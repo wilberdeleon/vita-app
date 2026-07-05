@@ -1,5 +1,6 @@
 export { Button } from './Button';
 export { Card } from './Card';
+export { DailyProgressCard } from './DailyProgressCard';
 export { Chip } from './Chip';
 export { IconBadge } from './IconBadge';
 export { ListRow } from './ListRow';
