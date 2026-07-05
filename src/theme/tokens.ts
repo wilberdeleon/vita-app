@@ -7,7 +7,14 @@
  */
 
 export const palette = {
-  // Brand
+  // Official VITA brand palette (founder-approved, July 2026)
+  ink: '#1C1F1A',
+  sage: '#7C846B',
+  cream: '#E6DFD2',
+  paper: '#F7F5F1',
+  gold: '#D4B27A',
+
+  // Screen accents from the approved UI reference
   primary: '#F2670F',
   primarySoft: '#FDEBDD',
   water: '#2F80ED',

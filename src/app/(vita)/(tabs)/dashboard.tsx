@@ -4,15 +4,17 @@ import { GreetingCard } from '../../../features/dashboard/components/GreetingCar
 import { JourneyCard } from '../../../features/dashboard/components/JourneyCard';
 import { QuickStatsRow } from '../../../features/dashboard/components/QuickStatsRow';
 import { getDashboard } from '../../../features/dashboard/api';
+import { greetingForHour } from '../../../features/dashboard/greeting';
 
 export default function Dashboard() {
   const data = getDashboard();
   const { calories } = data;
+  const greeting = greetingForHour(new Date().getHours());
 
   return (
     <Screen dockClearance>
-      <ScreenHeader title="VITA" accent settings />
-      <GreetingCard firstName={data.firstName} headline={data.headline} subline={data.subline} />
+      <ScreenHeader title="VITA" brand settings />
+      <GreetingCard greeting={greeting} firstName={data.firstName} headline={data.headline} subline={data.subline} />
 
       <SectionHeader title="Today's Summary" />
       <DailyProgressCard

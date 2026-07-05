@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { VitaMark } from '../shell/VitaMark';
 import { palette, spacing, typography } from '../../theme/tokens';
 
 type Props = {
   title: string;
-  /** Brand-colored title (the VITA wordmark on Home). */
-  accent?: boolean;
+  /** Official VITA logo lockup (mark + wordmark) instead of a plain title. */
+  brand?: boolean;
   /** Show the settings gear on the right (main hub screens). */
   settings?: boolean;
   /** Show a back arrow on the left (stacked screens). */
@@ -15,7 +16,7 @@ type Props = {
   close?: boolean;
 };
 
-export function ScreenHeader({ title, accent = false, settings = false, back = false, close = false }: Props) {
+export function ScreenHeader({ title, brand = false, settings = false, back = false, close = false }: Props) {
   return (
     <View style={styles.row}>
       {back ? (
@@ -23,9 +24,16 @@ export function ScreenHeader({ title, accent = false, settings = false, back = f
           <Ionicons name="chevron-back" size={24} color={palette.text} />
         </Pressable>
       ) : null}
-      <Text style={[styles.title, accent && styles.accent, back && styles.centered]} numberOfLines={1}>
-        {title}
-      </Text>
+      {brand ? (
+        <View style={styles.brandRow}>
+          <VitaMark size={30} />
+          <Text style={styles.wordmark}>{title}</Text>
+        </View>
+      ) : (
+        <Text style={[styles.title, back && styles.centered]} numberOfLines={1}>
+          {title}
+        </Text>
+      )}
       {settings ? (
         <Pressable hitSlop={12} onPress={() => router.push('/settings')} style={styles.side}>
           <Ionicons name="settings-outline" size={22} color={palette.text} />
@@ -53,9 +61,16 @@ const styles = StyleSheet.create({
     color: palette.text,
     flex: 1,
   },
-  accent: {
-    color: palette.primary,
-    letterSpacing: 1,
+  brandRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+  },
+  wordmark: {
+    ...typography.title,
+    color: palette.ink,
+    letterSpacing: 5,
   },
   centered: {
     textAlign: 'center',

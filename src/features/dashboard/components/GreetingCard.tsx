@@ -4,17 +4,20 @@ import { Card } from '../../../components/ui';
 import { palette, spacing, typography } from '../../../theme/tokens';
 
 type Props = {
+  greeting: string;
   firstName: string;
   headline: string;
   subline: string;
 };
 
-export function GreetingCard({ firstName, headline, subline }: Props) {
+export function GreetingCard({ greeting, firstName, headline, subline }: Props) {
   return (
     <Card>
       <View style={styles.row}>
         <View style={styles.text}>
-          <Text style={styles.greeting}>Good morning, {firstName}.</Text>
+          <Text style={styles.greeting}>
+            {greeting}, {firstName}.
+          </Text>
           <Text style={styles.headline}>{headline}</Text>
           <Text style={styles.subline}>{subline}</Text>
         </View>

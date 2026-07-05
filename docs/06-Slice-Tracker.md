@@ -26,6 +26,7 @@ live data connect in later sprints.
 | 0.8 | My Journey | Overview / Weight / Photos tabs, charts, 8-stage system | 🟡 Founder review |
 | 0.9 | Atlas + Settings | Purple WIP experience; settings shell | 🟡 Founder review |
 | 0.10 | Verification + docs | Simulator verification, documentation updates | 🟡 Founder review |
+| 0.11 | Official branding + greeting | Brand palette, VITA mark on Home/sign-in, app icon + splash, time-of-day greeting | 🟡 Founder review |
 
 Status legend: ⬜ Planned · 🟡 In Progress / In Review · ✅ Complete
 
@@ -34,3 +35,4 @@ Status legend: ⬜ Planned · 🟡 In Progress / In Review · ✅ Complete
 ## Completed Slices
 
 - 0.1 — Repository scaffolding (approved July 2026)
+- 0.2–0.10 — Sprint 0 Visual Foundation (approved July 2026)

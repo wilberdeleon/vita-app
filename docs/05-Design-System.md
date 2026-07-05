@@ -4,6 +4,12 @@ Status: **Placeholder — not yet authored.**
 
 The full Design System will be authored and approved separately before detailed UI polish begins. Until then, the **founder-approved VITA UI reference image (July 2026) is the interim visual authority**, and its extracted tokens live in `src/theme/tokens.ts`.
 
+## Official brand palette (founder-approved brand sheet, July 2026)
+
+- Ink `#1C1F1A` · Sage `#7C846B` · Cream `#E6DFD2` · Paper `#F7F5F1` · Gold `#D4B27A`
+- The VITA mark (mountain range in a circle) lives in code as `src/components/shell/VitaMark.tsx` and drives the generated app icon/splash (`scripts/generate-brand-assets.mjs`). Do not redesign or create variations.
+- Brand palette owns branding surfaces (icon, splash, logo, sign-in). Screen accents below come from the approved UI reference; reconciling the two is a decision for the full Design System.
+
 ## Interim tokens (extracted from the approved UI reference)
 
 - **Color ownership:** orange `#F2670F` = VITA core (Home, Fuel, primary actions) · blue `#2F80ED` = Water · purple `#7C3AED` = Peptides & Atlas

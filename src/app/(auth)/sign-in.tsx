@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { VitaMark } from '../../components/shell/VitaMark';
 import { palette, spacing, typography } from '../../theme/tokens';
 
 /**
@@ -8,6 +9,7 @@ import { palette, spacing, typography } from '../../theme/tokens';
 export default function SignIn() {
   return (
     <View style={styles.container}>
+      <VitaMark size={96} />
       <Text style={styles.wordmark}>VITA</Text>
       <Text style={styles.note}>Sign in arrives in a later sprint.</Text>
     </View>
@@ -17,18 +19,19 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.background,
+    backgroundColor: palette.paper,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.s,
   },
   wordmark: {
     ...typography.display,
-    color: palette.primary,
-    letterSpacing: 6,
+    color: palette.ink,
+    letterSpacing: 10,
   },
   note: {
     ...typography.caption,
     color: palette.textTertiary,
+    marginTop: spacing.m,
   },
 });
