@@ -1,29 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Redirect } from 'expo-router';
+import { useAuth } from '../features/auth/AuthProvider';
 
-// Temporary entry screen. Replaced by the auth gate and app shell in Sprint 0.
+/**
+ * Auth gate. With mock auth the user is always signed in; when real
+ * authentication is enabled this routing logic already does the right thing.
+ */
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>VITA</Text>
-      <Text style={styles.subtitle}>Scaffolding complete. Sprint 0 begins next.</Text>
-    </View>
-  );
-}
+  const { status } = useAuth();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '600',
-    letterSpacing: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    opacity: 0.6,
-  },
-});
+  if (status === 'signedOut') {
+    return <Redirect href="/sign-in" />;
+  }
+  return <Redirect href="/dashboard" />;
+}
