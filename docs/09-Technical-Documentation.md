@@ -35,6 +35,15 @@ Single source of truth for implementation details: stack, architecture rules, an
 - Copy `.env.example` to `.env` (git-ignored) and fill in values.
 - Only publishable keys use the `EXPO_PUBLIC_` prefix (they ship inside the app bundle). Real secrets live server-side in Supabase edge functions.
 
+## Sprint 0 implementation notes
+
+- **Navigation shape:** the dock has four tabs (`(vita)/(tabs)/`: dashboard, fuel, journey, atlas). Water, Peptides, the Food Log flow, and Settings are stack screens above the tabs (no dock). Settings opens from the header gear.
+- **Mock data:** every feature serves realistic fixtures from `mock.ts` through its `api.ts` boundary. Later sprints swap fixture bodies for Supabase queries without touching screens.
+- **Auth:** `features/auth/AuthProvider` reports a mock signed-in user; the gate in `src/app/index.tsx` already routes by session status. Enabling real auth = replacing AuthProvider internals.
+- **Charts** are hand-drawn with `react-native-svg` (LineChart, WeightBars in `features/journey`) — no chart library.
+- **Barcode scanner** is a static visual mock; camera permission and real scanning ship in Sprint 2.
+- **SDK 57 quirks:** expo-router vendors react-navigation — import tab-bar types from `expo-router/tabs`. `.npmrc` sets `legacy-peer-deps=true` (transitive react-dom peer conflict in the SDK 57 template).
+
 ## Running the app
 
 ```bash
