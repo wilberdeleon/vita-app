@@ -6,7 +6,7 @@ Single source of truth for implementation details: stack, architecture rules, an
 
 ## Stack (founder-approved, July 2026)
 
-- **Platform:** Native-first — Expo SDK 57 / React Native, managed workflow, EAS builds. TypeScript throughout (strict mode).
+- **Platform:** Native-first — Expo SDK 54 / React Native, managed workflow, EAS builds. TypeScript throughout (strict mode). SDK 54 is pinned to match the current App Store Expo Go client (54.x) so founders can test on real iPhones; upgrade the SDK only when the App Store Expo Go supports it.
 - **Navigation:** Expo Router (file-based) in `src/app/`.
 - **Backend:** Supabase (auth, database, storage). Schema changes via numbered migrations in `supabase/migrations/`.
 - **Deliberately not pre-committed:** state-management library, component library, testing framework. These are per-slice decisions made when a slice needs them.
@@ -42,7 +42,7 @@ Single source of truth for implementation details: stack, architecture rules, an
 - **Auth:** `features/auth/AuthProvider` reports a mock signed-in user; the gate in `src/app/index.tsx` already routes by session status. Enabling real auth = replacing AuthProvider internals.
 - **Charts** are hand-drawn with `react-native-svg` (LineChart, WeightBars in `features/journey`) — no chart library.
 - **Barcode scanner** is a static visual mock; camera permission and real scanning ship in Sprint 2.
-- **SDK 57 quirks:** expo-router vendors react-navigation — import tab-bar types from `expo-router/tabs`. `.npmrc` sets `legacy-peer-deps=true` (transitive react-dom peer conflict in the SDK 57 template).
+- **SDK notes:** tab-bar types import from `@react-navigation/bottom-tabs` (on SDK 55+ expo-router vendors react-navigation and they move to `expo-router/tabs`). `expo-status-bar` is not a config plugin on SDK 54 — do not add it to `plugins`. `.npmrc` keeps `legacy-peer-deps=true`.
 
 ## Running the app
 

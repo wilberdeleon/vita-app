@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-// SDK 57: expo-router vendors react-navigation and re-exports its types.
-import type { BottomTabBarProps } from 'expo-router/tabs';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette, radii, shadows, spacing, typography } from '../../theme/tokens';
