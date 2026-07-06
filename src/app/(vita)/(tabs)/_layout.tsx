@@ -5,7 +5,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => <FloatingDock {...props} />}
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ headerShown: false, animation: 'fade' }}
     >
       <Tabs.Screen name="dashboard" />
       <Tabs.Screen name="fuel" />

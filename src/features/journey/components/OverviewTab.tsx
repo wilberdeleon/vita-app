@@ -16,7 +16,7 @@ export function OverviewTab() {
     <View style={styles.container}>
       <SectionHeader title="Your Journey Stage" />
       <Card style={styles.stageCard}>
-        <IconBadge icon={stage.icon} size={44} />
+        <IconBadge icon={stage.icon} color={palette.journey} size={44} />
         <View style={styles.stageText}>
           <Text style={styles.stageName}>{stage.name}</Text>
           <Text style={styles.stageTagline}>{stage.tagline}</Text>
@@ -35,12 +35,12 @@ export function OverviewTab() {
         </View>
         <LineChart
           series={[
-            { points: journey.trend, color: palette.primary, dots: true },
+            { points: journey.trend, color: palette.journey, dots: true },
             { points: journey.previousTrend, color: palette.textTertiary },
           ]}
         />
         <View style={styles.legend}>
-          <View style={[styles.legendDot, { backgroundColor: palette.primary }]} />
+          <View style={[styles.legendDot, { backgroundColor: palette.journey }]} />
           <Text style={styles.legendLabel}>You</Text>
           <View style={[styles.legendDot, { backgroundColor: palette.textTertiary }]} />
           <Text style={styles.legendLabel}>Last 4 Weeks</Text>

@@ -22,7 +22,7 @@ export function GreetingCard({ greeting, firstName, headline, subline }: Props) 
           <Text style={styles.subline}>{subline}</Text>
         </View>
         <View style={styles.sun}>
-          <Ionicons name="sunny" size={30} color={palette.primary} />
+          <Ionicons name="sunny" size={30} color={palette.gold} />
         </View>
       </View>
     </Card>
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: palette.primarySoft,
+    backgroundColor: palette.cream,
     alignItems: 'center',
     justifyContent: 'center',
   },

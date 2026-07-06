@@ -5,11 +5,11 @@ type Props = {
   options: readonly string[];
   selectedIndex: number;
   onChange: (index: number) => void;
-  /** Active segment color; defaults to VITA orange. */
+  /** Active segment color; defaults to neutral ink (structure). Pass a domain color for domain flows. */
   activeColor?: string;
 };
 
-export function SegmentedTabs({ options, selectedIndex, onChange, activeColor = palette.primary }: Props) {
+export function SegmentedTabs({ options, selectedIndex, onChange, activeColor = palette.ink }: Props) {
   return (
     <View style={styles.track}>
       {options.map((option, index) => {

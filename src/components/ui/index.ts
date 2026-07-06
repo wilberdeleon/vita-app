@@ -4,6 +4,7 @@ export { Chip } from './Chip';
 export { DailyProgressCard } from './DailyProgressCard';
 export { IconBadge } from './IconBadge';
 export { ListRow } from './ListRow';
+export { PressableScale } from './PressableScale';
 export { ProgressBar } from './ProgressBar';
 export { Screen } from './Screen';
 export { ScreenHeader } from './ScreenHeader';

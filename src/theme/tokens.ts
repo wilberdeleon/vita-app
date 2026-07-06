@@ -1,9 +1,12 @@
 /**
- * VITA design tokens — extracted from the founder-approved UI reference
- * (July 2026). Interim authority until docs/05-Design-System.md is authored.
+ * VITA design tokens — extracted from the founder-approved UI reference and
+ * brand sheet (July 2026). Interim authority until docs/05-Design-System.md
+ * is fully authored.
  *
- * Color ownership: orange = VITA core (Home/Fuel), blue = Water,
- * purple = Peptides & Atlas.
+ * Permanent domain color hierarchy (founder decision, Sprint 0.1):
+ * orange = Nutrition/Fuel · blue = Water · purple = Atlas (and peptides,
+ * per the approved UI reference) · green = Journey progression ·
+ * neutrals = navigation, structure, general UI.
  */
 
 export const palette = {
@@ -14,13 +17,15 @@ export const palette = {
   paper: '#F7F5F1',
   gold: '#D4B27A',
 
-  // Screen accents from the approved UI reference
-  primary: '#F2670F',
+  // Permanent domain colors
+  primary: '#F2670F', // Nutrition / Fuel
   primarySoft: '#FDEBDD',
   water: '#2F80ED',
   waterSoft: '#E3EEFD',
-  peptide: '#7C3AED',
+  peptide: '#7C3AED', // Atlas + peptides
   peptideSoft: '#EFE7FD',
+  journey: '#2E9E5B', // Journey progression
+  journeySoft: '#E4F4EA',
 
   // Macros
   protein: '#E4572E',
@@ -57,14 +62,14 @@ export const spacing = {
 
 export const radii = {
   card: 20,
-  control: 14,
-  chip: 10,
+  control: 16,
+  chip: 12,
   pill: 999,
 } as const;
 
 export const typography = {
-  display: { fontSize: 30, fontWeight: '700' as const, letterSpacing: 0.2 },
-  title: { fontSize: 22, fontWeight: '700' as const },
+  display: { fontSize: 32, fontWeight: '700' as const, letterSpacing: 0.2 },
+  title: { fontSize: 24, fontWeight: '700' as const, letterSpacing: -0.3 },
   heading: { fontSize: 17, fontWeight: '600' as const },
   body: { fontSize: 15, fontWeight: '400' as const },
   bodyMedium: { fontSize: 15, fontWeight: '500' as const },
@@ -73,19 +78,20 @@ export const typography = {
   micro: { fontSize: 11, fontWeight: '500' as const },
 } as const;
 
+// Softer, Apple-style diffuse shadows: lower opacity, larger blur.
 export const shadows = {
   card: {
     shadowColor: '#000000',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.045,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 2,
   },
   dock: {
     shadowColor: '#000000',
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 10 },
     elevation: 8,
   },
 } as const;

@@ -9,7 +9,7 @@ import { palette, spacing, typography } from '../../theme/tokens';
 export default function SignIn() {
   return (
     <View style={styles.container}>
-      <VitaMark size={96} />
+      <VitaMark size={120} />
       <Text style={styles.wordmark}>VITA</Text>
       <Text style={styles.note}>Sign in arrives in a later sprint.</Text>
     </View>

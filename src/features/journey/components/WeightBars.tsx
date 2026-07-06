@@ -33,7 +33,7 @@ export function WeightBars({ points, height = 140 }: Props) {
               width={BAR_W}
               height={height - PAD_Y - barTop}
               rx={BAR_W / 2}
-              fill={palette.primary}
+              fill={palette.journey}
               opacity={index === points.length - 1 ? 1 : 0.55}
             />
           );

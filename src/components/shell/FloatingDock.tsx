@@ -13,10 +13,12 @@ type DockItem = {
   color: string;
 };
 
+// Active tints follow the permanent domain hierarchy: Home is navigation
+// (neutral ink), Fuel orange, Journey green, Atlas purple.
 const DOCK_ITEMS: DockItem[] = [
-  { route: 'dashboard', label: 'Home', icon: 'home-outline', activeIcon: 'home', color: palette.primary },
+  { route: 'dashboard', label: 'Home', icon: 'home-outline', activeIcon: 'home', color: palette.ink },
   { route: 'fuel', label: 'Fuel', icon: 'flame-outline', activeIcon: 'flame', color: palette.primary },
-  { route: 'journey', label: 'Journey', icon: 'trending-up-outline', activeIcon: 'trending-up', color: palette.primary },
+  { route: 'journey', label: 'Journey', icon: 'trending-up-outline', activeIcon: 'trending-up', color: palette.journey },
   { route: 'atlas', label: 'Atlas', icon: 'planet-outline', activeIcon: 'planet', color: palette.peptide },
 ];
 
@@ -25,7 +27,10 @@ export function FloatingDock({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, spacing.m) }]} pointerEvents="box-none">
+    <View
+      style={[styles.wrapper, { bottom: Math.max(insets.bottom, spacing.m) + spacing.s }]}
+      pointerEvents="box-none"
+    >
       <View style={styles.dock}>
         {DOCK_ITEMS.map((item) => {
           const routeIndex = state.routes.findIndex((route) => route.name === item.route);
@@ -66,9 +71,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: palette.card,
     borderRadius: radii.pill,
-    paddingVertical: spacing.m,
-    paddingHorizontal: spacing.s,
-    marginHorizontal: spacing.xxl,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.m,
+    marginHorizontal: spacing.xxl + spacing.xs,
     alignSelf: 'stretch',
     ...shadows.dock,
   },

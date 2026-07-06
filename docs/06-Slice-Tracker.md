@@ -27,6 +27,7 @@ live data connect in later sprints.
 | 0.9 | Atlas + Settings | Purple WIP experience; settings shell | 🟡 Founder review |
 | 0.10 | Verification + docs | Simulator verification, documentation updates | 🟡 Founder review |
 | 0.11 | Official branding + greeting | Brand palette, VITA mark on Home/sign-in, app icon + splash, time-of-day greeting | 🟡 Founder review |
+| 0.12 | Sprint 0.1 global polish | Domain color hierarchy, dock refinement, logo scale, shadows/type, subtle motion | 🟡 Founder review |
 
 Status legend: ⬜ Planned · 🟡 In Progress / In Review · ✅ Complete
 

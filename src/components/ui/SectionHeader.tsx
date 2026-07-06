@@ -34,6 +34,7 @@ const styles = StyleSheet.create({
   },
   action: {
     ...typography.captionMedium,
-    color: palette.primary,
+    fontWeight: '600',
+    color: palette.ink,
   },
 });

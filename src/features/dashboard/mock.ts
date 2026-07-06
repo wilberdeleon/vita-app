@@ -19,7 +19,7 @@ export const DASHBOARD_FIXTURE: DashboardData = {
     { id: 'steps', icon: 'footsteps-outline', color: palette.success, value: '6,842', label: '/ 10,000' },
     { id: 'water', icon: 'water-outline', color: palette.water, value: '5 / 8', label: 'Cups' },
     { id: 'peptides', icon: 'medical-outline', color: palette.peptide, value: '1 / 3', label: 'Logged' },
-    { id: 'sleep', icon: 'moon-outline', color: palette.primary, value: '6.4 h', label: 'Sleep' },
+    { id: 'sleep', icon: 'moon-outline', color: palette.sage, value: '6.4 h', label: 'Sleep' },
   ],
   journey: {
     stage: 'Momentum',

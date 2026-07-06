@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { palette, radii, spacing, typography } from '../../theme/tokens';
+import { PressableScale } from './PressableScale';
 
 type Props = {
   label: string;
@@ -14,17 +15,10 @@ type Props = {
 export function Button({ label, onPress, color = palette.primary, icon, variant = 'filled' }: Props) {
   const filled = variant === 'filled';
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        { backgroundColor: filled ? color : `${color}1A` },
-        pressed && styles.pressed,
-      ]}
-    >
+    <PressableScale onPress={onPress} style={[styles.button, { backgroundColor: filled ? color : `${color}1A` }]}>
       {icon ? <Ionicons name={icon} size={18} color={filled ? palette.textOnColor : color} /> : null}
       <Text style={[styles.label, { color: filled ? palette.textOnColor : color }]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -37,9 +31,6 @@ const styles = StyleSheet.create({
     borderRadius: radii.control,
     paddingVertical: 14,
     paddingHorizontal: spacing.xl,
-  },
-  pressed: {
-    opacity: 0.85,
   },
   label: {
     ...typography.bodyMedium,

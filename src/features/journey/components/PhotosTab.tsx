@@ -13,7 +13,7 @@ export function PhotosTab() {
       <Pressable>
         <Card style={styles.addCard}>
           <View style={styles.addCircle}>
-            <Ionicons name="add" size={28} color={palette.primary} />
+            <Ionicons name="add" size={28} color={palette.journey} />
           </View>
           <Text style={styles.addTitle}>Add Progress Photo</Text>
           <Text style={styles.addHint}>Front, side, or back. You choose.</Text>
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: palette.primarySoft,
+    backgroundColor: palette.journeySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.s,

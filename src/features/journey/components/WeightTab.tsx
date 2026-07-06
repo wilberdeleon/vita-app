@@ -33,7 +33,7 @@ export function WeightTab() {
       <SectionHeader title="You vs Last 4 Weeks" />
       <Card style={styles.compareCard}>
         <LineChart
-          series={[{ points: journey.trend, color: palette.water, dots: true }]}
+          series={[{ points: journey.trend, color: palette.journey, dots: true }]}
           height={110}
         />
         <Text style={styles.encouragement}>
@@ -58,13 +58,13 @@ export function WeightTab() {
 function DeltaBadge({ delta }: { delta: number }) {
   const losing = delta < 0;
   return (
-    <View style={[styles.badge, { backgroundColor: losing ? palette.successSoft : palette.primarySoft }]}>
+    <View style={[styles.badge, { backgroundColor: losing ? palette.journeySoft : palette.track }]}>
       <Ionicons
         name={losing ? 'trending-down' : 'trending-up'}
         size={12}
-        color={losing ? palette.success : palette.primary}
+        color={losing ? palette.journey : palette.textSecondary}
       />
-      <Text style={[styles.badgeLabel, { color: losing ? palette.success : palette.primary }]}>
+      <Text style={[styles.badgeLabel, { color: losing ? palette.journey : palette.textSecondary }]}>
         {delta} lb
       </Text>
     </View>
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   delta: {
     ...typography.captionMedium,
-    color: palette.primary,
+    color: palette.journey,
   },
   chips: {
     flexDirection: 'row',
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   encouragement: {
     ...typography.captionMedium,
-    color: palette.water,
+    color: palette.journey,
   },
   badge: {
     flexDirection: 'row',

@@ -6,6 +6,8 @@ Single source of truth for release history and completed work.
 
 ## Unreleased
 
+- 2026-07-05 — Sprint 0.1 Global Design Polish: permanent domain color hierarchy (orange=Fuel, blue=Water, purple=Atlas, green=Journey, neutral=structure), sleeker floating dock (shorter, higher, more margin), VITA logo +27%, softer Apple-style shadows, stronger title typography, subtle motion (tab fade, press scale, animated progress bars). No functionality changes. (Slice 0.12)
+
 - 2026-07-05 — Expo Go compatibility: project aligned from SDK 57 to SDK 54 (the version the current App Store Expo Go supports) so founders can test on real iPhones. No UI, branding, or architecture changes. Verified running in Expo Go 54 in the simulator.
 
 - 2026-07-05 — Official VITA branding: brand palette (ink/sage/cream/paper/gold) in tokens, VITA mark on Home header and sign-in, app icon + splash + Android adaptive assets generated from the approved logo, time-of-day greeting on the Dashboard. (Slice 0.11)

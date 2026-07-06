@@ -26,7 +26,7 @@ export function ScreenHeader({ title, brand = false, settings = false, back = fa
       ) : null}
       {brand ? (
         <View style={styles.brandRow}>
-          <VitaMark size={30} />
+          <VitaMark size={38} />
           <Text style={styles.wordmark}>{title}</Text>
         </View>
       ) : (
@@ -69,8 +69,9 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     ...typography.title,
+    fontSize: 28,
     color: palette.ink,
-    letterSpacing: 5,
+    letterSpacing: 6,
   },
   centered: {
     textAlign: 'center',

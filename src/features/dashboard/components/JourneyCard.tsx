@@ -22,7 +22,7 @@ export function JourneyCard({ journey }: Props) {
           </View>
           <Ionicons name="chevron-forward" size={18} color={palette.textTertiary} />
         </View>
-        <ProgressBar progress={journey.week / journey.totalWeeks} height={6} />
+        <ProgressBar progress={journey.week / journey.totalWeeks} color={palette.journey} height={6} />
       </Card>
     </Pressable>
   );

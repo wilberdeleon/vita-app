@@ -5,12 +5,12 @@ type Props = {
   label: string;
   selected?: boolean;
   onPress?: () => void;
-  /** Selected fill color; defaults to VITA orange. */
+  /** Selected fill color; defaults to neutral ink (structure). Pass a domain color for domain flows. */
   color?: string;
 };
 
 /** Small selectable pill — time ranges (7D/1M/…), bottle sizes, quick amounts. */
-export function Chip({ label, selected = false, onPress, color = palette.primary }: Props) {
+export function Chip({ label, selected = false, onPress, color = palette.ink }: Props) {
   return (
     <Pressable
       onPress={onPress}
