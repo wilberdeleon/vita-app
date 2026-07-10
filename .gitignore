@@ -28,6 +28,7 @@ yarn-error.*
 
 # macOS
 .DS_Store
+Thumbs.db
 *.pem
 
 # local env files (never commit secrets; .env.example is the tracked template)
@@ -40,3 +41,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Obsidian (Vita HQ vault at docs/Vita HQ) — machine-specific / session state,
+# excluded to avoid near-constant sync conflicts between collaborators
+docs/Vita HQ/.obsidian/workspace.json
+docs/Vita HQ/.obsidian/workspace-mobile.json
+docs/Vita HQ/.obsidian/cache/
+docs/Vita HQ/.trash/
