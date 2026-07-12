@@ -70,4 +70,4 @@
 - **Verified vs. direction.** Anything confirmed from the repository is stated plainly. Founder-stated direction not yet in the repo is labeled as direction. Anything unconfirmed is marked **Needs Verification**.
 - **Living documentation.** Whenever meaningful work ships, the affected HQ pages are updated — and only those pages.
 
-*Maintained by Claude (Primary Engineer). Last full sync with the repository: 2026-07-06.*
+*Maintained by Claude (Primary Engineer).*

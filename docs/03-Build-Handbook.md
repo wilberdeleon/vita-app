@@ -121,6 +121,8 @@ Whenever something changes, update the appropriate document.
 
 Never duplicate information across documents.
 
+**Vita HQ** (`~/Documents/Vita HQ`, Obsidian) is the company knowledge base beyond this repository's own `docs/` files. Every coding session ends with a silent checkpoint: did the work change knowledge? No → leave Vita HQ untouched. Yes → update only the affected pages.
+
 ---
 
 # Git Workflow
