@@ -95,6 +95,18 @@ Before adding any feature, ask:
 
 If the answer is no, don't build it.
 
+## 15. Approved Designs Are Final
+
+When a founder creates a production-quality mockup, screen, or visual design, treat it as approved. The objective is implementation accuracy, not creative interpretation.
+
+- Fidelity over creativity
+- Consistency over reinterpretation
+- Reproduce the design as accurately as possible
+
+Do not attempt to improve an approved design unless a founder specifically requests it.
+
+See the Build Handbook's Visual Reference Standards for how this applies to inspiration, production, and asset references.
+
 ---
 
 # Founder's Commitment

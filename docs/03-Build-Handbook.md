@@ -38,7 +38,7 @@ If the Product Bible defines **what** VITA is, the Build Handbook defines **how*
 - Follow the Design System
 - Follow the Build Handbook
 
-Claude should never redesign the product without approval.
+Claude should never redesign the product without approval. See Design Rules → Visual Reference Standards for how this applies to inspiration, production, and asset references.
 
 ## ChatGPT — Creative Director & Product Strategist
 
@@ -170,6 +170,29 @@ Every audit should include:
 All new UI must follow the Design System.
 
 No custom styling should be introduced unless approved and documented.
+
+## Visual Reference Standards
+
+VITA uses three types of visual reference, and each carries a different level of authority.
+
+**Inspiration Reference** — guides overall design direction (e.g. Robinhood, Apple Fitness, Headspace, Calm). Claude should absorb the visual language, design philosophy, interaction patterns, and overall feel, then create an original implementation. These references inspire — they are never copied.
+
+**Production Reference** — represents founder-approved visual design. A production reference is an implementation specification, not inspiration: the founder has already made the design decisions, and Claude's job is to reproduce it as faithfully as technically possible. Unless explicitly told otherwise, preserve proportions, spacing, composition, hierarchy, typography, alignment, sizing, icon placement, color, and animation timing. Do not redesign, reinterpret, modernize, simplify, "make it your own," substitute similar components, replace layouts, or adjust spacing based on personal preference — a production reference outranks Claude's own design judgment. If something cannot be reproduced exactly due to a technical limitation, explain why, explain the limitation, and implement the closest technically possible solution. Never diverge silently.
+
+**Asset Reference** — a founder-approved production asset (illustration, SVG, PNG, logo, icon, decorative or background artwork). Use the original asset whenever technically feasible. Do not redraw it, recreate it, generate a procedural version, or substitute something similar — the approved asset is the source of truth. Only recreate an asset if explicitly instructed to. An approved Asset Reference overrides Claude's own design judgment. The approved source asset is the implementation specification.
+
+See Founder's Principles §15, "Approved Designs Are Final."
+
+## Design Role vs Engineering Role
+
+The reference type determines which role Claude is playing:
+
+- **Inspiration Reference → Designer.** Create an original implementation inspired by the reference.
+- **Production Reference or Asset Reference → Implementation Engineer.** The responsibility is faithful reproduction, not redesign.
+
+Default assumption: production references are implementation specifications, and asset references are source files.
+
+These Visual Reference Standards apply permanently to all future VITA development work unless explicitly revised by the founders.
 
 ---
 
