@@ -8,9 +8,9 @@
 
 ---
 
-## ⚠️ This roadmap supersedes the repo Master Roadmap — repo not yet updated
+## Repository roadmap is synced
 
-The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) still shows the **old** 9-sprint structure (Dashboard → Fuel → My Journey → Water → Peptides → Atlas placeholder-only → Settings → Polish). This page now reflects the **new official roadmap** below; the repo file is stale until it's updated to match. This is a documentation-only update (per scope) — the repo doc itself hasn't been touched. Flagged as a follow-up, not done here.
+The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors this page's 8-sprint structure (Foundation → Dashboard → Journey → Fuel → Atlas → Health → Premium → Beta), synced 2026-07-12. Both describe the same official roadmap; update both together if the plan changes again.
 
 ## How development is structured
 
@@ -71,7 +71,7 @@ Completed work: Brand Identity · Product Vision · Atlas Identity · Navigation
 
 **Note:** a Dashboard already exists in mock form (old Slice 0.4, refined 0.11–0.12 — see [[Dashboard]]'s Current state), with a GreetingCard, DailyProgressCard, QuickStatsRow, and JourneyCard already built. This sprint's slices map closely onto those existing pieces (Slice 3 → GreetingCard, Slice 4–5 → DailyProgressCard/QuickStatsRow, Slice 6 → JourneyCard), which suggests Sprint 1 elevates the existing mock Dashboard to production quality rather than building from zero — a reasonable inference, not stated explicitly in the roadmap text.
 
-**Progress:** Slice 1 (Dashboard Layout) is approved — added a `Section` layout primitive and a configurable content-gap on `Screen` (scoped so only Dashboard's rhythm changed, not every other screen sharing `Screen`), establishing a 24/12/8px section rhythm from existing spacing tokens. Slice 2 (Dashboard Components) is underway — added `PressableCard` (Card + standard press-scale feedback) and migrated `JourneyCard` to it, removing an ad-hoc Pressable+Card duplication.
+**Progress:** Slice 1 (Dashboard Layout) approved — added a `Section` layout primitive and a configurable content-gap on `Screen` (scoped so only Dashboard's rhythm changed, not every other screen sharing `Screen`), establishing a 24/12/8px section rhythm from existing spacing tokens. Slice 2 (Dashboard Components) approved — added `PressableCard` (Card + standard press-scale feedback) and migrated `JourneyCard` to it. Slice 3 (Greeting Card) built and then design-revised by founders (2026-07-10): the generic sun/moon icon was replaced with a bespoke `TimeOfDayIllustration` — a fixed circular landscape composition (mountains + small lake) recolored across four states (morning/afternoon/evening/night), light/dark-ready. Existing greeting logic, minute re-evaluation, copy, and card layout preserved untouched. **Pending founder visual test in Expo Go before approval.**
 
 ## Sprint 2 — Journey
 

@@ -4,6 +4,14 @@ Status: **Placeholder — not yet authored.**
 
 The full Design System will be authored and approved separately before detailed UI polish begins. Until then, the **founder-approved VITA UI reference image (July 2026) is the interim visual authority**, and its extracted tokens live in `src/theme/tokens.ts`.
 
+## Theme model (founder decision, 2026-07-09)
+
+**VITA supports both Light Mode and Dark Mode, built on reusable semantic design tokens from the beginning — not hardcoded colors.** Tokens (e.g. `background`, `surface`, `textPrimary`, `textSecondary`, `hairline`, and the domain colors below) each carry a light value and a dark value; screens and components reference the token name, never a raw hex value. This is a decision, not yet an implementation: `src/theme/tokens.ts` today exports a single flat light palette with hardcoded hex values — no semantic pairs, no dark values, no theme switcher exist yet. Building that architecture is Sprint 1 / Design System work. Until it lands, new UI should still be written against semantic token names so the dark palette is a value swap later, not a rewrite.
+
+## Navigation placement (founder decision, 2026-07-09)
+
+**Settings remains permanently in the top-right corner (header icon, present on every screen) and is not part of the floating dock.** The dock stays a fixed 4 items: Home, Fuel, Journey, Atlas. This is locked, not an open question.
+
 ## Official brand palette (founder-approved brand sheet, July 2026)
 
 - Ink `#1C1F1A` · Sage `#7C846B` · Cream `#E6DFD2` · Paper `#F7F5F1` · Gold `#D4B27A`
