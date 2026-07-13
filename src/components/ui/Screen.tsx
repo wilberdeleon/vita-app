@@ -15,7 +15,7 @@ export function Screen({ children, scroll = true, dockClearance = false }: Props
   const bottomPadding = dockClearance ? DOCK_CLEARANCE : insets.bottom + spacing.xxl;
 
   if (!scroll) {
-    return <View style={[styles.root, { paddingTop: insets.top }]}>{children}</View>;
+    return <View style={[styles.root, { paddingTop: insets.top, paddingBottom: bottomPadding }]}>{children}</View>;
   }
 
   return (

@@ -37,7 +37,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.m,
     paddingHorizontal: spacing.xxxl,
-    paddingBottom: spacing.xxxl * 2,
   },
   orb: {
     width: 96,
