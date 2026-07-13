@@ -1,16 +1,16 @@
 import { useRef, type PropsWithChildren } from 'react';
-import { Animated, Pressable, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 
-type Props = PropsWithChildren<{
-  onPress?: () => void;
-  disabled?: boolean;
-  style?: StyleProp<ViewStyle>;
-  /** Scale while pressed. Keep subtle. */
-  pressedScale?: number;
-}>;
+type Props = PropsWithChildren<
+  Omit<PressableProps, 'style' | 'onPressIn' | 'onPressOut'> & {
+    style?: StyleProp<ViewStyle>;
+    /** Scale while pressed. Keep subtle. */
+    pressedScale?: number;
+  }
+>;
 
 /** Light press animation shared by tappable components — subtle spring scale. */
-export function PressableScale({ children, onPress, disabled, style, pressedScale = 0.97 }: Props) {
+export function PressableScale({ children, onPress, disabled, style, pressedScale = 0.97, ...pressableProps }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const springTo = (toValue: number) =>
@@ -22,6 +22,7 @@ export function PressableScale({ children, onPress, disabled, style, pressedScal
       disabled={disabled}
       onPressIn={() => springTo(pressedScale)}
       onPressOut={() => springTo(1)}
+      {...pressableProps}
     >
       <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
     </Pressable>

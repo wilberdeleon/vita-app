@@ -20,7 +20,13 @@ export function ScreenHeader({ title, brand = false, settings = false, back = fa
   return (
     <View style={styles.row}>
       {back ? (
-        <Pressable hitSlop={12} onPress={() => router.back()} style={styles.side}>
+        <Pressable
+          hitSlop={12}
+          onPress={() => router.back()}
+          style={styles.side}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
           <Ionicons name="chevron-back" size={24} color={palette.text} />
         </Pressable>
       ) : null}
@@ -35,12 +41,24 @@ export function ScreenHeader({ title, brand = false, settings = false, back = fa
         </Text>
       )}
       {settings ? (
-        <Pressable hitSlop={12} onPress={() => router.push('/settings')} style={styles.side}>
+        <Pressable
+          hitSlop={12}
+          onPress={() => router.push('/settings')}
+          style={styles.side}
+          accessibilityRole="button"
+          accessibilityLabel="Settings"
+        >
           <Ionicons name="settings-outline" size={22} color={palette.text} />
         </Pressable>
       ) : null}
       {close ? (
-        <Pressable hitSlop={12} onPress={() => router.back()} style={styles.side}>
+        <Pressable
+          hitSlop={12}
+          onPress={() => router.back()}
+          style={styles.side}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+        >
           <Ionicons name="close" size={24} color={palette.text} />
         </Pressable>
       ) : null}

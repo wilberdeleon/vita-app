@@ -18,6 +18,8 @@ export function Stepper({ value, onChange, min = 1, max = 99, suffix }: Props) {
         style={styles.button}
         onPress={() => onChange(Math.max(min, value - 1))}
         hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Decrease"
       >
         <Ionicons name="remove" size={18} color={palette.text} />
       </Pressable>
@@ -29,6 +31,8 @@ export function Stepper({ value, onChange, min = 1, max = 99, suffix }: Props) {
         style={styles.button}
         onPress={() => onChange(Math.min(max, value + 1))}
         hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Increase"
       >
         <Ionicons name="add" size={18} color={palette.text} />
       </Pressable>
