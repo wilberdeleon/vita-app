@@ -66,7 +66,7 @@
 ## How this vault works
 
 - **One source of truth.** Every fact has exactly one home. Pages link to it rather than repeating it.
-- **Repo docs govern engineering.** The application repository (`Documents/vita-app`, GitHub `wilberdeleon/vita-app`) keeps its own governing docs in `docs/` — the Slice Tracker, Audit Log, and Changelog live **there**, next to the code. HQ summarizes and links; it does not duplicate them.
+- **Repo docs govern engineering.** The application repository (`/Users/wilber/vita-app`, GitHub `wilberdeleon/vita-app`) keeps its own governing docs in `docs/` — the Slice Tracker, Audit Log, and Changelog live **there**, next to the code. HQ summarizes and links; it does not duplicate them.
 - **Verified vs. direction.** Anything confirmed from the repository is stated plainly. Founder-stated direction not yet in the repo is labeled as direction. Anything unconfirmed is marked **Needs Verification**.
 - **Living documentation.** Whenever meaningful work ships, the affected HQ pages are updated — and only those pages.
 

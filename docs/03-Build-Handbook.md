@@ -121,7 +121,7 @@ Whenever something changes, update the appropriate document.
 
 Never duplicate information across documents.
 
-**Vita HQ** (`~/Documents/Vita HQ`, Obsidian) is the company knowledge base beyond this repository's own `docs/` files. Every coding session ends with a silent checkpoint: did the work change knowledge? No → leave Vita HQ untouched. Yes → update only the affected pages.
+**Vita HQ** (`docs/Vita HQ`, Obsidian) is the company knowledge base, living inside this repository's `docs/` alongside its other governing files. Every coding session ends with a silent checkpoint: did the work change knowledge? No → leave Vita HQ untouched. Yes → update only the affected pages.
 
 ---
 
@@ -133,7 +133,7 @@ GitHub is the single source of truth for code.
 - Meaningful commit messages are required.
 - Avoid committing unfinished work whenever possible.
 
-The permanent repository is `wilberdeleon/vita-app`.
+The permanent repository is `wilberdeleon/vita-app`. The only official local working copy is `/Users/wilber/vita-app`.
 
 ---
 
