@@ -57,7 +57,7 @@ Then open the same `vita-app` folder in Obsidian at `docs/Vita HQ` as described 
 
 ## Collaboration rules
 
-- `main` is the shared branch for both code and Vita HQ documentation.
+- `main` is the integration branch. Normal sprint work happens on a dedicated sprint branch (see `docs/03-Build-Handbook.md` → Branch Policy) and is reviewed — via pull request or explicit founder review — before merging into `main`.
 - Always `git pull` before starting work.
 - Commit small, logical changes with descriptive messages; push frequently.
 - Review Markdown/Obsidian conflicts manually — never blindly accept one side.

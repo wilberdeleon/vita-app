@@ -75,6 +75,18 @@ Small completed features are better than large unfinished systems.
 
 ---
 
+# Sprint Workflow
+
+Every working session is one sprint unless explicitly stated otherwise. (Roadmap Sprints in the Master Roadmap are milestones; one may span several session-sprints.)
+
+**Start of sprint:** read the relevant Vita HQ documentation, review the current implementation, confirm the sprint objective, break the sprint into logical slices, and present the slice plan for approval. Implementation begins only after the first slice is approved.
+
+**During the sprint:** work the approved slices sequentially. Each slice has one clear objective, is reasonably sized, leaves the application in a working state, and is committed before the next slice when appropriate. Never work on unrelated slices simultaneously.
+
+**End of sprint:** conclude with a Sprint Retrospective — Completed, Decisions, Challenges, Improvements, Next Sprint — then evaluate whether Vita HQ needs updating (see Documentation Rules). Documentation maintenance is part of finishing a sprint.
+
+---
+
 # Slice Workflow
 
 Every slice follows the same lifecycle.
@@ -134,6 +146,16 @@ GitHub is the single source of truth for code.
 - Avoid committing unfinished work whenever possible.
 
 The permanent repository is `wilberdeleon/vita-app`. The only official local working copy is `/Users/wilber/vita-app`.
+
+## Branch Policy
+
+`main` is the integration branch, not a workspace.
+
+- Normal sprint implementation must occur on a dedicated sprint branch, never directly on `main`.
+- Branch names should clearly identify the sprint, feature, and owner where useful — e.g. `sprint-1-dashboard-wilber`.
+- Work is reviewed before merging into `main`.
+- Wilber and Santiago should not perform overlapping implementation work directly on `main`.
+- Documentation-only emergency corrections may be handled separately, but normal product work always follows the sprint-branch workflow.
 
 ---
 

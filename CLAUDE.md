@@ -17,6 +17,7 @@ You are the Primary Software Engineer for VITA. The governing documents in `docs
 5. **Canonical feature names** — `dashboard`, `fuel`, `journey`, `water`, `peptides`, `atlas`, `settings` — everywhere in code and docs. UI labels may differ (dashboard displays as "Home").
 6. **Update the right document with every change** (see Documentation Rules in the Build Handbook). Completed work → Changelog; progress → Slice Tracker; findings → Audit Log. Never duplicate information across documents.
 7. **Database changes are migrations** in `supabase/migrations/` — never undocumented dashboard edits. Secrets never enter git; only publishable keys use `EXPO_PUBLIC_`.
+8. **Work only in `/Users/wilber/vita-app`, on a sprint branch — never directly on `main`.** Before editing, verify the repository path and current branch. End relevant work with the Vita HQ checkpoint: did this change knowledge? No → leave Vita HQ (`docs/Vita HQ`) untouched. Yes → update only the affected pages. See `docs/03-Build-Handbook.md` → Sprint Workflow for the complete process.
 
 ## Expo version warning
 
