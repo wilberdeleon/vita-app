@@ -1,49 +1,43 @@
-import { restaurantIconFor } from '../../../features/dashboard/mealIcons';
-import { DailyProgressCard, ListRow, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
-import { GreetingCard } from '../../../features/dashboard/components/GreetingCard';
-import { JourneyCard } from '../../../features/dashboard/components/JourneyCard';
+import { useWindowDimensions } from 'react-native';
+import { Screen, Section, SectionHeader } from '../../../components/ui';
+import { HomeHeader } from '../../../features/dashboard/components/HomeHeader';
+import { HomeSummaryCard } from '../../../features/dashboard/components/HomeSummaryCard';
+import { JourneyProgressCard } from '../../../features/dashboard/components/JourneyProgressCard';
+import { MealRow } from '../../../features/dashboard/components/MealRow';
 import { QuickStatsRow } from '../../../features/dashboard/components/QuickStatsRow';
 import { getDashboard } from '../../../features/dashboard/api';
-import { greetingForHour } from '../../../features/dashboard/greeting';
+import { useGreeting } from '../../../features/dashboard/greeting';
+import { spacing } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
+
+/** Narrower iPhones (SE-class) get a slightly tighter outer margin than the rest of the 24–30px directional range. */
+const NARROW_WIDTH_BREAKPOINT = 380;
 
 export default function Dashboard() {
   const data = getDashboard();
-  const { calories } = data;
-  const greeting = greetingForHour(new Date().getHours());
+  const greeting = useGreeting();
+  const { width } = useWindowDimensions();
+  const { scheme } = useTheme();
+  const horizontalInset = width < NARROW_WIDTH_BREAKPOINT ? 24 : 28;
+  const tone = scheme === 'dark' ? 'light' : 'dark';
 
   return (
-    <Screen dockClearance>
-      <ScreenHeader title="VITA" brand settings />
-      <GreetingCard greeting={greeting} firstName={data.firstName} headline={data.headline} subline={data.subline} />
+    <Screen dockClearance contentGap={spacing.xxl} topInset={false} horizontalInset={horizontalInset} themed>
+      <HomeHeader greeting={greeting} firstName={data.firstName} />
 
-      <SectionHeader title="Today's Summary" />
-      <DailyProgressCard
-        headline={`${calories.current.toLocaleString()} / ${calories.goal.toLocaleString()} kcal`}
-        percentLabel={`${Math.round((calories.current / calories.goal) * 100)}%`}
-        progress={calories.current / calories.goal}
-        bars={calories.macros.map((macro) => ({
-          label: macro.label,
-          valueLabel: `${macro.current} / ${macro.goal}${macro.unit}`,
-          progress: macro.current / macro.goal,
-          color: macro.color,
-        }))}
-      />
+      <HomeSummaryCard calories={data.calories} goals={data.goals} streakDays={data.streakDays} />
 
-      <QuickStatsRow stats={data.quickStats} />
+      <JourneyProgressCard journey={data.journey} macros={data.calories.macros} />
 
-      <SectionHeader title="Current Journey" />
-      <JourneyCard journey={data.journey} />
+      <Section header={<SectionHeader title="Health Metrics" tone={tone} />}>
+        <QuickStatsRow stats={data.quickStats} />
+      </Section>
 
-      <SectionHeader title="Today's Meals" />
-      {data.meals.map((meal) => (
-        <ListRow
-          key={meal.id}
-          icon={restaurantIconFor(meal.slot)}
-          title={meal.name}
-          subtitle={meal.slot}
-          value={`${meal.kcal} kcal`}
-        />
-      ))}
+      <Section header={<SectionHeader title="Today's Meals" tone={tone} />}>
+        {data.mealSlots.map((meal) => (
+          <MealRow key={meal.slot} meal={meal} />
+        ))}
+      </Section>
     </Screen>
   );
 }

@@ -6,15 +6,18 @@ type Props = PropsWithChildren<{
   style?: StyleProp<ViewStyle>;
 }>;
 
+/** Base card surface style — the single source of truth for card background, radius, and shadow. Reused by PressableCard so every tappable card matches every static one exactly. */
+export const cardSurfaceStyle: ViewStyle = {
+  backgroundColor: palette.card,
+  borderRadius: radii.card,
+  padding: spacing.l,
+  ...shadows.card,
+};
+
 export function Card({ children, style }: Props) {
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: palette.card,
-    borderRadius: radii.card,
-    padding: spacing.l,
-    ...shadows.card,
-  },
+  card: cardSurfaceStyle,
 });

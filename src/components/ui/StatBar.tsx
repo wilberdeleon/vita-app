@@ -10,7 +10,7 @@ type Props = {
   color: string;
 };
 
-/** Labeled progress bar — the macro rows on Home and Fuel. */
+/** Labeled progress bar — the macro rows on Fuel. */
 export function StatBar({ label, valueLabel, progress, color }: Props) {
   return (
     <View style={styles.container}>

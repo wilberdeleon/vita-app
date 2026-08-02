@@ -1,11 +1,11 @@
 import { palette } from '../../theme/tokens';
 import type { DashboardData } from './types';
 
-/** Realistic placeholder data matching the approved UI reference. */
+/** Realistic placeholder data matching the approved clean-redesign v2 UI reference. */
 export const DASHBOARD_FIXTURE: DashboardData = {
   firstName: 'Wilber',
-  headline: "You've got this.",
-  subline: 'Small steps today. Big changes tomorrow.',
+  headline: 'Build with intention.',
+  subline: 'YOUR DAY, YOUR DIRECTION.',
   calories: {
     current: 1267,
     goal: 2000,
@@ -15,20 +15,31 @@ export const DASHBOARD_FIXTURE: DashboardData = {
       { label: 'Fat', current: 45, goal: 64, unit: 'g', color: palette.fat },
     ],
   },
-  quickStats: [
-    { id: 'steps', icon: 'footsteps-outline', color: palette.success, value: '6,842', label: '/ 10,000' },
-    { id: 'water', icon: 'water-outline', color: palette.water, value: '5 / 8', label: 'Cups' },
-    { id: 'peptides', icon: 'medical-outline', color: palette.peptide, value: '1 / 3', label: 'Logged' },
-    { id: 'sleep', icon: 'moon-outline', color: palette.sage, value: '6.4 h', label: 'Sleep' },
+  goals: [
+    { id: 'nutrition', label: 'Nutrition', icon: 'restaurant-outline', color: palette.primary, complete: true },
+    { id: 'water', label: 'Water', icon: 'water-outline', color: palette.water, complete: true },
+    { id: 'movement', label: 'Movement', icon: 'barbell-outline', color: palette.success, complete: true },
+    { id: 'recovery', label: 'Recovery', icon: 'moon-outline', color: palette.peptide, complete: false },
   ],
+  streakDays: 12,
   journey: {
-    stage: 'Momentum',
-    week: 4,
+    stageId: 'focus',
+    nextStageId: 'growth',
+    week: 2,
     totalWeeks: 24,
+    stagePercent: 0.18,
+    overallPercent: 0.25,
   },
-  meals: [
-    { id: 'breakfast', slot: 'Breakfast', name: 'Protein Oats', kcal: 300 },
-    { id: 'lunch', slot: 'Lunch', name: 'Grilled Chicken Bowl', kcal: 450 },
-    { id: 'dinner', slot: 'Dinner', name: 'Salmon & Veggies', kcal: 500 },
+  quickStats: [
+    { id: 'steps', icon: 'footsteps-outline', color: palette.journey, value: '6,842', label: 'Steps', progress: 6842 / 10000 },
+    { id: 'water', icon: 'water-outline', color: palette.water, value: '5 / 8', label: 'Water', progress: 5 / 8 },
+    { id: 'workout', icon: 'flame-outline', color: palette.primary, value: '1 / 3', label: 'Workouts', progress: 1 / 3 },
+    { id: 'sleep', icon: 'moon-outline', color: palette.peptide, value: '6.4 h', label: 'Sleep', progress: 6.4 / 8 },
+  ],
+  mealSlots: [
+    { slot: 'Breakfast', kcal: 420, itemCount: 1 },
+    { slot: 'Lunch', kcal: 620, itemCount: 1 },
+    { slot: 'Dinner', kcal: 520, itemCount: 1 },
+    { slot: 'Snacks', kcal: 180, itemCount: 1 },
   ],
 };

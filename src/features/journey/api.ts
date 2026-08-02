@@ -1,5 +1,5 @@
+import { getJourneyStage, type JourneyStage } from '../../lib/journeyStages';
 import { JOURNEY_FIXTURE } from './mock';
-import { JOURNEY_STAGES, type JourneyStage } from './stages';
 import type { JourneyData } from './types';
 
 /**
@@ -11,5 +11,5 @@ export function getJourney(): JourneyData {
 }
 
 export function getStage(stageId: string): JourneyStage {
-  return JOURNEY_STAGES.find((stage) => stage.id === stageId) ?? JOURNEY_STAGES[0];
+  return getJourneyStage(stageId);
 }

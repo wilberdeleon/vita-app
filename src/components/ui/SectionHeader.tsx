@@ -5,15 +5,18 @@ type Props = {
   title: string;
   actionLabel?: string;
   onAction?: () => void;
+  /** Defaults to 'dark' (unchanged everywhere else). 'light' for use over a dark glass/photo background. */
+  tone?: 'dark' | 'light';
 };
 
-export function SectionHeader({ title, actionLabel, onAction }: Props) {
+export function SectionHeader({ title, actionLabel, onAction, tone = 'dark' }: Props) {
+  const light = tone === 'light';
   return (
     <View style={styles.row}>
-      <Text style={styles.title}>{title.toUpperCase()}</Text>
+      <Text style={[styles.title, light && styles.titleLight]}>{title.toUpperCase()}</Text>
       {actionLabel ? (
         <Pressable hitSlop={8} onPress={onAction}>
-          <Text style={styles.action}>{actionLabel}</Text>
+          <Text style={[styles.action, light && styles.actionLight]}>{actionLabel}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -32,9 +35,16 @@ const styles = StyleSheet.create({
     color: palette.textTertiary,
     letterSpacing: 0.8,
   },
+  titleLight: {
+    color: palette.textOnColor,
+    opacity: 0.8,
+  },
   action: {
     ...typography.captionMedium,
     fontWeight: '600',
     color: palette.ink,
+  },
+  actionLight: {
+    color: palette.textOnColor,
   },
 });

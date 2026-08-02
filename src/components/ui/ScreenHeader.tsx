@@ -14,9 +14,35 @@ type Props = {
   back?: boolean;
   /** Show a close X on the right instead of the gear (flow screens). */
   close?: boolean;
+  /**
+   * Defaults to 'dark' (unchanged everywhere else). 'light' renders the
+   * mark, wordmark, and icons in a light/white treatment for use over a
+   * dark or busy background (e.g. the Dashboard hero image) — same
+   * component, same tap targets, different color only.
+   */
+  tone?: 'dark' | 'light';
+  /**
+   * Overrides the VitaMark's color, independent of `tone` — unset by
+   * default (unchanged everywhere: the mark still follows `tone` like the
+   * wordmark). Home passes a fixed gold so the mark reads the same brand
+   * color in both Light and Dark mode, while the wordmark next to it still
+   * flips with theme (founders, 2026-07-19).
+   */
+  markColor?: string;
 };
 
-export function ScreenHeader({ title, brand = false, settings = false, back = false, close = false }: Props) {
+export function ScreenHeader({
+  title,
+  brand = false,
+  settings = false,
+  back = false,
+  close = false,
+  tone = 'dark',
+  markColor,
+}: Props) {
+  const iconColor = tone === 'light' ? palette.textOnColor : palette.text;
+  const wordmarkColor = tone === 'light' ? palette.textOnColor : palette.ink;
+
   return (
     <View style={styles.row}>
       {back ? (
@@ -27,16 +53,16 @@ export function ScreenHeader({ title, brand = false, settings = false, back = fa
           accessibilityRole="button"
           accessibilityLabel="Back"
         >
-          <Ionicons name="chevron-back" size={24} color={palette.text} />
+          <Ionicons name="chevron-back" size={24} color={iconColor} />
         </Pressable>
       ) : null}
       {brand ? (
         <View style={styles.brandRow}>
-          <VitaMark size={38} />
-          <Text style={styles.wordmark}>{title}</Text>
+          <VitaMark size={38} color={markColor ?? (tone === 'light' ? palette.textOnColor : undefined)} />
+          <Text style={[styles.wordmark, { color: wordmarkColor }]}>{title}</Text>
         </View>
       ) : (
-        <Text style={[styles.title, back && styles.centered]} numberOfLines={1}>
+        <Text style={[styles.title, { color: iconColor }, back && styles.centered]} numberOfLines={1}>
           {title}
         </Text>
       )}
@@ -48,7 +74,7 @@ export function ScreenHeader({ title, brand = false, settings = false, back = fa
           accessibilityRole="button"
           accessibilityLabel="Settings"
         >
-          <Ionicons name="settings-outline" size={22} color={palette.text} />
+          <Ionicons name="settings-outline" size={22} color={iconColor} />
         </Pressable>
       ) : null}
       {close ? (
@@ -59,7 +85,7 @@ export function ScreenHeader({ title, brand = false, settings = false, back = fa
           accessibilityRole="button"
           accessibilityLabel="Close"
         >
-          <Ionicons name="close" size={24} color={palette.text} />
+          <Ionicons name="close" size={24} color={iconColor} />
         </Pressable>
       ) : null}
     </View>
@@ -76,7 +102,6 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.title,
-    color: palette.text,
     flex: 1,
   },
   brandRow: {
@@ -88,7 +113,6 @@ const styles = StyleSheet.create({
   wordmark: {
     ...typography.title,
     fontSize: 28,
-    color: palette.ink,
     letterSpacing: 6,
   },
   centered: {

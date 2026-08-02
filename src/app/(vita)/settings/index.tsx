@@ -1,14 +1,22 @@
-import { ListRow, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
+import { StyleSheet, View } from 'react-native';
+import { ListRow, Screen, ScreenHeader, SectionHeader, SegmentedTabs } from '../../../components/ui';
 import { useAuth } from '../../../features/auth/AuthProvider';
-import { palette } from '../../../theme/tokens';
+import { palette, spacing } from '../../../theme/tokens';
+import { useTheme, type ThemeMode } from '../../../theme/ThemeProvider';
+
+const APPEARANCE_OPTIONS: readonly ThemeMode[] = ['light', 'dark', 'system'];
+const APPEARANCE_LABELS = ['Light', 'Dark', 'System'];
 
 /**
- * Settings shell — structure only for Sprint 0. Each row gains its real
- * screen in Sprint 7 (Settings). Not part of the UI reference; kept
- * deliberately minimal and consistent with the Design System primitives.
+ * Settings shell — structure only for Sprint 0, except Appearance (founders,
+ * 2026-07-18 clean redesign): the first functional preference, wired
+ * straight to ThemeProvider so it takes effect app-wide with no
+ * restart/refresh. Rest of the screen is deliberately untouched — this
+ * redesign pass is scoped to Home only.
  */
 export default function Settings() {
   const { user, signOut } = useAuth();
+  const { mode, setMode } = useTheme();
 
   return (
     <Screen>
@@ -20,7 +28,15 @@ export default function Settings() {
       <SectionHeader title="Preferences" />
       <ListRow icon="notifications-outline" title="Notifications" chevron />
       <ListRow icon="scale-outline" title="Units" subtitle="Imperial (lb, oz)" chevron />
-      <ListRow icon="contrast-outline" title="Appearance" subtitle="Light" chevron />
+      <ListRow icon="contrast-outline" title="Appearance" />
+      <View style={styles.appearancePicker}>
+        <SegmentedTabs
+          options={APPEARANCE_LABELS}
+          selectedIndex={APPEARANCE_OPTIONS.indexOf(mode)}
+          onChange={(index) => setMode(APPEARANCE_OPTIONS[index])}
+          activeColor={palette.ink}
+        />
+      </View>
 
       <SectionHeader title="Privacy" />
       <ListRow icon="lock-closed-outline" title="Privacy & Data" chevron />
@@ -38,3 +54,9 @@ export default function Settings() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  appearancePicker: {
+    marginTop: -spacing.s,
+  },
+});

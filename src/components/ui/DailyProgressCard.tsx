@@ -21,7 +21,7 @@ type Props = {
   bars?: Bar[];
 };
 
-/** Headline progress + sub-bars — the Today's Summary card on Home and Fuel. */
+/** Headline progress + sub-bars — the Today's Goal card on Fuel. */
 export function DailyProgressCard({ headline, percentLabel, progress, color = palette.primary, bars }: Props) {
   return (
     <Card>
