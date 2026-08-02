@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from 'react';
+import type { PropsWithChildren } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DOCK_CLEARANCE, palette, spacing } from '../../theme/tokens';
@@ -25,14 +25,6 @@ type Props = PropsWithChildren<{
    * safe-area-aware internal padding.
    */
   topInset?: boolean;
-  /**
-   * Unset by default (unchanged everywhere else — root stays palette.
-   * background). When provided, renders behind the scroll content as a
-   * fixed, non-scrolling layer filling the whole screen (e.g. the Home
-   * dashboard's mountain background), and the root's own background color
-   * is dropped in favor of it so nothing shows through at the edges.
-   */
-  background?: ReactNode;
   /** Outer horizontal inset. Defaults to spacing.xl (unchanged everywhere else). */
   horizontalInset?: number;
   /**
@@ -51,7 +43,6 @@ export function Screen({
   dockClearance = false,
   contentGap = spacing.l,
   topInset = true,
-  background,
   horizontalInset = spacing.xl,
   themed = false,
 }: Props) {
@@ -59,12 +50,11 @@ export function Screen({
   const { surfaces } = useTheme();
   const bottomPadding = dockClearance ? DOCK_CLEARANCE : insets.bottom + spacing.xxl;
   const paddingTop = topInset ? insets.top : 0;
-  const rootBackground = background ? 'transparent' : themed ? surfaces.background : palette.background;
+  const rootBackground = themed ? surfaces.background : palette.background;
 
   if (!scroll) {
     return (
       <View style={[styles.root, { paddingTop, paddingBottom: bottomPadding, backgroundColor: rootBackground }]}>
-        {background}
         {children}
       </View>
     );
@@ -72,7 +62,6 @@ export function Screen({
 
   return (
     <View style={[styles.root, { paddingTop, backgroundColor: rootBackground }]}>
-      {background}
       <ScrollView
         contentContainerStyle={[
           styles.content,

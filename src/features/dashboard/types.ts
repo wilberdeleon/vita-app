@@ -70,8 +70,6 @@ export type JourneySnapshot = {
 
 export type DashboardData = {
   firstName: string;
-  headline: string;
-  subline: string;
   calories: CalorieSummary;
   goals: GoalPillar[];
   journey: JourneySnapshot;

@@ -6,9 +6,9 @@
 
 ---
 
-## Snapshot — 2026-07-09
+## Snapshot — 2026-08-02
 
-**Sprint 0 — Foundation is ✅ Completed** per the official roadmap issued 2026-07-09 (see [[Roadmap]]). **Sprint 1 — Dashboard is next.**
+**Sprint 0 — Foundation is ✅ Completed** per the official roadmap issued 2026-07-09 (see [[Roadmap]]). **Sprint 1 — Dashboard is ✅ Completed** (2026-08-02) — see [[Current Sprint]] for what shipped. **Sprint 2 — Fuel is next**, reprioritized ahead of Journey per founder direction.
 
 The entire application shell exists and runs in the iOS Simulator via Expo Go — this is the code-level substrate Sprint 0 completed on top of:
 
@@ -32,7 +32,7 @@ The entire application shell exists and runs in the iOS Simulator via Expo Go �
 
 ## What's next
 
-Per the [[Roadmap]]: **Sprint 1 — Dashboard**, built slice by slice (Layout → Greeting Card → Today's Summary → Health Metrics → Journey Preview → Meals Preview → Floating Navigation → Dashboard Polish) to full production quality before Sprint 2 begins. This replaces the previous "polish all five core experiences at once" framing with a strictly sequential, one-sprint-at-a-time build.
+**Sprint 2 — Fuel**, reprioritized ahead of Journey (the [[Roadmap]]'s original Sprint 2 ordering) per founder direction, 2026-08-01/02 — see [[Roadmap]] for the flagged note. Fuel inherits the theme system and card/spacing/typography language Sprint 1 established rather than building its own.
 
 ## Resolved 2026-07-09
 

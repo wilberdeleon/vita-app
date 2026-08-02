@@ -91,10 +91,6 @@ export type Surfaces = {
   textTertiary: string;
 };
 
-export function surfacesFor(scheme: 'light' | 'dark'): Surfaces {
-  return scheme === 'dark' ? darkSurfaces : lightSurfaces;
-}
-
 export const spacing = {
   xs: 4,
   s: 8,
@@ -112,7 +108,6 @@ export const radii = {
   pill: 999,
   glassTile: 20,
   glassRow: 22,
-  glassMedium: 28,
   glassLarge: 24,
 } as const;
 

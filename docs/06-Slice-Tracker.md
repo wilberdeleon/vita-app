@@ -41,7 +41,7 @@ Status legend: ⬜ Planned · 🟡 In Progress / In Review · ✅ Complete
 
 ---
 
-## Sprint 1 — Dashboard (in progress)
+## Sprint 1 — Dashboard — ✅ Complete (see closing summary below)
 
 Two prerequisite decisions are resolved (founders, 2026-07-09): VITA supports Light + Dark via semantic design tokens, and Settings stays permanently in the top-right corner, never the dock.
 
@@ -101,10 +101,28 @@ New: `components/ui/ProgressRing.tsx`'s sibling change is `glass.premium` in `th
 |---|-------|-----------|--------|
 | 1.1 | Dashboard Layout | Overall layout, content hierarchy, section spacing, responsive behavior, scroll | ✅ Approved |
 | 1.2 | Dashboard Components | Reusable card/container primitives — shadows, radius, press feedback — for all sections to build on | ✅ Approved |
-| 1.3 | Greeting Card | Dynamic greeting, motivational message, time-of-day behavior, polish | 🟡 Founder review (Expo Go visual test pending) |
-| 1.4 | Today's Summary | Calories, macro progress (protein/carbs/fat), progress calculations | ⬜ Planned |
-| 1.5 | Health Metrics | Steps, Water, Meals Logged, Sleep (not Peptides), reusable metric cards | ⬜ Planned |
-| 1.6 | Journey Preview | Current Journey card, progress bar, current week, CTA into Journey | ⬜ Planned |
-| 1.7 | Meals Preview | Meal cards, icons, calories, empty states, tap interactions | ⬜ Planned |
-| 1.8 | Floating Navigation | Existing 4-tab dock only (Home/Fuel/Journey/Atlas) — active states, blur/material, animations, polish. Settings excluded per placement decision. | ⬜ Planned |
-| 1.9 | Dashboard Polish | Loading states, animations, micro-interactions, accessibility, performance, Light + Dark verification | ⬜ Planned |
+| 1.3 | Greeting Card | Dynamic greeting, motivational message, time-of-day behavior, polish | ✅ Approved (superseded by the clean redesign below) |
+| 1.4 | Today's Summary | Calories, macro progress (protein/carbs/fat), progress calculations | ✅ Approved (superseded by the clean redesign below) |
+| 1.5 | Health Metrics | Steps, Water, Workouts, Sleep, Streak — reusable metric tiles | ✅ Approved (superseded by the clean redesign below) |
+| 1.6 | Journey Preview | Current Journey card, progress bar, current week, CTA into Journey | ✅ Approved (superseded by the clean redesign below) |
+| 1.7 | Meals Preview | Meal cards, icons, calories, empty states, tap interactions | ✅ Approved (superseded by the clean redesign below) |
+| 1.8 | Floating Navigation | Existing 4-tab dock only (Home/Fuel/Journey/Atlas) — active states, blur/material, animations, polish. Settings excluded per placement decision. | ✅ Approved |
+| 1.9 | Dashboard Polish | Loading states, animations, micro-interactions, accessibility, performance, Light + Dark verification | ✅ Approved (theme system + final density/audit pass) |
+
+---
+
+## Sprint 1 — Dashboard — ✅ Complete (2026-08-02)
+
+**The original granular 1.3–1.7 slice plan above was superseded mid-sprint by a full design pivot**, documented in the long narrative above this table: the "Mountain World" photo-background concept (built and iterated across ~10 rounds) was abandoned entirely once the founders supplied real Light + Dark mockups declared "the new foundation, not another iteration." Everything that plan's slices were meant to cover (greeting, today's summary, health metrics, journey preview, meals preview) shipped as part of that redesign instead of as separate numbered slices — hence marking 1.3–1.7 approved-via-supersession rather than backfilling a slice-by-slice history that doesn't match how the work actually happened.
+
+**What shipped, in build order:**
+1. **Theme system** — real Light/Dark/System theming (`ThemeProvider.tsx`, `useTheme()`), replacing the light-only stub. Every Home surface (`GlassSurface`, `Screen`, the floating dock) reads from it; Settings' Appearance row is now a functional picker.
+2. **Clean Home redesign** — flat card-based layout replacing the photo-background hero: `HomeHeader`, health metrics as floating tiles, meal rows, Current Journey with the 8-stage system (promoted to `src/lib/journeyStages.ts` so Journey and Home share one source).
+3. **Today's Summary simplification** — dropped the three-metric row (consumed/remaining/streak) for one primary metric (calories remaining) beneath the goals row; goals row itself simplified from boxed tiles to plain icon/label/status-dot columns.
+4. **Journey and Macros split** into two separate cards, each with one clear purpose, instead of one combined card.
+5. **Health Metrics** — Day Streak added as a 5th tile, centered beneath the primary four rather than left-aligned.
+6. **Final audit and cleanup (2026-08-02)** — removed dead code accumulated across the redesign's many iterations: unused `radii.glassMedium` token, unused `surfacesFor()` helper, `ListRow`'s unused `surface` prop, `Screen`'s unused `background` prop (both left over from the abandoned photo-hero era), dead `DashboardData.headline`/`subline` fields, and the unused `expo-linear-gradient` dependency (also installed for the abandoned hero). Full findings in `docs/07-Audit-Log.md`.
+
+**Validation:** `npx tsc --noEmit` clean, `npx expo install --check` clean, Metro bundle verified with zero errors at each stage. Sprint 1 is founder-approved in Expo Go.
+
+**Next: Sprint 2 — Fuel.** Reprioritized ahead of Journey (the official roadmap's original Sprint 2) per founder direction 2026-08-01/02 — see `docs/Vita HQ/01 Vision/Roadmap.md` for the flagged sequencing note. Fuel inherits the theme system and card/spacing/typography language established in this sprint rather than building its own.

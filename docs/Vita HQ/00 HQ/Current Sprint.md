@@ -13,11 +13,15 @@ Per the official roadmap issued 2026-07-09, Sprint 0 is done. This folds togethe
 
 Both are now considered part of "Sprint 0 — Foundation," complete. Full detail: [[Roadmap]].
 
-## Sprint 1 — Dashboard (in progress)
+## Sprint 1 — Dashboard — ✅ Completed (2026-08-02)
 
-Nine slices are defined on [[Roadmap]] (Layout, Dashboard Components, Greeting Card, Today's Summary, Health Metrics, Journey Preview, Meals Preview, Floating Navigation, Dashboard Polish — restructured from 8 to 9 on 2026-07-09 when founders split card/container work out of Slice 1). The two prerequisite decisions that gated this sprint's UI work are resolved (2026-07-09): VITA supports Light + Dark via semantic tokens, and Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]. Health Metrics content is locked: Steps, Water, Meals Logged, Sleep — not Peptides.
+The nine-slice plan originally defined on [[Roadmap]] was superseded mid-sprint by a full design pivot: the founders supplied real Light + Dark mockups and declared them "the new foundation, not another iteration," which replaced the earlier "Mountain World" photo-background concept entirely. What shipped instead: a real Light/Dark/System theme system (`ThemeProvider`, theme-aware `GlassSurface`/`Screen`/dock, a functional Settings Appearance picker), and a rebuilt Home dashboard — header, Today's Summary (simplified to a goals row + one primary metric), Current Journey and Macros as two separate cards, Health Metrics with a centered Streak tile, Today's Meals. A final cleanup/audit pass on 2026-08-02 removed dead code accumulated across the redesign's many iterations. Full detail: repo `docs/06-Slice-Tracker.md`.
 
-**Progress:** Slice 1 (Dashboard Layout) ✅ approved. Slice 2 (Dashboard Components) 🟡 in review.
+The two prerequisite decisions that gated this sprint's UI work resolved 2026-07-09 (VITA supports Light + Dark via semantic tokens; Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]) both shipped as part of the theme system above.
+
+## Sprint 2 — Fuel (next, in progress)
+
+**Reprioritized ahead of Journey** (the official [[Roadmap]]'s original Sprint 2) per founder direction, 2026-08-01/02 — see [[Roadmap]] for the flagged sequencing note. Fuel inherits the theme system, `GlassSurface` card language, and spacing/typography patterns established in Sprint 1 rather than building its own visual language from scratch.
 
 ### Definition of done (from the Build Handbook)
 

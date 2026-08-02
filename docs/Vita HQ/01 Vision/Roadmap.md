@@ -18,7 +18,9 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 
 ## Current stage
 
-**Sprint 0 — Foundation is ✅ Completed.** Sprint 1 — Dashboard is next.
+**Sprint 0 — Foundation is ✅ Completed. Sprint 1 — Dashboard is ✅ Completed** (2026-08-02 — see [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what shipped). **Sprint 2 — Fuel is next.**
+
+**⚠️ Sequencing reprioritized (founder direction, 2026-08-01/02) — supersedes the Sprint 2/3 ordering below.** The sections further down still read "Sprint 2 — Journey" then "Sprint 3 — Fuel," reflecting the roadmap issued 2026-07-09. The founders have since moved Fuel ahead of Journey as the sprint immediately following Dashboard, reasoning that Fuel should inherit Sprint 1's newly-established theme system and card/spacing/typography language while it's fresh. The section headers/numbers below are not yet renumbered to match — treat "Sprint 2 — Journey" and "Sprint 3 — Fuel" as swapped in actual build order until this doc gets a full renumbering pass.
 
 **A note on what "Sprint 0 complete" means.** The new roadmap's Sprint 0 deliverable — brand identity, product vision, Atlas identity, navigation architecture, design language, product documentation, the Design Bible, the development workflow, the Innovation Lab, core planning — describes vision/design/documentation work, not application code. This reads as the founders folding together two things that happened separately in practice: the application shell already built in the repo (the old Slice 0.1–0.12, still tracked in `docs/06-Slice-Tracker.md`, still showing 🟡 founder review there) **and** the vision/design/documentation foundation built across recent HQ sessions (this vault, the [[Innovation Lab]], the [[Design Bible]], the [[Claude Workflow|sprint workflow]]). Both are now considered done as "Sprint 0 — Foundation." This is Claude's synthesis of the two, not something the roadmap text states explicitly — flagged as an interpretation, not a verified fact.
 

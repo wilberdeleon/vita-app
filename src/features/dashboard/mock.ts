@@ -4,8 +4,6 @@ import type { DashboardData } from './types';
 /** Realistic placeholder data matching the approved clean-redesign v2 UI reference. */
 export const DASHBOARD_FIXTURE: DashboardData = {
   firstName: 'Wilber',
-  headline: 'Build with intention.',
-  subline: 'YOUR DAY, YOUR DIRECTION.',
   calories: {
     current: 1267,
     goal: 2000,

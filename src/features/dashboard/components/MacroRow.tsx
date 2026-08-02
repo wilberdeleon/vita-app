@@ -8,7 +8,7 @@ type Props = {
   macro: MacroSummary;
 };
 
-/** One macro line inside Today's Summary — label, bar, value, percent. No cards, no pills, just a clean row. */
+/** One macro line inside the Macros card — label, bar, value, percent. No cards, no pills, just a clean row. */
 export function MacroRow({ macro }: Props) {
   const { surfaces } = useTheme();
   const progress = macro.current / macro.goal;
