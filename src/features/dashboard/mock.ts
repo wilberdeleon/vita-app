@@ -21,7 +21,6 @@ export const DASHBOARD_FIXTURE: DashboardData = {
     { id: 'movement', label: 'Movement', icon: 'barbell-outline', color: palette.success, complete: true },
     { id: 'recovery', label: 'Recovery', icon: 'moon-outline', color: palette.peptide, complete: false },
   ],
-  streakDays: 12,
   journey: {
     stageId: 'focus',
     nextStageId: 'growth',
@@ -35,6 +34,7 @@ export const DASHBOARD_FIXTURE: DashboardData = {
     { id: 'water', icon: 'water-outline', color: palette.water, value: '5 / 8', label: 'Water', progress: 5 / 8 },
     { id: 'workout', icon: 'flame-outline', color: palette.primary, value: '1 / 3', label: 'Workouts', progress: 1 / 3 },
     { id: 'sleep', icon: 'moon-outline', color: palette.peptide, value: '6.4 h', label: 'Sleep', progress: 6.4 / 8 },
+    { id: 'streak', icon: 'calendar-outline', color: palette.gold, value: '12', label: 'Streak', progress: 12 / 30 },
   ],
   mealSlots: [
     { slot: 'Breakfast', kcal: 420, itemCount: 1 },

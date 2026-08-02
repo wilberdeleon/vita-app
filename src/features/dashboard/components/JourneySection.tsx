@@ -13,8 +13,9 @@ type Props = {
 /**
  * Current Journey content — stage/next-stage lookup via the shared
  * JOURNEY_STAGES catalog, timeline, week/percent labels, progress bar.
- * Rendered without its own card wrapper so JourneyProgressCard (v4) can
- * wrap it together with Macros in one GlassSurface. The "NEXT: X" label
+ * Rendered without its own card wrapper so JourneyCard can wrap it alone
+ * (founders, 2026-07-22 — Macros split into its own MacrosCard). The
+ * "NEXT: X" label
  * uses adjustsFontSizeToFit (founders, 2026-07-20) since stage names vary
  * in length (Foundation vs. Focus) and the reference screenshot's fixed
  * badge width isn't a pixel spec to copy literally.

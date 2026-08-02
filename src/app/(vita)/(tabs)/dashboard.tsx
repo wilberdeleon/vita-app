@@ -2,7 +2,8 @@ import { useWindowDimensions } from 'react-native';
 import { Screen, Section, SectionHeader } from '../../../components/ui';
 import { HomeHeader } from '../../../features/dashboard/components/HomeHeader';
 import { HomeSummaryCard } from '../../../features/dashboard/components/HomeSummaryCard';
-import { JourneyProgressCard } from '../../../features/dashboard/components/JourneyProgressCard';
+import { JourneyCard } from '../../../features/dashboard/components/JourneyCard';
+import { MacrosCard } from '../../../features/dashboard/components/MacrosCard';
 import { MealRow } from '../../../features/dashboard/components/MealRow';
 import { QuickStatsRow } from '../../../features/dashboard/components/QuickStatsRow';
 import { getDashboard } from '../../../features/dashboard/api';
@@ -22,12 +23,14 @@ export default function Dashboard() {
   const tone = scheme === 'dark' ? 'light' : 'dark';
 
   return (
-    <Screen dockClearance contentGap={spacing.xxl} topInset={false} horizontalInset={horizontalInset} themed>
+    <Screen dockClearance contentGap={spacing.xxxl} topInset={false} horizontalInset={horizontalInset} themed>
       <HomeHeader greeting={greeting} firstName={data.firstName} />
 
-      <HomeSummaryCard calories={data.calories} goals={data.goals} streakDays={data.streakDays} />
+      <HomeSummaryCard calories={data.calories} goals={data.goals} />
 
-      <JourneyProgressCard journey={data.journey} macros={data.calories.macros} />
+      <JourneyCard journey={data.journey} />
+
+      <MacrosCard macros={data.calories.macros} />
 
       <Section header={<SectionHeader title="Health Metrics" tone={tone} />}>
         <QuickStatsRow stats={data.quickStats} />

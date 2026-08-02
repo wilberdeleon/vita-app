@@ -74,7 +74,6 @@ export type DashboardData = {
   subline: string;
   calories: CalorieSummary;
   goals: GoalPillar[];
-  streakDays: number;
   journey: JourneySnapshot;
   quickStats: QuickStat[];
   mealSlots: MealSlotSummary[];

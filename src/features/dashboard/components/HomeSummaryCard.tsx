@@ -8,37 +8,22 @@ import type { CalorieSummary, GoalPillar } from '../types';
 type Props = {
   calories: CalorieSummary;
   goals: GoalPillar[];
-  streakDays: number;
-};
-
-type StatCell = {
-  key: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  value: string;
-  label: string;
-  color: string;
 };
 
 /**
- * Today's Summary (founders, 2026-07-20 — pixel-accurate reference pass).
- * One unified card, no boxed sub-widgets: a full-width goals row (icon /
- * label / status dot per pillar, no chip or background) under a plain
- * completion count, then a full-width three-metric stats row (Calories
- * Consumed, Calories Remaining, Day Streak — Goals Hit and the percentage
- * badge are gone; the completion count above already covers that). Both
- * rows use equal flex columns with no fixed widths so they scale across
- * iPhone sizes without truncation.
+ * Today's Summary (founders, 2026-07-22 — final Sprint 1 density pass).
+ * One unified card: a full-width goals row (icon / label / status dot per
+ * pillar, no chip or background) under the completion count, then a single
+ * primary metric — calories remaining — as the card's clear secondary
+ * focus. The earlier three-metric row (consumed/remaining/streak) is gone;
+ * Day Streak moved to Health Metrics, and Calories Consumed simply isn't
+ * shown here anymore — the founder called the three-way split "too many
+ * things competing for attention." One number reads at a glance.
  */
-export function HomeSummaryCard({ calories, goals, streakDays }: Props) {
+export function HomeSummaryCard({ calories, goals }: Props) {
   const { surfaces } = useTheme();
   const remaining = Math.max(0, calories.goal - calories.current);
   const completeCount = goals.filter((goal) => goal.complete).length;
-
-  const stats: StatCell[] = [
-    { key: 'consumed', icon: 'flame', value: calories.current.toLocaleString(), label: 'Calories Consumed', color: palette.fat },
-    { key: 'remaining', icon: 'restaurant', value: remaining.toLocaleString(), label: 'Calories Remaining', color: palette.primary },
-    { key: 'streak', icon: 'calendar-outline', value: `${streakDays}`, label: 'Day Streak', color: palette.peptide },
-  ];
 
   return (
     <GlassSurface variant="card" radius={radii.glassLarge} padding={spacing.xxl}>
@@ -69,21 +54,11 @@ export function HomeSummaryCard({ calories, goals, streakDays }: Props) {
         })}
       </View>
 
-      <View style={[styles.horizontalDivider, { backgroundColor: surfaces.border }]} />
-
-      <View style={styles.statsRow}>
-        {stats.map((stat, index) => (
-          <View key={stat.key} style={styles.statCellWrap}>
-            {index > 0 ? <View style={[styles.verticalDivider, { backgroundColor: surfaces.border }]} /> : null}
-            <View style={styles.statCell}>
-              <Ionicons name={stat.icon} size={20} color={stat.color} />
-              <Text style={[styles.statValue, { color: surfaces.text }]} numberOfLines={1}>
-                {stat.value}
-              </Text>
-              <Text style={[styles.statLabel, { color: surfaces.textTertiary }]}>{stat.label.toUpperCase()}</Text>
-            </View>
-          </View>
-        ))}
+      <View style={styles.primaryMetric}>
+        <Text style={[styles.primaryValue, { color: palette.primary }]} numberOfLines={1}>
+          {remaining.toLocaleString()}
+        </Text>
+        <Text style={[styles.primaryLabel, { color: surfaces.textTertiary }]}>CALORIES REMAINING</Text>
       </View>
     </GlassSurface>
   );
@@ -112,6 +87,7 @@ const styles = StyleSheet.create({
   goalsRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    marginBottom: spacing.xxl,
   },
   goalColumn: {
     flex: 1,
@@ -126,34 +102,17 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  horizontalDivider: {
-    height: 1,
-    marginVertical: spacing.xl,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  statCellWrap: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  verticalDivider: {
-    width: 1,
-    marginRight: spacing.l,
-  },
-  statCell: {
-    flex: 1,
+  primaryMetric: {
     alignItems: 'center',
-    gap: spacing.xs,
   },
-  statValue: {
-    ...typography.title,
-    marginTop: spacing.xs,
+  primaryValue: {
+    fontSize: 34,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
-  statLabel: {
+  primaryLabel: {
     ...typography.micro,
-    letterSpacing: 0.4,
-    textAlign: 'center',
+    letterSpacing: 0.6,
+    marginTop: spacing.xs,
   },
 });
