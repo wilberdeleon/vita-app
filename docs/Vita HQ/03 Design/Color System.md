@@ -1,6 +1,6 @@
 # Color System
 
-**What is this?** Every color in Vita, what owns it, and where it's defined. Code source of truth: `src/theme/tokens.ts` (verified 2026-07-06; theme architecture decision 2026-07-09).
+**What is this?** Every color in Vita, what owns it, and where it's defined. Code source of truth: `src/theme/tokens.ts` (values verified 2026-08-16; theme architecture decision 2026-07-09, implemented app-wide 2026-08-16).
 
 **Why does it exist?** Color carries meaning in Vita — each domain owns a hue permanently. This page keeps that contract explicit.
 
@@ -10,7 +10,12 @@
 
 VITA supports **Light Mode and Dark Mode**, both first-class — see [[Design Bible]] and [[Decision Log]]. Colors are defined as **semantic tokens** (e.g. `color.background`, `color.surface`, `color.textPrimary`, `color.textSecondary`, `color.hairline`) each carrying a light value and a dark value, rather than screens referencing raw hex codes directly. Domain colors (orange/blue/purple/green below) are tokens too, and may need distinct light/dark variants where contrast requires it — a Design System authoring detail, not a re-opened decision.
 
-**This is a decision, not yet an implementation.** `src/theme/tokens.ts` today exports one flat light palette with hardcoded hex values (see "Currently implemented" below) — no semantic pairs, no dark values, no theme switcher. Building that is Design System / Sprint 1 work.
+**✅ Implemented and app-wide** (Sprint 1 built it for Home; the visual consistency pass, 2026-08-16, extended it to every screen). Light, Dark, and System all work across the whole app; System follows the device appearance live. The split to respect:
+
+- **`useTheme().surfaces`** — `background`, `card`, `border`, `text`, `textSecondary`, `textTertiary`, `track`. Every background, text, and border color.
+- **`palette`** — theme-invariant only: brand, domain, macro, semantic colors. Orange is orange in both themes.
+
+Reading a surface value off `palette` pins the component to light mode permanently — that was exactly the drift this pass removed. Full rules and the documented exceptions live in the repo's `docs/05-Design-System.md`; this page is not a second copy of them.
 
 ## Permanent domain color hierarchy
 
@@ -40,13 +45,23 @@ Founder-approved brand sheet, July 2026. Owns icon, splash, logo, sign-in — **
 
 ## Macro colors (Fuel)
 
-Protein `#E4572E` · Carbs `#F5A623` · Fat `#E5484D`
+Protein `#2E9E5B` (corrected to green 2026-07-18 to match the approved reference — reuses the Journey green rather than inventing a hex) · Carbs `#F5A623` · Fat `#E5484D`
 
-## Surfaces & text — currently implemented (light values only)
+## Surfaces & text — both themes implemented
 
-- Background `#F6F5F2` · Card `#FFFFFF` · Warm card `#5C3A21` ("Visual Progress" brown card) · Track `#EFEDE9` · Hairline `#ECEAE6`
-- Text `#1B1B1B` · Secondary `#6E6B66` · Tertiary `#A3A099` · On-color `#FFFFFF`
-- These become the **light values** of the semantic surface/text tokens once the token architecture is built. No dark equivalents exist in code yet.
+| Token | Light | Dark |
+|---|---|---|
+| `background` | `#F8F6F2` | `#000000` |
+| `card` | `#FFFFFF` | `#1A1B1D` |
+| `border` | `rgba(28,31,26,0.08)` | `rgba(255,255,255,0.08)` |
+| `text` | `#1B1B1B` | `#FFFFFF` |
+| `textSecondary` | `#6E6B66` | `rgba(255,255,255,0.65)` |
+| `textTertiary` | `#A3A099` | `rgba(255,255,255,0.45)` |
+| `track` | `#EFEDE9` | `rgba(255,255,255,0.12)` |
+
+Theme-invariant surfaces: warm card `#5C3A21` (the "Visual Progress" brown card) and on-color `#FFFFFF`.
+
+**Three approved implementation decisions** (founder-approved on device, 2026-08-16) — cards carry a hairline border in both themes; domain "soft" fills use low-opacity tints of their domain color rather than the fixed pastels; and `ProgressBar`'s pale track is deliberately theme-invariant because it is the approved Home treatment. Rationale for each is in `docs/05-Design-System.md` — do not reverse them casually.
 
 ## Target state
 

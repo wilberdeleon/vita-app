@@ -18,13 +18,13 @@
 
 **Explicitly avoid:** generic fitness aesthetics · gaming aesthetics · the previous space theme.
 
-> **Status: theme model decided, not yet implemented.** `src/theme/tokens.ts` currently ships a single flat light palette with hardcoded values — no semantic token pairs, no dark palette, no theme switcher yet. Building that architecture is Design System / Sprint 1 work. What follows below is what's actually implemented today.
+> **Status: theme model decided ✅ and implemented app-wide ✅.** Sprint 1 built the architecture (`ThemeProvider`, `useTheme()`, light/dark surface pairs, the Settings → Appearance picker) for Home; the visual consistency pass (2026-08-16) extended it to every remaining screen. Light, Dark, and System all work across the whole app, System following the device appearance live.
 
-## The implemented interim system (verified in repo)
+## The implemented system (verified in repo)
 
-The founder-approved **VITA UI reference image (July 2026)** is the interim visual authority; its extracted tokens live in `src/theme/tokens.ts`:
+**The Home/Dashboard screen is the current visual source of truth** — founder-approved and stable. Every other screen follows its design language: premium, modern, minimal, clean, strong hierarchy, theme-aware surfaces, rounded cards, subtle borders, controlled accents, cohesive typography, consistent section headers and navigation styling. Feature screens keep their own layouts and content — **shared DNA, not a shared layout.** Full guidance in the repo's `docs/05-Design-System.md`.
 
-- **Warm light theme (only theme shipped today):** background `#F6F5F2`, white cards (radius 20) with soft Apple-style diffuse shadows, track gray `#EFEDE9`. No dark equivalent exists in code yet.
+- **Both themes shipped:** light background `#F8F6F2` with white cards; dark background `#000000` with `#1A1B1D` cards. Cards radius 20 with a hairline border in both themes plus a soft light-mode shadow. Exact token pairs in [[Color System]].
 - **Brand palette** (branding surfaces only): ink `#1C1F1A` · sage `#7C846B` · cream `#E6DFD2` · paper `#F7F5F1` · gold `#D4B27A` — [[Brand Identity & Icons]]
 - **Permanent domain color hierarchy** (survives any retheme — founder decision, Sprint 0.1): orange = Fuel · blue = Water · purple = Atlas/peptides · green = Journey · neutrals = structure — [[Color System]]
 - Type scale, spacing, radii — [[Typography]], [[Spacing & Layout]]
@@ -33,9 +33,11 @@ The founder-approved **VITA UI reference image (July 2026)** is the interim visu
 
 ## The gap — and how it resolves
 
-**Resolved 2026-07-09:** the theme model is decided — both Light and Dark, semantic tokens, not hardcoded colors ([[Open Questions]] #1–2, see [[Decision Log]]). What's still open is the *implementation*: authoring the real Design System (`docs/05-Design-System.md`), which will define the actual semantic token set with light/dark values, component states, the dock and app shell, iconography, motion/haptics, and accessibility standards. Also still open: how the brand palette (ink/sage/cream/paper/gold) and the domain color hierarchy map onto both themes — a token-authoring detail, not a further founder decision.
+**Resolved 2026-07-09** (model) **and 2026-08-16** (implementation): both Light and Dark via semantic tokens, now live across every screen ([[Open Questions]] #1–2, see [[Decision Log]]).
 
-Until the Design System is authored, the standing rule from the repo still applies: **do not invent visual styling** — new UI uses existing tokens and primitives only, and any new Sprint 1 UI work should be built against semantic token names (even if both themes' values aren't finalized yet) rather than hardcoded hex values, so the eventual dark palette is a value swap, not a rewrite.
+**Still open:** authoring the full Design System doc (`docs/05-Design-System.md` remains a working document rather than the finished article) — component states, iconography, motion/haptics, and accessibility standards. Also still open: how the brand palette (ink/sage/cream/paper/gold) maps formally onto both themes — a token-authoring detail, not a further founder decision.
+
+The standing rule still applies: **do not invent visual styling** — new UI uses existing tokens and primitives only, resolving surfaces through `useTheme().surfaces` rather than hardcoded hex or light-only `palette` values.
 
 ## Design principles (stable regardless of theme)
 

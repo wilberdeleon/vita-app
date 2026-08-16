@@ -126,3 +126,29 @@ New: `components/ui/ProgressRing.tsx`'s sibling change is `glass.premium` in `th
 **Validation:** `npx tsc --noEmit` clean, `npx expo install --check` clean, Metro bundle verified with zero errors at each stage. Sprint 1 is founder-approved in Expo Go.
 
 **Next: Sprint 2 — Fuel.** Reprioritized ahead of Journey (the official roadmap's original Sprint 2) per founder direction 2026-08-01/02 — see `docs/Vita HQ/01 Vision/Roadmap.md` for the flagged sequencing note. Fuel inherits the theme system and card/spacing/typography language established in this sprint rather than building its own.
+
+---
+
+## App-Wide Visual Consistency Pass — ✅ Complete (2026-08-16)
+
+**Not a sprint and not a feature pass** — a design-system migration run between Sprint 1 and Sprint 2, founder-approved after Expo Go review on a physical iPhone. Merged to `main` as `ec6d2cc`.
+
+**The problem.** Sprint 1 built the theme system but scoped it to Home. Home read `theme.surfaces` (light/dark pairs) while every other screen imported the flat, light-only `palette` object directly — so the rest of the app was *structurally incapable* of rendering dark and had visibly drifted from Home's design language. This migrated them onto the same system.
+
+**What changed:**
+1. **`tokens.ts`** — added `surfaces.track` (light `#EFEDE9` / dark `rgba(255,255,255,0.12)`) so segmented controls, steppers, and inert wells stop pinning a light gray.
+2. **`Screen`** — dropped the `themed` opt-in prop; every screen root now follows the active theme. The prop only existed because the redesign was Home-scoped, and keeping it would just be a way to leave a screen broken in dark mode.
+3. **Primitives made theme-aware** — `Card`/`PressableCard` (`cardSurfaceStyle` became the `useCardSurfaceStyle()` hook, plus a hairline border in both themes), `ListRow`, `Chip`, `SegmentedTabs`, `TextField`, `Stepper`, `SectionHeader`, `ScreenHeader`, `DailyProgressCard`, `StatBar`. `Chip`/`SegmentedTabs` now resolve their own neutral fill per theme — brand ink is invisible on a near-black track.
+4. **Screens migrated** — Fuel + all sub-routes (Food Log, Log Food, Add Manually, Search, Recent, Favorites, Food Detail), Journey (Overview/Weight/Photos + `LineChart`/`WeightBars`), Atlas, Settings, Water, Peptides, sign-in.
+
+**Deliberately unchanged:** `ProgressBar`'s pale track (it *is* the approved Home treatment — see `docs/05-Design-System.md`), the Barcode Scan screen (an inherently dark camera mock), and the `cardWarm` brown "Visual Progress" card (a deliberate accent surface).
+
+**Functional parity — nothing changed behaviorally.** Verified mechanically rather than by eye: every JSX text node and string literal across all 32 changed files is identical before/after (the only new literals are `'dark'` scheme checks), and every `onPress`, `router.push/back`, `onChange`, `chevron`, accessibility prop, and route declaration is unchanged. No route added or removed (23, unchanged); no mock, `api.ts`, or `types.ts` file touched.
+
+**Home is visually unchanged.** No file under `src/features/dashboard/` was modified. `dashboard.tsx` changed by one line (removing the now-nonexistent `themed` prop, which resolved to the same value). Each shared component Home uses was traced to resolve identically — Home passes `tone` explicitly to `ScreenHeader`/`SectionHeader`, which short-circuits ahead of the new theme default, and in light mode `surfaces.text` *is* `palette.text`.
+
+**Validation:** `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo install --check` clean · iOS Metro bundle exported with zero errors (post-merge bundle hash byte-identical to the pre-merge build, confirming the fast-forward introduced no drift) · founder-approved in Expo Go on device.
+
+**Deferred:** theme preference persistence — `ThemeProvider` holds `mode` in `useState`, so the Appearance choice resets on cold restart. No `AsyncStorage`/`SecureStore` in the project yet. Not started here; needs its own slice.
+
+**Next: Sprint 2 — Fuel.** Not started.

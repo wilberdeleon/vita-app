@@ -14,18 +14,21 @@
 2. Structural components default to **neutral ink**; domain flows pass their domain color explicitly ([[Color System]]).
 3. No new custom styling without approval — compose from primitives and tokens.
 
-## UI primitives — `src/components/ui/` (15)
+## UI primitives — `src/components/ui/` (18)
 
 | Primitive | Job |
 |---|---|
 | `Screen` | Screen container; `dockClearance` and `scroll` props |
 | `ScreenHeader` | Title row; optional settings gear |
 | `SectionHeader` | Section titles with optional actions |
-| `Card` | White card, radius 20, soft shadow |
+| `Card` | Card surface, radius 20, hairline border + soft shadow; theme-aware via `useCardSurfaceStyle()` |
+| `PressableCard` | `Card` with press feedback — shares its surface style exactly |
+| `GlassSurface` | Frosted-glass surface (real blur) for Home cards and the dock; theme-aware |
+| `Section` | Groups a header + content into one rhythm unit |
 | `DailyProgressCard` | Dashboard daily summary card |
 | `ProgressBar` | Animated progress (650ms ease-out cubic) |
 | `StatBar` | Labeled stat bar |
-| `SegmentedTabs` | Segmented control (neutral by default) |
+| `SegmentedTabs` | Segmented control; resolves its own neutral fill per theme |
 | `Chip` | Small selectable pill |
 | `ListRow` | Standard list row |
 | `IconBadge` | Icon in a soft-tinted circle |
@@ -43,10 +46,10 @@ All exported through `src/components/ui/index.ts`.
 
 ## Feature components (not primitives — live with their features)
 
-Dashboard: `GreetingCard`, `JourneyCard`, `QuickStatsRow` · Fuel: `FoodRow` · Journey: `LineChart`, `WeightBars`, `OverviewTab`, `WeightTab`, `PhotosTab` · Water: `CupsRow`. Charts are hand-drawn with `react-native-svg` — **no chart library** (deliberate).
+Dashboard: `HomeHeader`, `HomeSummaryCard`, `JourneyCard`, `JourneySection`, `MacrosCard`, `MacroRow`, `MealRow`, `MetricTile`, `QuickStatsRow` · Fuel: `FoodRow` · Journey: `LineChart`, `WeightBars`, `OverviewTab`, `WeightTab`, `PhotosTab` · Water: `CupsRow`. Charts are hand-drawn with `react-native-svg` — **no chart library** (deliberate).
 
 ## Target state
 
-Once the theme direction resolves ([[Design Bible]]), primitives gain dark/glass variants and formally documented states (default/pressed/disabled/loading) in the authored Design System. A component library package (e.g., adopting a third-party kit) was **deliberately not chosen** — per-slice decision if ever.
+**Theme-aware as of 2026-08-16** — every primitive that renders a surface, text, or border resolves it through `useTheme().surfaces`, so all of them work in Light and Dark. Still to come in the authored Design System: formally documented states (default/pressed/disabled/loading). A component library package (e.g., adopting a third-party kit) was **deliberately not chosen** — per-slice decision if ever.
 
 **Related:** [[Design Bible]] · [[Spacing & Layout]] · [[Motion & Animation]] · [[Architecture]]

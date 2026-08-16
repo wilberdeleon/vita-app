@@ -6,9 +6,11 @@ VITA is a personal health companion that measures transformation, not just numbe
 
 ## Status
 
-Sprint 0 — Visual Foundation: Complete. Sprint 0.1 — Polish: Complete. Sprint 1 — Dashboard/Home: Complete. Sprint 2 — Fuel: Next.
+Sprint 0 — Visual Foundation: Complete. Sprint 0.1 — Polish: Complete. Sprint 1 — Dashboard/Home: Complete. App-Wide Visual Consistency Pass: Complete. Sprint 2 — Fuel: Next.
 
 Remaining roadmap: Sprint 3 — Journey / Weight · Sprint 4 — Journey / Photos · Sprint 5 — Water & Peptides · Sprint 6 — Atlas · Sprint 7 — Settings / Account · Sprint 8 — Final Polish & Animations.
+
+**Theming is app-wide.** Light, Dark, and System are supported across every existing screen; System follows the device appearance live. Home/Dashboard is the visual source of truth every other screen follows. Before writing UI, read the [Design System](docs/05-Design-System.md) — in particular, resolve surface and text colors through `useTheme().surfaces`, never from `palette` directly.
 
 ## Stack
 

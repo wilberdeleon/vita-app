@@ -6,9 +6,11 @@
 
 ---
 
-## Snapshot — 2026-08-02
+## Snapshot — 2026-08-16
 
-**Sprint 0 — Foundation is ✅ Completed** per the official roadmap issued 2026-07-09 (see [[Roadmap]]). **Sprint 1 — Dashboard is ✅ Completed** (2026-08-02) — see [[Current Sprint]] for what shipped. **Sprint 2 — Fuel is next**, reprioritized ahead of Journey per founder direction.
+**Sprint 0 — Foundation ✅ Completed** per the official roadmap issued 2026-07-09 (see [[Roadmap]]). **Sprint 1 — Dashboard ✅ Completed** (2026-08-02) — see [[Current Sprint]] for what shipped. **App-Wide Visual Consistency Pass ✅ Completed** (2026-08-16). **Sprint 2 — Fuel is next**, reprioritized ahead of Journey per founder direction. Not started.
+
+**Theming is app-wide.** Light, Dark, and System work across every existing screen; System follows the device appearance live. Home/Dashboard is the documented visual source of truth — see [[Design Bible]], [[Color System]], [[Decision Log]]. The pass was a design-system migration, **not** a feature sprint: no routes, tabs, sections, data, navigation, interactions, or copy changed. Detail lives in the repo's `docs/06-Slice-Tracker.md`; this page does not duplicate it.
 
 The entire application shell exists and runs in the iOS Simulator via Expo Go — this is the code-level substrate Sprint 0 completed on top of:
 
@@ -24,7 +26,8 @@ The entire application shell exists and runs in the iOS Simulator via Expo Go �
 
 | Layer | State |
 |---|---|
-| UI / navigation | Real, complete for Sprint 0 scope |
+| UI / navigation | Real, complete for Sprint 0 scope; Light/Dark/System theming live app-wide |
+| Theme preference | Resolves correctly, but held in memory — **resets on cold restart**; persistence not implemented |
 | Data | Mock fixtures served through `api.ts` boundaries — no live data |
 | Auth | Mock signed-in user; gate logic real, provider internals fake |
 | Supabase | Client architecture in place; **not connected** (no migrations, no edge functions) |
@@ -37,7 +40,7 @@ The entire application shell exists and runs in the iOS Simulator via Expo Go �
 ## Resolved 2026-07-09
 
 Two decisions that were previously open tensions are now locked, following a full project review and documentation audit:
-1. **Theme:** VITA supports both Light Mode and Dark Mode, built on semantic design tokens rather than hardcoded colors — not a dark-only product, not a future retheme. See [[Design Bible]], [[Decision Log]].
+1. **Theme:** VITA supports both Light Mode and Dark Mode, built on semantic design tokens rather than hardcoded colors — not a dark-only product, not a future retheme. **Implemented app-wide as of 2026-08-16.** See [[Design Bible]], [[Decision Log]].
 2. **Navigation:** Settings stays permanently in the top-right corner and is never part of the floating dock, which stays a fixed 4 items. See [[Navigation & Floating Dock]], [[Decision Log]].
 
 Also resolved in the same audit: the repo Slice Tracker's internal contradiction (all Sprint 0 slices now consistently ✅ Approved), and `docs/04-Master-Roadmap.md` synced to this vault's roadmap.

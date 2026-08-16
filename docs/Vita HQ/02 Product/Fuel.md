@@ -14,7 +14,7 @@ Built in Slice 0.5: the Fuel hub tab plus a complete eight-screen Food Log flow 
 - **Flow screens:** `log`, `add`, `search`, `scan` (barcode — **static visual mock**, no camera yet), `manual`, `recent`, `favorites`, `food/[id]` (food detail)
 - Feature module `src/features/fuel/` with `FoodRow` component, types, and mock fixtures behind the `api.ts` boundary
 - Domain color: **orange `#F2670F`** ([[Color System]]); dock icon: flame
-- Macro colors: protein `#E4572E` · carbs `#F5A623` · fat `#E5484D`
+- Macro colors: protein `#2E9E5B` (corrected to green 2026-07-18) · carbs `#F5A623` · fat `#E5484D`
 
 ## Target state
 

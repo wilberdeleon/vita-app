@@ -14,6 +14,24 @@ The full Design System will be authored and approved separately before detailed 
 - **`palette`** — theme-invariant values only: brand, domain, macro, and semantic colors. Orange is orange in both themes.
 - Structural controls (`SegmentedTabs`, `Chip`) resolve their own neutral fill per theme — pass `activeColor`/`color` only for a domain flow.
 
+### Approved implementation decisions (visual consistency pass, 2026-08-16)
+
+Founder-approved after Expo Go review on device. Do not reverse these casually.
+
+- **Card borders.** Cards carry a subtle hairline border in both themes. Light-mode drop shadows do essentially nothing against a near-black background, so in dark mode the border is what separates a card from the page — matching how Home's `GlassSurface` cards already read.
+- **Domain soft surfaces.** Tinted backings (the Journey add-photo circle, the Atlas orb, the weight delta badge) use a low-opacity tint of their domain color — `` `${palette.journey}1A` `` — instead of the fixed pastel `*Soft` values. The pastels are light-mode-only and glare as bright blobs on black. The `*Soft` tokens remain in `tokens.ts` for light-only contexts.
+- **Progress track.** `ProgressBar`'s track is *deliberately theme-invariant*, the one exception to the surfaces rule. The approved Home dashboard shows that pale track under the gold journey bar and the macro bars in dark mode, so it is the reference treatment. Every other screen matches Home by leaving it alone. **Do not "fix" this for token purity** — changing it would change Home, and that needs a deliberate design decision.
+
+## Visual source of truth: Home/Dashboard
+
+**The Home/Dashboard screen is the current visual authority for VITA.** When a question arises about how something should look, match Home. Its design language:
+
+premium · modern · minimal · clean · strong hierarchy · theme-aware surfaces · rounded cards · subtle borders · controlled accent colors · cohesive typography · consistent section headers · consistent navigation styling.
+
+**Share the DNA, not the layout.** Feature screens keep their own layouts and content — Fuel should look like Fuel, Journey like Journey, Settings like Settings. What they share is the theme, spacing rhythm, card and border treatment, section-header system, typography, accent semantics, and dock styling. This is explicitly *not* an instruction to reuse Home's composition.
+
+Home is founder-approved and stable. Changing a shared primitive in a way that visibly alters Home requires flagging it first.
+
 ## Navigation placement (founder decision, 2026-07-09)
 
 **Settings remains permanently in the top-right corner (header icon, present on every screen) and is not part of the floating dock.** The dock stays a fixed 4 items: Home, Fuel, Journey, Atlas. This is locked, not an open question.
@@ -26,21 +44,22 @@ The full Design System will be authored and approved separately before detailed 
 
 ## Permanent domain color hierarchy (founder decision, Sprint 0.1)
 
-- **Orange `#F2670F` → Nutrition / Fuel** · **Blue `#2F80ED` → Water** · **Purple `#7C3AED` → Atlas** (and peptides per the approved UI reference) · **Green `#2E9E5B` → Journey progression** · **Neutrals → navigation, structure, general UI**
-- Structural components (SegmentedTabs, Chip, section actions, the Home dock item) default to neutral ink; domain flows pass their domain color explicitly.
-- This hierarchy is part of the permanent design language moving forward.
+- **Gold `#D4B27A` → brand, journey stage / progression emphasis, premium highlights** · **Orange `#F2670F` → Fuel / nutrition** · **Blue `#2F80ED` → Water / hydration** · **Green `#2E9E5B` → progress, movement, positive completion** · **Purple `#7C3AED` → Peptides** (and Atlas) · **Neutrals → navigation, structure, general UI**
+- Structural components (SegmentedTabs, Chip, section actions, the Home dock item) default to the theme's neutral — brand ink in light, primary text in dark; domain flows pass their domain color explicitly.
+- This hierarchy is part of the permanent design language moving forward. **Do not recolor an existing feature into a different hue.** Treat it as guidance rather than an absolute where already-approved UI requires otherwise (Home's gold journey accents, for example).
 
 ## Motion (Sprint 0.1 baseline)
 
 - Tab transitions: fade. Press feedback: subtle spring scale (`PressableScale`, 0.97–0.98). Progress bars animate to their value (650ms ease-out cubic). No advanced animations until the Polish sprint.
 
-## Interim tokens (extracted from the approved UI reference)
-- **Macros:** protein `#E4572E` · carbs `#F5A623` · fat `#E5484D` · success green `#2E9E5B`
-- **Surfaces:** warm background `#F6F5F2`, white cards radius 20 with soft shadow, track gray `#EFEDE9`
-- **Type scale:** display 30 · title 22 · heading 17 · body 15 · caption 13 · micro 11 (system font)
+## Interim tokens (`src/theme/tokens.ts` is authoritative — values below verified 2026-08-16)
+- **Macros:** protein `#2E9E5B` (green, corrected 2026-07-18 to match the approved reference) · carbs `#F5A623` · fat `#E5484D` · success green `#2E9E5B`
+- **Light surfaces:** warm background `#F8F6F2` · cards `#FFFFFF` radius 20, hairline border + soft shadow · track gray `#EFEDE9`
+- **Dark surfaces:** background `#000000` · cards `#1A1B1D` · border `rgba(255,255,255,0.08)` · text white, secondary 65%, tertiary 45% · track `rgba(255,255,255,0.12)`
+- **Type scale:** display 32 · title 24 · heading 17 · body 15 · caption 13 · micro 11 (system font)
 - **Spacing:** 4-based scale (4–32); floating dock clearance 120
 
-Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, SectionHeader, ProgressBar, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow, IconBadge, Button, TextField, Stepper.
+Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, PressableCard, GlassSurface, Section, SectionHeader, ProgressBar, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow, IconBadge, Button, TextField, Stepper, PressableScale.
 
 ---
 
