@@ -6,7 +6,9 @@ VITA is a personal health companion that measures transformation, not just numbe
 
 ## Status
 
-Phase 1 — Foundation (Sprint 0). Repository scaffolded; application shell in progress.
+Sprint 0 — Visual Foundation: Complete. Sprint 0.1 — Polish: Complete. Sprint 1 — Dashboard/Home: Complete. Sprint 2 — Fuel: Next.
+
+Remaining roadmap: Sprint 3 — Journey / Weight · Sprint 4 — Journey / Photos · Sprint 5 — Water & Peptides · Sprint 6 — Atlas · Sprint 7 — Settings / Account · Sprint 8 — Final Polish & Animations.
 
 ## Stack
 

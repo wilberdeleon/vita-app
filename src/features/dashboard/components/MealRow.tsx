@@ -25,8 +25,10 @@ const SLOT_ICONS: Record<MealSlot, { icon: keyof typeof Ionicons.glyphMap; color
 
 /**
  * One row per meal slot (founders, 2026-07-19 mockup v2) — icon, name,
- * logged status with a colored dot, calories, and a decorative chevron
- * (no navigation wired this pass — see redesign audit notes).
+ * logged status with a colored dot, calories. No chevron (Sprint 1
+ * closeout, 2026-08-02) — Fuel/meal-detail doesn't exist yet, so the row
+ * doesn't imply an interaction it can't fulfill. Restore a chevron/tap
+ * target once Sprint 2 gives it somewhere to go.
  */
 export function MealRow({ meal }: Props) {
   const { surfaces } = useTheme();
@@ -51,7 +53,6 @@ export function MealRow({ meal }: Props) {
             <Text style={[styles.status, { color: surfaces.textTertiary }]}>{status}</Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={surfaces.textTertiary} />
       </View>
     </GlassSurface>
   );
