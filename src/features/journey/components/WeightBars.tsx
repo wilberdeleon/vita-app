@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 import type { WeightPoint } from '../types';
 
 type Props = {
@@ -14,6 +15,7 @@ const BAR_W = 10;
 
 /** Vertical weight bars — the Weight tab trend chart. */
 export function WeightBars({ points, height = 140 }: Props) {
+  const { surfaces } = useTheme();
   const weights = points.map((p) => p.weight);
   const min = Math.min(...weights) - 0.6;
   const max = Math.max(...weights) + 0.6;
@@ -41,7 +43,7 @@ export function WeightBars({ points, height = 140 }: Props) {
       </Svg>
       <View style={styles.labels}>
         {points.map((point) => (
-          <Text key={point.label} style={styles.label}>
+          <Text key={point.label} style={[styles.label, { color: surfaces.textTertiary }]}>
             {point.label}
           </Text>
         ))}
@@ -59,6 +61,5 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.micro,
-    color: palette.textTertiary,
   },
 });

@@ -3,20 +3,24 @@ import { StyleSheet, Text } from 'react-native';
 import { restaurantIconFor } from '../../../features/dashboard/mealIcons';
 import { Button, Card, DailyProgressCard, ListRow, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
 import { getFuelToday } from '../../../features/fuel/api';
-import { palette, spacing, typography } from '../../../theme/tokens';
+import { spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 
 export default function FoodLog() {
   const today = getFuelToday();
+  const { surfaces } = useTheme();
 
   return (
     <Screen>
       <ScreenHeader title="Log Food" back />
 
       <Card>
-        <Text style={styles.count}>
+        <Text style={[styles.count, { color: surfaces.text }]}>
           {today.mealsLogged} / {today.mealSlots} logged
         </Text>
-        <Text style={styles.hint}>Track your meals and stay on top of your nutrition.</Text>
+        <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
+          Track your meals and stay on top of your nutrition.
+        </Text>
       </Card>
 
       <SectionHeader title="Today's Goal" />
@@ -51,11 +55,9 @@ export default function FoodLog() {
 const styles = StyleSheet.create({
   count: {
     ...typography.heading,
-    color: palette.text,
     marginBottom: spacing.xs,
   },
   hint: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
 });

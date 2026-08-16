@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from 'react';
 import type { AccessibilityRole, StyleProp, ViewStyle } from 'react-native';
-import { cardSurfaceStyle } from './Card';
+import { useCardSurfaceStyle } from './Card';
 import { PressableScale } from './PressableScale';
 
 type Props = PropsWithChildren<{
@@ -13,16 +13,17 @@ type Props = PropsWithChildren<{
 
 /**
  * A Card surface with the app's standard press-scale feedback — for tappable
- * cards (e.g. Journey Preview, future Meals Preview). Shares cardSurfaceStyle
- * with Card so a pressable card and a static card are visually identical,
- * differing only in touch behavior.
+ * cards (e.g. Journey Preview, future Meals Preview). Shares
+ * useCardSurfaceStyle with Card so a pressable card and a static card are
+ * visually identical, differing only in touch behavior.
  */
 export function PressableCard({ children, onPress, disabled, style, accessibilityLabel, accessibilityRole }: Props) {
+  const surfaceStyle = useCardSurfaceStyle();
   return (
     <PressableScale
       onPress={onPress}
       disabled={disabled}
-      style={[cardSurfaceStyle, style]}
+      style={[surfaceStyle, style]}
       pressedScale={0.98}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole}

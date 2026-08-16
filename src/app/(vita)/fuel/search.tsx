@@ -3,11 +3,13 @@ import { StyleSheet, Text } from 'react-native';
 import { Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
 import { FoodRow } from '../../../features/fuel/components/FoodRow';
 import { searchFoods } from '../../../features/fuel/api';
-import { palette, spacing, typography } from '../../../theme/tokens';
+import { spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 
 export default function SearchFood() {
   const [query, setQuery] = useState('big mac');
   const results = searchFoods(query);
+  const { surfaces } = useTheme();
 
   return (
     <Screen>
@@ -27,7 +29,7 @@ export default function SearchFood() {
           ))}
         </>
       ) : (
-        <Text style={styles.empty}>
+        <Text style={[styles.empty, { color: surfaces.textTertiary }]}>
           {query.trim() ? 'No foods matched your search.' : 'Search our database to log a food.'}
         </Text>
       )}
@@ -38,7 +40,6 @@ export default function SearchFood() {
 const styles = StyleSheet.create({
   empty: {
     ...typography.caption,
-    color: palette.textTertiary,
     textAlign: 'center',
     marginTop: spacing.xxxl,
   },

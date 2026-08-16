@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { palette, radii, shadows, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { IconBadge } from './IconBadge';
 import { PressableScale } from './PressableScale';
 
@@ -19,23 +20,30 @@ type Props = {
 
 /** Card-style row — meals, log entries, settings items. */
 export function ListRow({ icon, iconColor = palette.primary, title, subtitle, value, chevron = false, onPress, trailing }: Props) {
+  const { surfaces } = useTheme();
+
   return (
-    <PressableScale onPress={onPress} disabled={!onPress} style={styles.row} pressedScale={0.98}>
+    <PressableScale
+      onPress={onPress}
+      disabled={!onPress}
+      style={[styles.row, { backgroundColor: surfaces.card, borderColor: surfaces.border }]}
+      pressedScale={0.98}
+    >
       {icon ? <IconBadge icon={icon} color={iconColor} /> : null}
       <View style={styles.textBlock}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={[styles.title, { color: surfaces.text }]} numberOfLines={1}>
           {title}
         </Text>
         {subtitle ? (
-          <Text style={styles.subtitle} numberOfLines={1}>
+          <Text style={[styles.subtitle, { color: surfaces.textTertiary }]} numberOfLines={1}>
             {subtitle}
           </Text>
         ) : null}
       </View>
       {trailing ?? (
         <View style={styles.trailing}>
-          {value ? <Text style={styles.value}>{value}</Text> : null}
-          {chevron ? <Ionicons name="chevron-forward" size={16} color={palette.textTertiary} /> : null}
+          {value ? <Text style={[styles.value, { color: surfaces.textSecondary }]}>{value}</Text> : null}
+          {chevron ? <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} /> : null}
         </View>
       )}
     </PressableScale>
@@ -47,8 +55,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.m,
-    backgroundColor: palette.card,
     borderRadius: radii.card,
+    borderWidth: 1,
     paddingVertical: spacing.m,
     paddingHorizontal: spacing.l,
     ...shadows.card,
@@ -59,11 +67,9 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.bodyMedium,
-    color: palette.text,
   },
   subtitle: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
   trailing: {
     flexDirection: 'row',
@@ -72,6 +78,5 @@ const styles = StyleSheet.create({
   },
   value: {
     ...typography.caption,
-    color: palette.textSecondary,
   },
 });

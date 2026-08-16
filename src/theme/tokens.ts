@@ -12,11 +12,16 @@
  * dropping the Mountain World photo background in favor of full light/dark
  * support): brand, domain, and macro colors below do NOT change between
  * themes — red is red regardless of theme. Only surfaces (background, card,
- * text, border) have light/dark pairs — see `lightSurfaces`/`darkSurfaces`
- * and `useTheme()` in `ThemeProvider.tsx`. `palette` itself is UNCHANGED in
- * shape and stays the single flat light-mode object every non-Home screen
- * already imports directly — those screens intentionally don't theme-switch
- * yet (see Slice Tracker for the explicit scope note).
+ * text, border, track) have light/dark pairs — see `lightSurfaces`/
+ * `darkSurfaces` and `useTheme()` in `ThemeProvider.tsx`.
+ *
+ * `palette` keeps its shape, but as of the app-wide visual consistency pass
+ * it is the source for THEME-INVARIANT values only — brand, domain, macro,
+ * and semantic colors. Its surface/text entries (`background`, `card`,
+ * `text`, `textSecondary`, `textTertiary`, `track`, `hairline`) are the
+ * light-mode half of the pairs below and exist so `lightSurfaces` has one
+ * source of truth; read them through `useTheme().surfaces`, not directly,
+ * or the component will be permanently light.
  */
 
 export const palette = {
@@ -70,6 +75,7 @@ export const lightSurfaces = {
   text: palette.text,
   textSecondary: palette.textSecondary,
   textTertiary: palette.textTertiary,
+  track: palette.track,
 } as const;
 
 /** Dark-mode surfaces (founders, 2026-07-20 v4 — pure black background per the exact-replica reference spec). */
@@ -80,6 +86,7 @@ export const darkSurfaces = {
   text: '#FFFFFF',
   textSecondary: 'rgba(255,255,255,0.65)',
   textTertiary: 'rgba(255,255,255,0.45)',
+  track: 'rgba(255,255,255,0.12)',
 } as const;
 
 export type Surfaces = {
@@ -89,6 +96,8 @@ export type Surfaces = {
   text: string;
   textSecondary: string;
   textTertiary: string;
+  /** Unfilled portion of segmented controls, steppers, and inert wells. */
+  track: string;
 };
 
 export const spacing = {

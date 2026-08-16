@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Card, Chip, IconBadge, SectionHeader } from '../../../components/ui';
 import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 import { getJourney, getStage } from '../api';
 import { TIME_RANGES } from '../mock';
 import { LineChart } from './LineChart';
@@ -11,6 +12,7 @@ export function OverviewTab() {
   const journey = getJourney();
   const stage = getStage(journey.stageId);
   const [rangeIndex, setRangeIndex] = useState(1); // 1M
+  const { surfaces } = useTheme();
 
   return (
     <View style={styles.container}>
@@ -18,9 +20,9 @@ export function OverviewTab() {
       <Card style={styles.stageCard}>
         <IconBadge icon={stage.icon} color={palette.journey} size={44} />
         <View style={styles.stageText}>
-          <Text style={styles.stageName}>{stage.name}</Text>
-          <Text style={styles.stageTagline}>{stage.tagline}</Text>
-          <Text style={styles.stageWeek}>
+          <Text style={[styles.stageName, { color: surfaces.text }]}>{stage.name}</Text>
+          <Text style={[styles.stageTagline, { color: surfaces.textSecondary }]}>{stage.tagline}</Text>
+          <Text style={[styles.stageWeek, { color: surfaces.textTertiary }]}>
             Week {journey.week} of {journey.totalWeeks}
           </Text>
         </View>
@@ -36,26 +38,26 @@ export function OverviewTab() {
         <LineChart
           series={[
             { points: journey.trend, color: palette.journey, dots: true },
-            { points: journey.previousTrend, color: palette.textTertiary },
+            { points: journey.previousTrend, color: surfaces.textTertiary },
           ]}
         />
         <View style={styles.legend}>
           <View style={[styles.legendDot, { backgroundColor: palette.journey }]} />
-          <Text style={styles.legendLabel}>You</Text>
-          <View style={[styles.legendDot, { backgroundColor: palette.textTertiary }]} />
-          <Text style={styles.legendLabel}>Last 4 Weeks</Text>
+          <Text style={[styles.legendLabel, { color: surfaces.textSecondary }]}>You</Text>
+          <View style={[styles.legendDot, { backgroundColor: surfaces.textTertiary }]} />
+          <Text style={[styles.legendLabel, { color: surfaces.textSecondary }]}>Last 4 Weeks</Text>
         </View>
       </Card>
 
       <SectionHeader title="Weekly Milestones" actionLabel="View all" />
       {journey.milestones.map((milestone) => (
         <Card key={milestone.id} style={styles.milestone}>
-          <Text style={styles.milestoneLabel}>{milestone.label}</Text>
-          <Text style={styles.milestoneProgress}>{milestone.progressLabel}</Text>
+          <Text style={[styles.milestoneLabel, { color: surfaces.text }]}>{milestone.label}</Text>
+          <Text style={[styles.milestoneProgress, { color: surfaces.textTertiary }]}>{milestone.progressLabel}</Text>
           <Ionicons
             name={milestone.done ? 'checkmark-circle' : 'ellipse-outline'}
             size={22}
-            color={milestone.done ? palette.success : palette.textTertiary}
+            color={milestone.done ? palette.success : surfaces.textTertiary}
           />
         </Card>
       ))}
@@ -78,15 +80,12 @@ const styles = StyleSheet.create({
   },
   stageName: {
     ...typography.heading,
-    color: palette.text,
   },
   stageTagline: {
     ...typography.caption,
-    color: palette.textSecondary,
   },
   stageWeek: {
     ...typography.micro,
-    color: palette.textTertiary,
   },
   chartCard: {
     gap: spacing.l,
@@ -107,7 +106,6 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     ...typography.micro,
-    color: palette.textSecondary,
     marginRight: spacing.m,
   },
   milestone: {
@@ -118,11 +116,9 @@ const styles = StyleSheet.create({
   },
   milestoneLabel: {
     ...typography.bodyMedium,
-    color: palette.text,
     flex: 1,
   },
   milestoneProgress: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
 });

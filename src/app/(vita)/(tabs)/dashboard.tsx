@@ -23,7 +23,7 @@ export default function Dashboard() {
   const tone = scheme === 'dark' ? 'light' : 'dark';
 
   return (
-    <Screen dockClearance contentGap={spacing.xxxl} topInset={false} horizontalInset={horizontalInset} themed>
+    <Screen dockClearance contentGap={spacing.xxxl} topInset={false} horizontalInset={horizontalInset}>
       <HomeHeader greeting={greeting} firstName={data.firstName} />
 
       <HomeSummaryCard calories={data.calories} goals={data.goals} />

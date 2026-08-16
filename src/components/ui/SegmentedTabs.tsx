@@ -1,26 +1,46 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { palette, radii, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = {
   options: readonly string[];
   selectedIndex: number;
   onChange: (index: number) => void;
-  /** Active segment color; defaults to neutral ink (structure). Pass a domain color for domain flows. */
+  /**
+   * Active segment color. Defaults to the theme's neutral structural color —
+   * brand ink in light, white in dark, since ink is invisible on a near-black
+   * track. Pass a domain color for domain flows.
+   */
   activeColor?: string;
 };
 
-export function SegmentedTabs({ options, selectedIndex, onChange, activeColor = palette.ink }: Props) {
+export function SegmentedTabs({ options, selectedIndex, onChange, activeColor }: Props) {
+  const { scheme, surfaces } = useTheme();
+  // The one case needing a dark label is the neutral default in dark mode,
+  // where the active segment is white. Every domain color is dark enough for white.
+  const neutralDarkFill = !activeColor && scheme === 'dark';
+  const fill = activeColor ?? (neutralDarkFill ? surfaces.text : palette.ink);
+  const activeLabelColor = neutralDarkFill ? surfaces.background : palette.textOnColor;
+
   return (
-    <View style={styles.track}>
+    <View style={[styles.track, { backgroundColor: surfaces.track }]}>
       {options.map((option, index) => {
         const active = index === selectedIndex;
         return (
           <Pressable
             key={option}
             onPress={() => onChange(index)}
-            style={[styles.segment, active && { backgroundColor: activeColor }]}
+            style={[styles.segment, active && { backgroundColor: fill }]}
           >
-            <Text style={[styles.label, active && styles.activeLabel]}>{option}</Text>
+            <Text
+              style={[
+                styles.label,
+                { color: active ? activeLabelColor : surfaces.textSecondary },
+                active && styles.activeLabel,
+              ]}
+            >
+              {option}
+            </Text>
           </Pressable>
         );
       })}
@@ -31,7 +51,6 @@ export function SegmentedTabs({ options, selectedIndex, onChange, activeColor = 
 const styles = StyleSheet.create({
   track: {
     flexDirection: 'row',
-    backgroundColor: palette.track,
     borderRadius: radii.pill,
     padding: 3,
   },
@@ -43,10 +62,8 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.captionMedium,
-    color: palette.textSecondary,
   },
   activeLabel: {
-    color: palette.textOnColor,
     fontWeight: '600',
   },
 });

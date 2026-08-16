@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable } from 'react-native';
 import { ListRow } from '../../../components/ui';
 import { palette } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 import type { FoodItem } from '../types';
 
 type Props = {
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export function FoodRow({ food, heart = false }: Props) {
+  const { surfaces } = useTheme();
+
   return (
     <ListRow
       icon="fast-food-outline"
@@ -26,7 +29,7 @@ export function FoodRow({ food, heart = false }: Props) {
             <Ionicons
               name={food.favorite ? 'heart' : 'heart-outline'}
               size={20}
-              color={food.favorite ? palette.primary : palette.textTertiary}
+              color={food.favorite ? palette.primary : surfaces.textTertiary}
             />
           </Pressable>
         ) : undefined

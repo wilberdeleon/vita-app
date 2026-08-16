@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, G, Polyline } from 'react-native-svg';
-import { palette, spacing, typography } from '../../../theme/tokens';
+import { spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 import type { WeightPoint } from '../types';
 
 type Series = {
@@ -24,6 +25,7 @@ const PAD_Y = 14;
  * shared min/max so comparisons are honest. X labels come from the first series.
  */
 export function LineChart({ series, height = 130 }: Props) {
+  const { surfaces } = useTheme();
   const weights = series.flatMap((s) => s.points.map((p) => p.weight));
   const min = Math.min(...weights);
   const max = Math.max(...weights);
@@ -63,7 +65,7 @@ export function LineChart({ series, height = 130 }: Props) {
       </Svg>
       <View style={styles.labels}>
         {labels.map((label) => (
-          <Text key={label} style={styles.label}>
+          <Text key={label} style={[styles.label, { color: surfaces.textTertiary }]}>
             {label}
           </Text>
         ))}
@@ -81,6 +83,5 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.micro,
-    color: palette.textTertiary,
   },
 });

@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { palette, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { Card } from './Card';
 import { ProgressBar } from './ProgressBar';
 import { StatBar } from './StatBar';
@@ -23,11 +24,13 @@ type Props = {
 
 /** Headline progress + sub-bars — the Today's Goal card on Fuel. */
 export function DailyProgressCard({ headline, percentLabel, progress, color = palette.primary, bars }: Props) {
+  const { surfaces } = useTheme();
+
   return (
     <Card>
       <View style={styles.headlineRow}>
-        <Text style={styles.headline}>{headline}</Text>
-        <Text style={styles.percent}>{percentLabel}</Text>
+        <Text style={[styles.headline, { color: surfaces.text }]}>{headline}</Text>
+        <Text style={[styles.percent, { color: surfaces.textSecondary }]}>{percentLabel}</Text>
       </View>
       <ProgressBar progress={progress} color={color} />
       {bars && bars.length > 0 ? (
@@ -50,11 +53,9 @@ const styles = StyleSheet.create({
   },
   headline: {
     ...typography.heading,
-    color: palette.text,
   },
   percent: {
     ...typography.captionMedium,
-    color: palette.textSecondary,
   },
   bars: {
     flexDirection: 'row',

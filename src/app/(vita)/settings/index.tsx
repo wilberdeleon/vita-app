@@ -8,11 +8,11 @@ const APPEARANCE_OPTIONS: readonly ThemeMode[] = ['light', 'dark', 'system'];
 const APPEARANCE_LABELS = ['Light', 'Dark', 'System'];
 
 /**
- * Settings shell — structure only for Sprint 0, except Appearance (founders,
- * 2026-07-18 clean redesign): the first functional preference, wired
- * straight to ThemeProvider so it takes effect app-wide with no
- * restart/refresh. Rest of the screen is deliberately untouched — this
- * redesign pass is scoped to Home only.
+ * Settings shell — structure only, except Appearance (founders, 2026-07-18
+ * clean redesign): the first functional preference, wired straight to
+ * ThemeProvider so it takes effect app-wide with no restart/refresh. Every
+ * row here is a shared primitive, so the screen follows the active theme
+ * through those rather than styling anything itself.
  */
 export default function Settings() {
   const { user, signOut } = useAuth();
@@ -30,11 +30,13 @@ export default function Settings() {
       <ListRow icon="scale-outline" title="Units" subtitle="Imperial (lb, oz)" chevron />
       <ListRow icon="contrast-outline" title="Appearance" />
       <View style={styles.appearancePicker}>
+        {/* No activeColor: the selector takes the theme's neutral structural
+            fill, so the current choice stays legible in both themes — brand
+            ink disappears against a near-black track. */}
         <SegmentedTabs
           options={APPEARANCE_LABELS}
           selectedIndex={APPEARANCE_OPTIONS.indexOf(mode)}
           onChange={(index) => setMode(APPEARANCE_OPTIONS[index])}
-          activeColor={palette.ink}
         />
       </View>
 

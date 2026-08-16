@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { palette, spacing, typography } from '../../theme/tokens';
+import { spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 import { ProgressBar } from './ProgressBar';
 
 type Props = {
@@ -12,11 +13,13 @@ type Props = {
 
 /** Labeled progress bar — the macro rows on Fuel. */
 export function StatBar({ label, valueLabel, progress, color }: Props) {
+  const { surfaces } = useTheme();
+
   return (
     <View style={styles.container}>
       <View style={styles.labels}>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value}>{valueLabel}</Text>
+        <Text style={[styles.label, { color: surfaces.textSecondary }]}>{label}</Text>
+        <Text style={[styles.value, { color: surfaces.textTertiary }]}>{valueLabel}</Text>
       </View>
       <ProgressBar progress={progress} color={color} height={6} />
     </View>
@@ -36,10 +39,8 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.micro,
-    color: palette.textSecondary,
   },
   value: {
     ...typography.micro,
-    color: palette.textTertiary,
   },
 });

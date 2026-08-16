@@ -2,21 +2,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card, SectionHeader } from '../../../components/ui';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 import { getJourney } from '../api';
 
 export function PhotosTab() {
   const journey = getJourney();
+  const { surfaces } = useTheme();
 
   return (
     <View style={styles.container}>
       <SectionHeader title="Progress Photos" />
       <Pressable>
         <Card style={styles.addCard}>
-          <View style={styles.addCircle}>
+          <View style={[styles.addCircle, { backgroundColor: `${palette.journey}1A` }]}>
             <Ionicons name="add" size={28} color={palette.journey} />
           </View>
-          <Text style={styles.addTitle}>Add Progress Photo</Text>
-          <Text style={styles.addHint}>Front, side, or back. You choose.</Text>
+          <Text style={[styles.addTitle, { color: surfaces.text }]}>Add Progress Photo</Text>
+          <Text style={[styles.addHint, { color: surfaces.textTertiary }]}>Front, side, or back. You choose.</Text>
         </Card>
       </Pressable>
 
@@ -34,11 +36,11 @@ export function PhotosTab() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeline}>
         {journey.photos.map((photo) => (
           <Card key={photo.id} style={styles.photoCard}>
-            <View style={styles.silhouette}>
-              <Ionicons name="body-outline" size={40} color={palette.textTertiary} />
+            <View style={[styles.silhouette, { backgroundColor: surfaces.track }]}>
+              <Ionicons name="body-outline" size={40} color={surfaces.textTertiary} />
             </View>
-            <Text style={styles.photoDate}>{photo.dateLabel}</Text>
-            <Text style={styles.photoWeek}>{photo.weekLabel}</Text>
+            <Text style={[styles.photoDate, { color: surfaces.text }]}>{photo.dateLabel}</Text>
+            <Text style={[styles.photoWeek, { color: surfaces.textTertiary }]}>{photo.weekLabel}</Text>
           </Card>
         ))}
       </ScrollView>
@@ -59,18 +61,15 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: palette.journeySoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.s,
   },
   addTitle: {
     ...typography.heading,
-    color: palette.text,
   },
   addHint: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
   visualCard: {
     backgroundColor: palette.cardWarm,
@@ -111,17 +110,14 @@ const styles = StyleSheet.create({
     width: 72,
     height: 88,
     borderRadius: radii.control,
-    backgroundColor: palette.track,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.s,
   },
   photoDate: {
     ...typography.captionMedium,
-    color: palette.text,
   },
   photoWeek: {
     ...typography.micro,
-    color: palette.textTertiary,
   },
 });

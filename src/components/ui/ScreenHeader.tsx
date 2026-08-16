@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { VitaMark } from '../shell/VitaMark';
 import { palette, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = {
   title: string;
@@ -15,10 +16,10 @@ type Props = {
   /** Show a close X on the right instead of the gear (flow screens). */
   close?: boolean;
   /**
-   * Defaults to 'dark' (unchanged everywhere else). 'light' renders the
-   * mark, wordmark, and icons in a light/white treatment for use over a
-   * dark or busy background (e.g. the Dashboard hero image) — same
-   * component, same tap targets, different color only.
+   * Explicit override. Unset, the title and icons follow the active theme's
+   * primary text color, which is what every stacked screen wants. 'light'
+   * forces the white treatment for use over a dark or busy background
+   * regardless of theme — same component, same tap targets, color only.
    */
   tone?: 'dark' | 'light';
   /**
@@ -40,7 +41,8 @@ export function ScreenHeader({
   tone = 'dark',
   markColor,
 }: Props) {
-  const iconColor = tone === 'light' ? palette.textOnColor : palette.text;
+  const { surfaces } = useTheme();
+  const iconColor = tone === 'light' ? palette.textOnColor : surfaces.text;
   const wordmarkColor = tone === 'light' ? palette.textOnColor : palette.ink;
 
   return (

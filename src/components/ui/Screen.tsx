@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DOCK_CLEARANCE, palette, spacing } from '../../theme/tokens';
+import { DOCK_CLEARANCE, spacing } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = PropsWithChildren<{
@@ -27,16 +27,17 @@ type Props = PropsWithChildren<{
   topInset?: boolean;
   /** Outer horizontal inset. Defaults to spacing.xl (unchanged everywhere else). */
   horizontalInset?: number;
-  /**
-   * Defaults to false (unchanged everywhere else — root stays the fixed
-   * light `palette.background`). Set true to use the active theme's
-   * surface background instead, so the root flips between warm cream and
-   * near-black with Light/Dark/System (founders, 2026-07-18 clean
-   * redesign) — currently only the Home dashboard opts in.
-   */
-  themed?: boolean;
 }>;
 
+/**
+ * Every screen's root now follows the active theme (app-wide visual
+ * consistency pass) — the earlier `themed` opt-in prop is gone. It existed
+ * only because the clean redesign was scoped to Home, so the rest of the app
+ * had to stay pinned to the light background; with the whole app on the
+ * theme system, an opt-out would just be a way to leave a screen broken in
+ * dark mode. Light mode is unaffected: `surfaces.background` resolves to the
+ * same warm cream `palette.background` these screens already used.
+ */
 export function Screen({
   children,
   scroll = true,
@@ -44,13 +45,12 @@ export function Screen({
   contentGap = spacing.l,
   topInset = true,
   horizontalInset = spacing.xl,
-  themed = false,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { surfaces } = useTheme();
   const bottomPadding = dockClearance ? DOCK_CLEARANCE : insets.bottom + spacing.xxl;
   const paddingTop = topInset ? insets.top : 0;
-  const rootBackground = themed ? surfaces.background : palette.background;
+  const rootBackground = surfaces.background;
 
   if (!scroll) {
     return (

@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, Chip, Screen, ScreenHeader, SectionHeader, SegmentedTabs, TextField } from '../../../components/ui';
 import { BOTTLE_SIZES_OZ, QUICK_CUPS } from '../../../features/water/mock';
 import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 
 const UNITS = ['Cups', 'Ounces'] as const;
 
@@ -11,6 +12,7 @@ export default function AddWater() {
   const [unitIndex, setUnitIndex] = useState(0);
   const [amount, setAmount] = useState<number | null>(null);
   const [custom, setCustom] = useState('');
+  const { surfaces } = useTheme();
 
   const isCups = unitIndex === 0;
   const options = isCups ? QUICK_CUPS : BOTTLE_SIZES_OZ;
@@ -30,8 +32,10 @@ export default function AddWater() {
       <SegmentedTabs options={UNITS} selectedIndex={unitIndex} onChange={selectUnit} activeColor={palette.water} />
 
       <View style={styles.display}>
-        <Text style={styles.amount}>{displayAmount || '—'}</Text>
-        <Text style={styles.unit}>{displayAmount ? unitLabel : 'Choose an amount'}</Text>
+        <Text style={[styles.amount, { color: surfaces.text }]}>{displayAmount || '—'}</Text>
+        <Text style={[styles.unit, { color: surfaces.textTertiary }]}>
+          {displayAmount ? unitLabel : 'Choose an amount'}
+        </Text>
       </View>
 
       <SectionHeader title={isCups ? 'Quick add' : 'Common bottle sizes'} />
@@ -75,11 +79,9 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 44,
     fontWeight: '700',
-    color: palette.text,
   },
   unit: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
   chips: {
     flexDirection: 'row',

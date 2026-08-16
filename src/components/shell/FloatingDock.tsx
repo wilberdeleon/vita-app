@@ -91,6 +91,5 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.micro,
-    color: palette.textTertiary,
   },
 });

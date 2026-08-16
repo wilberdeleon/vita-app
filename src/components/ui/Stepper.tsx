@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { palette, radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = {
   value: number;
@@ -12,29 +13,31 @@ type Props = {
 };
 
 export function Stepper({ value, onChange, min = 1, max = 99, suffix }: Props) {
+  const { surfaces } = useTheme();
+
   return (
     <View style={styles.row}>
       <Pressable
-        style={styles.button}
+        style={[styles.button, { backgroundColor: surfaces.track }]}
         onPress={() => onChange(Math.max(min, value - 1))}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Decrease"
       >
-        <Ionicons name="remove" size={18} color={palette.text} />
+        <Ionicons name="remove" size={18} color={surfaces.text} />
       </Pressable>
-      <Text style={styles.value}>
+      <Text style={[styles.value, { color: surfaces.text }]}>
         {value}
         {suffix ? ` ${suffix}` : ''}
       </Text>
       <Pressable
-        style={styles.button}
+        style={[styles.button, { backgroundColor: surfaces.track }]}
         onPress={() => onChange(Math.min(max, value + 1))}
         hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Increase"
       >
-        <Ionicons name="add" size={18} color={palette.text} />
+        <Ionicons name="add" size={18} color={surfaces.text} />
       </Pressable>
     </View>
   );
@@ -50,13 +53,11 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: radii.chip,
-    backgroundColor: palette.track,
     alignItems: 'center',
     justifyContent: 'center',
   },
   value: {
     ...typography.bodyMedium,
-    color: palette.text,
     minWidth: 80,
     textAlign: 'center',
   },

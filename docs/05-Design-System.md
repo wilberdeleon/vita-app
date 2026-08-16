@@ -6,7 +6,13 @@ The full Design System will be authored and approved separately before detailed 
 
 ## Theme model (founder decision, 2026-07-09)
 
-**VITA supports both Light Mode and Dark Mode, built on reusable semantic design tokens from the beginning — not hardcoded colors.** Tokens (e.g. `background`, `surface`, `textPrimary`, `textSecondary`, `hairline`, and the domain colors below) each carry a light value and a dark value; screens and components reference the token name, never a raw hex value. This is a decision, not yet an implementation: `src/theme/tokens.ts` today exports a single flat light palette with hardcoded hex values — no semantic pairs, no dark values, no theme switcher exist yet. Building that architecture is Sprint 1 / Design System work. Until it lands, new UI should still be written against semantic token names so the dark palette is a value swap later, not a rewrite.
+**VITA supports both Light Mode and Dark Mode, built on reusable semantic design tokens from the beginning — not hardcoded colors.** Tokens each carry a light value and a dark value; screens and components reference the token name, never a raw hex value.
+
+**Implemented and app-wide.** Sprint 1 built the architecture (`ThemeProvider.tsx`, `useTheme()`, `lightSurfaces`/`darkSurfaces` in `theme/tokens.ts`, Settings → Appearance as the Light/Dark/System picker) but applied it to Home only; the visual consistency pass that followed extended it to every remaining screen. The split to respect when adding UI:
+
+- **`useTheme().surfaces`** — `background`, `card`, `border`, `text`, `textSecondary`, `textTertiary`, `track`. Every background, text, and border color comes from here. Reading these from `palette` instead pins the component to light mode permanently, which is exactly the drift this pass removed.
+- **`palette`** — theme-invariant values only: brand, domain, macro, and semantic colors. Orange is orange in both themes.
+- Structural controls (`SegmentedTabs`, `Chip`) resolve their own neutral fill per theme — pass `activeColor`/`color` only for a domain flow.
 
 ## Navigation placement (founder decision, 2026-07-09)
 

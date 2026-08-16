@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Card, Chip, ListRow, SectionHeader } from '../../../components/ui';
 import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 import { getJourney } from '../api';
 import { TIME_RANGES } from '../mock';
 import { LineChart } from './LineChart';
@@ -11,13 +12,14 @@ import { WeightBars } from './WeightBars';
 export function WeightTab() {
   const journey = getJourney();
   const [rangeIndex, setRangeIndex] = useState(1); // 1M
+  const { surfaces } = useTheme();
 
   return (
     <View style={styles.container}>
       <SectionHeader title="Weight Trend" />
       <Card style={styles.trendCard}>
         <View style={styles.headline}>
-          <Text style={styles.weight}>{journey.currentWeight.toFixed(1)} lb</Text>
+          <Text style={[styles.weight, { color: surfaces.text }]}>{journey.currentWeight.toFixed(1)} lb</Text>
           <Text style={styles.delta}>
             {journey.deltaLbs} lbs in the last {journey.deltaWeeks} weeks
           </Text>
@@ -56,15 +58,18 @@ export function WeightTab() {
 }
 
 function DeltaBadge({ delta }: { delta: number }) {
+  const { surfaces } = useTheme();
   const losing = delta < 0;
+  // A 10% tint of the domain color reads correctly on both a white card and a
+  // near-black one, where the fixed pastel `journeySoft` would glare.
   return (
-    <View style={[styles.badge, { backgroundColor: losing ? palette.journeySoft : palette.track }]}>
+    <View style={[styles.badge, { backgroundColor: losing ? `${palette.journey}1A` : surfaces.track }]}>
       <Ionicons
         name={losing ? 'trending-down' : 'trending-up'}
         size={12}
-        color={losing ? palette.journey : palette.textSecondary}
+        color={losing ? palette.journey : surfaces.textSecondary}
       />
-      <Text style={[styles.badgeLabel, { color: losing ? palette.journey : palette.textSecondary }]}>
+      <Text style={[styles.badgeLabel, { color: losing ? palette.journey : surfaces.textSecondary }]}>
         {delta} lb
       </Text>
     </View>
@@ -83,7 +88,6 @@ const styles = StyleSheet.create({
   },
   weight: {
     ...typography.title,
-    color: palette.text,
   },
   delta: {
     ...typography.captionMedium,

@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, Card, IconBadge, Screen, ScreenHeader, Stepper } from '../../../../components/ui';
 import { getFoodById } from '../../../../features/fuel/api';
-import { palette, spacing, typography } from '../../../../theme/tokens';
+import { spacing, typography } from '../../../../theme/tokens';
+import { useTheme } from '../../../../theme/ThemeProvider';
 
 const NUTRITION_LABELS = [
   ['totalCarbs', 'Total Carbs', 'g'],
@@ -18,12 +19,13 @@ export default function FoodDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [servings, setServings] = useState(1);
   const food = getFoodById(id);
+  const { surfaces } = useTheme();
 
   if (!food) {
     return (
       <Screen>
         <ScreenHeader title="Food" back />
-        <Text style={styles.missing}>This food is no longer available.</Text>
+        <Text style={[styles.missing, { color: surfaces.textTertiary }]}>This food is no longer available.</Text>
       </Screen>
     );
   }
@@ -34,19 +36,19 @@ export default function FoodDetail() {
 
       <View style={styles.hero}>
         <IconBadge icon="fast-food-outline" size={72} />
-        <Text style={styles.kcal}>{food.kcal * servings} kcal</Text>
-        <Text style={styles.perServing}>
+        <Text style={[styles.kcal, { color: surfaces.text }]}>{food.kcal * servings} kcal</Text>
+        <Text style={[styles.perServing, { color: surfaces.textTertiary }]}>
           {food.brand ? `${food.brand} · ` : ''}
           {food.perServing}
         </Text>
       </View>
 
       <Card>
-        <Text style={styles.sectionTitle}>NUTRITIONAL COMPONENTS</Text>
+        <Text style={[styles.sectionTitle, { color: surfaces.textTertiary }]}>NUTRITIONAL COMPONENTS</Text>
         {NUTRITION_LABELS.map(([key, label, unit]) => (
-          <View key={key} style={styles.nutritionRow}>
-            <Text style={styles.nutritionLabel}>{label}</Text>
-            <Text style={styles.nutritionValue}>
+          <View key={key} style={[styles.nutritionRow, { borderBottomColor: surfaces.border }]}>
+            <Text style={[styles.nutritionLabel, { color: surfaces.textSecondary }]}>{label}</Text>
+            <Text style={[styles.nutritionValue, { color: surfaces.text }]}>
               {food.nutrition[key] * servings}
               {unit}
             </Text>
@@ -56,7 +58,7 @@ export default function FoodDetail() {
 
       <View style={styles.servingRow}>
         <Stepper value={servings} onChange={setServings} suffix={servings === 1 ? 'serving' : 'servings'} />
-        <Text style={styles.total}>{food.kcal * servings} kcal total</Text>
+        <Text style={[styles.total, { color: surfaces.text }]}>{food.kcal * servings} kcal total</Text>
       </View>
 
       <Button label="+ Add to Log" onPress={() => router.back()} />
@@ -72,16 +74,13 @@ const styles = StyleSheet.create({
   },
   kcal: {
     ...typography.title,
-    color: palette.text,
     marginTop: spacing.s,
   },
   perServing: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
   sectionTitle: {
     ...typography.micro,
-    color: palette.textTertiary,
     letterSpacing: 0.8,
     marginBottom: spacing.s,
   },
@@ -90,15 +89,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.s,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: palette.hairline,
   },
   nutritionLabel: {
     ...typography.body,
-    color: palette.textSecondary,
   },
   nutritionValue: {
     ...typography.bodyMedium,
-    color: palette.text,
   },
   servingRow: {
     flexDirection: 'row',
@@ -107,11 +103,9 @@ const styles = StyleSheet.create({
   },
   total: {
     ...typography.bodyMedium,
-    color: palette.text,
   },
   missing: {
     ...typography.body,
-    color: palette.textTertiary,
     textAlign: 'center',
     marginTop: spacing.xxxl,
   },

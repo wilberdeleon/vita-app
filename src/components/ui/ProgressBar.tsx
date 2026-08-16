@@ -40,6 +40,13 @@ export function ProgressBar({ progress, color = palette.primary, height = 8 }: P
 
 const styles = StyleSheet.create({
   track: {
+    /**
+     * Deliberately theme-invariant, unlike every other surface in the app.
+     * The approved Home dashboard shows this pale track under the gold
+     * journey bar and the macro bars in dark mode, so it is the reference
+     * treatment, not an oversight — theming it would change Home. Every
+     * other screen's progress bars match Home by leaving it alone.
+     */
     backgroundColor: palette.track,
     borderRadius: radii.pill,
     overflow: 'hidden',

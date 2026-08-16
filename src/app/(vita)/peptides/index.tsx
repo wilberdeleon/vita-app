@@ -4,29 +4,33 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, Card, ProgressBar, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
 import { getPeptideToday } from '../../../features/peptides/api';
 import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 
 export default function PeptideLog() {
   const today = getPeptideToday();
   const progress = today.logged / today.goal;
+  const { surfaces } = useTheme();
 
   return (
     <Screen>
       <ScreenHeader title="Peptide Log" back />
 
       <Card>
-        <Text style={styles.count}>
+        <Text style={[styles.count, { color: surfaces.text }]}>
           {today.logged} / {today.goal} logged
         </Text>
-        <Text style={styles.hint}>Track your peptides and stay consistent.</Text>
+        <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
+          Track your peptides and stay consistent.
+        </Text>
       </Card>
 
       <SectionHeader title="Today's Goal" />
       <Card style={styles.goalCard}>
         <View style={styles.goalRow}>
-          <Text style={styles.goalLabel}>
+          <Text style={[styles.goalLabel, { color: surfaces.text }]}>
             {today.logged} / {today.goal}
           </Text>
-          <Text style={styles.percent}>{Math.round(progress * 100)}%</Text>
+          <Text style={[styles.percent, { color: surfaces.textSecondary }]}>{Math.round(progress * 100)}%</Text>
         </View>
         <ProgressBar progress={progress} color={palette.peptide} />
       </Card>
@@ -37,10 +41,10 @@ export default function PeptideLog() {
           <Ionicons
             name={slot.logged > 0 ? 'checkmark-circle' : 'ellipse-outline'}
             size={22}
-            color={slot.logged > 0 ? palette.peptide : palette.textTertiary}
+            color={slot.logged > 0 ? palette.peptide : surfaces.textTertiary}
           />
-          <Text style={styles.slotLabel}>{slot.label}</Text>
-          <Text style={styles.slotValue}>{slot.logged} logged</Text>
+          <Text style={[styles.slotLabel, { color: surfaces.text }]}>{slot.label}</Text>
+          <Text style={[styles.slotValue, { color: surfaces.textTertiary }]}>{slot.logged} logged</Text>
         </Card>
       ))}
 
@@ -52,12 +56,10 @@ export default function PeptideLog() {
 const styles = StyleSheet.create({
   count: {
     ...typography.heading,
-    color: palette.text,
     marginBottom: spacing.xs,
   },
   hint: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
   goalCard: {
     gap: spacing.m,
@@ -69,11 +71,9 @@ const styles = StyleSheet.create({
   },
   goalLabel: {
     ...typography.heading,
-    color: palette.text,
   },
   percent: {
     ...typography.captionMedium,
-    color: palette.textSecondary,
   },
   slotRow: {
     flexDirection: 'row',
@@ -83,11 +83,9 @@ const styles = StyleSheet.create({
   },
   slotLabel: {
     ...typography.bodyMedium,
-    color: palette.text,
     flex: 1,
   },
   slotValue: {
     ...typography.caption,
-    color: palette.textTertiary,
   },
 });
