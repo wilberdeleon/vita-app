@@ -54,7 +54,7 @@ FoodEntry[]  →  DailyNutritionState  →  pure selectors  →  Fuel + Home
 - Copy `.env.example` to `.env` (git-ignored) and fill in values.
 - Only publishable keys use the `EXPO_PUBLIC_` prefix (they ship inside the app bundle). Real secrets live server-side in Supabase edge functions.
 
-## Known mocks (as of Sprint 2, slice 2.3)
+## Known mocks (as of Sprint 2, slice 2.4)
 
 Recorded explicitly so a screen showing real data next to a screen showing fixtures is never mistaken for a bug — or for working functionality.
 
@@ -62,6 +62,7 @@ Recorded explicitly so a screen showing real data next to a screen showing fixtu
 |---|---|
 | Food entries, daily totals, meal grouping, targets | **Real.** Persisted via `src/lib/nutrition`; verified across a full app restart. |
 | Food Detail (serving/quantity/meal → log) | **Real**, and provider-agnostic — consumes the normalized model only. |
+| Editing a logged entry (serving/quantity/meal) | **Real.** Updates in place; never mutates the food definition. |
 | Food Search, Recent, Favorites | Fixture catalog, normalized through `features/fuel/fixtureCatalog.ts` and labelled `source: 'vita-fixture'`. Replaced by the provider layer in slice 2.6. |
 | Add Manually, custom foods (My Foods), delete + Undo | **Real.** Persisted. |
 | Barcode scanner | Static drawing, no camera. Later in Sprint 2. |

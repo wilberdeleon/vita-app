@@ -164,7 +164,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.1 | Nutrition Foundation | Model, pure calculations, persistence behind a repository, `NutritionProvider`; Fuel reads real state | 🟡 Built, pending founder review |
 | 2.2 | Core Logging | Manual food → custom food → entry → meal → daily totals; delete + Undo | 🟡 Built, pending founder review |
 | 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log; dark-mode progress-track correction | 🟡 Built, pending founder review |
-| 2.4 | Edit + Delete | Edit route, delete with Undo, immediate recalculation | ⬜ Planned |
+| 2.4 | Edit + Delete | Edit route reusing `PortionEditor`; delete + Undo preserved | 🟡 Built, pending founder review |
 | 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | ⬜ Planned |
 | 2.6 | Provider Layer + Search | Adapters, normalization, dedupe, ranking, cache, debounced search | ⬜ Planned |
 | 2.7 | Recent + Favorites | History-derived recents, persisted favorites, quick re-log | ⬜ Planned |
@@ -264,3 +264,37 @@ To make that true today rather than aspirationally, the placeholder catalog got 
 **Not yet true, by design:** Home's nutrition still comes from its own fixture (`733 calories remaining`, `107 / 160g` protein) and therefore does **not** agree with Fuel's real totals. Home Integration is slice 2.5. Fuel-internal consistency — day total vs. meal subtotals vs. macros — is verified above.
 
 **Serving selection is architecturally present but visually unexercised:** custom and fixture foods each carry exactly one serving today, so `PortionEditor` correctly renders no picker. The multi-serving branch ships with real provider foods in slice 2.6 and has not been seen on screen yet.
+
+### Slice 2.4 — Edit + Delete 🟡
+
+**Objective:** correct an existing log entry — serving, quantity, meal — without creating duplicate data or breaking totals.
+
+**One editor, not two.** The edit route reuses `PortionEditor`, `NutritionSummary`, `NutritionDetailList`, `nutritionForServing()`, and the shared formatters. This is exactly why `PortionEditor` was extracted in slice 2.3 rather than built inline: the add and edit flows must never drift apart on serving arithmetic, and two editors would have guaranteed that they eventually did.
+
+**Entry identity is preserved.** Editing calls `updateEntry(id, changes)` with only the mutable fields — `meal`, `serving`, `nutrition`. `id`, `logDate`, `loggedAt`, and `foodRef` are untouched, so an edited entry is still the same eating event rather than a delete-and-recreate. That matters once sync and history exist. `logDate` is structurally unchangeable: `updateEntry`'s type is `Partial<Omit<FoodEntry, 'id' | 'logDate'>>`, so a date can't be reassigned by accident.
+
+**The food definition is never touched.** Editing an entry to 2 servings does not rewrite "Protein Oats" to 600 kcal per serving. Verified on device: after editing one entry through 2 servings → 0.5 servings → a meal move, reopening the editor still resolves 300 kcal / 24g / 40g / 7g per serving from the definition.
+
+**New pure helpers** (`model/foods.ts`): `servingFromEntry()` reconstructs a one-serving option from an entry by dividing its snapshot back out by quantity; `editableServings()` picks what to offer in three cases — the food resolves and a serving matches (offer the food's set), the food resolves but nothing matches (keep the entry's own serving first so the stored value is never silently rewritten), or the food is gone entirely (the entry's own serving is all there is). **This is the snapshot design paying off:** an entry stays fully editable after its custom food is deleted or a provider result falls out of cache.
+
+**Entry point.** Tapping a log row opens the editor — the interaction the row's card styling already implies. No chevron was added: value + delete + chevron is three trailing elements competing in one row. The one-tap `×` delete from slice 2.2 is untouched, and the editor carries a secondary "Remove from log" for parity.
+
+**Cancel is safe by construction.** The editor holds serving/quantity/meal in local state and writes nothing until Save, so backing out cannot partially persist.
+
+**Test results — all seven pass, driven on device:**
+
+| Test | Result |
+|---|---|
+| A — Quantity edit, 1 → 2 servings | 600 kcal, 48/80/14; day total 300+600 → 1,200. **One entry, no duplicate.** |
+| B — Fractional edit, 2 → 0.5 | 150 kcal, 12/20/**3.5**; centralized rounding intact. Also proves per-serving nutrition was correctly recovered from a 2-serving snapshot. |
+| C — Meal move, Breakfast → Lunch | Breakfast section disappeared, `LUNCH · 750 KCAL` absorbed both entries, **daily total unchanged at 750** with identical macros. |
+| D — Cancel | Changed 1 → 2, backed out; stored entry still 1 serving / 300 kcal. Repeated later in light mode with the same result. |
+| E — Persistence | Killed Expo Go and relaunched; edited values (0.5 × 1 serving, Lunch) survived. |
+| F — Delete + Undo | Entry removed, totals fell immediately; Undo restored it **in its original position** with identical serving label, quantity, meal, and nutrition. |
+| G — Permanent delete | Deleted, let the 6s window expire, killed and relaunched — still gone (600 kcal, one entry). |
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` clean · iOS bundle exported with zero errors · grep confirms no new raw light-only `palette` surface reads. Light and Dark both verified on the new screen.
+
+**Flagged, not expanded (per the scope instruction):** the editor seeds `meal` from the entry rather than `defaultMealForTime()` — confirmed on device (Lunch stayed selected at 2:19 AM, when the time-of-day default would have been Breakfast). Two things the architecture *could* support but that were deliberately left out: editing an entry's **date** (no history UI exists yet, and it would need a date picker), and stamping an **`editedAt`** timestamp (useful for future sync conflict resolution, but it changes the persisted shape and belongs with the Supabase work).
+
+**Unchanged and still true:** Home's nutrition remains its own fixture, so Home ↔ Fuel totals still disagree. That is slice 2.5.

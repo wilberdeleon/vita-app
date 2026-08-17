@@ -47,8 +47,10 @@ export {
 export {
   createCustomFood,
   createEntry,
+  editableServings,
   entryServingLabel,
   newId,
+  servingFromEntry,
   servingLabel,
   type CreateEntryInput,
   type CustomFoodInput,

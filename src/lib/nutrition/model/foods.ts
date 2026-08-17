@@ -119,6 +119,58 @@ export function createEntry({ food, servingIndex, quantity, meal, logDate }: Cre
 }
 
 /**
+ * Reconstructs a one-serving option from a logged entry alone.
+ *
+ * An entry stores nutrition already multiplied by quantity, so dividing back
+ * out recovers what a single serving was worth at the moment it was logged.
+ * That is what lets an entry stay editable after its food definition is
+ * gone — a deleted custom food, or a provider result that is no longer
+ * cached. The snapshot design pays off here: history is self-sufficient.
+ */
+export function servingFromEntry(entry: FoodEntry): ServingOption {
+  const divisor = entry.serving.quantity > 0 ? entry.serving.quantity : 1;
+  return {
+    label: entry.serving.label,
+    quantity: 1,
+    unit: entry.serving.unit,
+    ...(entry.serving.gramWeight !== undefined
+      ? { gramWeight: entry.serving.gramWeight / divisor }
+      : {}),
+    nutrition: scaleNutrition(entry.nutrition, 1 / divisor),
+  };
+}
+
+/**
+ * The serving options to offer when editing an entry, plus which one is
+ * currently selected.
+ *
+ * Three cases, in order of preference:
+ *  1. The food resolves and one of its servings matches the entry — offer
+ *     the food's full set, selected on the match.
+ *  2. The food resolves but nothing matches (its servings changed since the
+ *     entry was logged) — keep the entry's own serving as the first option
+ *     so the stored value is never silently rewritten, then the rest.
+ *  3. The food is gone — the entry's own serving is all there is.
+ */
+export function editableServings(
+  entry: FoodEntry,
+  food: VitaFood | undefined,
+): { servings: ServingOption[]; selectedIndex: number } {
+  const own = servingFromEntry(entry);
+  if (!food || food.servings.length === 0) {
+    return { servings: [own], selectedIndex: 0 };
+  }
+
+  const matched = food.servings.findIndex(
+    (option) => option.label === entry.serving.label && option.unit === entry.serving.unit,
+  );
+  if (matched >= 0) {
+    return { servings: food.servings, selectedIndex: matched };
+  }
+  return { servings: [own, ...food.servings], selectedIndex: 0 };
+}
+
+/**
  * How an entry's serving reads in the log: "1 serving", "2 × 1 cup".
  * A single serving doesn't need a multiplier in front of it.
  */
