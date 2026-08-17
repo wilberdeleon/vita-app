@@ -33,6 +33,18 @@ export {
 
 export { defaultMealForTime, mealSlotIcon } from './model/mealSlots';
 
+export { MACROS, type MacroDescriptor, type MacroKey } from './model/macros';
+
+export {
+  createCustomFood,
+  createEntry,
+  entryServingLabel,
+  newId,
+  servingLabel,
+  type CreateEntryInput,
+  type CustomFoodInput,
+} from './model/foods';
+
 export {
   EMPTY_NUTRITION,
   addNutrition,
@@ -51,8 +63,12 @@ export {
   type MealSummary,
 } from './model/nutrition';
 
-export type { FoodLogRepository } from './data/FoodLogRepository';
-export { asyncStorageFoodLogRepository } from './data/asyncStorageRepository';
+export type {
+  CustomFoodRepository,
+  FoodLogRepository,
+  NutritionRepository,
+} from './data/FoodLogRepository';
+export { asyncStorageNutritionRepository } from './data/asyncStorageRepository';
 
 export { NutritionProvider, useNutrition } from './state/NutritionProvider';
 export { useDailyNutrition, type DailyNutrition } from './state/useDailyNutrition';

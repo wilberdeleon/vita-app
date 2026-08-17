@@ -14,7 +14,7 @@
 2. Structural components default to **neutral ink**; domain flows pass their domain color explicitly ([[Color System]]).
 3. No new custom styling without approval — compose from primitives and tokens.
 
-## UI primitives — `src/components/ui/` (19)
+## UI primitives — `src/components/ui/` (20)
 
 | Primitive | Job |
 |---|---|
@@ -37,6 +37,7 @@
 | `Stepper` | Increment/decrement control |
 | `PressableScale` | Press feedback wrapper (spring scale 0.97–0.98) |
 | `EmptyState` | Shared empty state — outline glyph, title, optional body. Deliberately quiet; no guilt mechanics (Sprint 2, slice 2.1) |
+| `Toast` | Confirmation pill above the dock with optional Undo. `ToastProvider` + `useToast()` (Sprint 2, slice 2.2) |
 
 All exported through `src/components/ui/index.ts`.
 

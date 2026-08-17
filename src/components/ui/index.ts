@@ -17,3 +17,4 @@ export { SegmentedTabs } from './SegmentedTabs';
 export { StatBar } from './StatBar';
 export { Stepper } from './Stepper';
 export { TextField } from './TextField';
+export { ToastProvider, useToast, type ToastOptions } from './Toast';

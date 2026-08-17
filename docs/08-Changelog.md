@@ -6,6 +6,8 @@ Single source of truth for release history and completed work.
 
 ## Unreleased
 
+- 2026-08-17 — **Sprint 2 slice 2.2, Core Logging:** manual food entry is functional — a controlled form that creates a reusable custom food in My Foods, logs it to a chosen meal, and confirms with an Undo toast. Food Log is meal-grouped with real entry rows, per-meal subtotals, and delete-with-Undo. New `Toast` primitive; `Button` gains `disabled`. Verified end-to-end in Expo Go including survival across a full app restart. (Slice 2.2)
+
 - 2026-08-17 — **Sprint 2 slice 2.1, Nutrition Foundation:** new shared nutrition domain at `src/lib/nutrition/` — provider-independent model, pure calculation functions, `FoodLogRepository` behind an interface with an AsyncStorage implementation, and `NutritionProvider` mounted at the app root. Fuel and Food Log now render real logged entries instead of fixtures, and honestly show an empty day. Removed `FUEL_TODAY` (whose meal breakdown contradicted its own headline total, and whose water/peptide counts duplicated those features' fixtures) and `features/dashboard/mealIcons.ts` (a Fuel-only concern living in the Dashboard feature). Canonical meal vocabulary settled on `Snacks`. New `EmptyState` primitive. One new dependency: `@react-native-async-storage/async-storage`. (Slice 2.1)
 
 - 2026-08-17 — **Roadmap restructured** to the founders' 2026-08-17 plan: Fuel becomes Sprint 2, Journey splits into Sprints 3 and 4, Water & Peptides gain Sprint 5, Settings/Account gains Sprint 7, and Beta is replaced by Sprint 8 — Final Polish & Animations. Health and Premium are no longer scheduled; flagged rather than silently reconciled. Documentation only.

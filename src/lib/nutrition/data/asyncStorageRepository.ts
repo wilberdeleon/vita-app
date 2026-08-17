@@ -18,8 +18,10 @@ import {
   type MealSlot,
   type NutritionFacts,
   type NutritionTargets,
+  type ServingOption,
+  type VitaFood,
 } from '../model/types';
-import type { FoodLogRepository } from './FoodLogRepository';
+import type { NutritionRepository } from './FoodLogRepository';
 import { StorageKeys } from './keys';
 
 /* ── validation ─────────────────────────────────────────────────────── */
@@ -110,6 +112,54 @@ function parseEntry(value: unknown): FoodEntry | null {
   };
 }
 
+function parseServing(value: unknown): ServingOption | null {
+  if (!isRecord(value)) return null;
+  if (!isNonEmptyString(value.label) || !isFiniteNumber(value.quantity) || !isNonEmptyString(value.unit)) {
+    return null;
+  }
+  const nutrition = parseNutrition(value.nutrition);
+  if (!nutrition) return null;
+
+  return {
+    label: value.label,
+    quantity: value.quantity,
+    unit: value.unit,
+    ...(isFiniteNumber(value.gramWeight) ? { gramWeight: value.gramWeight } : {}),
+    nutrition,
+  };
+}
+
+function parseCustomFood(value: unknown): VitaFood | null {
+  if (!isRecord(value)) return null;
+  if (!isNonEmptyString(value.vitaId) || !isNonEmptyString(value.sourceId) || !isNonEmptyString(value.name)) {
+    return null;
+  }
+  if (!Array.isArray(value.servings)) return null;
+
+  const servings: ServingOption[] = [];
+  for (const candidate of value.servings) {
+    const serving = parseServing(candidate);
+    if (serving) servings.push(serving);
+  }
+  // A food with no usable serving cannot be logged, so it is not a food.
+  if (servings.length === 0) return null;
+
+  const defaultIndex = isFiniteNumber(value.defaultServingIndex) ? value.defaultServingIndex : 0;
+
+  return {
+    vitaId: value.vitaId,
+    source: 'vita-custom',
+    sourceId: value.sourceId,
+    name: value.name,
+    ...(isNonEmptyString(value.brand) ? { brand: value.brand } : {}),
+    ...(isNonEmptyString(value.barcode) ? { barcode: value.barcode } : {}),
+    servings,
+    defaultServingIndex: defaultIndex >= 0 && defaultIndex < servings.length ? defaultIndex : 0,
+    isCustom: true,
+    fetchedAt: isNonEmptyString(value.fetchedAt) ? value.fetchedAt : new Date(0).toISOString(),
+  };
+}
+
 function parseTargets(value: unknown): NutritionTargets | null {
   if (!isRecord(value)) return null;
   if (
@@ -144,7 +194,7 @@ async function readJson(key: string): Promise<unknown> {
 
 /* ── implementation ─────────────────────────────────────────────────── */
 
-export const asyncStorageFoodLogRepository: FoodLogRepository = {
+export const asyncStorageNutritionRepository: NutritionRepository = {
   async getEntries(logDate: LogDate): Promise<FoodEntry[]> {
     const parsed = await readJson(StorageKeys.foodLog(logDate));
     if (!Array.isArray(parsed)) return [];
@@ -177,5 +227,25 @@ export const asyncStorageFoodLogRepository: FoodLogRepository = {
 
   async saveTargets(targets: NutritionTargets): Promise<void> {
     await AsyncStorage.setItem(StorageKeys.targets, JSON.stringify(targets));
+  },
+
+  async getCustomFoods(): Promise<VitaFood[]> {
+    const parsed = await readJson(StorageKeys.myFoods);
+    if (!Array.isArray(parsed)) return [];
+
+    const foods: VitaFood[] = [];
+    for (const candidate of parsed) {
+      const food = parseCustomFood(candidate);
+      if (food) foods.push(food);
+    }
+    return foods;
+  },
+
+  async saveCustomFoods(foods: VitaFood[]): Promise<void> {
+    if (foods.length === 0) {
+      await AsyncStorage.removeItem(StorageKeys.myFoods);
+      return;
+    }
+    await AsyncStorage.setItem(StorageKeys.myFoods, JSON.stringify(foods));
   },
 };

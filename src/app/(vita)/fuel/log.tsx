@@ -1,17 +1,24 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   Button,
   Card,
   DailyProgressCard,
   EmptyState,
-  ListRow,
   Screen,
   ScreenHeader,
   SectionHeader,
+  useToast,
 } from '../../../components/ui';
-import { MACROS } from '../../../lib/nutrition/model/macros';
-import { mealSlotIcon, progress, roundForDisplay, useDailyNutrition } from '../../../lib/nutrition';
+import { LoggedEntryRow } from '../../../features/fuel/components/LoggedEntryRow';
+import {
+  MACROS,
+  progress,
+  roundForDisplay,
+  useDailyNutrition,
+  useNutrition,
+  type FoodEntry,
+} from '../../../lib/nutrition';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -19,14 +26,30 @@ const PENDING = '—';
 
 export default function FoodLog() {
   const today = useDailyNutrition();
+  const { removeEntry, restoreEntry } = useNutrition();
+  const { showToast } = useToast();
   const { surfaces } = useTheme();
 
   const consumed = roundForDisplay(today.nutrition);
   const pending = today.isLoading;
 
+  const handleDelete = (entry: FoodEntry) => {
+    // Captured before removal so Undo restores the entry to where it was,
+    // not to the end of the list.
+    const index = today.entries.findIndex((candidate) => candidate.id === entry.id);
+    void removeEntry(entry.id);
+    showToast({
+      message: `Removed · ${entry.name}`,
+      actionLabel: 'Undo',
+      onAction: () => {
+        void restoreEntry(entry, index);
+      },
+    });
+  };
+
   return (
     <Screen>
-      <ScreenHeader title="Log Food" back />
+      <ScreenHeader title="Food Log" back />
 
       <Card>
         <Text style={[styles.count, { color: surfaces.text }]}>
@@ -56,29 +79,32 @@ export default function FoodLog() {
         }))}
       />
 
-      <SectionHeader title="Today's Meals" />
       {pending ? null : today.isEmpty ? (
-        <EmptyState
-          icon="restaurant-outline"
-          title="No food logged yet"
-          body="Tap Log Food to add your first meal of the day."
-        />
+        <>
+          <SectionHeader title="Today's Meals" />
+          <EmptyState
+            icon="restaurant-outline"
+            title="No food logged yet"
+            body="Tap Log Food to add your first meal of the day."
+          />
+        </>
       ) : (
         /**
-         * Every slot shows, including empty ones — unlike the Fuel hub,
-         * which lists only what's been logged. This screen is where the day
-         * gets filled in, so a slot with nothing in it is information.
-         * Per-entry rows and tap-to-edit arrive with the Core Logging slice.
+         * Grouped by meal, and only meals with something in them. Rendering
+         * all four with three empty headings turns a short log into a mostly
+         * blank screen; the meal a food belongs to is chosen when it's added,
+         * so an empty slot here isn't a control, just noise.
          */
-        today.meals.map((meal) => (
-          <ListRow
-            key={meal.slot}
-            icon={mealSlotIcon(meal.slot)}
-            title={meal.slot}
-            subtitle={meal.itemCount === 0 ? 'Nothing logged' : meal.itemCount === 1 ? '1 item' : `${meal.itemCount} items`}
-            value={`${Math.round(meal.nutrition.calories)} kcal`}
-          />
-        ))
+        today.meals
+          .filter((meal) => meal.itemCount > 0)
+          .map((meal) => (
+            <View key={meal.slot} style={styles.mealGroup}>
+              <SectionHeader title={`${meal.slot} · ${Math.round(meal.nutrition.calories)} kcal`} />
+              {meal.entries.map((entry) => (
+                <LoggedEntryRow key={entry.id} entry={entry} onDelete={() => handleDelete(entry)} />
+              ))}
+            </View>
+          ))
       )}
 
       <Button label="+ Log Food" onPress={() => router.push('/fuel/add')} />
@@ -96,5 +122,8 @@ const styles = StyleSheet.create({
   },
   error: {
     ...typography.caption,
+  },
+  mealGroup: {
+    gap: spacing.s,
   },
 });

@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { ToastProvider } from '../components/ui';
 import { AuthProvider } from '../features/auth/AuthProvider';
 import { NutritionProvider } from '../lib/nutrition';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
@@ -26,7 +27,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <NutritionProvider>
-        <RootStack />
+        <ToastProvider>
+          <RootStack />
+        </ToastProvider>
       </NutritionProvider>
     </ThemeProvider>
   );

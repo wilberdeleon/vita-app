@@ -162,7 +162,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
 | 2.1 | Nutrition Foundation | Model, pure calculations, persistence behind a repository, `NutritionProvider`; Fuel reads real state | 🟡 Built, pending founder review |
-| 2.2 | Core Logging | Manual food → entry → meal → daily totals, edit/delete | ⬜ Planned |
+| 2.2 | Core Logging | Manual food → custom food → entry → meal → daily totals; delete + Undo | 🟡 Built, pending founder review |
 | 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log, confirmation | ⬜ Planned |
 | 2.4 | Edit + Delete | Edit route, delete with Undo, immediate recalculation | ⬜ Planned |
 | 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | ⬜ Planned |
@@ -202,3 +202,28 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 **Not yet proven.** The persistence **write** path is unexercised end-to-end — nothing in the app can create an entry until slice 2.2. Hydration (read) is confirmed working. Do not treat "logging survives a restart" as verified until 2.2 demonstrates it.
 
 **Found, not fixed — needs a founder decision.** With real data, an empty day shows every progress bar as a solid near-white track in dark mode, which reads as *100% complete* rather than 0%. The cause is the deliberately theme-invariant `ProgressBar` track (`palette.track`), approved 2026-08-16 as decision (3) precisely because changing it would change Home. It was harmless while the fixtures always showed partial progress. It is not harmless now. Flagged rather than changed, since the founders locked it. Also noted: a pre-existing `[Layout children]: No route named "(auth)"` warning in `src/app/_layout.tsx` (the route is `(auth)/sign-in`), unrelated to this slice.
+
+### Slice 2.2 — Core Logging 🟡
+
+**Objective:** make the write path real. Create a reusable custom food, log it to a meal, see every total move, remove it, undo the removal — all persisted. This is the slice that proves the engine 2.1 built.
+
+**What shipped.**
+
+- **Custom foods (My Foods).** `CustomFoodRepository` alongside `FoodLogRepository`, both satisfied by one `NutritionRepository` implementation. A custom food is a *definition*; the log is a record of eating it — so logging the same breakfast every day creates one food and many entries, never a duplicate food per log. `saveCustomFood` replaces by `vitaId` rather than appending, so a future edit updates the food instead of spawning a near-duplicate.
+- **Factories** (`model/foods.ts`, pure): `createCustomFood`, `createEntry`, `servingLabel`, `entryServingLabel`, `newId`. A food typed in by hand and a food from a provider produce the identical `VitaFood`, which is what keeps Favorites, Recents, and Food Detail source-agnostic later.
+- **Manual entry is real.** `manual.tsx` was nine uncontrolled inputs discarding everything on Save. It is now a controlled form: name, optional brand, serving size + unit, the four required macros, a collapsible "More nutrition" group (saturated fat, fiber, sugar, sodium), and a meal picker seeded from the time of day. Save is disabled until valid. Saving creates the food, logs one serving, shows a confirmation toast with Undo, and returns to the Food Log.
+- **Food Log is real.** Meal-grouped sections with per-entry rows, per-meal calorie subtotals, an explicit remove control on each row, and delete-with-Undo.
+- **`Toast` primitive** (20 total) — the confirmation surface. Not a modal and not a success screen: logging is meant to take seconds, and a screen to dismiss after every banana turns two taps into three. Carrying Undo also removes the need for a confirm dialog in front of a destructive action, which is both faster and kinder than asking "are you sure?" every time.
+- **`Button` gains `disabled`** (backward compatible; `PressableScale` already supported it).
+
+**Decisions worth recording.** (1) **Blank ≠ zero.** `parseAmount` returns `null` for an empty field, so an omitted sodium is stored as absent rather than `0 mg` — entering 0 g of fat is a fact, leaving it blank is not. (2) **The four macros are required, everything else optional** — the founder-stated minimum, without forcing a full nutrition label. (3) **Delete has no confirm dialog**, because Undo makes it reversible; a gate in front of a reversible action is friction without safety. (4) **Only meals with entries are rendered** in the Food Log — four headings over one entry turns a short log into a mostly blank screen, and the meal is chosen when the food is added, so an empty slot here is not a control.
+
+**Also corrected:** the Food Log screen's header said "Log Food", which is what `/fuel/add` is called. It now says "Food Log".
+
+**Validation.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` clean · iOS bundle exported with zero errors (3.29 MB) · **driven end-to-end in Expo Go on the simulator**: created "Protein Oats" (1 serving, 300 kcal / 24P / 40C / 7F, Breakfast) → Food Log showed `1 / 4 logged`, `300 / 2,000 kcal · 15%`, macro bars at 24/160g, 40/214g, 7/64g, and a `BREAKFAST · 300 KCAL` section → **killed Expo Go and relaunched: the entry survived**, and the Fuel hub showed the same numbers → deleted the entry (totals fell to 0 immediately) → Undo restored it.
+
+**Persistence is now proven end-to-end**, closing the gap flagged in slice 2.1.
+
+**One change made during verification:** the Undo toast window was 4.2s. A first Undo attempt missed it — that was a slow test rather than a defect, but 4.2s is genuinely tight for an action the user has to notice, read, decide on, and reach. Raised to 6s for toasts carrying an action; plain acknowledgements stay at 2.6s.
+
+**Still open from slice 2.1, unchanged:** the theme-invariant progress track still reads as a full bar at 0% in dark mode. Confirmed light-mode-only during this slice's verification — in light mode the pale track reads correctly as empty. Founder decision.
