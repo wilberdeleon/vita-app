@@ -1,16 +1,8 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, Screen, ScreenHeader, SectionHeader, TextField, useToast } from '../../../components/ui';
-import { MealPicker } from '../../../features/fuel/components/MealPicker';
-import {
-  createCustomFood,
-  createEntry,
-  defaultMealForTime,
-  useNutrition,
-  type MealSlot,
-  type NutritionFacts,
-} from '../../../lib/nutrition';
+import { Button, Card, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
+import { createCustomFood, useNutrition, type NutritionFacts } from '../../../lib/nutrition';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -27,10 +19,21 @@ function parseAmount(raw: string): number | null {
   return value;
 }
 
+/**
+ * Creates a food *definition* — it does not log anything.
+ *
+ * "What is this food?" and "how much did I eat, and when?" are separate
+ * questions, and keeping them separate is what makes a custom food reusable
+ * instead of something re-typed at every meal. So saving here hands off to
+ * Food Detail, which owns serving, quantity, and meal for every food in the
+ * app regardless of where it came from.
+ *
+ * (Slice 2.2 logged directly from this screen as the shortest path to
+ * proving the write path. Slice 2.3 restores the intended architecture.)
+ */
 export default function AddFoodManually() {
   const { surfaces } = useTheme();
-  const { saveCustomFood, addEntry, removeEntry } = useNutrition();
-  const { showToast } = useToast();
+  const { saveCustomFood } = useNutrition();
 
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
@@ -48,7 +51,6 @@ export default function AddFoodManually() {
   const [sugar, setSugar] = useState('');
   const [sodium, setSodium] = useState('');
 
-  const [meal, setMeal] = useState<MealSlot>(() => defaultMealForTime());
   const [saving, setSaving] = useState(false);
 
   const parsed = useMemo(() => {
@@ -106,25 +108,12 @@ export default function AddFoodManually() {
       nutrition,
     });
 
-    // The food is saved to My Foods first so it stays reusable even if the
-    // user immediately undoes the log — creating it and eating it are two
-    // separate facts.
     await saveCustomFood(food);
 
-    const entry = createEntry({ food, quantity: 1, meal });
-    await addEntry(entry);
-
-    showToast({
-      message: `Logged · ${food.name} — ${Math.round(nutrition.calories)} kcal`,
-      actionLabel: 'Undo',
-      onAction: () => {
-        void removeEntry(entry.id);
-      },
-    });
-
-    // Returns to the Food Log rather than the method picker, so the entry
-    // that was just created is the first thing on screen.
-    router.navigate('/fuel/log');
+    // `replace`, not `push`: the form has done its job, and backing out of
+    // Food Detail should return to the Log Food picker rather than to a
+    // filled-in form that would create a second copy of the same food.
+    router.replace(`/fuel/food/${encodeURIComponent(food.vitaId)}`);
   };
 
   return (
@@ -240,12 +229,9 @@ export default function AddFoodManually() {
         ) : null}
       </Card>
 
-      <SectionHeader title="Add to" />
-      <MealPicker value={meal} onChange={setMeal} />
-
-      <Button label="Save & Log" onPress={handleSave} disabled={!isValid || saving} />
+      <Button label="Save & Continue" onPress={handleSave} disabled={!isValid || saving} />
       <Text style={[styles.footnote, { color: surfaces.textTertiary }]}>
-        Saved to My Foods so you can log it again without retyping it.
+        Saved to My Foods so you can log it again without retyping it. You'll pick the serving and meal next.
       </Text>
     </Screen>
   );

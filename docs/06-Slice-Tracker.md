@@ -163,7 +163,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 |---|-------|-----------|--------|
 | 2.1 | Nutrition Foundation | Model, pure calculations, persistence behind a repository, `NutritionProvider`; Fuel reads real state | 🟡 Built, pending founder review |
 | 2.2 | Core Logging | Manual food → custom food → entry → meal → daily totals; delete + Undo | 🟡 Built, pending founder review |
-| 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log, confirmation | ⬜ Planned |
+| 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log; dark-mode progress-track correction | 🟡 Built, pending founder review |
 | 2.4 | Edit + Delete | Edit route, delete with Undo, immediate recalculation | ⬜ Planned |
 | 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | ⬜ Planned |
 | 2.6 | Provider Layer + Search | Adapters, normalization, dedupe, ranking, cache, debounced search | ⬜ Planned |
@@ -227,3 +227,40 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 **One change made during verification:** the Undo toast window was 4.2s. A first Undo attempt missed it — that was a slow test rather than a defect, but 4.2s is genuinely tight for an action the user has to notice, read, decide on, and reach. Raised to 6s for toasts carrying an action; plain acknowledgements stay at 2.6s.
 
 **Still open from slice 2.1, unchanged:** the theme-invariant progress track still reads as a full bar at 0% in dark mode. Confirmed light-mode-only during this slice's verification — in light mode the pale track reads correctly as empty. Founder decision.
+
+### Slice 2.3 — Food Detail + Servings 🟡
+
+**Objective:** make Food Detail the reusable decision point between a food *definition* and a food *log entry* — serving, quantity, meal — with nutrition recalculating live before anything is committed.
+
+**Food Detail consumes only the normalized model.** Nothing on the screen knows whether a food was typed in by hand, came from the interim fixture catalog, or (later) from USDA, Open Food Facts, FatSecret, or a barcode scan. That is the point of normalizing at the provider boundary rather than in the screen.
+
+To make that true today rather than aspirationally, the placeholder catalog got its own adapter (`features/fuel/fixtureCatalog.ts`) — a provider adapter in miniature, mapping `FoodItem` → `VitaFood`. Search, Recent, and Favorites now render normalized foods too. `FoodSource` gains an interim `'vita-fixture'` member so those foods carry honest provenance instead of masquerading as user-created; both the adapter and that member are deleted in slice 2.6 with nothing downstream changing. `features/fuel/api.ts` was removed — fully superseded.
+
+**Built for the edit flow, not just for adding.** `PortionEditor` (serving + quantity + meal) is its own component precisely because editing an existing entry needs the same three controls and the same arithmetic. Building it inline would have guaranteed a second, subtly different editor in slice 2.4.
+
+**Calculation is not duplicated.** The screen calls `nutritionForServing()` from the engine; the only screen-local logic is which serving is selected. Display rounding moved into a new `model/format.ts` — `formatCalories` (whole numbers), `formatAmount` (one decimal only when there is one), `formatServingCount`, `pluralizeUnit`. Half of 7 g fat renders as `3.5g`, not `4g`, because rounding that would be a visible lie at exactly the moment the user is checking the math.
+
+**Other changes.** `Stepper` gains `step`, `formatValue`, and a `quantize()` guard — floating-point steps otherwise drift 1.5 into 1.4999999999999998 after a few presses, which would then be *stored*. `FoodRow` lost its heart: it had no `onPress` and toggled nothing, the same deceptive-control problem as the barcode mock's gallery button. It returns as a working control in slice 2.7. Search/Recent/Favorites gained real empty states.
+
+**Manual flow restored to the intended architecture.** Slice 2.2 logged directly from the form as the shortest path to proving the write path. It now creates the food and hands off: `Add Manually → save custom food → Food Detail → serving/quantity/meal → Add to Log`. Navigation uses `replace`, not `push`, so backing out of Food Detail returns to the Log Food picker rather than a filled-in form that would create a second copy of the same food.
+
+### Progress-track correction (founder-approved refinement, 2026-08-17)
+
+**Refines, not reverses, the 2026-08-16 decision** that kept `ProgressBar`'s track deliberately theme-invariant. That decision was sound while every bar was fed by a fixture showing partial progress. Once real logging arrived, an empty day rendered a near-white bar on a near-black card — reading as *100% complete* rather than 0%. The founders reclassified this as a usability defect rather than an aesthetic preference and approved a minimal correction.
+
+**The change is one line:** the track resolves through `surfaces.track` instead of the `palette.track` literal. **Light mode is byte-identical** — `lightSurfaces.track` *is* `palette.track` (`#EFEDE9`), the same value the literal held. Only dark changes, to `rgba(255,255,255,0.12)`.
+
+**Home verified in dark mode.** All three of Home's `ProgressBar` consumers were checked on device: `JourneySection` (gold journey bar), `MacroRow` (protein/carbs/fat rows), and `MetricTile` (the 3px accents under Steps/Water/Workouts/Sleep/Streak). Every bar reads correctly, and Home is more legible than before — the near-white tracks had been competing with the content they sat under. No file under `src/features/dashboard/` was modified.
+
+**Validation.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` clean · iOS bundle exported with zero errors · grep confirms no new component reads a raw `palette` surface value.
+
+**Driven end-to-end in Expo Go on the simulator:**
+- Manual → Food Detail handoff works; the meal picker is gone from the form and the button reads "Save & Continue".
+- **Quantity math, all four cases exactly as specified:** 0.5 → `150 kcal / 12g / 20g / 3.5g` · 1 → `300 / 24 / 40 / 7` · 1.5 → `450 / 36 / 60 / 10.5` · 2 → `600 / 48 / 80 / 14`. The kicker pluralizes correctly (`0.5 SERVINGS`, `1 SERVING`).
+- **Two meals:** Breakfast 1 serving (300 kcal) + Lunch 2 servings (600 kcal) → `BREAKFAST · 300 KCAL`, `LUNCH · 600 KCAL`, day total `900 / 2,000 kcal · 45%`, macros `72 / 120 / 21`. Subtotals and macros reconcile with the grand total exactly.
+- **Persistence:** killed Expo Go and relaunched — both entries survived with correct quantities, meals, and the `2 × 1 serving` label.
+- **Themes:** Light and Dark both correct on Food Detail, Food Log, and Home.
+
+**Not yet true, by design:** Home's nutrition still comes from its own fixture (`733 calories remaining`, `107 / 160g` protein) and therefore does **not** agree with Fuel's real totals. Home Integration is slice 2.5. Fuel-internal consistency — day total vs. meal subtotals vs. macros — is verified above.
+
+**Serving selection is architecturally present but visually unexercised:** custom and fixture foods each carry exactly one serving today, so `PortionEditor` correctly renders no picker. The multi-serving branch ships with real provider foods in slice 2.6 and has not been seen on screen yet.

@@ -20,7 +20,19 @@ Founder-approved after Expo Go review on device. Do not reverse these casually.
 
 - **Card borders.** Cards carry a subtle hairline border in both themes. Light-mode drop shadows do essentially nothing against a near-black background, so in dark mode the border is what separates a card from the page — matching how Home's `GlassSurface` cards already read.
 - **Domain soft surfaces.** Tinted backings (the Journey add-photo circle, the Atlas orb, the weight delta badge) use a low-opacity tint of their domain color — `` `${palette.journey}1A` `` — instead of the fixed pastel `*Soft` values. The pastels are light-mode-only and glare as bright blobs on black. The `*Soft` tokens remain in `tokens.ts` for light-only contexts.
-- **Progress track.** `ProgressBar`'s track is *deliberately theme-invariant*, the one exception to the surfaces rule. The approved Home dashboard shows that pale track under the gold journey bar and the macro bars in dark mode, so it is the reference treatment. Every other screen matches Home by leaving it alone. **Do not "fix" this for token purity** — changing it would change Home, and that needs a deliberate design decision.
+- **Progress track.** ~~`ProgressBar`'s track is *deliberately theme-invariant*, the one exception to the surfaces rule.~~ **Superseded 2026-08-17 — see the refinement below.**
+
+### Progress track refined (founder-approved, 2026-08-17)
+
+The theme-invariant track held while every progress bar was fed by a fixture that always showed partial progress. Once real logging landed in Sprint 2, an empty day rendered a near-white bar across a near-black card — which reads as *100% complete*, not 0%. The founders reclassified this as a **usability defect rather than an aesthetic preference** and approved a minimal correction.
+
+`ProgressBar`'s track now resolves through `useTheme().surfaces.track`.
+
+- **Light mode is byte-identical.** `lightSurfaces.track` *is* `palette.track` (`#EFEDE9`) — the same value the removed literal held.
+- **Only dark changes**, to `rgba(255,255,255,0.12)`: visible enough to read as a track, quiet enough that the filled portion still clearly dominates.
+- **Home was verified on device** across all three of its consumers — `JourneySection` (gold journey bar), `MacroRow` (protein/carbs/fat), and `MetricTile` (the 3px accents). No file under `src/features/dashboard/` was modified, and Home reads better than before: the pale tracks had been competing with the content above them.
+
+This refines rather than reverses the 2026-08-16 decision — the principle that Home is the reference treatment still stands; what changed is that the reference itself was wrong once the data became real.
 
 ## Visual source of truth: Home/Dashboard
 

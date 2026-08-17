@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { palette, radii } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = {
   /** 0..1 */
@@ -12,6 +13,7 @@ type Props = {
 export function ProgressBar({ progress, color = palette.primary, height = 8 }: Props) {
   const clamped = Math.max(0, Math.min(1, progress));
   const anim = useRef(new Animated.Value(0)).current;
+  const { surfaces } = useTheme();
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -23,7 +25,7 @@ export function ProgressBar({ progress, color = palette.primary, height = 8 }: P
   }, [anim, clamped]);
 
   return (
-    <View style={[styles.track, { height, borderRadius: height / 2 }]}>
+    <View style={[styles.track, { height, borderRadius: height / 2, backgroundColor: surfaces.track }]}>
       <Animated.View
         style={[
           styles.fill,
@@ -41,13 +43,25 @@ export function ProgressBar({ progress, color = palette.primary, height = 8 }: P
 const styles = StyleSheet.create({
   track: {
     /**
-     * Deliberately theme-invariant, unlike every other surface in the app.
-     * The approved Home dashboard shows this pale track under the gold
-     * journey bar and the macro bars in dark mode, so it is the reference
-     * treatment, not an oversight — theming it would change Home. Every
-     * other screen's progress bars match Home by leaving it alone.
+     * Theme-aware since Sprint 2 slice 2.3 (founder-approved refinement of
+     * the 2026-08-16 decision, which had kept this deliberately
+     * theme-invariant).
+     *
+     * The pale track was fine while every bar was fed by a fixture that
+     * always showed partial progress. Once real logging arrived, an empty
+     * day rendered a near-white bar on a near-black card — which reads as
+     * *100% complete* rather than 0%. That is a usability defect, not an
+     * aesthetic preference, so the track now resolves through
+     * `surfaces.track`.
+     *
+     * Light mode is byte-identical: `lightSurfaces.track` IS `palette.track`
+     * (#EFEDE9), the same value this literal used. Only dark changes, to
+     * `rgba(255,255,255,0.12)` — visible enough to read as a track, quiet
+     * enough that the filled portion still clearly dominates.
+     *
+     * `backgroundColor` is applied inline in the component; this rule keeps
+     * only the shape.
      */
-    backgroundColor: palette.track,
     borderRadius: radii.pill,
     overflow: 'hidden',
   },

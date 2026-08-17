@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
+import { EmptyState, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
 import { FoodRow } from '../../../features/fuel/components/FoodRow';
-import { searchFoods } from '../../../features/fuel/api';
-import { spacing, typography } from '../../../theme/tokens';
-import { useTheme } from '../../../theme/ThemeProvider';
+import { searchFixtureFoods } from '../../../features/fuel/fixtureCatalog';
 
+/**
+ * Interim search over the placeholder catalog. Real multi-provider search —
+ * USDA + Open Food Facts, normalized, deduped, ranked, debounced — lands in
+ * slice 2.6. The results already flow through the normalized model, so that
+ * slice replaces the data source without touching this screen's shape.
+ */
 export default function SearchFood() {
-  const [query, setQuery] = useState('big mac');
-  const results = searchFoods(query);
-  const { surfaces } = useTheme();
+  const [query, setQuery] = useState('');
+  const results = searchFixtureFoods(query);
+  const hasQuery = query.trim().length > 0;
 
   return (
     <Screen>
@@ -19,28 +22,21 @@ export default function SearchFood() {
         onChangeText={setQuery}
         placeholder="Search foods"
         autoCorrect={false}
+        autoCapitalize="none"
         returnKeyType="search"
       />
       {results.length > 0 ? (
         <>
           <SectionHeader title="Results" />
           {results.map((food) => (
-            <FoodRow key={food.id} food={food} />
+            <FoodRow key={food.vitaId} food={food} />
           ))}
         </>
+      ) : hasQuery ? (
+        <EmptyState icon="search-outline" title="No matching foods" body="Try a different name, or add it manually." />
       ) : (
-        <Text style={[styles.empty, { color: surfaces.textTertiary }]}>
-          {query.trim() ? 'No foods matched your search.' : 'Search our database to log a food.'}
-        </Text>
+        <EmptyState icon="search-outline" title="Search for a food" body="Find something to log, then choose your serving." />
       )}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  empty: {
-    ...typography.caption,
-    textAlign: 'center',
-    marginTop: spacing.xxxl,
-  },
-});

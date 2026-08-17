@@ -22,8 +22,15 @@ export type MealSlot = 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
 /** Display and iteration order. The single place this sequence is defined. */
 export const MEAL_SLOTS: readonly MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
 
-/** Where a food came from. Kept on every food and every logged entry. */
-export type FoodSource = 'usda' | 'openfoodfacts' | 'fatsecret' | 'vita-custom';
+/**
+ * Where a food came from. Kept on every food and every logged entry.
+ *
+ * `vita-fixture` is interim: it labels the placeholder catalog still behind
+ * Search, Recent, and Favorites so those foods carry honest provenance
+ * rather than masquerading as user-created. It is removed when the provider
+ * layer replaces that catalog (slice 2.6).
+ */
+export type FoodSource = 'usda' | 'openfoodfacts' | 'fatsecret' | 'vita-custom' | 'vita-fixture';
 
 /**
  * Nutrition for a single unit of something — one serving, or one logged

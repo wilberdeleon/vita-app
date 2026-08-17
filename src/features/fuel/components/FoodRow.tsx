@@ -1,39 +1,35 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable } from 'react-native';
 import { ListRow } from '../../../components/ui';
-import { palette } from '../../../theme/tokens';
-import { useTheme } from '../../../theme/ThemeProvider';
-import type { FoodItem } from '../types';
+import { formatCalories, type VitaFood } from '../../../lib/nutrition';
 
 type Props = {
-  food: FoodItem;
-  /** Show a heart (Recent/Favorites) instead of the kcal + chevron. */
-  heart?: boolean;
+  food: VitaFood;
 };
 
-export function FoodRow({ food, heart = false }: Props) {
-  const { surfaces } = useTheme();
+/**
+ * One food in a list — search results, Recent, Favorites.
+ *
+ * Consumes the normalized model, so the same row renders a custom food, a
+ * fixture food, or (later) a USDA or FatSecret result with no per-source
+ * branching.
+ *
+ * The heart that used to sit here was removed in slice 2.3: it had no
+ * `onPress` and toggled nothing, which is the same deceptive-control problem
+ * as the gallery button on the barcode mock. It returns as a working control
+ * when Favorites becomes real (slice 2.7).
+ */
+export function FoodRow({ food }: Props) {
+  const serving = food.servings[food.defaultServingIndex] ?? food.servings[0];
+  const detail = [food.brand, serving?.label].filter(Boolean).join(' · ');
 
   return (
     <ListRow
       icon="fast-food-outline"
       title={food.name}
-      subtitle={food.brand ? `${food.brand} · ${food.kcal} kcal` : `${food.kcal} kcal`}
-      value={heart ? undefined : `${food.kcal} kcal`}
-      chevron={!heart}
-      onPress={() => router.push(`/fuel/food/${food.id}`)}
-      trailing={
-        heart ? (
-          <Pressable hitSlop={8}>
-            <Ionicons
-              name={food.favorite ? 'heart' : 'heart-outline'}
-              size={20}
-              color={food.favorite ? palette.primary : surfaces.textTertiary}
-            />
-          </Pressable>
-        ) : undefined
-      }
+      subtitle={detail || undefined}
+      value={serving ? `${formatCalories(serving.nutrition.calories)} kcal` : undefined}
+      chevron
+      onPress={() => router.push(`/fuel/food/${encodeURIComponent(food.vitaId)}`)}
     />
   );
 }

@@ -54,14 +54,15 @@ FoodEntry[]  →  DailyNutritionState  →  pure selectors  →  Fuel + Home
 - Copy `.env.example` to `.env` (git-ignored) and fill in values.
 - Only publishable keys use the `EXPO_PUBLIC_` prefix (they ship inside the app bundle). Real secrets live server-side in Supabase edge functions.
 
-## Known mocks (as of Sprint 2, slice 2.2)
+## Known mocks (as of Sprint 2, slice 2.3)
 
 Recorded explicitly so a screen showing real data next to a screen showing fixtures is never mistaken for a bug — or for working functionality.
 
 | Area | State |
 |---|---|
 | Food entries, daily totals, meal grouping, targets | **Real.** Persisted via `src/lib/nutrition`; verified across a full app restart. |
-| Food Search, Recent, Favorites, Food Detail | Fixture catalog (`features/fuel/mock.ts`). Replaced by the provider layer in slice 2.6. |
+| Food Detail (serving/quantity/meal → log) | **Real**, and provider-agnostic — consumes the normalized model only. |
+| Food Search, Recent, Favorites | Fixture catalog, normalized through `features/fuel/fixtureCatalog.ts` and labelled `source: 'vita-fixture'`. Replaced by the provider layer in slice 2.6. |
 | Add Manually, custom foods (My Foods), delete + Undo | **Real.** Persisted. |
 | Barcode scanner | Static drawing, no camera. Later in Sprint 2. |
 | **Water Log** | **Mock.** `getWaterToday()` returns a fixed `5 / 8 cups`; "+ Add Water" discards the amount. Tier 3 of Sprint 2. |

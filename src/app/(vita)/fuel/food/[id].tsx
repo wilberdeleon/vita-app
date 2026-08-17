@@ -1,67 +1,121 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Button, Card, IconBadge, Screen, ScreenHeader, Stepper } from '../../../../components/ui';
-import { getFoodById } from '../../../../features/fuel/api';
+import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
+import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
+import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
+import { getFixtureFood } from '../../../../features/fuel/fixtureCatalog';
+import {
+  createEntry,
+  defaultMealForTime,
+  formatServingCount,
+  nutritionForServing,
+  useNutrition,
+  type MealSlot,
+} from '../../../../lib/nutrition';
 import { spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
-const NUTRITION_LABELS = [
-  ['totalCarbs', 'Total Carbs', 'g'],
-  ['totalFat', 'Total Fat', 'g'],
-  ['saturatedFat', 'Saturated Fat', 'g'],
-  ['totalSugars', 'Total Sugars', 'g'],
-  ['protein', 'Protein', 'g'],
-  ['sodium', 'Sodium', 'mg'],
-] as const;
-
+/**
+ * The reusable decision point between a food *definition* and a food *log
+ * entry*: which serving, how many, which meal — with nutrition recalculating
+ * live before anything is committed.
+ *
+ * It consumes only the normalized `VitaFood` model. Nothing on this screen
+ * knows whether the food was typed in by hand, pulled from the interim
+ * fixture catalog, or (later) returned by USDA, Open Food Facts, FatSecret,
+ * or a barcode scan — which is the whole point of normalizing at the
+ * provider boundary rather than here.
+ */
 export default function FoodDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [servings, setServings] = useState(1);
-  const food = getFoodById(id);
+  const vitaId = decodeURIComponent(id ?? '');
+
+  const { findFood, addEntry, removeEntry } = useNutrition();
+  const { showToast } = useToast();
   const { surfaces } = useTheme();
 
-  if (!food) {
+  // User-created foods win over the fixture catalog: if both somehow carry
+  // an id, the one the user made is the one they meant.
+  const food = findFood(vitaId) ?? getFixtureFood(vitaId);
+
+  const [servingIndex, setServingIndex] = useState(food?.defaultServingIndex ?? 0);
+  const [quantity, setQuantity] = useState(1);
+  const [meal, setMeal] = useState<MealSlot>(() => defaultMealForTime());
+  const [saving, setSaving] = useState(false);
+
+  const serving = food?.servings[servingIndex] ?? food?.servings[0];
+
+  // The single calculation on this screen, and it delegates: scaling lives
+  // in the nutrition engine so Food Detail, the log, and the future edit
+  // screen can never drift apart on the arithmetic.
+  const preview = useMemo(
+    () => (serving ? nutritionForServing(serving, quantity) : null),
+    [serving, quantity],
+  );
+
+  if (!food || !serving || !preview) {
     return (
       <Screen>
         <ScreenHeader title="Food" back />
-        <Text style={[styles.missing, { color: surfaces.textTertiary }]}>This food is no longer available.</Text>
+        <EmptyState
+          icon="help-circle-outline"
+          title="This food is no longer available"
+          body="It may have been removed. Try searching for it again."
+        />
       </Screen>
     );
   }
+
+  const portionLabel = formatServingCount(quantity, serving.unit);
+  const subtitle = [food.brand, food.restaurant].filter(Boolean).join(' · ');
+
+  const handleAdd = async () => {
+    if (saving) return;
+    setSaving(true);
+
+    const entry = createEntry({ food, servingIndex, quantity, meal });
+    await addEntry(entry);
+
+    showToast({
+      message: `Logged · ${food.name} — ${Math.round(entry.nutrition.calories)} kcal`,
+      actionLabel: 'Undo',
+      onAction: () => {
+        void removeEntry(entry.id);
+      },
+    });
+
+    // Back to the Food Log so the entry that was just created is on screen,
+    // rather than to whichever picker the user arrived through.
+    router.navigate('/fuel/log');
+  };
 
   return (
     <Screen>
       <ScreenHeader title={food.name} back />
 
       <View style={styles.hero}>
-        <IconBadge icon="fast-food-outline" size={72} />
-        <Text style={[styles.kcal, { color: surfaces.text }]}>{food.kcal * servings} kcal</Text>
-        <Text style={[styles.perServing, { color: surfaces.textTertiary }]}>
-          {food.brand ? `${food.brand} · ` : ''}
-          {food.perServing}
-        </Text>
+        <IconBadge icon="fast-food-outline" size={64} />
+        <Text style={[styles.name, { color: surfaces.text }]}>{food.name}</Text>
+        {subtitle ? <Text style={[styles.subtitle, { color: surfaces.textTertiary }]}>{subtitle}</Text> : null}
       </View>
 
-      <Card>
-        <Text style={[styles.sectionTitle, { color: surfaces.textTertiary }]}>NUTRITIONAL COMPONENTS</Text>
-        {NUTRITION_LABELS.map(([key, label, unit]) => (
-          <View key={key} style={[styles.nutritionRow, { borderBottomColor: surfaces.border }]}>
-            <Text style={[styles.nutritionLabel, { color: surfaces.textSecondary }]}>{label}</Text>
-            <Text style={[styles.nutritionValue, { color: surfaces.text }]}>
-              {food.nutrition[key] * servings}
-              {unit}
-            </Text>
-          </View>
-        ))}
-      </Card>
+      <NutritionSummary nutrition={preview} portionLabel={portionLabel} />
 
-      <View style={styles.servingRow}>
-        <Stepper value={servings} onChange={setServings} suffix={servings === 1 ? 'serving' : 'servings'} />
-        <Text style={[styles.total, { color: surfaces.text }]}>{food.kcal * servings} kcal total</Text>
-      </View>
+      <PortionEditor
+        servings={food.servings}
+        servingIndex={servingIndex}
+        onServingChange={setServingIndex}
+        quantity={quantity}
+        onQuantityChange={setQuantity}
+        meal={meal}
+        onMealChange={setMeal}
+      />
 
-      <Button label="+ Add to Log" onPress={() => router.back()} />
+      <NutritionDetailList nutrition={preview} />
+
+      <Button label="+ Add to Log" onPress={handleAdd} disabled={saving} />
     </Screen>
   );
 }
@@ -72,41 +126,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginVertical: spacing.s,
   },
-  kcal: {
+  name: {
     ...typography.title,
     marginTop: spacing.s,
-  },
-  perServing: {
-    ...typography.caption,
-  },
-  sectionTitle: {
-    ...typography.micro,
-    letterSpacing: 0.8,
-    marginBottom: spacing.s,
-  },
-  nutritionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.s,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  nutritionLabel: {
-    ...typography.body,
-  },
-  nutritionValue: {
-    ...typography.bodyMedium,
-  },
-  servingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  total: {
-    ...typography.bodyMedium,
-  },
-  missing: {
-    ...typography.body,
     textAlign: 'center',
-    marginTop: spacing.xxxl,
+  },
+  subtitle: {
+    ...typography.caption,
+    textAlign: 'center',
   },
 });

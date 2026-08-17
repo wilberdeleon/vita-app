@@ -36,6 +36,15 @@ export { defaultMealForTime, mealSlotIcon } from './model/mealSlots';
 export { MACROS, type MacroDescriptor, type MacroKey } from './model/macros';
 
 export {
+  formatAmount,
+  formatCalories,
+  formatMacros,
+  formatQuantity,
+  formatServingCount,
+  pluralizeUnit,
+} from './model/format';
+
+export {
   createCustomFood,
   createEntry,
   entryServingLabel,
