@@ -19,9 +19,17 @@ The nine-slice plan originally defined on [[Roadmap]] was superseded mid-sprint 
 
 The two prerequisite decisions that gated this sprint's UI work resolved 2026-07-09 (VITA supports Light + Dark via semantic tokens; Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]) both shipped as part of the theme system above.
 
-## Sprint 2 — Fuel (next, in progress)
+## Sprint 2 — Fuel — 🟡 In progress (started 2026-08-17)
 
-**Reprioritized ahead of Journey** (the official [[Roadmap]]'s original Sprint 2) per founder direction, 2026-08-01/02 — see [[Roadmap]] for the flagged sequencing note. Fuel inherits the theme system, `GlassSurface` card language, and spacing/typography patterns established in Sprint 1 rather than building its own visual language from scratch.
+**Founder-authorized 2026-08-17.** Branch: `sprint-2-fuel`. The 2026-08-17 roadmap restructure makes Fuel officially Sprint 2 (it was Sprint 3 under the 2026-07-09 plan) — see [[Roadmap]] and [[Decision Log]].
+
+**Objective:** turn Fuel from presentation-only screens into a real nutrition tracking system. Fuel inherits the theme system, card language, and spacing/typography patterns established in Sprint 1 rather than building its own — the approved visual design is locked, and Fuel is not redesigned.
+
+**Approved architecture — prove the engine before the network.** The nutrition foundation (food entries → daily state → calculated totals → persistence) is built and proven *before* external food providers are introduced. The shared nutrition domain is promoted to `src/lib/nutrition/` so neither [[Fuel]] nor [[Dashboard]] imports the other's internals, per CLAUDE.md rule 4 — the same promotion [[Journey Stages]] received.
+
+**Slice sequence:** Nutrition Foundation → Core Logging → Home Integration → Recents/Favorites/Custom Foods → Provider Layer → Food Search → Barcode Scanner → Edge Cases & Polish → Final Verification. Live progress: repo `docs/06-Slice-Tracker.md`.
+
+**Binding constraints:** do not upgrade the Expo SDK · no provider secrets in the client · verify provider licensing before caching third-party data · [[Water]] and [[Peptides]] preserved but not expanded · the approved visual design stays locked.
 
 ### Definition of done (from the Build Handbook)
 

@@ -6,16 +6,16 @@
 
 ---
 
-## Snapshot — 2026-08-16
+## Snapshot — 2026-08-17
 
-**Sprint 0 — Foundation ✅ Completed** per the official roadmap issued 2026-07-09 (see [[Roadmap]]). **Sprint 1 — Dashboard ✅ Completed** (2026-08-02) — see [[Current Sprint]] for what shipped. **App-Wide Visual Consistency Pass ✅ Completed** (2026-08-16). **Sprint 2 — Fuel is next**, reprioritized ahead of Journey per founder direction. Not started.
+**Sprint 2 — Fuel is 🟡 in progress** (founder-authorized 2026-08-17, branch `sprint-2-fuel`). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), and the App-Wide Visual Consistency Pass (2026-08-16). **The official roadmap was restructured 2026-08-17** — Fuel is now formally Sprint 2 (was 3), Journey splits into Sprints 3 and 4, and Water/Peptides and Settings finally get sprints of their own. See [[Roadmap]] and [[Decision Log]].
 
 **Theming is app-wide.** Light, Dark, and System work across every existing screen; System follows the device appearance live. Home/Dashboard is the documented visual source of truth — see [[Design Bible]], [[Color System]], [[Decision Log]]. The pass was a design-system migration, **not** a feature sprint: no routes, tabs, sections, data, navigation, interactions, or copy changed. Detail lives in the repo's `docs/06-Slice-Tracker.md`; this page does not duplicate it.
 
 The entire application shell exists and runs in the iOS Simulator via Expo Go — this is the code-level substrate Sprint 0 completed on top of:
 
 - ✅ Repository scaffolded with approved architecture (`wilberdeleon/vita-app`)
-- ✅ Theme tokens + reusable UI kit (15 primitives)
+- ✅ Theme tokens + reusable UI kit (18 primitives, all theme-aware)
 - ✅ Floating dock, routing shell, auth gate (mock), Supabase client architecture
 - ✅ Dashboard, Fuel + full Food Log flow (8 screens), Water, Peptides, My Journey (3 tabs, hand-drawn SVG charts), Atlas work-in-progress screen, Settings shell
 - ✅ Official Vita branding: brand palette, VITA mark, app icon + splash, time-of-day greeting
@@ -31,11 +31,11 @@ The entire application shell exists and runs in the iOS Simulator via Expo Go �
 | Data | Mock fixtures served through `api.ts` boundaries — no live data |
 | Auth | Mock signed-in user; gate logic real, provider internals fake |
 | Supabase | Client architecture in place; **not connected** (no migrations, no edge functions) |
-| Barcode scanner | Static visual mock; real camera ships in Sprint 3 (was "Sprint 2" under the old numbering) |
+| Barcode scanner | Static visual mock; real camera ships in **Sprint 2 — Fuel**, now in progress |
 
 ## What's next
 
-**Sprint 2 — Fuel**, reprioritized ahead of Journey (the [[Roadmap]]'s original Sprint 2 ordering) per founder direction, 2026-08-01/02 — see [[Roadmap]] for the flagged note. Fuel inherits the theme system and card/spacing/typography language Sprint 1 established rather than building its own.
+**Sprint 2 — Fuel**, in progress. The approved architecture proves the nutrition engine — food entries, daily state, calculated totals, persistence, and one shared domain in `src/lib/nutrition/` driving both [[Fuel]] and [[Dashboard]] — before external food providers (FatSecret, USDA FoodData Central, Open Food Facts) are introduced. Real barcode scanning ships in this sprint too, on the existing Expo Go + physical iPhone workflow. Slice-level detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md`.
 
 ## Resolved 2026-07-09
 
@@ -48,17 +48,20 @@ Also resolved in the same audit: the repo Slice Tracker's internal contradiction
 ## Known tensions still open
 
 Tracked in [[Open Questions]]:
-1. Where Water and Peptides live in the product hierarchy going forward (#4).
-2. **[[Water]], [[Peptides]], and [[Settings]] still have no sprint anywhere in the official roadmap.** Settings' navigation placement is resolved (above), but its actual feature work (profile, notifications, preferences, privacy) has no scheduled path to completion. See [[Roadmap]] "Gaps worth founder attention" and [[Open Questions]] #11.
+1. Where Water and Peptides live in the product hierarchy going forward (#4) — narrowed, not closed: both now have a sprint (Sprint 5), but their place in the primary navigation is still undecided.
+2. **⚠️ New (2026-08-17): Health and Premium are no longer scheduled**, orphaning five Innovation Lab ideas that had been promoted to 📋 Planned — [[Health Age]], [[Biomarker Age]], [[Apple Health Integration]], [[Apple Home Screen Widgets]], [[Voice Atlas]] — plus [[Mobile Order Screenshot Import]]. Their status has deliberately not been reverted. See #14.
+3. Release-readiness work (analytics, crash reporting, App Store prep, launch QA) has no home now that Sprint 7 — Beta is replaced by the narrower Sprint 8 — Final Polish & Animations. See #15.
+
+**✅ Closed 2026-08-17:** Water, Peptides, and Settings having no sprint anywhere (#11) — resolved by the roadmap restructure.
 
 ## Major reversal
 
-**Atlas is no longer scoped as a placeholder-only V1 feature.** The new roadmap's Sprint 4 commits to a full AI coach (chat, meal planning, workout planning, health guidance, memory, recommendations) — superseding the prior "Atlas V1 is a polished placeholder only" decision. See [[Atlas]] and the [[Decision Log]].
+**Atlas is no longer scoped as a placeholder-only V1 feature.** The roadmap's Atlas sprint (Sprint 6 as of the 2026-08-17 restructure; was Sprint 4) commits to a full AI coach (chat, meal planning, workout planning, health guidance, memory, recommendations) — superseding the prior "Atlas V1 is a polished placeholder only" decision. See [[Atlas]] and the [[Decision Log]].
 
 ## Sources
 
-- Verified from code: repository `docs/06-Slice-Tracker.md`, `docs/08-Changelog.md`, git history (13 commits, latest: "Slice 0.12: Sprint 0.1 global design polish"), and direct code inspection.
-- Roadmap structure: the founders' official Sprint Roadmap, issued 2026-07-09 — see [[Roadmap]]'s note that the repo's own Master Roadmap doc hasn't been updated to match yet.
+- Verified from code: repository `docs/06-Slice-Tracker.md`, `docs/08-Changelog.md`, git history, and direct code inspection.
+- Roadmap structure: the founders' official Sprint Roadmap as restructured 2026-08-17. The repo's own `docs/04-Master-Roadmap.md` was resynced to match the same day — both now describe the same plan.
 - The live Slice Tracker and Changelog remain in the repo — HQ does not duplicate them.
 
 **Related:** [[Current Sprint]] · [[Roadmap]] · [[Decision Log]] · [[Open Questions]]

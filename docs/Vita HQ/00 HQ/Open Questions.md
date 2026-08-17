@@ -22,9 +22,14 @@
 
 ## Roadmap (new — 2026-07-09)
 
-11. **[[Water]], [[Peptides]], and [[Settings]] have no sprint in the new official roadmap.** All three are existing, already-built (or shell-built) product areas — this isn't a "where do they live" question anymore for Settings (resolved by #3 above), it's "do they have any scheduled path to completion at all." Settings is still the most urgent — its navigation placement is locked, but its actual feature work (profile, notifications, preferences, privacy) has no sprint. *Owner: founders. Unlocks: closing the gap flagged on [[Roadmap]].*
+11. ~~**[[Water]], [[Peptides]], and [[Settings]] have no sprint in the new official roadmap.**~~ **✅ RESOLVED 2026-08-17** by the roadmap restructure: Water and Peptides get **Sprint 5**, Settings gets **Sprint 7 — Settings / Account**. See [[Decision Log]] and [[Roadmap]].
 12. **Several new roadmap slices have no backing Innovation Lab idea note:** Restaurant Support (Sprint 3), Oura Integration and WHOOP Integration (Sprint 5), Smart Notifications, Themes & Personalization, and Subscription Experience (Sprint 6). Should these be backfilled as full Lab notes for consistency, or is direct roadmap-only entry acceptable for some categories of work? *Owner: founders/Claude, low urgency.*
-13. **Streak System (Sprint 2) vs. the Journey Stages system.** [[Journey Stages]] was explicitly built as "Vita's answer to streaks and guilt mechanics" — the new roadmap's Streak System slice needs a design resolution before Sprint 2 starts: one signal or two, and specifically how it avoids reintroducing the punishment mechanic Stages was designed to avoid. *Owner: founders, before Sprint 2.*
+13. **Streak System (now Sprint 3 — Journey / Weight) vs. the Journey Stages system.** [[Journey Stages]] was explicitly built as "Vita's answer to streaks and guilt mechanics" — the Streak System slice needs a design resolution before that slice starts: one signal or two, and specifically how it avoids reintroducing the punishment mechanic Stages was designed to avoid. *Owner: founders, before Sprint 3.*
+
+## Roadmap (new — 2026-08-17)
+
+14. **⚠️ Health and Premium are no longer scheduled, orphaning five promoted Innovation Lab ideas.** The 2026-08-17 restructure drops both sprints. [[Health Age]], [[Biomarker Age]], [[Apple Health Integration]], [[Apple Home Screen Widgets]], and [[Voice Atlas]] were promoted to 📋 Planned *because* the 2026-07-09 roadmap named them directly; none has a scheduled sprint now. [[Mobile Order Screenshot Import]] is in the same position after being deferred out of Sprint 2's approved scope. Their Lab status has deliberately **not** been reverted — per the Lab's standing rule ideas change status but are never deleted, and reverting them unasked would be inventing a founder decision. Do these get a future sprint, return to 📝 Defined, or stay 📋 Planned pending a post-V1 roadmap? *Owner: founders. See [[Roadmap]] "What changed in the 2026-08-17 restructure."*
+15. **Beta-sprint work has no home.** The old Sprint 7 — Beta included Analytics, Crash Reporting, App Store Preparation, and a Final QA & Launch Checklist. Sprint 8 — Final Polish & Animations is narrower and doesn't obviously cover them. Where does release-readiness work land? *Owner: founders, before Sprint 8.*
 
 ## Engineering (not blocking today)
 

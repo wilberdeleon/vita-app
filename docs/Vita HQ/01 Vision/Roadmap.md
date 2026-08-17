@@ -4,13 +4,13 @@
 
 **Why does it exist?** So everyone knows what we're building now, what comes next, and what is out of scope until later.
 
-*Sources: this is the founders' official Sprint Roadmap, issued 2026-07-09, and is the single source of truth for VITA's development process, superseding the prior sprint structure.*
+*Sources: the founders' official Sprint Roadmap. **Restructured 2026-08-17** (founder authorization, issued alongside Sprint 2 approval) — this supersedes the 8-sprint structure issued 2026-07-09 that the per-sprint sections further down were originally written against.*
 
 ---
 
 ## Repository roadmap is synced
 
-The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors this page's 8-sprint structure (Foundation → Dashboard → Journey → Fuel → Atlas → Health → Premium → Beta), synced 2026-07-12. Both describe the same official roadmap; update both together if the plan changes again.
+The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors this page's sprint structure, resynced 2026-08-17 to the restructured plan below. Both describe the same official roadmap; update both together if the plan changes again.
 
 ## How development is structured
 
@@ -18,36 +18,53 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 
 ## Current stage
 
-**Sprint 0 — Foundation is ✅ Completed. Sprint 1 — Dashboard is ✅ Completed** (2026-08-02 — see [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what shipped). **Sprint 2 — Fuel is next.**
+**Sprint 2 — Fuel is 🟡 in progress** (started 2026-08-17, branch `sprint-2-fuel`). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), and the App-Wide Visual Consistency Pass (2026-08-16). See [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what shipped in each.
 
-**⚠️ Sequencing reprioritized (founder direction, 2026-08-01/02) — supersedes the Sprint 2/3 ordering below.** The sections further down still read "Sprint 2 — Journey" then "Sprint 3 — Fuel," reflecting the roadmap issued 2026-07-09. The founders have since moved Fuel ahead of Journey as the sprint immediately following Dashboard, reasoning that Fuel should inherit Sprint 1's newly-established theme system and card/spacing/typography language while it's fresh. The section headers/numbers below are not yet renumbered to match — treat "Sprint 2 — Journey" and "Sprint 3 — Fuel" as swapped in actual build order until this doc gets a full renumbering pass.
+*The prior sequencing warning here — that Fuel and Journey were swapped in build order but not renumbered — is resolved. The 2026-08-17 restructure below renumbers them properly.*
 
 **A note on what "Sprint 0 complete" means.** The new roadmap's Sprint 0 deliverable — brand identity, product vision, Atlas identity, navigation architecture, design language, product documentation, the Design Bible, the development workflow, the Innovation Lab, core planning — describes vision/design/documentation work, not application code. This reads as the founders folding together two things that happened separately in practice: the application shell already built in the repo (the old Slice 0.1–0.12, still tracked in `docs/06-Slice-Tracker.md`, still showing 🟡 founder review there) **and** the vision/design/documentation foundation built across recent HQ sessions (this vault, the [[Innovation Lab]], the [[Design Bible]], the [[Claude Workflow|sprint workflow]]). Both are now considered done as "Sprint 0 — Foundation." This is Claude's synthesis of the two, not something the roadmap text states explicitly — flagged as an interpretation, not a verified fact.
 
-## Sprint plan (official, founders 2026-07-09)
+## Sprint plan (official, founders 2026-08-17)
 
 | Sprint | Objective | Status |
 |---|---|---|
-| 0 — Foundation | Establish identity, vision, and foundation before major feature development | ✅ Completed |
-| 1 — [[Dashboard]] | Build the Dashboard experience that defines the quality standard for the app | ⬜ Next |
-| 2 — [[My Journey|Journey]] | Build the emotional core of Vita | ⬜ Planned |
-| 3 — [[Fuel]] | Build the smartest nutrition experience possible | ⬜ Planned |
-| 4 — [[Atlas]] | Transform Atlas into a true AI health coach | ⬜ Planned |
-| 5 — Health | Build Vita's health intelligence platform | ⬜ Planned |
-| 6 — Premium | Deliver the premium Vita experience | ⬜ Planned |
-| 7 — Beta | Prepare Vita for public release | ⬜ Planned |
+| 0 — Visual Foundation | Establish identity, vision, architecture, and the application shell | ✅ Complete |
+| 0.1 — Polish | Global design polish over the Sprint 0 shell | ✅ Complete |
+| 1 — [[Dashboard]] / Home | Build the Home experience that defines the quality standard for the app | ✅ Complete |
+| — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
+| **2 — [[Fuel]]** | **Build the smartest nutrition experience possible** | **🟡 Current** |
+| 3 — [[My Journey\|Journey]] / Weight | The weight half of the Journey experience | ⬜ Planned |
+| 4 — [[My Journey\|Journey]] / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
+| 5 — [[Water]] & [[Peptides]] | Bring both existing logs to real, persisted functionality | ⬜ Planned |
+| 6 — [[Atlas]] | Transform Atlas into a true AI health coach | ⬜ Planned |
+| 7 — [[Settings]] / Account | Profile, notifications, preferences, units, appearance, privacy | ⬜ Planned |
+| 8 — Final Polish & Animations | Motion, micro-interactions, and the final quality pass | ⬜ Planned |
 
-**Note on scope:** [[Water]], [[Peptides]], and [[Settings]] — all existing, already-built product areas — have **no sprint anywhere in this roadmap**. This is a real gap, not an oversight I'm silently filling in. (Settings' *navigation placement* was resolved 2026-07-09 — top-right corner, permanently — but it still has no sprint scheduling its actual feature work.) See "Gaps worth founder attention" below.
+**Two long-flagged gaps are now closed.** [[Water]] and [[Peptides]] get Sprint 5; [[Settings]] gets Sprint 7. All three previously had no sprint anywhere — tracked as Gaps #1–#3 below and [[Open Questions]] #11. **A new gap opens in their place** — see "What changed in the 2026-08-17 restructure."
+
+## What changed in the 2026-08-17 restructure
+
+Recorded so nothing is silently dropped. Prior structure (2026-07-09): Foundation → Dashboard → Journey → Fuel → Atlas → Health → Premium → Beta.
+
+**Moved:** Fuel 3 → **2** · Journey 2 → split across **3 (Weight)** and **4 (Photos)** · Atlas 4 → **6**.
+
+**Added:** Sprint 0.1 and the Visual Consistency Pass as first-class completed entries · **Sprint 5 — Water & Peptides** · **Sprint 7 — Settings / Account**.
+
+**Replaced:** Sprint 7 — Beta → **Sprint 8 — Final Polish & Animations**. Beta's non-polish slices (Analytics, Crash Reporting, App Store Preparation, Final QA & Launch Checklist) have no explicit home in the new structure.
+
+**⚠️ No longer scheduled — flagged, not resolved.** **Sprint 5 — Health** and **Sprint 6 — Premium** are both absent from the new structure. Their detail sections are preserved further down, marked as unscheduled. Between them they carried **five [[Innovation Lab]] ideas promoted to 📋 Planned** precisely because the old roadmap named them directly: [[Health Age]], [[Biomarker Age]], [[Apple Health Integration]], [[Apple Home Screen Widgets]], and [[Voice Atlas]]. Those ideas now have no scheduled sprint. Per the Lab's standing rule an idea's *status* changes but it is never deleted — these are **not** being demoted here, and I have not silently reverted them to 💭/📝. Flagged for founder attention. Same situation for **Screenshot Food Analysis** ([[Mobile Order Screenshot Import]]), a slice of the old Sprint 3 — Fuel that is explicitly deferred out of the approved Sprint 2 scope. Tracked as [[Open Questions]] #14.
 
 ---
 
-## Sprint 0 — Foundation ✅
+## Sprint 0 — Visual Foundation ✅
+
+*Detail sections below appear in their original 2026-07-09 document order, retitled with their 2026-08-17 numbers. The table above is the authoritative sequence.*
 
 **Status:** Completed. **Deliverable:** a complete blueprint for the application.
 
 Completed work: Brand Identity · Product Vision · Atlas Identity · Navigation Architecture · Design Language · UI Direction · Product Documentation · [[Design Bible]] · [[Claude Workflow|Development Workflow]] · [[Innovation Lab]] · Core Planning.
 
-## Sprint 1 — Dashboard
+## Sprint 1 — Dashboard / Home ✅
 
 **Objective:** build the Dashboard experience that defines the quality standard for the entire application. **Deliverable:** a polished Home Dashboard that users could realistically experience as a production-quality feature.
 
@@ -75,7 +92,9 @@ Completed work: Brand Identity · Product Vision · Atlas Identity · Navigation
 
 **Progress:** Slice 1 (Dashboard Layout) approved — added a `Section` layout primitive and a configurable content-gap on `Screen` (scoped so only Dashboard's rhythm changed, not every other screen sharing `Screen`), establishing a 24/12/8px section rhythm from existing spacing tokens. Slice 2 (Dashboard Components) approved — added `PressableCard` (Card + standard press-scale feedback) and migrated `JourneyCard` to it. Slice 3 (Greeting Card) built and then design-revised by founders (2026-07-10): the generic sun/moon icon was replaced with a bespoke `TimeOfDayIllustration` — a fixed circular landscape composition (mountains + small lake) recolored across four states (morning/afternoon/evening/night), light/dark-ready. Existing greeting logic, minute re-evaluation, copy, and card layout preserved untouched. **Pending founder visual test in Expo Go before approval.**
 
-## Sprint 2 — Journey
+## Sprints 3 & 4 — Journey / Weight and Journey / Photos
+
+*Was Sprint 2 under the 2026-07-09 structure; the 2026-08-17 restructure splits it into two sprints — Weight (3) and Photos (4). The eight slices below were written as one sprint and have not yet been divided between them; that split is a planning task for whenever Sprint 3 begins.*
 
 **Objective:** build the emotional core of Vita. **Deliverable:** a complete Journey experience that motivates through progress, not just data display.
 
@@ -94,7 +113,9 @@ Completed work: Brand Identity · Product Vision · Atlas Identity · Navigation
 
 Full proposal: [[Journey Stages]] · [[Product Philosophy]].
 
-## Sprint 3 — Fuel
+## Sprint 2 — Fuel 🟡 Current
+
+*Was Sprint 3 under the 2026-07-09 structure. The eight slices below are the original framing; the **approved Sprint 2 implementation plan** (founder-authorized 2026-08-17) supersedes them — it proves the nutrition engine before external providers, and defers Screenshot Food Analysis. Live slice progress: repo `docs/06-Slice-Tracker.md`.*
 
 **Objective:** build the smartest nutrition experience possible. **Deliverable:** a complete food logging experience centered on simplicity, speed, and intelligent recommendations.
 
@@ -109,7 +130,9 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]].
 | 7 | **Screenshot Food Analysis** | **This is [[Mobile Order Screenshot Import]]** — promoted from the Innovation Lab to 📋 Planned as part of this update |
 | 8 | Fuel Polish | |
 
-## Sprint 4 — Atlas
+## Sprint 6 — Atlas
+
+*Was Sprint 4 under the 2026-07-09 structure.*
 
 **Objective:** transform Atlas into a true AI health coach. **Deliverable:** an AI experience that feels proactive, intelligent, and deeply integrated throughout Vita.
 
@@ -126,7 +149,9 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]].
 | 7 | Recommendations | |
 | 8 | Atlas Polish | |
 
-## Sprint 5 — Health
+## Health — ⚠️ no longer scheduled
+
+*Was Sprint 5 under the 2026-07-09 structure. **Absent from the 2026-08-17 restructure.** Preserved here because it carried three promoted Innovation Lab ideas. See "What changed in the 2026-08-17 restructure" above and [[Open Questions]] #14.*
 
 **Objective:** build Vita's health intelligence platform. **Deliverable:** meaningful health insights powered by wearable integrations and biomarker analysis.
 
@@ -143,7 +168,9 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]].
 
 **Note:** [[Longevity Dashboard]] isn't explicitly named as its own slice here, even though both scores it depends on are. Worth a founder check on whether it's implicitly part of Slice 1 (Health Dashboard) or genuinely not yet scheduled.
 
-## Sprint 6 — Premium
+## Premium — ⚠️ no longer scheduled
+
+*Was Sprint 6 under the 2026-07-09 structure. **Absent from the 2026-08-17 restructure.** Preserved here because it carried two promoted Innovation Lab ideas. See "What changed in the 2026-08-17 restructure" above and [[Open Questions]] #14.*
 
 **Objective:** deliver the premium Vita experience. **Deliverable:** premium features that elevate the product beyond traditional health apps.
 
@@ -158,7 +185,9 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]].
 | 7 | Subscription Experience | Relates to [[Monetization]] / [[Business Model & Pricing]] — no dedicated Lab idea note |
 | 8 | Premium Polish | |
 
-## Sprint 7 — Beta
+## Beta — superseded by Sprint 8 — Final Polish & Animations
+
+*Was Sprint 7 under the 2026-07-09 structure. The 2026-08-17 restructure replaces it with Sprint 8 — Final Polish & Animations, which is narrower: the polish/performance/accessibility slices carry over, but Analytics, Crash Reporting, App Store Preparation, and Final QA & Launch Checklist have no explicit home in the new structure.*
 
 **Objective:** prepare Vita for public release. **Deliverable:** a stable, production-ready beta.
 
@@ -179,20 +208,27 @@ Overlaps with [[Launch Plan]]'s pre-launch checklist — cross-reference when ei
 
 ## Gaps worth founder attention
 
-Flagging rather than silently resolving, per the vault's standing rule to never invent an answer:
+Flagging rather than silently resolving, per the vault's standing rule to never invent an answer.
 
-1. **[[Water]] has no sprint anywhere.** It's an existing, already-built product area (Product Bible core area, Slice 0.6). Is it folded into another sprint implicitly, or genuinely deprioritized?
-2. **[[Peptides]] has no sprint anywhere.** Same situation — existing, already-built, Product Bible core area, no home in the new roadmap.
-3. **[[Settings]] has no sprint anywhere.** This is the most concerning of the three: Settings is part of the founder-stated five-item primary navigation ([[Decision Log]]) and currently only exists as an empty shell. Its navigation placement is now locked (top-right corner, resolved 2026-07-09) but with no sprint, its actual feature work still has no path to completion in this roadmap.
-4. **Several slices are named without a backing Innovation Lab idea note:** Restaurant Support (Sprint 3), Oura Integration and WHOOP Integration (Sprint 5), Smart Notifications, Themes & Personalization, and Subscription Experience (Sprint 6). Not a problem, just an inconsistency with how the rest of the Lab→Roadmap flow has worked so far — worth backfilling idea notes for these if the founders want the Lab to stay the complete record.
+**✅ Resolved by the 2026-08-17 restructure:**
+
+1. ~~**[[Water]] has no sprint anywhere.**~~ Now **Sprint 5 — Water & Peptides**.
+2. ~~**[[Peptides]] has no sprint anywhere.**~~ Same — **Sprint 5**.
+3. ~~**[[Settings]] has no sprint anywhere.**~~ Now **Sprint 7 — Settings / Account**. This was the most concerning of the three: Settings is part of the founder-stated five-item primary navigation ([[Decision Log]]) and currently only exists as an empty shell. Its placement was locked 2026-07-09; its feature work now has a scheduled home too.
+
+**Still open:**
+
+4. **Several slices are named without a backing Innovation Lab idea note:** Restaurant Support (now inside Sprint 2 — Fuel), Oura and WHOOP Integration (Health, now unscheduled), Smart Notifications, Themes & Personalization, and Subscription Experience (Premium, now unscheduled). Not a problem, just an inconsistency with how the rest of the Lab→Roadmap flow has worked — worth backfilling idea notes if the founders want the Lab to stay the complete record.
+
+5. **⚠️ New: Health and Premium are no longer scheduled, orphaning five promoted Lab ideas.** [[Health Age]], [[Biomarker Age]], [[Apple Health Integration]], [[Apple Home Screen Widgets]], and [[Voice Atlas]] were promoted to 📋 Planned because the 2026-07-09 roadmap named them directly. The 2026-08-17 restructure drops both sprints, so none of the five has a scheduled sprint now. [[Mobile Order Screenshot Import]] is in the same position after being deferred out of Sprint 2's approved scope. Their status has **not** been reverted — the founders should decide whether these get a future sprint, return to 📝 Defined, or stay 📋 Planned pending a post-V1 roadmap. Tracked as [[Open Questions]] #14.
 
 ## Version 1 goal
 
-Updated against the new sprint set: Version 1 is complete when Sprint 7 — Beta finishes — a stable, production-ready beta with every primary screen at production quality, complete navigation, visual consistency, and Atlas functioning as a real AI coach (not a placeholder).
+Updated against the 2026-08-17 sprint set: Version 1 is complete when **Sprint 8 — Final Polish & Animations** finishes — every primary screen at production quality, complete navigation, visual consistency in both themes, and Atlas functioning as a real AI coach (not a placeholder).
 
 ## Current priority
 
-**Sprint 1 — Dashboard**, built slice by slice to full production quality before Sprint 2 begins. This is a shift from the previous "polish all five core experiences at once" framing to a strictly sequential, one-sprint-at-a-time build — consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level, not just the slice level.
+**Sprint 2 — Fuel**, built slice by slice to full production quality before Sprint 3 begins. Founder-authorized 2026-08-17; branch `sprint-2-fuel`. The approved architecture proves the nutrition engine — food entries, daily state, calculated totals, persistence, and one shared domain driving both [[Fuel]] and [[Dashboard]] — before external food providers are introduced. Strictly sequential, one sprint at a time, consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level.
 
 ## Remaining unscheduled ideas
 
