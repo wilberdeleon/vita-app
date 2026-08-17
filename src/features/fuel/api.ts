@@ -1,14 +1,13 @@
-import { FOODS, FUEL_TODAY, RECENT_FOOD_IDS } from './mock';
-import type { FoodItem, FuelToday } from './types';
+import { FOODS, RECENT_FOOD_IDS } from './mock';
+import type { FoodItem } from './types';
 
 /**
- * Data boundary for Fuel. Sprint 0 serves fixtures; later sprints replace
- * these bodies with Supabase queries — screen contracts stay stable.
+ * Fuel's interim food-catalog boundary. `getFuelToday()` was removed in
+ * slice 2.1 — daily nutrition is served by `src/lib/nutrition` from real
+ * logged entries. What remains here is the fixture catalog behind Search,
+ * Recent, Favorites, and Food Detail, replaced by the provider layer in
+ * slice 2.6.
  */
-export function getFuelToday(): FuelToday {
-  return FUEL_TODAY;
-}
-
 export function getRecentFoods(): FoodItem[] {
   return RECENT_FOOD_IDS.map((id) => FOODS.find((food) => food.id === id)).filter(
     (food): food is FoodItem => Boolean(food),

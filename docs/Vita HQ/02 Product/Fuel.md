@@ -6,19 +6,21 @@
 
 ---
 
-## Current state (verified in repo, Sprint 0 — mock data)
+## Current state (verified in repo — Sprint 2 in progress)
 
-Built in Slice 0.5: the Fuel hub tab plus a complete eight-screen Food Log flow under `src/app/(vita)/fuel/`:
+**Slice 2.1 — Nutrition Foundation is built.** Fuel's daily calories, macros, meal grouping, and targets now come from **real logged food entries** through the shared nutrition domain at `src/lib/nutrition/`, not from a fixture. Fuel and the Food Log render an honest empty day when nothing is logged. The engine persists to AsyncStorage behind a `FoodLogRepository` interface, so Supabase later swaps in without touching a screen. Architecture detail: repo `docs/09-Technical-Documentation.md`.
 
-- **Hub** (`fuel.tsx` tab) — daily nutrition overview
-- **Flow screens:** `log`, `add`, `search`, `scan` (barcode — **static visual mock**, no camera yet), `manual`, `recent`, `favorites`, `food/[id]` (food detail)
-- Feature module `src/features/fuel/` with `FoodRow` component, types, and mock fixtures behind the `api.ts` boundary
-- Domain color: **orange `#F2670F`** ([[Color System]]); dock icon: flame
-- Macro colors: protein `#2E9E5B` (corrected to green 2026-07-18) · carbs `#F5A623` · fat `#E5484D`
+Removed in the same slice: `FUEL_TODAY` (its meal breakdown contradicted its own headline total, and its water/peptide counts duplicated fixtures those features already owned) and `features/dashboard/mealIcons.ts` (a Fuel-only concern living inside the Dashboard feature). Canonical meal vocabulary is now `Breakfast · Lunch · Dinner · Snacks` — the codebase previously carried both `Snack` and `Snacks` for the same thing.
+
+**Still fixture or mock, deliberately:** Food Search, Recent, Favorites, and Food Detail still read the interim catalog in `features/fuel/mock.ts` (replaced by the provider layer, slice 2.6) · Add Manually saves nothing (slice 2.2) · the barcode scanner is still a static drawing with no camera · Home's nutrition is still its own fixture until slice 2.5.
+
+The eight-screen flow under `src/app/(vita)/fuel/` and the Fuel hub tab are otherwise unchanged from Sprint 0. Domain color: **orange `#F2670F`** ([[Color System]]); dock icon: flame. Macro colors: protein `#2E9E5B` · carbs `#F5A623` · fat `#E5484D`.
 
 ## Target state
 
-**Sprint 3** of the [[Roadmap]] (renumbered from Sprint 2 under the old structure, per the official 2026-07-09 roadmap): Food Logging, Food Search, **real barcode scanning** (camera permission ships here), Daily Nutrition, Meal History, Restaurant Support, **Screenshot Food Analysis** — which is [[Mobile Order Screenshot Import]], promoted from the Innovation Lab to 📋 Planned — and Fuel Polish.
+**Sprint 2** of the [[Roadmap]] (renumbered 2026-08-17; was Sprint 3): Core Logging, Home Integration, Recents/Favorites/Custom Foods, the Provider Layer, Food Search, **real barcode scanning** (camera permission ships here), Edge Cases & Polish, Final Verification. Live slice progress: repo `docs/06-Slice-Tracker.md`.
+
+**Screenshot Food Analysis** ([[Mobile Order Screenshot Import]]) is explicitly **deferred out of Sprint 2's approved scope** and currently has no scheduled sprint — see [[Open Questions]] #14.
 
 ## Future ideas
 
@@ -30,12 +32,13 @@ Built in Slice 0.5: the Fuel hub tab plus a complete eight-screen Food Log flow 
 
 ## Dependencies
 
-- Food database / nutrition data source decision — **Needs Verification** (no provider chosen or documented in the repo)
-- Camera + barcode scanning implementation (Sprint 2)
-- [[Supabase & Database]] for logging persistence
+- Food data providers — **decided 2026-08-17**: FatSecret (restaurant/branded), USDA FoodData Central (generic/foundational), Open Food Facts (packaged/barcode/images), behind provider adapters and a normalized VITA food model. Licensing, attribution, and caching terms must be verified per provider before any third-party data is cached. See [[Decision Log]].
+- Camera + barcode scanning implementation (Sprint 2, later slice)
+- [[Supabase & Database]] — **not** required for Sprint 2 logging; persistence is local behind a repository interface, and Supabase becomes a second implementation later
 
 ## Open questions
 
-- Which food-data provider (and licensing cost) powers search and barcodes? Should be resolved before Sprint 2 planning.
+- FatSecret account registration and Premier Free eligibility are founder tasks — Claude stops at that dependency rather than inventing credentials.
+- Whether nutrition targets become user-editable in Sprint 2, given [[Settings]] has no sprint until 7.
 
 **Related:** [[Product Overview]] · [[Dashboard]] · [[Water]] · [[Atlas Capabilities]]

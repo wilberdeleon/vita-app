@@ -59,7 +59,9 @@ Home is founder-approved and stable. Changing a shared primitive in a way that v
 - **Type scale:** display 32 · title 24 · heading 17 · body 15 · caption 13 · micro 11 (system font)
 - **Spacing:** 4-based scale (4–32); floating dock clearance 120
 
-Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, PressableCard, GlassSurface, Section, SectionHeader, ProgressBar, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow, IconBadge, Button, TextField, Stepper, PressableScale.
+Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, PressableCard, GlassSurface, Section, SectionHeader, ProgressBar, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow, IconBadge, Button, TextField, Stepper, PressableScale, EmptyState.
+
+`EmptyState` (added Sprint 2, slice 2.1) is the shared empty-state treatment: outline glyph, secondary title, optional tertiary body, centered. Deliberately quiet — no illustration and no shouting call to action. Logging nothing yet is a normal moment in a normal day, not a failure to correct, which is the same reasoning behind the no-guilt-mechanics rule.
 
 ---
 

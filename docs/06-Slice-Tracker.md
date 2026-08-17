@@ -152,3 +152,53 @@ New: `components/ui/ProgressRing.tsx`'s sibling change is `glass.premium` in `th
 **Deferred:** theme preference persistence — `ThemeProvider` holds `mode` in `useState`, so the Appearance choice resets on cold restart. No `AsyncStorage`/`SecureStore` in the project yet. Not started here; needs its own slice.
 
 **Next: Sprint 2 — Fuel.** Not started.
+
+---
+
+## Sprint 2 — Fuel — 🟡 In Progress (started 2026-08-17)
+
+Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprint 2 Fuel plan. Architecture principle the founders approved explicitly: **prove the nutrition engine before introducing external providers**, so the core loop is testable before a single network call exists.
+
+| # | Slice | Objective | Status |
+|---|-------|-----------|--------|
+| 2.1 | Nutrition Foundation | Model, pure calculations, persistence behind a repository, `NutritionProvider`; Fuel reads real state | 🟡 Built, pending founder review |
+| 2.2 | Core Logging | Manual food → entry → meal → daily totals, edit/delete | ⬜ Planned |
+| 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log, confirmation | ⬜ Planned |
+| 2.4 | Edit + Delete | Edit route, delete with Undo, immediate recalculation | ⬜ Planned |
+| 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | ⬜ Planned |
+| 2.6 | Provider Layer + Search | Adapters, normalization, dedupe, ranking, cache, debounced search | ⬜ Planned |
+| 2.7 | Recent + Favorites | History-derived recents, persisted favorites, quick re-log | ⬜ Planned |
+| 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, fallback chain | ⬜ Planned |
+| 2.9 | Restaurant Coverage | Edge Function proxy + FatSecret adapter (founder-approved, gated on account setup) | ⬜ Planned |
+| 2.10 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
+| 2.11 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
+
+### Slice 2.1 — Nutrition Foundation 🟡
+
+**Objective:** replace Fuel's presentation-only nutrition with a real engine — one shared source of truth that persists, survives a restart, and is ready for Home to read in slice 2.5. No external providers, no logging UI yet.
+
+**What the audit found, and what it means.** Fuel and Home each carried an independent nutrition fixture. Both showed `1267 / 2000 kcal`, but Fuel's meals summed to 1250 and Home's to 1740 — neither reconciled with its own headline. `Macro` and `MacroSummary` were field-for-field identical types in two features. Fuel said `'Snack'`, Home said `'Snacks'`, and `restaurantIconFor()` only mapped the singular, so Home's slot would have returned `undefined` had it ever called it. There was no persistence anywhere in `src/` — no `AsyncStorage`, no `SecureStore`, no `expo-sqlite` — and not a single `fetch()`.
+
+**New — `src/lib/nutrition/`.** In `lib/`, not `features/fuel/`, because both Fuel and Dashboard consume nutrition and features never import each other (CLAUDE.md rule 4) — the same promotion `journeyStages.ts` received.
+
+- `model/types.ts` — `VitaFood`, `ServingOption`, `NutritionFacts`, `FoodEntry`, `NutritionTargets`, `MealSlot`, `FoodSource`, `DEFAULT_TARGETS`
+- `model/nutrition.ts` — pure: `scaleNutrition`, `addNutrition`, `sumEntries`, `groupByMeal`, `summarizeMeals`, `dailyTotals`, `remaining`, `progress`, `percent`, `roundForDisplay`
+- `model/dates.ts` — local-calendar log dates (`toLogDate`, `todayLogDate`, `isValidLogDate`)
+- `model/mealSlots.ts` — canonical meal icons + `defaultMealForTime()` (moved from `features/dashboard/mealIcons.ts`)
+- `model/macros.ts` — the three macros defined once, theme-free, keys chosen to match the color token names
+- `data/` — `FoodLogRepository` interface, AsyncStorage implementation, namespaced `vita:v1:` keys
+- `state/` — `NutritionProvider` (Context + `useReducer`, mirroring `ThemeProvider`; no state library added) and `useDailyNutrition()`
+
+**Three decisions worth recording.** (1) **Entry nutrition is snapshotted**, already multiplied by quantity, so a later provider correction never rewrites January's log and daily totals stay a pure sum with no async. (2) **Persisted data is validated on read** — `NaN`, corrupted records, and entries whose `logDate` contradicts their storage key are dropped rather than repaired, because a guessed value in a food log is worse than a missing one. (3) **Optional nutrients stay absent when absent** through scaling and addition, so "unknown sodium" never becomes "0 mg sodium".
+
+**Deleted.** `FUEL_TODAY` (contradictory totals; its water/peptide counts also duplicated fixtures those features already owned — the Fuel hub now reads `getWaterToday()`/`getPeptideToday()` directly at the route level, which is composition, not a cross-feature import). `Macro`, `FuelToday`, `LoggedMeal` from `features/fuel/types.ts`. `getFuelToday()` from its api. `features/dashboard/mealIcons.ts` — grep confirmed nothing under `src/features/dashboard/` imported it; only Fuel's two screens did.
+
+**Changed.** `src/app/_layout.tsx` mounts `NutritionProvider` above the router. `(tabs)/fuel.tsx` and `fuel/log.tsx` render real state with a designed empty state and an em-dash placeholder during hydration — showing a real `0` that jumps to `1,267` a frame later would read as data loss. New `EmptyState` primitive (19 total).
+
+**Deviation from the approved plan, flagged:** the plan put `isFavorite` on `VitaFood`. Implemented instead as a separate favorites store keyed by `vitaId`, resolved at read time (slice 2.7). A denormalized mutable flag on a cached food is a staleness bug waiting to happen; the behavior the founders asked for — favorites working identically regardless of source — is unchanged.
+
+**Validation.** `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo install --check` clean · iOS Metro bundle exported with zero errors (3.27 MB, 1363 modules) · run in Expo Go on the iOS Simulator and confirmed by screenshot: Fuel renders `0 / 2,000 kcal · 0%`, macros `0/160g · 0/214g · 0/64g`, the empty state, and `Food Log 0 / 4 logged`, with Water and Peptides still on their own fixtures as intended.
+
+**Not yet proven.** The persistence **write** path is unexercised end-to-end — nothing in the app can create an entry until slice 2.2. Hydration (read) is confirmed working. Do not treat "logging survives a restart" as verified until 2.2 demonstrates it.
+
+**Found, not fixed — needs a founder decision.** With real data, an empty day shows every progress bar as a solid near-white track in dark mode, which reads as *100% complete* rather than 0%. The cause is the deliberately theme-invariant `ProgressBar` track (`palette.track`), approved 2026-08-16 as decision (3) precisely because changing it would change Home. It was harmless while the fixtures always showed partial progress. It is not harmless now. Flagged rather than changed, since the founders locked it. Also noted: a pre-existing `[Layout children]: No route named "(auth)"` warning in `src/app/_layout.tsx` (the route is `(auth)/sign-in`), unrelated to this slice.

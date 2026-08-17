@@ -2,6 +2,7 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { Chip } from './Chip';
 export { DailyProgressCard } from './DailyProgressCard';
+export { EmptyState } from './EmptyState';
 export { GlassSurface } from './GlassSurface';
 export { IconBadge } from './IconBadge';
 export { ListRow } from './ListRow';

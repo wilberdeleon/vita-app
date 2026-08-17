@@ -1,24 +1,13 @@
-import { palette } from '../../theme/tokens';
-import type { FoodItem, FuelToday } from './types';
+import type { FoodItem } from './types';
 
-/** Realistic placeholder data matching the approved UI reference. */
-export const FUEL_TODAY: FuelToday = {
-  kcal: { current: 1267, goal: 2000 },
-  macros: [
-    { label: 'Protein', current: 107, goal: 160, unit: 'g', color: palette.protein },
-    { label: 'Carbs', current: 100, goal: 214, unit: 'g', color: palette.carbs },
-    { label: 'Fat', current: 45, goal: 64, unit: 'g', color: palette.fat },
-  ],
-  meals: [
-    { id: 'breakfast', slot: 'Breakfast', name: 'Protein Oats', kcal: 300 },
-    { id: 'lunch', slot: 'Lunch', name: 'Grilled Chicken Bowl', kcal: 450 },
-    { id: 'dinner', slot: 'Dinner', name: 'Salmon & Veggies', kcal: 500 },
-  ],
-  mealsLogged: 1,
-  mealSlots: 4,
-  waterCups: { current: 5, goal: 8 },
-  peptides: { logged: 1, goal: 3 },
-};
+/**
+ * The interim fixture food catalog, still backing Search, Recent, Favorites,
+ * and Food Detail until the provider layer replaces it (slice 2.6).
+ *
+ * FUEL_TODAY was removed in slice 2.1: today's calories, macros, and meals
+ * now come from real logged entries via `src/lib/nutrition`, and its water
+ * and peptide counts duplicated the fixtures those features already own.
+ */
 
 const nutrition = (
   totalCarbs: number,
