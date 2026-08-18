@@ -1,11 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Chip, SectionHeader, Stepper } from '../../../components/ui';
-import {
-  formatQuantity,
-  pluralizeUnit,
-  type MealSlot,
-  type ServingOption,
-} from '../../../lib/nutrition';
+import { formatQuantity, type MealSlot, type ServingOption } from '../../../lib/nutrition';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { MealPicker } from './MealPicker';
@@ -49,7 +44,6 @@ export function PortionEditor({
 }: Props) {
   const { surfaces } = useTheme();
   const serving = servings[servingIndex] ?? servings[0];
-  const unitLabel = quantity === 1 ? serving.unit : pluralizeUnit(serving.unit);
 
   return (
     <View style={styles.root}>
@@ -77,17 +71,21 @@ export function PortionEditor({
             <Text style={[styles.servingText, { color: surfaces.text }]} numberOfLines={1}>
               {serving.label}
             </Text>
-            {servings.length === 1 ? (
-              <Text style={[styles.servingHint, { color: surfaces.textTertiary }]}>Serving size</Text>
-            ) : null}
+            <Text style={[styles.servingHint, { color: surfaces.textTertiary }]}>
+              {quantity === 1 ? 'Serving size' : `× ${formatQuantity(quantity)}`}
+            </Text>
           </View>
+          {/*
+            No suffix: the serving's own label sits to the left, and provider
+            labels are full phrases ("1 bar (68 g)") rather than unit nouns,
+            so appending one reads as "1 1 bar (68 g)".
+          */}
           <Stepper
             value={quantity}
             onChange={onQuantityChange}
             min={MIN_QUANTITY}
             max={MAX_QUANTITY}
             step={QUANTITY_STEP}
-            suffix={unitLabel}
             formatValue={formatQuantity}
           />
         </View>

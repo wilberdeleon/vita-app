@@ -6,6 +6,8 @@ Single source of truth for release history and completed work.
 
 ## Unreleased
 
+- 2026-08-18 — **Sprint 2 slice 2.6, Provider Layer + Real Search:** food search is now backed by real providers. USDA FoodData Central and Open Food Facts adapters behind a `FoodProvider` interface, feeding normalization → parallel fan-out → GTIN-normalized deduplication → deterministic ranking → TTL cache. The interim fixture catalog and its `'vita-fixture'` source are retired, with Search/Food Detail/Edit unchanged — the proof the abstraction works. Open Food Facts verified end-to-end on device; **USDA blocked pending a free API key from the founder.** Both providers are $0 with no billing risk. (Slice 2.6)
+
 - 2026-08-18 — **Sprint 2 slice 2.5, Home Synchronization — one source of truth achieved.** Home's calories, macros, and meals now come from the same `src/lib/nutrition` engine as Fuel; `DASHBOARD_FIXTURE`'s `calories` and `mealSlots` are gone, and Dashboard's `MealSlot` is a re-export of the canonical type. Only the nutrition goal pillar is derived — Water/Movement/Recovery stay honestly fixture-driven. **No file under `src/features/dashboard/components/` changed** (verified byte-identical). (Slice 2.5)
 
 - 2026-08-17 — **Sprint 2 slice 2.4, Edit + Delete:** tapping a log row opens an editor that reuses the same `PortionEditor` and nutrition engine as the add flow. Editing updates the existing entry in place — `id`, `logDate`, `loggedAt`, and `foodRef` preserved — and never mutates the underlying food definition. Entries stay editable even when their food definition is gone, by reconstructing the serving from the entry's own snapshot. Delete + Undo from slice 2.2 preserved unchanged. (Slice 2.4)

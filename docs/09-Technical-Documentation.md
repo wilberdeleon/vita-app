@@ -49,12 +49,47 @@ FoodEntry[]  →  DailyNutritionState  →  pure selectors  →  Fuel + Home
 
 **Storage keys** are namespaced and versioned (`vita:v1:…`), one key per day, so reads and writes stay small regardless of how much history accumulates. See `src/lib/nutrition/data/keys.ts`.
 
+## Food providers (Sprint 2, slice 2.6)
+
+```
+USDA adapter    Open Food Facts adapter        ← the only files that know a provider's shape
+        └───────────────┴───────────┐
+                                    ▼
+                          Normalized VitaFood
+                                    ▼
+                    parallel fan-out → score → dedupe → rank
+                                    ▼
+                            Search / Food Detail
+```
+
+**Adapters** live in `src/lib/nutrition/providers/`. Raw provider payloads never leave them — verified by grep: no `fetch(` outside that directory and no `source === 'usda'` style branching anywhere in `src/app`, `src/features`, or `src/components`.
+
+**USDA FoodData Central** — free, **CC0 public domain**, no commercial restrictions, attribution requested but not required. Key from `api.data.gov`, 1,000 requests/hour. Nutrients are read by numeric id (names vary by data type) and are always per 100 g, so a label serving is derived by scaling and the 100 g baseline is always offered too. Data types are limited to Foundation, SR Legacy, Branded, and Survey (FNDDS).
+
+**Open Food Facts** — free, no key, **ODbL** data and **CC-BY-SA** images; attribution is required wherever the data is shown. A contact email in the `User-Agent` is mandatory (`EXPO_PUBLIC_OFF_CONTACT`); without it the provider reports itself unconfigured rather than sending an anonymous identifier. Two conversions matter: sodium arrives in **grams** and is stored as mg, and energy is read only from the explicit `energy-kcal` field because the generic `energy` field is kilojoules on most records.
+
+**Search endpoint choice.** Full-text search uses **Search-a-licious** (`search.openfoodfacts.org`), which OFF's current documentation points to. The legacy `cgi/search.pl` returns richer records — it carries `serving_size`/`serving_quantity`, which Search-a-licious does not index at all — but it returned HTTP 503 during verification. Reliability won: OFF search results therefore offer only the honest 100 g baseline. Label servings remain available from the product endpoint, which `lookupBarcode` uses and the barcode slice inherits. **Recommended follow-up:** enrich a food from the product endpoint when the user opens it — one request per opened food, not per result.
+
+**Loggability rule.** A result is only surfaced if calories, protein, carbs, and fat can all be derived. Records missing any of them are dropped rather than shown disabled, because a result you cannot log is noise in a list being scanned fast — and zero-filling would be indistinguishable from a measured zero.
+
+**Deduplication** — three passes, cheapest first: normalized GTIN identity, then brand + normalized name, then near-duplicate generics (token-set similarity ≥ 0.9 **and** calories within 5% **and** both unbranded). The third pass is deliberately the narrowest: collapsing a 12 oz can into a 20 oz bottle would hide a real choice and log the wrong calories.
+
+**GTIN normalization** (`providers/gtin.ts`) pads every barcode to 14 digits, so UPC-A, EAN-13, and leading-zero-stripped numeric forms of the same product compare equal. Any 8–14 digit run is accepted and padded, because a barcode passed through a JSON number loses its leading zero — the exact mismatch the module exists to prevent. Check-digit validation is exposed but deliberately **not** enforced, since real catalogues carry codes that fail it.
+
+**Ranking** is a pure deterministic scoring function with named weights — no learning, and a name tiebreak so identical searches never reorder based on which provider answered first.
+
+**Failure isolation.** Providers are queried in parallel and settled independently; one failing, timing out (6 s), or being unconfigured degrades the result set but never fails the search. Only an all-providers-failed outcome shows the error state.
+
+**Caching.** Query results are in-memory with a 5-minute TTL (queries are too varied to persist, and search should feel live). Individual foods are persisted with a 30-day TTL under `vita:v1:cache:food:{vitaId}` — this one is load-bearing, because Food Detail resolves a provider food that is not in My Foods. Neither cache bulk-downloads or accumulates a redistributable copy of a provider database; ODbL's share-alike obligation attaches to publishing a derived database, which this is not.
+
+**Key handling.** The USDA key is a rate-limiting identifier rather than a true secret, which is why `EXPO_PUBLIC_` is acceptable for development. USDA does deactivate keys found published publicly, so **a public release should move these calls behind a proxy.** FatSecret is a different case entirely — its client secret must stay server-side, which is why it is deferred to a slice that can add a Supabase Edge Function.
+
 ## Environment & secrets
 
 - Copy `.env.example` to `.env` (git-ignored) and fill in values.
 - Only publishable keys use the `EXPO_PUBLIC_` prefix (they ship inside the app bundle). Real secrets live server-side in Supabase edge functions.
 
-## Known mocks (as of Sprint 2, slice 2.5)
+## Known mocks (as of Sprint 2, slice 2.6)
 
 Recorded explicitly so a screen showing real data next to a screen showing fixtures is never mistaken for a bug — or for working functionality.
 
@@ -63,7 +98,8 @@ Recorded explicitly so a screen showing real data next to a screen showing fixtu
 | Food entries, daily totals, meal grouping, targets | **Real.** Persisted via `src/lib/nutrition`; verified across a full app restart. |
 | Food Detail (serving/quantity/meal → log) | **Real**, and provider-agnostic — consumes the normalized model only. |
 | Editing a logged entry (serving/quantity/meal) | **Real.** Updates in place; never mutates the food definition. |
-| Food Search, Recent, Favorites | Fixture catalog, normalized through `features/fuel/fixtureCatalog.ts` and labelled `source: 'vita-fixture'`. Replaced by the provider layer in slice 2.6. |
+| Food Search | **Real.** USDA + Open Food Facts through the provider layer. |
+| Recent, Favorites | Empty states only. Real behavior ships in slice 2.7; the interim fixture list was retired with the catalog. |
 | Add Manually, custom foods (My Foods), delete + Undo | **Real.** Persisted. |
 | Barcode scanner | Static drawing, no camera. Later in Sprint 2. |
 | **Water Log** | **Mock.** `getWaterToday()` returns a fixed `5 / 8 cups`; "+ Add Water" discards the amount. Tier 3 of Sprint 2. |

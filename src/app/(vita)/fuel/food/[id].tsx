@@ -1,18 +1,20 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
-import { getFixtureFood } from '../../../../features/fuel/fixtureCatalog';
 import {
   createEntry,
   defaultMealForTime,
-  formatServingCount,
+  formatPortion,
   nutritionForServing,
+  readCachedFood,
+  readCachedFoodSync,
   useNutrition,
   type MealSlot,
+  type VitaFood,
 } from '../../../../lib/nutrition';
 import { spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -23,10 +25,9 @@ import { useTheme } from '../../../../theme/ThemeProvider';
  * live before anything is committed.
  *
  * It consumes only the normalized `VitaFood` model. Nothing on this screen
- * knows whether the food was typed in by hand, pulled from the interim
- * fixture catalog, or (later) returned by USDA, Open Food Facts, FatSecret,
- * or a barcode scan — which is the whole point of normalizing at the
- * provider boundary rather than here.
+ * knows whether the food was typed in by hand or returned by USDA, Open
+ * Food Facts, or (later) FatSecret or a barcode scan — which is the whole
+ * point of normalizing at the provider boundary rather than here.
  */
 export default function FoodDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,9 +37,26 @@ export default function FoodDetail() {
   const { showToast } = useToast();
   const { surfaces } = useTheme();
 
-  // User-created foods win over the fixture catalog: if both somehow carry
-  // an id, the one the user made is the one they meant.
-  const food = findFood(vitaId) ?? getFixtureFood(vitaId);
+  /**
+   * Resolution order: My Foods first, then the provider cache that search
+   * populated. The synchronous read covers the normal path (the user just
+   * tapped a result); the async read covers a cold start between search and
+   * detail, where only the persisted copy survives.
+   */
+  const cached = readCachedFoodSync(vitaId);
+  const [resolved, setResolved] = useState<VitaFood | undefined>(cached);
+  const food = findFood(vitaId) ?? resolved;
+
+  useEffect(() => {
+    if (food) return;
+    let active = true;
+    void readCachedFood(vitaId).then((result) => {
+      if (active && result) setResolved(result);
+    });
+    return () => {
+      active = false;
+    };
+  }, [food, vitaId]);
 
   const [servingIndex, setServingIndex] = useState(food?.defaultServingIndex ?? 0);
   const [quantity, setQuantity] = useState(1);
@@ -68,7 +86,7 @@ export default function FoodDetail() {
     );
   }
 
-  const portionLabel = formatServingCount(quantity, serving.unit);
+  const portionLabel = formatPortion(quantity, serving.label);
   const subtitle = [food.brand, food.restaurant].filter(Boolean).join(' · ');
 
   const handleAdd = async () => {

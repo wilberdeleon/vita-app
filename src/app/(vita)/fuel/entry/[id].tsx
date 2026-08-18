@@ -5,11 +5,11 @@ import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '.
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
-import { getFixtureFood } from '../../../../features/fuel/fixtureCatalog';
 import {
   editableServings,
-  formatServingCount,
+  formatPortion,
   nutritionForServing,
+  readCachedFoodSync,
   useNutrition,
   type MealSlot,
 } from '../../../../lib/nutrition';
@@ -44,7 +44,7 @@ export default function EditLogEntry() {
   // re-renders while the user is adjusting quantity.
   const resolved = useMemo(() => {
     if (!entry) return null;
-    const food = findFood(entry.foodRef.vitaFoodId) ?? getFixtureFood(entry.foodRef.vitaFoodId);
+    const food = findFood(entry.foodRef.vitaFoodId) ?? readCachedFoodSync(entry.foodRef.vitaFoodId);
     return editableServings(entry, food);
   }, [entry, findFood]);
 
@@ -122,7 +122,7 @@ export default function EditLogEntry() {
         {subtitle ? <Text style={[styles.subtitle, { color: surfaces.textTertiary }]}>{subtitle}</Text> : null}
       </View>
 
-      <NutritionSummary nutrition={preview} portionLabel={formatServingCount(quantity, serving.unit)} />
+      <NutritionSummary nutrition={preview} portionLabel={formatPortion(quantity, serving.label)} />
 
       <PortionEditor
         servings={resolved.servings}

@@ -21,6 +21,8 @@ export const StorageKeys = {
   myFoods: `${NAMESPACE}:myfoods`,
   favorites: `${NAMESPACE}:favorites`,
   recents: `${NAMESPACE}:recents`,
+  /** Provider results, so Food Detail can resolve a food that isn't in My Foods. */
+  cachedFood: (vitaId: string) => `${NAMESPACE}:cache:food:${vitaId}`,
 } as const;
 
 export const FOOD_LOG_KEY_PREFIX = `${NAMESPACE}:foodlog:`;

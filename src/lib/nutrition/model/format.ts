@@ -34,24 +34,18 @@ export function formatQuantity(value: number): string {
   return formatAmount(value);
 }
 
-/** "1 serving" / "1.5 servings" — pluralizes on the number, not the unit. */
-export function formatServingCount(quantity: number, unit: string): string {
-  const amount = formatQuantity(quantity);
-  const plural = quantity === 1 ? unit : pluralizeUnit(unit);
-  return `${amount} ${plural}`;
-}
-
 /**
- * Only pluralizes units that are countable words. Measurement abbreviations
- * ("g", "ml", "oz") are already invariant — "2 gs" would be wrong.
+ * How a portion reads when the serving's own label already describes one
+ * of it — "1 bar (68 g)", "100 g", "1 serving".
+ *
+ * Provider labels are full phrases, not unit nouns, so gluing the quantity
+ * in front produces "1 1 serving (68 g)". Multiplying instead gives
+ * "2 × 1 bar (68 g)", which is also exactly how a logged entry already
+ * reads in the Food Log — one convention across both surfaces.
  */
-const INVARIANT_UNITS = new Set(['g', 'kg', 'mg', 'ml', 'l', 'oz', 'fl oz', 'lb']);
-
-export function pluralizeUnit(unit: string): string {
-  const normalized = unit.trim().toLowerCase();
-  if (INVARIANT_UNITS.has(normalized)) return unit;
-  if (normalized.endsWith('s')) return unit;
-  return `${unit}s`;
+export function formatPortion(quantity: number, servingLabel: string): string {
+  if (quantity === 1) return servingLabel;
+  return `${formatQuantity(quantity)} × ${servingLabel}`;
 }
 
 /** The four macro figures as display strings, in one call. */

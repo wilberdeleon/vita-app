@@ -166,7 +166,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log; dark-mode progress-track correction | 🟡 Built, pending founder review |
 | 2.4 | Edit + Delete | Edit route reusing `PortionEditor`; delete + Undo preserved | 🟡 Built, pending founder review |
 | 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | 🟡 Built, pending founder review |
-| 2.6 | Provider Layer + Search | Adapters, normalization, dedupe, ranking, cache, debounced search | ⬜ Planned |
+| 2.6 | Provider Layer + Search | USDA + Open Food Facts adapters, normalization, dedupe, ranking, cache, debounced search | 🟡 Built (OFF verified; USDA blocked on founder key) |
 | 2.7 | Recent + Favorites | History-derived recents, persisted favorites, quick re-log | ⬜ Planned |
 | 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, fallback chain | ⬜ Planned |
 | 2.9 | Restaurant Coverage | Edge Function proxy + FatSecret adapter (founder-approved, gated on account setup) | ⬜ Planned |
@@ -342,3 +342,30 @@ Incidentally confirmed during Test A: the day rolled from 17 → 18 August and y
 **Dependency note, not caused by this slice:** `expo install --check` now reports `expo@54.0.36 → ~54.0.37` and `expo-constants@18.0.13 → ~18.0.14`. `package.json` and the lockfile are byte-identical to commit `1a9dec9` — these are patch releases Expo published upstream. Nothing is broken and no SDK change is involved. Left untouched pending founder direction.
 
 **What is still honestly mock on Home:** Journey, steps, sleep, workouts, streak, the water quick-stat, and the Water/Movement/Recovery goal pillars. None of them compete with the nutrition domain.
+
+### Slice 2.6 — Provider Layer + Real Search 🟡
+
+**The fixture catalog is gone.** `features/fuel/fixtureCatalog.ts`, `mock.ts`, `types.ts`, and the interim `'vita-fixture'` source member are all deleted, and Search, Food Detail, and Edit kept working without a single change to their logic. That was the point of the abstraction, and it held.
+
+**Cost: $0, zero billing risk.** USDA is free (CC0, no paid tier exists). Open Food Facts is free and needs no key. Full comparison table in the slice-2.6 checkpoint.
+
+**Architecture.** Adapters in `src/lib/nutrition/providers/` are the only files that know a provider's response shape. Verified by grep: no `fetch(` outside that directory, and no `source === 'usda'`-style branching anywhere in `src/app`, `src/features`, or `src/components`.
+
+**Two real bugs caught by real data**, both worth recording:
+
+1. **GTIN leading zeros.** The unit checks (20 assertions, run standalone) caught that a barcode passed through a JSON *number* loses its leading zero — UPC-A `028400157827` arrives as 11 digits and was being rejected as a non-standard length. That is exactly the mismatch the module exists to prevent. Fixed by accepting any 8–14 digit run and padding to 14.
+2. **Double-counted portion labels.** Provider serving labels are full phrases ("1 bar (68 g)"), not unit nouns, so the existing `formatServingCount(quantity, unit)` rendered **"1 1 SERVING (68 G)"**. Replaced with `formatPortion(quantity, label)`, which multiplies instead — "2 × 1 bar (68 g)" — matching the convention log rows already used. Adapters now keep `unit` a countable noun and the descriptive phrase in `label`.
+
+**Open Food Facts search endpoint changed mid-slice.** The legacy `cgi/search.pl` worked, then began returning HTTP 503 under repeated use. Switched to **Search-a-licious**, which OFF's current docs point to for full-text search. Tradeoff, documented rather than hidden: Search-a-licious does not index serving fields at all (confirmed — 43 fields, none serving-related), so OFF search results offer only the honest 100 g baseline. Label servings remain available from the product endpoint that `lookupBarcode` uses. Enriching an opened result from that endpoint is a recommended follow-up.
+
+**Verified on device (Open Food Facts):** searched `clif bar` → real results with brand, serving label, and calories, exact-name matches ranked first → opened "Clif Bar Cool Mint Chocolate" → Food Detail rendered `368 kcal · 14.7g / 63.2g / 8.8g` with no provider-specific code → logged to Breakfast → Fuel showed `968 / 2,000` alongside an existing custom-food entry (368 + 600, macros reconciling) → killed and relaunched → entry persisted and **Home read 1,032 remaining**, exactly consistent.
+
+**Provider failure isolation proved itself twice, live:** USDA is unconfigured (no key) and search still returned Open Food Facts results throughout; and when OFF 503'd, the error state, Retry button, and dev-only diagnostics (`openfoodfacts: bad-response @ search`) all rendered correctly — a category and a stage, never a key.
+
+**Search behavior.** 350 ms debounce; minimum query length **2** (one character matches nearly everything and wastes a call against OFF's documented 10 searches/minute); `AbortController` plus a run-sequence guard so a slow earlier response can never overwrite a newer one; 6 s per-provider timeout.
+
+**BLOCKED: USDA is unverified.** The adapter is written and type-checks, but no request has ever been made because there is no key. It cannot be verified until the founder registers one — instructions in the checkpoint.
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · `src/features/dashboard/` byte-identical to `dbe0c91` · dead `formatServingCount`/`pluralizeUnit` removed rather than left behind.
+
+**Dependency note, still not caused by this slice:** `expo-constants@18.0.13 → ~18.0.14` remains flagged upstream. Untouched per the founder's lock.

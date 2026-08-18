@@ -25,12 +25,12 @@ export const MEAL_SLOTS: readonly MealSlot[] = ['Breakfast', 'Lunch', 'Dinner', 
 /**
  * Where a food came from. Kept on every food and every logged entry.
  *
- * `vita-fixture` is interim: it labels the placeholder catalog still behind
- * Search, Recent, and Favorites so those foods carry honest provenance
- * rather than masquerading as user-created. It is removed when the provider
- * layer replaces that catalog (slice 2.6).
+ * The interim `vita-fixture` member was removed in slice 2.6 when real
+ * providers replaced the placeholder catalog — the proof that the provider
+ * abstraction holds. `fatsecret` is declared ahead of its adapter so
+ * provenance stays stable when restaurant coverage lands.
  */
-export type FoodSource = 'usda' | 'openfoodfacts' | 'fatsecret' | 'vita-custom' | 'vita-fixture';
+export type FoodSource = 'usda' | 'openfoodfacts' | 'fatsecret' | 'vita-custom';
 
 /**
  * Nutrition for a single unit of something — one serving, or one logged

@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { EmptyState, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Button, EmptyState, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
 import { FoodRow } from '../../../features/fuel/components/FoodRow';
-import { searchFixtureFoods } from '../../../features/fuel/fixtureCatalog';
+import { MIN_QUERY_LENGTH, useFoodSearch } from '../../../lib/nutrition';
+import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 
 /**
- * Interim search over the placeholder catalog. Real multi-provider search —
- * USDA + Open Food Facts, normalized, deduped, ranked, debounced — lands in
- * slice 2.6. The results already flow through the normalized model, so that
- * slice replaces the data source without touching this screen's shape.
+ * Real multi-provider search. The screen knows nothing about USDA or Open
+ * Food Facts — it renders `VitaFood`s that the provider layer has already
+ * normalized, deduped, and ranked.
  */
 export default function SearchFood() {
   const [query, setQuery] = useState('');
-  const results = searchFixtureFoods(query);
-  const hasQuery = query.trim().length > 0;
+  const { status, results, error, diagnostics, retry } = useFoodSearch(query);
+  const { surfaces } = useTheme();
 
   return (
     <Screen>
@@ -25,18 +27,76 @@ export default function SearchFood() {
         autoCapitalize="none"
         returnKeyType="search"
       />
-      {results.length > 0 ? (
+
+      {status === 'idle' ? (
+        <EmptyState
+          icon="search-outline"
+          title="Search for a food"
+          body={`Type at least ${MIN_QUERY_LENGTH} characters to search.`}
+        />
+      ) : null}
+
+      {status === 'searching' ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={palette.primary} />
+          <Text style={[styles.hint, { color: surfaces.textTertiary }]}>Searching…</Text>
+        </View>
+      ) : null}
+
+      {status === 'results' ? (
         <>
           <SectionHeader title="Results" />
           {results.map((food) => (
             <FoodRow key={food.vitaId} food={food} />
           ))}
         </>
-      ) : hasQuery ? (
+      ) : null}
+
+      {status === 'empty' ? (
         <EmptyState icon="search-outline" title="No matching foods" body="Try a different name, or add it manually." />
-      ) : (
-        <EmptyState icon="search-outline" title="Search for a food" body="Find something to log, then choose your serving." />
-      )}
+      ) : null}
+
+      {status === 'error' ? (
+        <View style={styles.stateBlock}>
+          <EmptyState
+            icon="cloud-offline-outline"
+            title="Couldn't load results"
+            body={error ?? 'Check your connection and try again.'}
+          />
+          <Button label="Try again" variant="soft" onPress={retry} />
+        </View>
+      ) : null}
+
+      {status === 'unconfigured' ? (
+        <EmptyState
+          icon="construct-outline"
+          title="Food search isn't set up yet"
+          body="No food data provider is configured for this build."
+        />
+      ) : null}
+
+      {/* Dev-only provider diagnostics — a category and a stage, never a key. */}
+      {__DEV__ && diagnostics.length > 0 ? (
+        <Text style={[styles.diagnostics, { color: surfaces.textTertiary }]}>{diagnostics.join('\n')}</Text>
+      ) : null}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  centered: {
+    alignItems: 'center',
+    gap: spacing.m,
+    paddingVertical: spacing.xxl,
+  },
+  hint: {
+    ...typography.caption,
+  },
+  stateBlock: {
+    gap: spacing.m,
+  },
+  diagnostics: {
+    ...typography.micro,
+    textAlign: 'center',
+  },
+});
