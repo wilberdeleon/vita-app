@@ -165,7 +165,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.2 | Core Logging | Manual food → custom food → entry → meal → daily totals; delete + Undo | 🟡 Built, pending founder review |
 | 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log; dark-mode progress-track correction | 🟡 Built, pending founder review |
 | 2.4 | Edit + Delete | Edit route reusing `PortionEditor`; delete + Undo preserved | 🟡 Built, pending founder review |
-| 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | ⬜ Planned |
+| 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | 🟡 Built, pending founder review |
 | 2.6 | Provider Layer + Search | Adapters, normalization, dedupe, ranking, cache, debounced search | ⬜ Planned |
 | 2.7 | Recent + Favorites | History-derived recents, persisted favorites, quick re-log | ⬜ Planned |
 | 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, fallback chain | ⬜ Planned |
@@ -298,3 +298,47 @@ To make that true today rather than aspirationally, the placeholder catalog got 
 **Flagged, not expanded (per the scope instruction):** the editor seeds `meal` from the entry rather than `defaultMealForTime()` — confirmed on device (Lunch stayed selected at 2:19 AM, when the time-of-day default would have been Breakfast). Two things the architecture *could* support but that were deliberately left out: editing an entry's **date** (no history UI exists yet, and it would need a date picker), and stamping an **`editedAt`** timestamp (useful for future sync conflict resolution, but it changes the persisted shape and belongs with the Supabase work).
 
 **Unchanged and still true:** Home's nutrition remains its own fixture, so Home ↔ Fuel totals still disagree. That is slice 2.5.
+
+### Slice 2.5 — Home Synchronization 🟡 — **one source of truth achieved**
+
+**The architecture milestone this sprint was built for.** Daily nutrition now has exactly one owner. `src/lib/nutrition` holds the entries; `useDailyNutrition()` derives totals; Fuel and Home both read that and nothing else. The contradictory fixtures the Sprint 2 audit opened with — Fuel's meals summing to 1250, Home's to 1740, both printing `1267` — no longer exist anywhere in the codebase.
+
+**What changed on Dashboard — three files, no components.**
+
+- `types.ts` — `calories` and `mealSlots` removed from `DashboardData`. `MealSlot` is now a **re-export of the canonical `src/lib/nutrition` type** rather than a redeclaration, so `'Snack'` vs `'Snacks'` cannot drift apart again: there is one definition. `CalorieSummary`/`MacroSummary`/`MealSlotSummary` stay, documented as **view models** — see the note below.
+- `mock.ts` — the `calories` block and the four fake `mealSlots` deleted. The nutrition goal pillar's `complete` becomes a placeholder, recomputed from real data.
+- `(tabs)/dashboard.tsx` — assembles those view models from `useDailyNutrition()`.
+
+**No file under `src/features/dashboard/components/` was modified** — verified as byte-identical to the approved commit `1a9dec9`, not asserted.
+
+**On `MacroSummary`, which the audit flagged for removal — kept, deliberately.** Its duplicate partner was Fuel's `Macro`, and that was already deleted back in slice 2.1, so nothing in `src/lib/nutrition` now carries this shape. Fuel's own progress bars want a different one (`{ label, valueLabel, progress, color }`). Inventing a shared display type that suits neither, and editing a locked Dashboard component to adopt it, would buy no data-integrity gain — **the data is already single-source; only the render shape is local.** Flagged rather than silently kept.
+
+**Goal pillars stay honest.** Only the *nutrition* pillar is recomputed. Water, Movement, and Recovery have no feature behind them yet and keep their fixture values, so "N of 4 goals complete" doesn't quietly become a nutrition-only number. Visible effect: Home now reads **2 of 4** on an empty day, where the fixture always claimed 3 of 4.
+
+**Nutrition completion semantics — needs founder confirmation.** "Complete" is currently `caloriesConsumed >= calorieTarget`. That is a product choice, not a derived fact; a range-based definition ("within 10% of target") or a macro-aware one are equally defensible.
+
+**Calories remaining** derives from `target − consumed` and floors at zero — the pre-existing `HomeSummaryCard` behavior, unchanged, and consistent with the engine's `remaining()`. Going over target reads as 0 remaining rather than a negative number, matching the no-guilt-mechanics rule.
+
+**Empty day needs no new empty state.** All four meal rows always render — Home's approved presentation — so an empty day is four honest zero rows. Multiple foods in one meal aggregate to a total plus a count (`1200 kcal • 2 logged`), which is the existing `MealRow` behavior; Fuel's Food Log remains the per-entry view.
+
+**Code audits (all clean).** No cross-feature imports · no remaining nutrition fields in `dashboard/mock.ts` · `getDashboard()` supplies only non-nutrition data · `'Snack'` singular appears only inside explanatory comments · no new light-only `palette` surface reads.
+
+**Test results — all seven pass, driven on device:**
+
+| Test | Result |
+|---|---|
+| A — Empty day | Fuel `0 / 2,000`; Home **2,000 remaining** (was a hardcoded `733`), macros 0, four zeroed meal rows, **2 of 4** goals |
+| B — Add Breakfast 300 | Both surfaces 300; Home 1,700 remaining, protein 24/160g, `Breakfast 300 kcal • Logged` — **no restart** |
+| C — Add Lunch 600 | Day 900 in both; Breakfast 300, Lunch 600; macros 72/120/21 identical on both |
+| D — Edit 1 → 2 bowls | Both jump to 1,200; Home 800 remaining, protein 96/160g |
+| E — Move Breakfast → Lunch | Home: Breakfast 0, `Lunch 1200 kcal • 2 logged`; **daily total unchanged**, macros unchanged |
+| F — Delete / Undo | Delete propagated (Home 1,400 remaining); Undo restored (Home still 1,400 — a failed undo would have read 2,000) |
+| G — Relaunch | Fuel `600 / 2,000`, macros 48/80/14; Home 1,400 remaining, protein 48/160g — exactly consistent |
+
+Incidentally confirmed during Test A: the day rolled from 17 → 18 August and yesterday's entries correctly did not appear as today's.
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors.
+
+**Dependency note, not caused by this slice:** `expo install --check` now reports `expo@54.0.36 → ~54.0.37` and `expo-constants@18.0.13 → ~18.0.14`. `package.json` and the lockfile are byte-identical to commit `1a9dec9` — these are patch releases Expo published upstream. Nothing is broken and no SDK change is involved. Left untouched pending founder direction.
+
+**What is still honestly mock on Home:** Journey, steps, sleep, workouts, streak, the water quick-stat, and the Water/Movement/Recovery goal pillars. None of them compete with the nutrition domain.
