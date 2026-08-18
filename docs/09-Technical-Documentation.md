@@ -84,12 +84,20 @@ USDA adapter    Open Food Facts adapter        ← the only files that know a pr
 
 **Key handling.** The USDA key is a rate-limiting identifier rather than a true secret, which is why `EXPO_PUBLIC_` is acceptable for development. USDA does deactivate keys found published publicly, so **a public release should move these calls behind a proxy.** FatSecret is a different case entirely — its client secret must stay server-side, which is why it is deferred to a slice that can add a Supabase Edge Function.
 
+### Recents and Favorites (slice 2.7)
+
+**Recents are derived, not stored.** The food log already holds the truth, so there is no `recents` key — a parallel list would only be a second thing that can disagree with the first. `useRecentFoods` enumerates log keys, reads the newest 30 days, collapses to one row per `vitaId`, and caps at 25.
+
+**`foodFromEntry()`** rebuilds a loggable `VitaFood` from an entry snapshot alone, which is what lets a recent survive an expired provider cache, a deleted custom food, or being offline. Opening Recents also re-seeds the food cache from history.
+
+**Favorites** are keyed by `vitaId` and persisted at `vita:v1:favorites`, newest first. `PERSISTABLE_SOURCES` gates whether the food *definition* may be retained: USDA (CC0), Open Food Facts (ODbL — retaining individual user-chosen records on-device is ordinary API use; share-alike attaches to publishing a derived database), and custom foods. **FatSecret is excluded** until its caching/storage terms are verified; a favorite from it will store identity only and resolve live. A stored definition is dropped on read if its source is no longer permitted, so a terms change needs no migration.
+
 ## Environment & secrets
 
 - Copy `.env.example` to `.env` (git-ignored) and fill in values.
 - Only publishable keys use the `EXPO_PUBLIC_` prefix (they ship inside the app bundle). Real secrets live server-side in Supabase edge functions.
 
-## Known mocks (as of Sprint 2, slice 2.6)
+## Known mocks (as of Sprint 2, slice 2.7)
 
 Recorded explicitly so a screen showing real data next to a screen showing fixtures is never mistaken for a bug — or for working functionality.
 
@@ -99,7 +107,8 @@ Recorded explicitly so a screen showing real data next to a screen showing fixtu
 | Food Detail (serving/quantity/meal → log) | **Real**, and provider-agnostic — consumes the normalized model only. |
 | Editing a logged entry (serving/quantity/meal) | **Real.** Updates in place; never mutates the food definition. |
 | Food Search | **Real.** USDA + Open Food Facts through the provider layer. |
-| Recent, Favorites | Empty states only. Real behavior ships in slice 2.7; the interim fixture list was retired with the catalog. |
+| Recent Foods | **Real.** Derived from logging history — no separate store. |
+| Favorites | **Real.** Persisted, keyed by `vitaId`, working across every source. |
 | Add Manually, custom foods (My Foods), delete + Undo | **Real.** Persisted. |
 | Barcode scanner | Static drawing, no camera. Later in Sprint 2. |
 | **Water Log** | **Mock.** `getWaterToday()` returns a fixed `5 / 8 cups`; "+ Add Water" discards the amount. Tier 3 of Sprint 2. |

@@ -26,6 +26,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { asyncStorageNutritionRepository } from '../data/asyncStorageRepository';
 import type { NutritionRepository } from '../data/FoodLogRepository';
 import { todayLogDate, type LogDate } from '../model/dates';
+import { toFavorite, type FavoriteFood } from '../model/favorites';
 import { DEFAULT_TARGETS, type FoodEntry, type NutritionTargets, type VitaFood } from '../model/types';
 
 type Status = 'loading' | 'ready';
@@ -36,6 +37,8 @@ type NutritionState = {
   entries: FoodEntry[];
   /** The user's own foods. Day-independent, so it is loaded once, not per date. */
   customFoods: VitaFood[];
+  /** Favorited foods, keyed by normalized identity. Also day-independent. */
+  favorites: FavoriteFood[];
   targets: NutritionTargets;
   /** Set when persistence failed, so the UI can say so instead of showing a silently empty day. */
   error: string | null;
@@ -48,11 +51,13 @@ type Action =
       logDate: LogDate;
       entries: FoodEntry[];
       customFoods: VitaFood[];
+      favorites: FavoriteFood[];
       targets: NutritionTargets;
     }
   | { type: 'loadFailed'; message: string }
   | { type: 'setEntries'; entries: FoodEntry[] }
   | { type: 'setCustomFoods'; customFoods: VitaFood[] }
+  | { type: 'setFavorites'; favorites: FavoriteFood[] }
   | { type: 'setTargets'; targets: NutritionTargets }
   | { type: 'setError'; message: string | null };
 
@@ -68,6 +73,7 @@ function reducer(state: NutritionState, action: Action): NutritionState {
         logDate: action.logDate,
         entries: action.entries,
         customFoods: action.customFoods,
+        favorites: action.favorites,
         targets: action.targets,
         error: null,
       };
@@ -77,6 +83,8 @@ function reducer(state: NutritionState, action: Action): NutritionState {
       return { ...state, entries: action.entries };
     case 'setCustomFoods':
       return { ...state, customFoods: action.customFoods };
+    case 'setFavorites':
+      return { ...state, favorites: action.favorites };
     case 'setTargets':
       return { ...state, targets: action.targets };
     case 'setError':
@@ -95,8 +103,11 @@ export type NutritionContextValue = NutritionState & {
   /** Adds a food to My Foods. Returns it so callers can log it immediately. */
   saveCustomFood: (food: VitaFood) => Promise<VitaFood>;
   removeCustomFood: (vitaId: string) => Promise<void>;
-  /** Looks a food up by id across My Foods. Provider results join this later. */
+  /** Looks a food up by id across My Foods and favorites. */
   findFood: (vitaId: string) => VitaFood | undefined;
+  isFavorite: (vitaId: string) => boolean;
+  /** Adds or removes, depending on current state. Returns the new state. */
+  toggleFavorite: (food: VitaFood) => Promise<boolean>;
 };
 
 const NutritionContext = createContext<NutritionContextValue | null>(null);
@@ -112,6 +123,7 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
     logDate: todayLogDate(),
     entries: [],
     customFoods: [],
+    favorites: [],
     targets: DEFAULT_TARGETS,
     error: null,
   });
@@ -123,6 +135,7 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
    */
   const entriesRef = useRef<FoodEntry[]>([]);
   const customFoodsRef = useRef<VitaFood[]>([]);
+  const favoritesRef = useRef<FavoriteFood[]>([]);
   const logDateRef = useRef<LogDate>(state.logDate);
   /** False once the user has deliberately navigated to a day other than today. */
   const followToday = useRef(true);
@@ -132,27 +145,31 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
       logDateRef.current = logDate;
       dispatch({ type: 'loadStarted', logDate });
       try {
-        const [entries, storedTargets, customFoods] = await Promise.all([
+        const [entries, storedTargets, customFoods, favorites] = await Promise.all([
           repository.getEntries(logDate),
           repository.getTargets(),
           repository.getCustomFoods(),
+          repository.getFavorites(),
         ]);
         // A slower load for a date the user has already navigated away from
         // must not overwrite the newer one.
         if (logDateRef.current !== logDate) return;
         entriesRef.current = entries;
         customFoodsRef.current = customFoods;
+        favoritesRef.current = favorites;
         dispatch({
           type: 'loadFinished',
           logDate,
           entries,
           customFoods,
+          favorites,
           targets: storedTargets ?? DEFAULT_TARGETS,
         });
       } catch {
         if (logDateRef.current !== logDate) return;
         entriesRef.current = [];
         customFoodsRef.current = [];
+        favoritesRef.current = [];
         dispatch({ type: 'loadFailed', message: "We couldn't load your food log." });
       }
     },
@@ -267,10 +284,42 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
   /**
    * Existing log entries are unaffected by deleting the food they came
    * from — their nutrition is snapshotted, so history stays intact.
+   *
+   * Favorites are searched too: a favorited external food keeps its stored
+   * definition, so it stays openable long after the search cache expires.
    */
   const findFood = useCallback(
-    (vitaId: string) => customFoodsRef.current.find((food) => food.vitaId === vitaId),
+    (vitaId: string) =>
+      customFoodsRef.current.find((food) => food.vitaId === vitaId) ??
+      favoritesRef.current.find((favorite) => favorite.vitaId === vitaId)?.food,
     [],
+  );
+
+  const isFavorite = useCallback(
+    (vitaId: string) => favoritesRef.current.some((favorite) => favorite.vitaId === vitaId),
+    [],
+  );
+
+  const toggleFavorite = useCallback(
+    async (food: VitaFood) => {
+      const existing = favoritesRef.current.some((favorite) => favorite.vitaId === food.vitaId);
+      // Newest first, so the Favorites screen has a deterministic order
+      // without needing a sort at render time.
+      const next = existing
+        ? favoritesRef.current.filter((favorite) => favorite.vitaId !== food.vitaId)
+        : [toFavorite(food), ...favoritesRef.current];
+
+      favoritesRef.current = next;
+      dispatch({ type: 'setFavorites', favorites: next });
+
+      try {
+        await repository.saveFavorites(next);
+      } catch {
+        dispatch({ type: 'setError', message: "We couldn't save that favorite." });
+      }
+      return !existing;
+    },
+    [repository],
   );
 
   const selectDate = useCallback(
@@ -293,6 +342,8 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
       saveCustomFood,
       removeCustomFood,
       findFood,
+      isFavorite,
+      toggleFavorite,
     }),
     [
       state,
@@ -305,6 +356,8 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
       saveCustomFood,
       removeCustomFood,
       findFood,
+      isFavorite,
+      toggleFavorite,
     ],
   );
 

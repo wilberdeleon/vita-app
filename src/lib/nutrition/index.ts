@@ -48,12 +48,20 @@ export {
   createEntry,
   editableServings,
   entryServingLabel,
+  foodFromEntry,
   newId,
   servingFromEntry,
   servingLabel,
   type CreateEntryInput,
   type CustomFoodInput,
 } from './model/foods';
+
+export {
+  PERSISTABLE_SOURCES,
+  canPersistDefinition,
+  toFavorite,
+  type FavoriteFood,
+} from './model/favorites';
 
 export {
   EMPTY_NUTRITION,
@@ -90,3 +98,10 @@ export { MIN_QUERY_LENGTH, useFoodSearch, type FoodSearchState, type FoodSearchS
 
 export { NutritionProvider, useNutrition } from './state/NutritionProvider';
 export { useDailyNutrition, type DailyNutrition } from './state/useDailyNutrition';
+export {
+  RECENT_LIMIT,
+  RECENT_MAX_DAYS,
+  collapseToRecents,
+  useRecentFoods,
+  type RecentFood,
+} from './state/useRecentFoods';

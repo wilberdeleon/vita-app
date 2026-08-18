@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { VitaMark } from '../shell/VitaMark';
 import { palette, spacing, typography } from '../../theme/tokens';
@@ -30,6 +31,13 @@ type Props = {
    * flips with theme (founders, 2026-07-19).
    */
   markColor?: string;
+  /**
+   * Optional right-hand control, for screens that need one that isn't the
+   * gear or the close X — currently Food Detail's favorite toggle. Ignored
+   * when `settings` or `close` is set, so the existing slots keep priority
+   * and every current screen renders unchanged.
+   */
+  action?: ReactNode;
 };
 
 export function ScreenHeader({
@@ -40,6 +48,7 @@ export function ScreenHeader({
   close = false,
   tone = 'dark',
   markColor,
+  action,
 }: Props) {
   const { surfaces } = useTheme();
   const iconColor = tone === 'light' ? palette.textOnColor : surfaces.text;
@@ -90,6 +99,7 @@ export function ScreenHeader({
           <Ionicons name="close" size={24} color={iconColor} />
         </Pressable>
       ) : null}
+      {!settings && !close && action ? <View style={styles.side}>{action}</View> : null}
     </View>
   );
 }

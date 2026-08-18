@@ -141,6 +141,32 @@ export function servingFromEntry(entry: FoodEntry): ServingOption {
 }
 
 /**
+ * Rebuilds a usable `VitaFood` from a logged entry alone.
+ *
+ * This is what makes Recents work without the network. An entry already
+ * carries the food's name, brand, provenance, and a nutrition snapshot, so
+ * a food the user logged three weeks ago stays loggable even after the
+ * provider cache expired, the custom food was deleted, or the device went
+ * offline. No API call, no fabricated data — only what the user's own
+ * history already recorded.
+ *
+ * The result carries a single serving: the one they actually used.
+ */
+export function foodFromEntry(entry: FoodEntry): VitaFood {
+  return {
+    vitaId: entry.foodRef.vitaFoodId,
+    source: entry.foodRef.source,
+    sourceId: entry.foodRef.sourceId,
+    name: entry.name,
+    ...(entry.brand ? { brand: entry.brand } : {}),
+    servings: [servingFromEntry(entry)],
+    defaultServingIndex: 0,
+    isCustom: entry.foodRef.source === 'vita-custom',
+    fetchedAt: entry.loggedAt,
+  };
+}
+
+/**
  * The serving options to offer when editing an entry, plus which one is
  * currently selected.
  *

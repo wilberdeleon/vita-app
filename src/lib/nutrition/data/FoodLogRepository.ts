@@ -17,6 +17,7 @@
  */
 
 import type { LogDate } from '../model/dates';
+import type { FavoriteFood } from '../model/favorites';
 import type { FoodEntry, NutritionTargets, VitaFood } from '../model/types';
 
 export interface FoodLogRepository {
@@ -30,6 +31,13 @@ export interface FoodLogRepository {
   getTargets(): Promise<NutritionTargets | null>;
 
   saveTargets(targets: NutritionTargets): Promise<void>;
+
+  /**
+   * Entries across recent days, newest first — the minimal history read
+   * Recents needs, deliberately not a full history API. One storage key per
+   * day is what makes this cheap: only the most recent days are read.
+   */
+  getRecentEntries(maxDays: number): Promise<FoodEntry[]>;
 }
 
 /**
@@ -46,5 +54,11 @@ export interface CustomFoodRepository {
   saveCustomFoods(foods: VitaFood[]): Promise<void>;
 }
 
-/** What `NutritionProvider` needs. One implementation satisfies both halves. */
-export interface NutritionRepository extends FoodLogRepository, CustomFoodRepository {}
+/** What `NutritionProvider` needs. One implementation satisfies all of it. */
+export interface NutritionRepository extends FoodLogRepository, CustomFoodRepository, FavoritesRepository {}
+
+/** Persisted favorites, keyed by normalized food identity. */
+export interface FavoritesRepository {
+  getFavorites(): Promise<FavoriteFood[]>;
+  saveFavorites(favorites: FavoriteFood[]): Promise<void>;
+}

@@ -167,7 +167,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.4 | Edit + Delete | Edit route reusing `PortionEditor`; delete + Undo preserved | 🟡 Built, pending founder review |
 | 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | 🟡 Built, pending founder review |
 | 2.6 | Provider Layer + Search | USDA + Open Food Facts adapters, normalization, dedupe, ranking, cache, debounced search | 🟡 Built (OFF verified; USDA blocked on founder key) |
-| 2.7 | Recent + Favorites | History-derived recents, persisted favorites, quick re-log | ⬜ Planned |
+| 2.7 | Recent + Favorites | History-derived recents, persisted favorites keyed by `vitaId` | 🟡 Built, pending founder review |
 | 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, fallback chain | ⬜ Planned |
 | 2.9 | Restaurant Coverage | Edge Function proxy + FatSecret adapter (founder-approved, gated on account setup) | ⬜ Planned |
 | 2.10 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
@@ -369,3 +369,38 @@ Incidentally confirmed during Test A: the day rolled from 17 → 18 August and y
 **Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · `src/features/dashboard/` byte-identical to `dbe0c91` · dead `formatServingCount`/`pluralizeUnit` removed rather than left behind.
 
 **Dependency note, still not caused by this slice:** `expo-constants@18.0.13 → ~18.0.14` remains flagged upstream. Untouched per the founder's lock.
+
+### Slice 2.7 — Recents + Favorites 🟡
+
+**Recents have no storage of their own.** The log already holds the truth — a food is recent precisely because the user logged it — so a parallel "recents" list would only be a second thing that can disagree with the first. The reserved `vita:v1:recents` key was **deleted** rather than filled. `useRecentFoods` reads the most recent days of log keys, collapses to one row per `vitaId` (entries arrive newest-first, so the first occurrence is already the latest use), and caps the result.
+
+**Limits:** 30 days scanned, 25 rows shown. One storage key per day is what makes the scan cheap — only those days are read, and keys are enumerated and sorted rather than walked date by date, because gaps are normal and walking would read nothing on every skipped day.
+
+**History is self-sufficient.** New pure `foodFromEntry()` rebuilds a usable `VitaFood` from an entry's snapshot alone — name, brand, provenance, and the serving actually used. A recent food stays loggable with the provider cache expired, the custom food deleted, or the device offline. No API call, nothing fabricated. Opening the Recents screen also re-seeds the food cache from history, so tapping a recent always resolves in Food Detail.
+
+**This paid off visibly during verification:** a food logged from the retired `vita-fixture` catalog — a source that no longer exists in the codebase after slice 2.6 — still rendered and remained loggable, rebuilt entirely from its entry snapshot.
+
+**Favorites** are keyed by `vitaId`, never by a search-result object reference, so favoriting once persists across every surface and every encounter. Stored newest-first, which gives the Favorites screen a deterministic order with no sort at render time.
+
+**Provider-aware storage, provider-independent presentation.** `PERSISTABLE_SOURCES` gates whether a favorite may retain the food *definition*: `usda` (CC0), `openfoodfacts` (ODbL — retaining individual user-chosen records on-device is ordinary API use; share-alike attaches to *publishing* a derived database), and `vita-custom`. **`fatsecret` is deliberately excluded** — its caching and storage terms differ and are unverified, so a favorite from it will store identity only and resolve the definition live. The row renders identically either way, and a stored definition is dropped on read if its source is no longer permitted, so a terms change takes effect without a migration.
+
+**The heart returned** in `FoodRow` (Search, Recents) and in Food Detail's header via a new optional `action` slot on `ScreenHeader` — additive and ignored when `settings`/`close` are set, so every existing screen renders unchanged. State comes from the shared store, which is why the surfaces agree without any of them refreshing or knowing about each other.
+
+**Test results — all eight pass, driven on device:**
+
+| Test | Result |
+|---|---|
+| A — Custom recent | Custom food appears in Recents; survived repeated kill/relaunch |
+| B — External recent | Open Food Facts food appears and stayed usable after relaunch **with no re-search and no network call** |
+| C — Recent dedup | Logged the same food twice → still exactly one row |
+| D — Favorite custom | Persisted across kill/relaunch |
+| E — Favorite external | Persisted, and opened from its stored definition after a full restart |
+| F — Unfavorite | Removed from Food Detail; Favorites and the Recents heart both updated |
+| G — Cross-surface | Favorited in Recents → Food Detail heart already filled → unfavorited there → Recents reflected it. In live search the favorited entry showed filled while a **near-identical result from a different brand entry showed hollow** — proving identity keying, not name matching |
+| H — Re-log | Opening a recent and logging moved it to the top; still one row, totals updated |
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · no provider branching in Recents/Favorites UI · no fixture resurrection · no separate recents persistence · only normalized `VitaFood` is persisted, never a raw provider payload · no cross-feature imports · `src/features/dashboard/` byte-identical to `2fe86a4`.
+
+**Known limitation:** two rows can legitimately share a name — the fixture-era "Protein Oats (bowl)" and the custom "Protein Oats (1 serving)" are genuinely different definitions with different `vitaId`s and different servings. Dedup is by identity, not by name, which is correct: merging them would hide a real distinction.
+
+**USDA remains unverified** pending the optional free key. Not a failure of this slice — the adapter, configuration, docs, and failure isolation are all in place, and search runs on Open Food Facts alone.

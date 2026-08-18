@@ -11,6 +11,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isValidLogDate, type LogDate } from '../model/dates';
+import { canPersistDefinition, type FavoriteFood } from '../model/favorites';
 import {
   MEAL_SLOTS,
   OPTIONAL_NUTRIENTS,
@@ -22,7 +23,7 @@ import {
   type VitaFood,
 } from '../model/types';
 import type { NutritionRepository } from './FoodLogRepository';
-import { StorageKeys } from './keys';
+import { FOOD_LOG_KEY_PREFIX, StorageKeys } from './keys';
 
 /* ── validation ─────────────────────────────────────────────────────── */
 
@@ -129,7 +130,7 @@ function parseServing(value: unknown): ServingOption | null {
   };
 }
 
-function parseCustomFood(value: unknown): VitaFood | null {
+function parseCustomFoodShape(value: unknown, source: VitaFood['source']): VitaFood | null {
   if (!isRecord(value)) return null;
   if (!isNonEmptyString(value.vitaId) || !isNonEmptyString(value.sourceId) || !isNonEmptyString(value.name)) {
     return null;
@@ -148,15 +149,32 @@ function parseCustomFood(value: unknown): VitaFood | null {
 
   return {
     vitaId: value.vitaId,
-    source: 'vita-custom',
+    source,
     sourceId: value.sourceId,
     name: value.name,
     ...(isNonEmptyString(value.brand) ? { brand: value.brand } : {}),
     ...(isNonEmptyString(value.barcode) ? { barcode: value.barcode } : {}),
     servings,
     defaultServingIndex: defaultIndex >= 0 && defaultIndex < servings.length ? defaultIndex : 0,
-    isCustom: true,
+    isCustom: source === 'vita-custom',
     fetchedAt: isNonEmptyString(value.fetchedAt) ? value.fetchedAt : new Date(0).toISOString(),
+  };
+}
+
+function parseFavorite(value: unknown): FavoriteFood | null {
+  if (!isRecord(value)) return null;
+  if (!isNonEmptyString(value.vitaId) || !isNonEmptyString(value.source)) return null;
+
+  const source = value.source as FavoriteFood['source'];
+  const food = parseCustomFoodShape(value.food, source);
+
+  return {
+    vitaId: value.vitaId,
+    source,
+    favoritedAt: isNonEmptyString(value.favoritedAt) ? value.favoritedAt : new Date(0).toISOString(),
+    // A stored definition is dropped on read if its source is no longer
+    // one we may retain, so a terms change takes effect without a migration.
+    ...(food && canPersistDefinition(source) ? { food } : {}),
   };
 }
 
@@ -235,10 +253,53 @@ export const asyncStorageNutritionRepository: NutritionRepository = {
 
     const foods: VitaFood[] = [];
     for (const candidate of parsed) {
-      const food = parseCustomFood(candidate);
+      const food = parseCustomFoodShape(candidate, 'vita-custom');
       if (food) foods.push(food);
     }
     return foods;
+  },
+
+  /**
+   * Reads the most recent days' logs, newest first.
+   *
+   * Keys are enumerated and sorted rather than walking backwards from today
+   * date by date: gaps are normal (a user doesn't log every day), and
+   * scanning dates would read nothing on every skipped one.
+   */
+  async getRecentEntries(maxDays: number): Promise<FoodEntry[]> {
+    const keys = await AsyncStorage.getAllKeys();
+    const logDates = keys
+      .filter((key) => key.startsWith(FOOD_LOG_KEY_PREFIX))
+      .map((key) => key.slice(FOOD_LOG_KEY_PREFIX.length))
+      .filter(isValidLogDate)
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, maxDays);
+
+    const days = await Promise.all(logDates.map((logDate) => this.getEntries(logDate)));
+
+    return days
+      .flat()
+      .sort((a, b) => b.loggedAt.localeCompare(a.loggedAt));
+  },
+
+  async getFavorites(): Promise<FavoriteFood[]> {
+    const parsed = await readJson(StorageKeys.favorites);
+    if (!Array.isArray(parsed)) return [];
+
+    const favorites: FavoriteFood[] = [];
+    for (const candidate of parsed) {
+      const favorite = parseFavorite(candidate);
+      if (favorite) favorites.push(favorite);
+    }
+    return favorites;
+  },
+
+  async saveFavorites(favorites: FavoriteFood[]): Promise<void> {
+    if (favorites.length === 0) {
+      await AsyncStorage.removeItem(StorageKeys.favorites);
+      return;
+    }
+    await AsyncStorage.setItem(StorageKeys.favorites, JSON.stringify(favorites));
   },
 
   async saveCustomFoods(foods: VitaFood[]): Promise<void> {

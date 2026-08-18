@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
@@ -111,7 +112,9 @@ export default function FoodDetail() {
 
   return (
     <Screen>
-      <ScreenHeader title={food.name} back />
+      {/* The heart lives in the header's action slot, so favorite state is
+          visible and toggleable without competing with Add to Log. */}
+      <ScreenHeader title={food.name} back action={<FavoriteButton food={food} />} />
 
       <View style={styles.hero}>
         <IconBadge icon="fast-food-outline" size={64} />

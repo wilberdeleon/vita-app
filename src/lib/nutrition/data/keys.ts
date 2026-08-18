@@ -17,10 +17,11 @@ const NAMESPACE = 'vita:v1';
 export const StorageKeys = {
   foodLog: (logDate: LogDate) => `${NAMESPACE}:foodlog:${logDate}`,
   targets: `${NAMESPACE}:targets`,
-  /** Reserved for later Sprint 2 slices; listed here so the namespace has one owner. */
   myFoods: `${NAMESPACE}:myfoods`,
   favorites: `${NAMESPACE}:favorites`,
-  recents: `${NAMESPACE}:recents`,
+  // No `recents` key: recents are derived from the food log itself. A
+  // parallel store would only be a second thing that can disagree with the
+  // first — see `state/useRecentFoods.ts`.
   /** Provider results, so Food Detail can resolve a food that isn't in My Foods. */
   cachedFood: (vitaId: string) => `${NAMESPACE}:cache:food:${vitaId}`,
 } as const;
