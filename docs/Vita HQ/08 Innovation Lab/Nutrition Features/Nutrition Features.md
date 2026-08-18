@@ -12,6 +12,8 @@
 
 ## Ideas in this category
 
-*No ideas logged yet.*
+| Idea | Status | Priority | Tier |
+|---|---|---|---|
+| [[Contextual Food Visuals]] | 📝 Defined | Medium | Free |
 
 **Related:** [[Innovation Lab]] · [[Fuel]] · [[Atlas Features]]

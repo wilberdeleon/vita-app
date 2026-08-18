@@ -37,6 +37,12 @@ The entire application shell exists and runs in the iOS Simulator via Expo Go �
 
 **Sprint 2 — Fuel**, in progress. The approved architecture proves the nutrition engine — food entries, daily state, calculated totals, persistence, and one shared domain in `src/lib/nutrition/` driving both [[Fuel]] and [[Dashboard]] — before external food providers (FatSecret, USDA FoodData Central, Open Food Facts) are introduced. Real barcode scanning ships in this sprint too, on the existing Expo Go + physical iPhone workflow. Slice-level detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md`.
 
+## Recorded 2026-08-18 — future product direction
+
+Founder direction captured ahead of implementation, so it survives the sprints between now and when it is built. **Nothing was implemented and no slice was opened.** Summary: a dedicated **Fuel Visual Refinement** slice late in Sprint 2 (Fuel is currently too bulky and over-reliant on large numbers — presentation only, no functional redesign) · **Sprint 5 — Water & Peptides** given a proposed six-slice breakdown, turning Water into a user-defined-goal hydration system and Peptides into an interactive tracker with a catalog, saved vial/reconstitution setup, a bidirectional units ⇄ dose calculator, injection-site logging with rotation, and history · **Sprint 8** clarified as owning the *global* motion/haptics layer, not every feature's visual debt.
+
+Carried with it: a **binding safety boundary** for Peptides (approved medications vs. research compounds must stay clearly distinguished; not-medical-advice disclaimer required) — [[Open Questions]] #17 must resolve before that sprint. Full detail on [[Roadmap]], [[Fuel]], [[Water]], [[Peptides]], [[Design Bible]], [[Motion & Animation]] and the [[Decision Log]].
+
 ## Resolved 2026-07-09
 
 Two decisions that were previously open tensions are now locked, following a full project review and documentation audit:

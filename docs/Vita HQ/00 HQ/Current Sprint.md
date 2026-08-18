@@ -27,7 +27,9 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Approved architecture — prove the engine before the network.** The nutrition foundation (food entries → daily state → calculated totals → persistence) is built and proven *before* external food providers are introduced. The shared nutrition domain is promoted to `src/lib/nutrition/` so neither [[Fuel]] nor [[Dashboard]] imports the other's internals, per CLAUDE.md rule 4 — the same promotion [[Journey Stages]] received.
 
-**Slice sequence:** Nutrition Foundation → Core Logging → Home Integration → Recents/Favorites/Custom Foods → Provider Layer → Food Search → Barcode Scanner → Edge Cases & Polish → Final Verification. Live progress: repo `docs/06-Slice-Tracker.md`.
+**Slice sequence:** Nutrition Foundation → Core Logging → Home Integration → Recents/Favorites/Custom Foods → Provider Layer → Food Search → Barcode Scanner → Edge Cases & Polish → **Fuel Visual Refinement** → Final Verification. Live progress: repo `docs/06-Slice-Tracker.md`.
+
+**Fuel Visual Refinement added 2026-08-18 (founder direction).** Functionality stays the priority for the rest of the sprint, but Fuel is not considered polished until a dedicated visual/interaction pass runs — the current screens read as *too basic, too bulky, overusing large numbers, filling space because space exists.* Presentation only; the feature architecture does not change. The slice is recorded, **not yet opened or approved** — it enters the normal slice workflow when the preceding slices complete. See [[Roadmap]], [[Fuel]], [[Design Bible]].
 
 **Binding constraints:** do not upgrade the Expo SDK · no provider secrets in the client · verify provider licensing before caching third-party data · [[Water]] and [[Peptides]] preserved but not expanded · the approved visual design stays locked.
 

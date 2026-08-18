@@ -79,6 +79,39 @@ Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, Press
 
 ---
 
+## Future direction (founder direction, 2026-08-18) — not yet implemented
+
+Recorded so it survives the sprints between now and when it is built. **This is stated direction, not approved specification.** Nothing here changes current implementation, and details may change after technical investigation, UX testing, provider availability, or design review.
+
+### Density and restraint
+
+The quality bar has not moved — premium, modern, minimal, in the Apple / Oura / WHOOP register. What the founders added is a specific critique of how VITA currently *spends* space:
+
+> Too basic · too bulky · overusing large numbers · filling space simply because space exists.
+
+Calorie and nutrition values are the named example: they grow disproportionately large and dominate entire screens. The corrective principle: **size communicates importance, not availability.** A number is large because it is the one thing the screen is about, never because the card had room. Refined density, stronger hierarchy, and more intentional visual storytelling — less bulk, more personality.
+
+The first application is the **Fuel Visual Refinement** slice near the end of Sprint 2 (`docs/04-Master-Roadmap.md`), which evaluates information density, typography scale, number sizing, spacing, card sizing, empty space, hierarchy, search-result density, Food Detail density, logging confirmation, meal rows, and Food Log presentation. Same feature architecture, significantly more refined presentation — it is not a functional redesign.
+
+### Contextual food visuals (concept — unscheduled)
+
+Food tracking should eventually feel more alive and visually distinctive: a burger shows a small burger, a taco a taco, a bowl a bowl, coffee a cup. **Small, delightful, tasteful, premium, and useful for quick recognition — explicitly not giant food photography dominating the interface.**
+
+Two constraints already settled as direction:
+
+- **Presentation must not depend on any one provider.** VITA must not look visually broken because a provider has no image. Real product image when it genuinely improves the experience → VITA contextual illustration/category icon when there is no image → clean generic food fallback when the category is unknown. This matters because USDA, Open Food Facts, restaurant providers, and custom foods all have inconsistent image coverage.
+- **A food → category → illustration mapping will be needed**, since provider data does not reliably expose a usable *visual* category. Recorded as a future architecture consideration in `docs/09-Technical-Documentation.md`; deliberately not designed or over-engineered yet.
+
+Implementation options to evaluate when this is scoped: a curated food-category icon/illustration library · lightweight vector assets · small animated illustrations · provider product images where appropriate · category fallback art. Full proposal: Vita HQ `08 Innovation Lab/Nutrition Features/Contextual Food Visuals.md`.
+
+### Motion and micro-interactions
+
+Subtle motion is wanted, and restraint is the point: **premium micro-interactions, not novelty animation.** VITA does not become a cartoon or a game. Named candidates — small food-icon movement on a successful log, smooth macro/progress animation, gentle confirmation transitions, water fill animation, peptide injection-site selection feedback, card state transitions, progress changes.
+
+Division of ownership: the *shared* motion system, haptics vocabulary, transition consistency, and global micro-interaction standards belong to **Sprint 8 — Final Polish & Animations**. Feature-specific motion may ship earlier where it genuinely belongs to that feature — Fuel motion inside Sprint 2's refinement slice, for example. Sprint 8 is not a holding pen for every feature's visual debt. The standing rules still apply: motion confirms, never decorates; respect reduced-motion settings; one vocabulary app-wide.
+
+---
+
 ## What this document will define (when authored)
 
 - Design tokens: color palette, typography scale, spacing, radii, elevation
