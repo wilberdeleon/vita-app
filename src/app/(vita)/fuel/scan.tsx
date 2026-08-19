@@ -1,93 +1,272 @@
-import { Ionicons } from '@expo/vector-icons';
+import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Linking from 'expo-linking';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, EmptyState, Screen, ScreenHeader } from '../../../components/ui';
+import { ScannerFrame } from '../../../features/fuel/components/ScannerFrame';
+import { lookupBarcodeAcrossProviders, normalizeGtin, rememberFoods } from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 
 /**
- * Static visual mock of the barcode scanner — no camera permission or
- * scanning logic yet. Real scanning ships with Sprint 2 (Fuel).
+ * Barcode types worth scanning for packaged food. Restricting the set keeps
+ * the detector from firing on QR codes and shipping labels that are never
+ * groceries.
+ */
+const FOOD_BARCODE_TYPES = ['upc_a', 'upc_e', 'ean13', 'ean8'] as const;
+
+type ScanState =
+  | { phase: 'scanning' }
+  | { phase: 'looking-up'; gtin: string }
+  | { phase: 'not-found'; gtin: string }
+  | { phase: 'error'; gtin: string; diagnostics: string[] };
+
+/**
+ * Real barcode scanning, on the Expo Go + physical iPhone workflow — no
+ * development build and no Xcode.
+ *
+ * The gallery control from the original mock stays removed: scanning a
+ * barcode out of a photo is QR-only on iOS, so that button could never do
+ * what it appeared to promise.
  */
 export default function ScanBarcode() {
-  const insets = useSafeAreaInsets();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [state, setState] = useState<ScanState>({ phase: 'scanning' });
+  const [torch, setTorch] = useState(false);
+
+  /**
+   * The single most important line in this screen.
+   *
+   * `onBarcodeScanned` fires continuously — many times per second — for as
+   * long as a code stays in frame. A `useState` flag is NOT sufficient:
+   * React batches updates, so several callbacks slip through before the
+   * re-render lands, each firing its own lookup and its own navigation. A
+   * ref flips synchronously on the very first detection.
+   */
+  const locked = useRef(false);
+  const controller = useRef<AbortController | null>(null);
+
+  useEffect(() => () => controller.current?.abort(), []);
+
+  const unlock = useCallback(() => {
+    locked.current = false;
+    setState({ phase: 'scanning' });
+  }, []);
+
+  const lookup = useCallback(async (gtin: string) => {
+    controller.current?.abort();
+    const abort = new AbortController();
+    controller.current = abort;
+
+    setState({ phase: 'looking-up', gtin });
+
+    const result = await lookupBarcodeAcrossProviders(gtin, abort.signal);
+
+    if (result.status === 'found') {
+      // Seed the cache so Food Detail resolves it, and so Favorites and
+      // Recents can reach it later without another request.
+      rememberFoods([result.food]);
+      // `replace`, not `push`: backing out of Food Detail should return to
+      // the Log Food picker, not to a frozen scanner mid-lookup.
+      router.replace(`/fuel/food/${encodeURIComponent(result.food.vitaId)}`);
+      return;
+    }
+
+    if (result.status === 'error') {
+      setState({
+        phase: 'error',
+        gtin,
+        diagnostics: result.outcomes
+          .filter((outcome) => !outcome.ok)
+          .map((outcome) => `${outcome.provider}: ${outcome.error?.kind ?? 'unknown'} @ ${outcome.error?.stage ?? '?'}`),
+      });
+      return;
+    }
+
+    // 'not-found' and 'no-providers' both mean there is nothing to open.
+    setState({ phase: 'not-found', gtin });
+  }, []);
+
+  const handleScan = useCallback(
+    (result: BarcodeScanningResult) => {
+      if (locked.current) return;
+      const gtin = normalizeGtin(result.data);
+      // A code that isn't a usable GTIN is ignored without locking, so the
+      // scanner keeps looking instead of dead-ending on a stray label.
+      if (!gtin) return;
+
+      locked.current = true;
+      setTorch(false);
+      void lookup(gtin);
+    },
+    [lookup],
+  );
+
+  /* ── permission states ────────────────────────────────────────────── */
+
+  if (!permission) {
+    return (
+      <Screen>
+        <ScreenHeader title="Scan Barcode" back close />
+        <View style={styles.centered}>
+          <ActivityIndicator color={palette.primary} />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (!permission.granted) {
+    const blocked = !permission.canAskAgain;
+    return (
+      <Screen>
+        <ScreenHeader title="Scan Barcode" back close />
+        <EmptyState
+          icon="camera-outline"
+          title={blocked ? 'Camera access is off' : 'Scan a barcode'}
+          body={
+            blocked
+              ? 'VITA needs the camera to read barcodes. You can turn it back on in Settings.'
+              : 'VITA uses the camera to read food barcodes so you can log packaged foods without typing.'
+          }
+        />
+        <Button
+          label={blocked ? 'Open Settings' : 'Allow camera'}
+          onPress={() => {
+            if (blocked) void Linking.openSettings();
+            else void requestPermission();
+          }}
+        />
+        <Button label="Search instead" variant="soft" onPress={() => router.replace('/fuel/search')} />
+      </Screen>
+    );
+  }
+
+  /* ── recovery states ──────────────────────────────────────────────── */
+
+  if (state.phase === 'not-found' || state.phase === 'error') {
+    const isError = state.phase === 'error';
+    return (
+      <Screen>
+        <ScreenHeader title="Scan Barcode" back close />
+        <EmptyState
+          icon={isError ? 'cloud-offline-outline' : 'help-circle-outline'}
+          title={isError ? "Couldn't look that up" : 'Product not found'}
+          body={
+            isError
+              ? 'Check your connection and try again.'
+              : "We couldn't find that barcode in our food databases. You can still add it manually."
+          }
+        />
+        {isError ? <Button label="Try again" onPress={() => void lookup(state.gtin)} /> : null}
+        <Button label="Scan again" variant={isError ? 'soft' : 'filled'} onPress={unlock} />
+        <Button label="Search food" variant="soft" onPress={() => router.replace('/fuel/search')} />
+        <Button label="Add manually" variant="soft" onPress={() => router.replace('/fuel/manual')} />
+        {__DEV__ && isError && state.diagnostics.length > 0 ? (
+          <Text style={styles.diagnostics}>{state.diagnostics.join('\n')}</Text>
+        ) : null}
+      </Screen>
+    );
+  }
+
+  /* ── live scanner ─────────────────────────────────────────────────── */
+
+  const busy = state.phase === 'looking-up';
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.frameArea, { paddingTop: insets.top + spacing.xxxl }]}>
-        <View style={styles.frame}>
-          <View style={styles.barcodeLines}>
-            {BARCODE_WIDTHS.map((width, index) => (
-              <View key={index} style={[styles.line, { width }]} />
-            ))}
-          </View>
-        </View>
-        <Text style={styles.caption}>Align barcode within the frame</Text>
-      </View>
+    <View style={styles.camera}>
+      <CameraView
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        enableTorch={torch}
+        barcodeScannerSettings={{ barcodeTypes: [...FOOD_BARCODE_TYPES] }}
+        // Detaching the handler while a lookup runs is a second guard
+        // alongside the ref — belt and braces against a very fast device.
+        onBarcodeScanned={busy ? undefined : handleScan}
+      />
 
-      <View style={[styles.controls, { paddingBottom: insets.bottom + spacing.xxl }]}>
-        <Pressable style={styles.control} hitSlop={8}>
-          <Ionicons name="flash-outline" size={22} color="#FFFFFF" />
+      <View style={[styles.scrim, busy && styles.scrimBusy]} pointerEvents="none" />
+      <ScannerFrame busy={busy} />
+
+      {busy ? (
+        <View style={styles.busyBadge}>
+          <ActivityIndicator color={palette.textOnColor} />
+        </View>
+      ) : null}
+
+      <View style={styles.controls}>
+        <Pressable
+          style={styles.control}
+          onPress={() => router.back()}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Close scanner"
+        >
+          <Ionicons name="close" size={24} color={palette.textOnColor} />
         </Pressable>
-        <Pressable style={styles.control} hitSlop={8}>
-          <Ionicons name="images-outline" size={22} color="#FFFFFF" />
-        </Pressable>
-        <Pressable style={styles.control} hitSlop={8} onPress={() => router.back()}>
-          <Ionicons name="close" size={24} color="#FFFFFF" />
+
+        <Pressable
+          style={[styles.control, torch && styles.controlActive]}
+          onPress={() => setTorch((value) => !value)}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityState={{ selected: torch }}
+          accessibilityLabel={torch ? 'Turn flashlight off' : 'Turn flashlight on'}
+        >
+          <Ionicons
+            name={torch ? 'flashlight' : 'flashlight-outline'}
+            size={22}
+            color={torch ? palette.ink : palette.textOnColor}
+          />
         </Pressable>
       </View>
     </View>
   );
 }
 
-const BARCODE_WIDTHS = [3, 6, 2, 8, 4, 2, 7, 3, 5, 2, 6, 8, 3, 2, 5, 7, 2, 4, 6, 3];
-
 const styles = StyleSheet.create({
-  container: {
+  camera: {
     flex: 1,
-    backgroundColor: '#121212',
-    justifyContent: 'space-between',
+    backgroundColor: '#000000',
   },
-  frameArea: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xxl,
+  scrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  frame: {
-    width: 280,
-    height: 170,
-    borderRadius: radii.card,
-    borderWidth: 3,
-    borderColor: palette.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  scrimBusy: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
-  barcodeLines: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    height: 90,
-  },
-  line: {
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-  },
-  caption: {
-    ...typography.body,
-    color: '#FFFFFF',
-    opacity: 0.85,
+  busyBadge: {
+    position: 'absolute',
+    top: '32%',
+    alignSelf: 'center',
   },
   controls: {
+    position: 'absolute',
+    left: spacing.xl,
+    right: spacing.xl,
+    bottom: spacing.xxxl * 2,
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xxxl,
+    justifyContent: 'space-between',
   },
   control: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    width: 48,
+    height: 48,
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  controlActive: {
+    backgroundColor: palette.textOnColor,
+  },
+  diagnostics: {
+    ...typography.micro,
+    color: palette.textSecondary,
+    textAlign: 'center',
+  },
+  centered: {
+    paddingVertical: spacing.xxxl,
+    alignItems: 'center',
   },
 });

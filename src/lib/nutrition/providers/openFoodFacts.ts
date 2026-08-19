@@ -22,7 +22,7 @@ import { scaleNutrition } from '../model/nutrition';
 import type { NutritionFacts, ServingOption, VitaFood } from '../model/types';
 import { normalizeGtin } from './gtin';
 import { asFiniteNumber, asNonEmptyString, asRecord, fetchJson } from './http';
-import { PROVIDER_PAGE_SIZE, type FoodProvider } from './types';
+import { ProviderError, PROVIDER_PAGE_SIZE, type FoodProvider } from './types';
 
 /**
  * Full-text search goes through Search-a-licious, which is what Open Food
@@ -204,13 +204,28 @@ export const openFoodFactsProvider: FoodProvider = {
     const contact = readContact();
     if (!contact) return null;
 
-    // Kept minimal here: the barcode slice owns the fallback chain and its
-    // UI. This exists so that slice inherits a working lookup rather than
-    // reopening the adapter.
     const url = `${PRODUCT_URL}/${encodeURIComponent(gtin)}.json?fields=${encodeURIComponent(PRODUCT_FIELDS)}`;
-    const payload = asRecord(await fetchJson('openfoodfacts', 'barcode', url, signal, {
-      'User-Agent': userAgent(contact),
-    }));
+
+    let payload: Record<string, unknown> | null;
+    try {
+      payload = asRecord(
+        await fetchJson('openfoodfacts', 'barcode', url, signal, { 'User-Agent': userAgent(contact) }),
+      );
+    } catch (error) {
+      /**
+       * Open Food Facts answers an unknown barcode with **HTTP 404**, not a
+       * 200 carrying `status: 0`. Left to the generic handler that surfaces
+       * as a lookup *error*, which would tell the user to retry something
+       * that can never succeed instead of offering manual entry.
+       *
+       * A 404 here is a definitive answer — the database was reached and
+       * does not have this product — so it maps to "not found".
+       */
+      if (error instanceof ProviderError && error.status === 404) return null;
+      throw error;
+    }
+
+    // Some responses still return 200 with `status: 0`; treated the same way.
     if (!payload || asFiniteNumber(payload.status) !== 1) return null;
     return toVitaFood(payload.product);
   },

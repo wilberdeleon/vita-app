@@ -196,4 +196,36 @@ export const usdaProvider: FoodProvider = {
     }
     return results;
   },
+
+  /**
+   * Barcode lookup, with a caveat that matters.
+   *
+   * **FoodData Central has no barcode endpoint.** Passing a GTIN to
+   * `/foods/search` is a fuzzy full-text query, so it will happily return
+   * near-misses and unrelated products. Every candidate is therefore
+   * re-checked against its own `gtinUpc` through `normalizeGtin`, and only
+   * an exact GTIN identity is accepted — a barcode scan must return *that*
+   * product or nothing, never something approximately like it.
+   */
+  async lookupBarcode(gtin: string, signal: AbortSignal): Promise<VitaFood | null> {
+    const key = readApiKey();
+    if (!key) return null;
+
+    const target = normalizeGtin(gtin);
+    if (!target) return null;
+
+    const url =
+      `${BASE_URL}?api_key=${encodeURIComponent(key)}` +
+      `&query=${encodeURIComponent(gtin)}` +
+      `&pageSize=10&dataType=${encodeURIComponent('Branded')}`;
+
+    const payload = asRecord(await fetchJson('usda', 'barcode', url, signal));
+    const foods = payload && Array.isArray(payload.foods) ? payload.foods : [];
+
+    for (const entry of foods) {
+      const food = toVitaFood(entry);
+      if (food?.barcode && food.barcode === target) return food;
+    }
+    return null;
+  },
 };

@@ -92,12 +92,26 @@ USDA adapter    Open Food Facts adapter        ← the only files that know a pr
 
 **Favorites** are keyed by `vitaId` and persisted at `vita:v1:favorites`, newest first. `PERSISTABLE_SOURCES` gates whether the food *definition* may be retained: USDA (CC0), Open Food Facts (ODbL — retaining individual user-chosen records on-device is ordinary API use; share-alike attaches to publishing a derived database), and custom foods. **FatSecret is excluded** until its caching/storage terms are verified; a favorite from it will store identity only and resolve live. A stored definition is dropped on read if its source is no longer permitted, so a terms change needs no migration.
 
+### Barcode scanning (slice 2.8)
+
+`expo-camera@~17.0.10` (SDK 54-compatible; **no SDK upgrade**). Works in Expo Go — no development build, no Xcode. `app.json` carries the `expo-camera` plugin with a permission string for future dev builds; Expo Go supplies its own.
+
+**Flow:** camera → `onBarcodeScanned` → `normalizeGtin()` → sequential lookup → Food Detail. Scan types are limited to `upc_a`, `upc_e`, `ean13`, `ean8`.
+
+**Scan lock is a `ref`, not state.** The callback fires many times per second while a code is in frame; React batching lets several through before a `useState` flag re-renders, each firing its own lookup and navigation. The handler is also detached during lookup as a second guard. A non-GTIN value is ignored without locking.
+
+**Sequential, not parallel.** A GTIN is an exact identity, so the first trustworthy match ends the search — no reason to spend rate-limited quota on the rest. Open Food Facts first (barcode-native product endpoint, and it carries serving data that Search-a-licious lacks); USDA optional and skipped silently when unconfigured.
+
+**USDA has no barcode endpoint** — a GTIN query is fuzzy full-text, so every candidate is re-verified against its own `gtinUpc` and only an exact match is accepted.
+
+**Not-found vs error are distinct**, and must stay so: Open Food Facts answers an unknown barcode with **HTTP 404**, which is a definitive "the database doesn't have this" and maps to not-found. Treating it as an error would send users to retry a lookup that can never succeed instead of offering manual entry.
+
 ## Environment & secrets
 
 - Copy `.env.example` to `.env` (git-ignored) and fill in values.
 - Only publishable keys use the `EXPO_PUBLIC_` prefix (they ship inside the app bundle). Real secrets live server-side in Supabase edge functions.
 
-## Known mocks (as of Sprint 2, slice 2.7)
+## Known mocks (as of Sprint 2, slice 2.8)
 
 Recorded explicitly so a screen showing real data next to a screen showing fixtures is never mistaken for a bug — or for working functionality.
 
@@ -110,7 +124,7 @@ Recorded explicitly so a screen showing real data next to a screen showing fixtu
 | Recent Foods | **Real.** Derived from logging history — no separate store. |
 | Favorites | **Real.** Persisted, keyed by `vitaId`, working across every source. |
 | Add Manually, custom foods (My Foods), delete + Undo | **Real.** Persisted. |
-| Barcode scanner | Static drawing, no camera. Later in Sprint 2. |
+| Barcode scanner | **Real camera.** Live detection unverified pending a physical iPhone — the simulator has no camera. |
 | **Water Log** | **Mock.** `getWaterToday()` returns a fixed `5 / 8 cups`; "+ Add Water" discards the amount. Tier 3 of Sprint 2. |
 | **Peptide Log** | **Mock.** `getPeptideToday()` returns a fixed `1 / 3 logged`; "Save Peptide" discards the entry. Preserved but deliberately not extended in Sprint 2 — deeper work is Sprint 5. |
 | Home nutrition (calories, macros, meals, nutrition goal) | **Real.** Same engine as Fuel — one source of truth. |

@@ -168,7 +168,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | 🟡 Built, pending founder review |
 | 2.6 | Provider Layer + Search | USDA + Open Food Facts adapters, normalization, dedupe, ranking, cache, debounced search | 🟡 Built (OFF verified; USDA blocked on founder key) |
 | 2.7 | Recent + Favorites | History-derived recents, persisted favorites keyed by `vitaId` | 🟡 Built, pending founder review |
-| 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, fallback chain | ⬜ Planned |
+| 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, OFF→USDA chain | 🟡 Built (pipeline + states verified; live detection needs a physical iPhone) |
 | 2.9 | Restaurant Coverage | Edge Function proxy + FatSecret adapter (founder-approved, gated on account setup) | ⬜ Planned |
 | 2.10 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
 | 2.11 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
@@ -404,3 +404,33 @@ Incidentally confirmed during Test A: the day rolled from 17 → 18 August and y
 **Known limitation:** two rows can legitimately share a name — the fixture-era "Protein Oats (bowl)" and the custom "Protein Oats (1 serving)" are genuinely different definitions with different `vitaId`s and different servings. Dedup is by identity, not by name, which is correct: merging them would hide a real distinction.
 
 **USDA remains unverified** pending the optional free key. Not a failure of this slice — the adapter, configuration, docs, and failure isolation are all in place, and search runs on Open Food Facts alone.
+
+### Slice 2.8 — Barcode Scanner 🟡
+
+**Camera.** `expo-camera@~17.0.10`, the SDK 54-compatible version — installed with `npx expo install`, **no SDK change** (`expo` stays `~54.0.36`). Works in Expo Go with no development build and no Xcode. `app.json` gains the `expo-camera` plugin with a camera-permission string so a future dev build is correct; Expo Go uses its own string, which is why the on-device prompt reads "Expo Go would like to access the Camera".
+
+**Scan types** restricted to `upc_a`, `upc_e`, `ean13`, `ean8` — the grocery formats. Narrowing the set stops the detector firing on QR codes and shipping labels that are never food. Detected values go through the existing `normalizeGtin()`; grep confirms no second normalization anywhere.
+
+**The scan lock is a `ref`, not state.** `onBarcodeScanned` fires many times per second while a code stays in frame. A `useState` flag is not sufficient — React batches, so several callbacks slip through before the re-render lands, each firing its own lookup and its own navigation. The ref flips synchronously on the first detection; `onBarcodeScanned` is additionally detached while a lookup runs, as a second guard. A value that isn't a usable GTIN is ignored **without** locking, so a stray label doesn't dead-end the scanner.
+
+**Lookup runs sequentially**, unlike text search. A GTIN is an exact identity: the first trustworthy match is the answer, so asking every provider would only spend rate-limited quota. Open Food Facts goes first (barcode-native, one O(1) product endpoint); USDA is an optional fallback and is **skipped silently when unconfigured** rather than reported as a failure.
+
+**USDA barcode has a caveat worth recording:** FoodData Central has no barcode endpoint, so a GTIN query is a fuzzy full-text search that returns near-misses. Every candidate is re-checked against its own `gtinUpc` through `normalizeGtin`, and only an exact GTIN identity is accepted — a scan must return *that* product or nothing.
+
+**A real bug the live API caught.** Open Food Facts answers an unknown barcode with **HTTP 404**, not a 200 carrying `status: 0`. Left to the generic handler that surfaced as a lookup *error* — which would have told the user to retry something that can never succeed, instead of offering manual entry. A 404 on the product endpoint is a definitive answer and now maps to "not found". This is exactly the not-found-vs-error distinction the slice brief called for, and it would have shipped wrong.
+
+**Pipeline verified against the live API** (10 assertions, standalone runner):
+
+- UPC-A `722252387530` and EAN-13 `0722252387530` both resolve, and produce the **same `vitaId`** — barcode identity is representation-independent.
+- The resolved product carries a **real label serving ("68 g")**, not just the 100 g baseline — the OFF *product* endpoint has serving data that Search-a-licious lacks, which is the 2.6 tradeoff paying off here.
+- Four macros present, barcode normalized to 14 digits, provenance `openfoodfacts`.
+- A genuinely unknown barcode returns **`not-found`, not `error`**.
+- Junk input returns `not-found` **without making a request**.
+
+*Aside worth knowing:* several "obviously fake" codes (`9999999999994`, `0123456789012`, `1111111111116`) are **real community records** in Open Food Facts. A valid GTIN is not automatically food, and the database is not automatically empty — which is why §18's rule matters and why the not-found test had to use a code verified absent.
+
+**Verified on the simulator:** permission-undetermined state (icon, explanation, "Allow camera", "Search instead") · the OS prompt · **denied** state switching copy to "Camera access is off" with "Open Settings" · granted → live scanner with orange corner brackets, instruction, close and torch controls · torch toggle reflecting on/off.
+
+**NOT verified — needs a physical iPhone.** The iOS Simulator has no camera, so the narrow path **camera detection → `handleScan` → `normalizeGtin` → lookup** has never executed against a real barcode. Everything either side of it is verified: the lookup chain against the live API above, and Food Detail → log → Fuel/Home → Recents → Favorites → relaunch, all unchanged and already proven for Open Food Facts foods in slices 2.3–2.7. Device tests C, D, E, F, G, H, J remain for the founder.
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · no provider branching in UI · no duplicate barcode normalization · no gallery control · SDK unchanged · `src/features/dashboard/` byte-identical to `c61f92e`.

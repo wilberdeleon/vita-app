@@ -29,7 +29,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "VITA uses the camera to scan food barcodes so you can log packaged foods without typing."
+        }
+      ]
     ]
   }
 }

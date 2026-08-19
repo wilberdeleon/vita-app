@@ -90,10 +90,18 @@ export { asyncStorageNutritionRepository } from './data/asyncStorageRepository';
 
 export { gtinEquals, isValidGtin, normalizeGtin, type Gtin } from './providers/gtin';
 export { ProviderError, type FoodProvider, type ProviderErrorKind } from './providers/types';
-export { PROVIDERS, configuredProviders, searchAllProviders, type AggregatedSearch, type ProviderOutcome } from './providers/registry';
+export {
+  PROVIDERS,
+  configuredProviders,
+  lookupBarcodeAcrossProviders,
+  searchAllProviders,
+  type AggregatedSearch,
+  type BarcodeLookup,
+  type ProviderOutcome,
+} from './providers/registry';
 export { dedupeFoods, normalizeName, type MergedFood } from './search/dedupe';
 export { rankFoods, scoreFood, type ScoredFood } from './search/rank';
-export { readCachedFood, readCachedFoodSync } from './search/cache';
+export { readCachedFood, readCachedFoodSync, rememberFoods } from './search/cache';
 export { MIN_QUERY_LENGTH, useFoodSearch, type FoodSearchState, type FoodSearchStatus } from './state/useFoodSearch';
 
 export { NutritionProvider, useNutrition } from './state/NutritionProvider';
