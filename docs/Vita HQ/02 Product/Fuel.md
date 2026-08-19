@@ -22,6 +22,22 @@ The eight-screen flow under `src/app/(vita)/fuel/` and the Fuel hub tab are othe
 
 **Screenshot Food Analysis** ([[Mobile Order Screenshot Import]]) is explicitly **deferred out of Sprint 2's approved scope** and currently has no scheduled sprint — see [[Open Questions]] #14.
 
+### Fuel Visual Refinement — founder direction, 2026-08-18
+
+Functionality stays the priority for the rest of Sprint 2, but **before Sprint 2 counts as polished, Fuel gets a dedicated visual/interaction refinement slice** — added to [[Roadmap]] after the functional slices and before Final Verification.
+
+The founders' read on Fuel as built today: **too basic, too bulky, overusing large numbers, and filling space simply because space exists.** Calorie and nutrition values are the named example — they grow disproportionately large and dominate entire screens. It currently reads as a functional prototype rather than a refined production health app.
+
+**Same feature architecture, significantly more refined presentation** — this is explicitly *not* a functional redesign. The slice evaluates: information density · typography scale · number sizing · spacing · card sizing · empty space · hierarchy · search-result density · Food Detail density · logging confirmation · meal rows · Food Log presentation. The governing principle, recorded on [[Design Bible]]: **size communicates importance, not availability.**
+
+### Contextual food visuals — concept, unscheduled
+
+Food tracking should eventually feel more alive and visually distinctive — a burger shows a small burger, a taco a taco, oatmeal a bowl, coffee a cup. **Small, delightful, tasteful, premium, and useful for quick recognition — never giant food photos dominating the interface.**
+
+Two constraints already settled as direction: presentation must **not depend on any one provider** (real image → VITA category illustration → generic fallback, because USDA, Open Food Facts, restaurant providers, and custom foods all have inconsistent image coverage), and a `Food → Category → illustration` mapping will likely be needed since provider data rarely exposes a usable *visual* category. Deliberately not over-engineered yet.
+
+Full proposal: [[Contextual Food Visuals]].
+
 ## Future ideas
 
 - AI meal planning via Atlas — [[Atlas Capabilities]]
@@ -29,6 +45,7 @@ The eight-screen flow under `src/app/(vita)/fuel/` and the Fuel hub tab are othe
 - Mobile order screenshot import — Atlas reads a restaurant/delivery order screenshot and drafts the log for review — [[Mobile Order Screenshot Import]]
 - AI meal photo recognition — Atlas estimates foods, portions, and macros from a photo of the plate and drafts the log for review — [[AI Meal Photo Recognition]]
 - Smart fridge scanner — Atlas reads what's in the fridge and suggests meals, swaps, and groceries (advisory, not a logging action — placement in the app is still open) — [[Smart Fridge Scanner]]
+- Contextual food visuals — small food illustrations/icons for quick recognition, provider-independent — [[Contextual Food Visuals]]
 
 ## Dependencies
 

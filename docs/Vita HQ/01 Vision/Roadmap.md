@@ -130,6 +130,39 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]].
 | 7 | **Screenshot Food Analysis** | **This is [[Mobile Order Screenshot Import]]** — promoted from the Innovation Lab to 📋 Planned as part of this update |
 | 8 | Fuel Polish | |
 
+### Fuel Visual Refinement — added 2026-08-18 (founder direction)
+
+A dedicated late slice, after the functional slices are stable and before Final Verification. Sprint 2 keeps prioritizing functionality first; this is where presentation catches up before Fuel is called finished.
+
+The founders' assessment of Fuel as built today: **too basic, too bulky, overusing large numbers, and filling space simply because space exists** — calorie and nutrition values in particular grow disproportionately large and dominate entire screens. It reads as a functional prototype rather than a refined production health app.
+
+**Presentation only — the feature architecture does not change.** Same screens, same flows, same data model. What it evaluates: information density · typography scale · number sizing · spacing · card sizing · empty space · hierarchy · search-result density · Food Detail density · logging confirmation · meal rows · Food Log presentation. Fuel-specific micro-interactions may be introduced here rather than deferred wholesale to Sprint 8 (see below).
+
+Design direction: [[Design Bible]] → "Density and restraint". **Contextual food visuals** are a related but separate, unscheduled concept — [[Contextual Food Visuals]].
+
+*Founder-stated direction recorded ahead of time. The slice is not yet opened, scoped, or approved — that happens under the normal slice workflow ([[Claude Workflow]]) when the preceding slices complete.*
+
+## Sprint 5 — Water & Peptides
+
+*New in the 2026-08-17 restructure — it closes the long-flagged gap where neither [[Water]] nor [[Peptides]] had a sprint anywhere. Scope below is **founder direction recorded 2026-08-18**, ahead of the sprint. Slice names and boundaries are **illustrative and not yet approved**; the sprint is planned properly when Sprint 4 completes.*
+
+**Objective:** bring both existing logs to real, persisted functionality. **Deliverable:** Water and Peptides as genuinely functional features rather than the visual mocks they are today.
+
+| # | Slice | Scope |
+|---|---|---|
+| 1 | Water Foundation | User-defined daily goal, quick logging, persistence, date-aware daily reset |
+| 2 | Water Experience | Progress visualization, quick-add amounts, polish |
+| 3 | Peptide Data Foundation | Peptide catalog + Custom, user vial/reconstitution setup, log entry model |
+| 4 | Peptide Calculator | Reconstitution model and bidirectional syringe units ⇄ dose conversion — [[Peptide Dose Calculator]] |
+| 5 | Injection Site Tracking | Site picker, simple body visual, rotation history — [[Injection Site Tracking]] |
+| 6 | Peptide History & Polish | Log review, editing, interaction refinement, disclaimer placement |
+
+**Water direction.** The target is a small, useful hydration system rather than a static `5 of 8 cups` counter: a **user-defined** daily goal in cups/oz/mL/L that persists until changed (VITA does not assume everyone wants 8 cups), fast quick-add logging plus a custom amount, a more satisfying progress visual designed inside VITA's own system — **not automatically a literal animated water bottle** — and date-aware daily behavior. Full scope on [[Water]].
+
+**Peptide direction.** A genuinely interactive tracker rather than a basic logging form, staying informational and tracking-oriented: catalog + Custom, short educational information per peptide, a clear approved-vs-research distinction with an unobtrusive disclaimer, a saved vial/reconstitution setup so logging is fast, a bidirectional units ⇄ dose calculator, injection-site logging with a simple body visual and rotation guidance, and reviewable/editable history. Full scope and the safety boundary on [[Peptides]].
+
+**Sequencing note:** the long-term hydration *goal preference* may belong to [[Settings]], which is Sprint 7 — after this sprint. Tracked as [[Open Questions]] #16.
+
 ## Sprint 6 — Atlas
 
 *Was Sprint 4 under the 2026-07-09 structure.*
@@ -203,6 +236,12 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]].
 | 8 | Final QA & Launch Checklist |
 
 Overlaps with [[Launch Plan]]'s pre-launch checklist — cross-reference when either page is next updated.
+
+### What Sprint 8 owns — and what it does not (founder direction, 2026-08-18)
+
+Sprint 8 owns the **global** layer: the shared motion system, haptics vocabulary, transition consistency, and app-wide micro-interaction standards. It is **not a holding pen for every feature's visual debt.** If Fuel still feels bulky once its functionality is finished, it gets its own refinement slice inside Sprint 2 (above) — the same principle applies to later sprints. Feature-specific motion may land earlier where it genuinely belongs to that feature; Sprint 8 then reconciles it into one vocabulary.
+
+Motion stays restrained — **premium micro-interactions, not novelty animation.** VITA does not become a cartoon or a game. Named candidates: small food-icon movement on a successful log · smooth macro/progress animation · gentle confirmation transitions · water fill animation · peptide injection-site selection feedback · card state transitions · progress changes. See [[Motion & Animation]].
 
 ---
 

@@ -100,13 +100,25 @@ Deliverable: a complete food logging experience centered on simplicity, speed, a
 
 **Founder-approved architecture (2026-08-17):** prove the nutrition engine before introducing external providers. Full blueprint in the Sprint 2 Fuel plan; slice-by-slice progress in `docs/06-Slice-Tracker.md`.
 
-Slices: Nutrition Foundation · Core Logging (manual food → log → meal → totals → edit/delete) · Home Integration · Recents / Favorites / Custom Foods · Provider Layer · Food Search · Barcode Scanner · Edge Cases & Polish · Final Verification.
+Slices: Nutrition Foundation · Core Logging (manual food → log → meal → totals → edit/delete) · Home Integration · Recents / Favorites / Custom Foods · Provider Layer · Food Search · Barcode Scanner · Edge Cases & Polish · **Fuel Visual Refinement** · Final Verification.
 
 **Binding constraints for this sprint:**
 - **Do not upgrade the Expo SDK.** The App Store Expo Go build is still SDK 54; SDK 55–57 builds remain in Apple review. If a dependency requires an upgrade, stop and report before proceeding.
 - **No provider secrets in the client.** Any provider requiring server-side credentials goes behind a minimal Supabase Edge Function, narrowly scoped to provider access — not a broad Supabase or auth migration.
 - **Provider licensing is a hard constraint.** Verify current licensing, attribution, storage, and caching terms before caching or persisting any third-party nutrition data.
 - **The approved visual design is locked.** Fuel is not redesigned; new functional states follow the established system with Home as the visual source of truth.
+
+## Fuel Visual Refinement — added 2026-08-18 (founder direction)
+
+A dedicated late slice, scheduled **after the functional slices are stable and before Final Verification**. Sprint 2 continues to prioritize functionality first; this is where presentation catches up before Fuel is called finished.
+
+The founders' assessment of Fuel as built today: too basic, too bulky, over-reliant on large numbers, and filling space simply because space exists — calorie and nutrition values in particular grow disproportionately large and dominate whole screens. It reads as a functional prototype rather than a refined production health app.
+
+**Scope is presentation only. The feature architecture does not change** — same screens, same flows, same data model, significantly more refined presentation. What the slice evaluates: information density · typography scale · number sizing · spacing · card sizing · empty space · hierarchy · search-result density · Food Detail density · logging confirmation · meal rows · Food Log presentation.
+
+Fuel-specific micro-interactions may be introduced here rather than deferred wholesale to Sprint 8 — see Sprint 8 below for the division. Design direction detail lives in `docs/05-Design-System.md` → "Future direction (founder direction, 2026-08-18)". **Contextual food visuals** (small food illustrations/icons) are a related but separate, currently unscheduled concept — parked in `docs/10-Ideas-Parking-Lot.md`, not part of this slice unless the founders scope it in.
+
+*This is founder-stated direction recorded ahead of time. The slice is not yet formally opened, scoped, or approved — that happens under the normal slice workflow when the preceding slices complete.*
 
 Status: 🟡 In Progress
 
@@ -141,6 +153,45 @@ Objective: bring both existing logs to real, persisted functionality.
 Deliverable: Water and Peptides as genuinely functional features rather than the visual mocks they are today.
 
 **Resolves a previously flagged gap.** Water and Peptides had no sprint anywhere in the 2026-07-09 roadmap — logged as Gap #1 and #2 there and as Open Question #11. This sprint closes both.
+
+## Proposed slices — founder direction, 2026-08-18
+
+Recorded ahead of the sprint so the scope is not rediscovered later. **Slice names and boundaries are illustrative and not yet approved**; the sprint is planned and opened under the normal workflow when Sprint 4 completes.
+
+| # | Slice | Scope |
+|---|---|---|
+| 1 | Water Foundation | User-defined daily goal, quick logging, persistence, date-aware daily reset |
+| 2 | Water Experience | Progress visualization, quick-add amounts, polish |
+| 3 | Peptide Data Foundation | Peptide catalog + Custom entry, user vial/reconstitution setup, log entry model |
+| 4 | Peptide Calculator | Reconstitution model and bidirectional syringe units ↔ dose conversion |
+| 5 | Injection Site Tracking | Site picker, simple body visual, site-rotation history |
+| 6 | Peptide History & Polish | Log review, editing, interaction refinement, disclaimer placement |
+
+### Water — direction
+
+Water exists conceptually inside Fuel today and is deliberately **not** a Sprint 2 focus: Sprint 2 preserves its entry points and necessary integration only, and does not remove it. The deep hydration work belongs here.
+
+The target is a small, useful hydration system rather than a static `5 of 8 cups` counter:
+
+- **User-defined daily goal** in cups, ounces, millilitres, or litres. VITA does not assume every user wants exactly 8 cups. The goal persists until changed. Flow: set goal → log throughout the day → see progress toward it. The long-term goal *preference* may end up owned by Settings (Sprint 7) — sequencing question, tracked in Vita HQ `00 HQ/Open Questions.md`.
+- **Fast logging** via quick amounts (e.g. +8 / +12 / +16 / +24 oz) plus a custom amount, following the user's unit system.
+- **A more satisfying progress visual** — fill level, bottle/glass, circular progress, fluid motion, or a clean bar. **Do not assume a literal animated water bottle is automatically right**; design it inside VITA's premium visual system.
+- **Date-aware behavior:** today's intake, daily rollover, goal, progress, and history later. Full hydration analytics are out of scope unless explicitly planned.
+
+### Peptides — direction
+
+Peptides should become a genuinely interactive tracker rather than a basic logging form, while staying **informational and tracking-oriented**. Founder-stated scope: peptide/product being tracked · vial amount · reconstitution volume · dose · syringe units · injection site · date/time · history · site rotation.
+
+- **Catalog + Custom.** A searchable/selectable peptide list with a Custom option for anything not listed. Data sourcing and product/legal boundaries must be defined **before** implementation.
+- **Short educational information** per peptide — name, category/class, general mechanism, target/receptor context, high-level research purpose. Content must come from reliable sources and be written carefully. No medical claims are authored in advance of that review.
+- **⚠️ Safety/medical boundary.** The feature must clearly distinguish FDA-approved medications from investigational/research compounds, and must not present research compounds as approved treatments. An unobtrusive disclaimer — informational purposes, not medical advice, consult a healthcare professional, research compounds may not be approved for human use — with placement decided during implementation. Exact copy is reviewed then, not now. Do not make the app unusable with a giant disclaimer on every screen.
+- **Vial / reconstitution model and a bidirectional calculator.** Given vial amount + reconstitution volume (e.g. 10 mg vial, 1 mL bacteriostatic water): entering syringe units shows the calculated mg/mcg dose, and entering a mg/mcg dose shows the equivalent syringe units. This exists specifically because many users think in syringe units and do not intuitively do the conversion. It must be implemented transparently, with **verified math, normalized internal units (mg · mcg · mL · syringe units — never free-form strings for dose math), and tests**.
+- **Saved regimen/setup** — peptide, vial strength, reconstitution amount, start date, typical dose, schedule where appropriate — so daily logging is fast and vial math is not retyped per injection. Flow: Peptides → select active peptide → enter dose/units → select site → log.
+- **Injection site logging and rotation.** Site taxonomy (abdomen/left/right, thigh/left/right, upper arm, other) researched at implementation. A simple body/model graphic to tap — a clean visual aid, **not** a complex 3D model unless later justified. Rotation support (remember recent sites, show last used, highlight recent areas, suggest another eligible area) is presented as **organizational guidance, not personalized medical advice**; any claim about injection technique or site selection must be sourced and reviewed.
+- **History** — date, peptide, dose, units, site, notes, with editing. Frequency/consistency/site-rotation views are possible later; complex health analytics are not added automatically.
+- **Data architecture:** keep **Peptide Definition** (what the compound is), **User Peptide Setup** (this user's vial/reconstitution configuration), and **Peptide Log Entry** (one recorded administration) as three separate concerns — mirroring the Food Definition ≠ Food Entry separation Sprint 2 established. Do not collapse them into one record. See `docs/09-Technical-Documentation.md` → "Future architecture considerations".
+
+Standalone proposals for the calculator and site tracking live in the Vita HQ Innovation Lab; this section is the sprint-scope view, not the full proposal.
 
 Status: ⬜ Planned
 
@@ -177,6 +228,10 @@ Status: ⬜ Planned
 Objective: the final quality pass before release.
 
 Deliverable: motion, micro-interactions, accessibility, performance, and overall polish across the finished product.
+
+**Relationship to per-sprint polish (founder direction, 2026-08-18).** Sprint 8 owns the *global* layer: the shared motion system, haptics vocabulary, transition consistency, and app-wide micro-interaction standards. It is **not** a holding pen for every feature's visual debt — if Fuel still feels bulky once its functionality is finished, it gets its own refinement slice inside Sprint 2 (see above), and the same principle applies to later sprints. Feature-specific motion may land earlier where it genuinely belongs to that feature; Sprint 8 then reconciles it into one vocabulary.
+
+Motion direction stays restrained: premium micro-interactions, not novelty animation. Candidates the founders have named — a small food-icon movement on successful logging, smooth macro/progress animation, gentle confirmation transitions, water fill animation, peptide injection-site selection feedback, card state transitions, progress changes. VITA does not become a cartoon or a game. See `docs/05-Design-System.md` → "Future direction" and Vita HQ `03 Design/Motion & Animation.md`.
 
 Status: ⬜ Planned
 

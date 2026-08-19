@@ -134,3 +134,47 @@ npx expo start        # then press i for the iOS simulator, or scan the QR code 
 ```
 
 Development builds and store builds use EAS (`eas.json` profiles: development, preview, production).
+
+---
+
+## Future architecture considerations (founder direction, 2026-08-18)
+
+**None of this is built, scheduled at the code level, or approved as a specification.** It is recorded here so the constraints are known before the relevant sprint starts, and so nobody re-derives them. Product framing lives in `docs/04-Master-Roadmap.md` (Sprints 2 and 5) and `docs/05-Design-System.md`; this section covers only the architectural implications.
+
+### Food visual classification (Fuel — unscheduled)
+
+Contextual food visuals need a stable answer to "what does this food look like," which provider data does not reliably supply — provider categories are commercial/nutritional taxonomies, not visual ones.
+
+The likely shape is a mapping layer: `Food → Category → VITA illustration`, with a candidate category vocabulary of fruit · vegetable · burger · sandwich · bowl · taco · pizza · breakfast · oatmeal · bakery · drink · coffee · dairy · protein · snack · dessert. **Do not over-engineer this yet** — it is recorded as a consideration, not a design.
+
+Two constraints that do carry over regardless of implementation:
+
+- **Provider independence.** Resolution must degrade cleanly: real product image → VITA category illustration → generic food fallback. No screen may depend on a provider having supplied an image. USDA, Open Food Facts, restaurant providers, and custom foods all have inconsistent coverage, and a custom food has none by definition.
+- **Classification belongs with the normalized model, not the adapters.** `VitaFood` is already provider-independent; a visual category is a property of the normalized food, derived once, rather than something each provider adapter invents differently.
+
+### Water (Sprint 5)
+
+- The daily goal is **user-defined** with a unit (cups/oz/mL/L) — not a hardcoded 8 cups — and persists until changed. Where the preference is *stored* interacts with Settings (Sprint 7), which lands later; sequencing is an open question, not an assumption to make silently.
+- Hydration is **date-aware in the same way food logging already is**: local-calendar day keys, daily rollover on `AppState` → `active`, today's intake separate from history. The `logDate` / `loggedAt` split and the versioned per-day storage keys in `src/lib/nutrition/data/keys.ts` are the working precedent — reuse the pattern rather than inventing a second date model.
+- Persistence should sit behind a repository interface like `FoodLogRepository`, so Supabase later arrives as a second implementation without touching screens.
+
+### Peptides (Sprint 5)
+
+**Three separate concerns, not one record** — mirroring the Food Definition ≠ Food Entry separation already established in `src/lib/nutrition`:
+
+| Concern | What it is |
+|---|---|
+| Peptide Definition | What the compound is — catalog entry or user-created Custom |
+| User Peptide Setup | This user's configuration: vial strength, reconstitution volume, start date, typical dose, schedule |
+| Peptide Log Entry | One recorded administration: dose, units, injection site, timestamp, notes |
+
+Collapsing these would repeat exactly the mistake the nutrition model avoids: a log entry that mutates when a definition changes, and a definition that cannot be reused across entries.
+
+**Dose math is safety-adjacent and must be treated as such.** The bidirectional calculator (vial amount + reconstitution volume ⇄ syringe units ⇄ mg/mcg) is the reason this feature exists for users who think in syringe units, so it has to be right and it has to be legible:
+
+- **Normalize units internally.** mg · mcg · mL · syringe units, as typed values — never free-form strings for anything feeding a calculation.
+- **Unit tests are a requirement, not a preference,** including rounding behavior and the round-trip property (units → dose → units). This is the first place in VITA where a testing-framework decision (deliberately deferred per the stack notes above) actually has to be made.
+- **Show the derivation, not just the answer.** A calculated dose the user cannot sanity-check is worse than no calculator.
+- The entry snapshot principle applies here too: a log entry records the dose that was actually administered, and later edits to a vial setup must not silently rewrite history.
+
+**Medical-content boundary.** Educational peptide information and any approved-vs-research distinction are content and compliance concerns, not engineering ones — they must be sourced and reviewed before implementation. Engineering's job is to keep the distinction representable in the data model (approval status is a field, not prose) rather than to author the content. Peptide data is also among the most sensitive VITA will hold; storage and disclosure posture must be settled before live data ships (see Vita HQ `04 Engineering/Supabase & Database.md`).
