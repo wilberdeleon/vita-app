@@ -6,6 +6,8 @@ Single source of truth for release history and completed work.
 
 ## Unreleased
 
+- 2026-08-19 — **QA repair: barcode misidentification + favorite discoverability.** A scanned barcode could display an unrelated earlier product — `/fuel/food/[id]` updates params without remounting, so a `useState`-seeded food never refreshed and every subsequent food showed the first one. Same defect fixed in the entry editor. Open Food Facts barcode lookups now re-verify the returned GTIN and reject mismatches; the barcode chain now runs Open Food Facts first as designed, instead of spending a futile USDA request on every scan. Favorite hearts (present since 2.7 but drawn too faintly to find) now render as visible circular controls.
+
 - 2026-08-19 — **USDA live verification: reliability + ranking fixes.** Removed the `dataType` query parameter, which api.data.gov intermittently rejected with nginx `400` on **5 of 10** identical requests (unfiltered: 10/10) — it was silently costing USDA results on about half of all searches. Filtering moved client-side. Also removed a `hasCompleteMacros` ranking bonus that rewarded food type rather than data quality, pushing "Bread, egg" above real eggs.
 
 - 2026-08-19 — **USDA ranking fix.** Real FoodData Central responses showed bare generic queries returning branded junk first — a peanut butter spread named "BANANA" above "Bananas, raw", three products named "EGG" above real eggs. Added `VitaFood.dataQuality`, a provider-independent per-record trust signal (USDA maps its FDC data types; Open Food Facts uses a flat value), reduced the exact-name bonus for branded products whose brand the query never mentioned, and added a capped extra-word penalty. All slice 2.6 field and per-100 g normalization assumptions were confirmed correct.

@@ -43,7 +43,7 @@ export default function FavoriteFoods() {
               <View style={styles.grow}>
                 <FoodRow food={food} showFavorite={false} />
               </View>
-              <FavoriteButton food={food} />
+              <FavoriteButton food={food} withSurface />
             </View>
           ))}
         </>

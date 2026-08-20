@@ -40,7 +40,7 @@ export function FoodRow({ food, showFavorite = true }: Props) {
               {formatCalories(serving.nutrition.calories)} kcal
             </Text>
           ) : null}
-          {showFavorite ? <FavoriteButton food={food} size={20} /> : null}
+          {showFavorite ? <FavoriteButton food={food} size={19} withSurface /> : null}
         </View>
       }
     />

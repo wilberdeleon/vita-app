@@ -21,8 +21,24 @@ import { openFoodFactsProvider } from './openFoodFacts';
 import { usdaProvider } from './usda';
 import { ProviderError, type FoodProvider } from './types';
 
-/** Registration order is irrelevant to output order — ranking decides that. */
+/**
+ * Registration order is irrelevant to *search* output order — ranking
+ * decides that, and providers are queried in parallel anyway.
+ */
 export const PROVIDERS: FoodProvider[] = [usdaProvider, openFoodFactsProvider];
+
+/**
+ * Barcode lookup order, which very much does matter — this chain is
+ * sequential and stops at the first exact match.
+ *
+ * Open Food Facts is first because it is barcode-native: one O(1) product
+ * endpoint keyed on the GTIN itself. USDA has no barcode endpoint at all,
+ * so its "lookup" is a fuzzy full-text search over the digits followed by
+ * re-verification, which is both slower and far less likely to hit. Running
+ * it first spent a USDA request on every single scan before Open Food Facts
+ * did the actual work.
+ */
+const BARCODE_PROVIDER_ORDER: FoodProvider['id'][] = ['openfoodfacts', 'usda'];
 
 export function configuredProviders(): FoodProvider[] {
   return PROVIDERS.filter((provider) => provider.isConfigured());
@@ -112,7 +128,9 @@ export async function lookupBarcodeAcrossProviders(
   const gtin = normalizeGtin(rawGtin);
   if (!gtin) return { status: 'not-found' };
 
-  const providers = configuredProviders().filter((provider) => typeof provider.lookupBarcode === 'function');
+  const providers = configuredProviders()
+    .filter((provider) => typeof provider.lookupBarcode === 'function')
+    .sort((a, b) => BARCODE_PROVIDER_ORDER.indexOf(a.id) - BARCODE_PROVIDER_ORDER.indexOf(b.id));
   if (providers.length === 0) return { status: 'no-providers' };
 
   const outcomes: ProviderOutcome[] = [];

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
@@ -52,6 +52,23 @@ export default function EditLogEntry() {
   const [quantity, setQuantity] = useState(() => entry?.serving.quantity ?? 1);
   const [meal, setMeal] = useState<MealSlot>(() => entry?.meal ?? 'Breakfast');
   const [saving, setSaving] = useState(false);
+
+  /**
+   * Re-seed from the entry whenever a different one is opened.
+   *
+   * `/fuel/entry/[id]` is a single route, so navigating from one entry to
+   * another updates `params` without remounting and a `useState` initializer
+   * never re-runs — the second entry would inherit the first one's quantity
+   * and meal. Same defect class that made a scanned barcode show an earlier
+   * product on Food Detail.
+   */
+  useEffect(() => {
+    if (!entry) return;
+    setServingIndex(resolved?.selectedIndex ?? 0);
+    setQuantity(entry.serving.quantity);
+    setMeal(entry.meal);
+    setSaving(false);
+  }, [entryId, entry?.id]);
 
   const serving = resolved?.servings[servingIndex] ?? resolved?.servings[0];
 

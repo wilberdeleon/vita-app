@@ -231,6 +231,33 @@ export const openFoodFactsProvider: FoodProvider = {
 
     // Some responses still return 200 with `status: 0`; treated the same way.
     if (!payload || asFiniteNumber(payload.status) !== 1) return null;
-    return toVitaFood(payload.product);
+
+    const food = toVitaFood(payload.product);
+    if (!food) return null;
+
+    /**
+     * Independently re-verify the returned product's own barcode against
+     * the one that was scanned.
+     *
+     * A barcode is an identifier, not a query: a lookup must return *that*
+     * product or nothing. Trusting the response because it arrived with
+     * `status: 1` is how a scanner ends up confidently showing an unrelated
+     * food, which is worse than admitting it found nothing. Both sides go
+     * through the same `normalizeGtin`, so UPC-A, EAN-13, and zero-padded
+     * forms of the same code compare equal.
+     */
+    const requested = normalizeGtin(gtin);
+    const returned = normalizeGtin(food.barcode);
+    if (!requested || !returned || requested !== returned) {
+      if (__DEV__) {
+        console.warn(
+          `[openfoodfacts] barcode mismatch — requested ${requested ?? 'invalid'}, ` +
+            `returned ${returned ?? 'none'} (${food.name}). Rejected.`,
+        );
+      }
+      return null;
+    }
+
+    return food;
   },
 };

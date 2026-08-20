@@ -485,3 +485,25 @@ Filtering moved client-side into `toVitaFood`, which drops any record whose `dat
 **Failure isolation verified live, all four cases:** both providers healthy → 42 results from both · invalid key → USDA `auth/403`, Open Food Facts still returned 17, search did not fail · key unset → USDA silently skipped, not even attempted · key restored → both back. `.env` was never modified; the test overrode the variable in its own process only.
 
 **Not verified: the in-app UI walkthrough for a USDA-sourced food.** The screen-control tooling disconnected mid-session, so the simulator could be screenshotted but not driven. The app boots clean with the key loaded. Everything downstream of the provider layer is provider-independent (grep confirms zero source branching in `src/app`, `src/features`, `src/components`) and was fully verified for Open Food Facts foods in slices 2.6–2.7, so USDA foods traverse the identical path — but that specific walkthrough is the founder's to run.
+
+### QA repair — barcode misidentification + favorite discoverability (2026-08-19)
+
+Physical-device QA on Expo Go found two real product defects. Not a slice; a repair checkpoint.
+
+**Barcode returned an unrelated product.** A Kroger water bottle resolved as "Hillshire Farm Beef Smoked Sausage" — and a *second, different* bottle produced the *same* wrong result. That signature is the clue: fuzzy provider matching would have produced two different wrong answers, so the fault was stale state, not the provider.
+
+**Root cause:** `/fuel/food/[id]` is a single route, and navigating from one food to another updates `params` **without remounting**. Food Detail seeded its resolved food with a `useState` initializer, which runs only on first mount, so `resolved` held whichever food opened the screen first — forever. Worse, the async fallback was guarded by `if (food) return`, and `food` was truthy (the stale one), so it never re-read. Every subsequent food showed the first one. The same defect class was present in `/fuel/entry/[id]`, where a second entry would inherit the first one's quantity and meal.
+
+Fixed by storing the async result **with the id it belongs to** and discarding it when the route param differs, plus an effect that re-seeds portion state when the food identity changes.
+
+**Provider hardening (required regardless).** Open Food Facts' barcode lookup now independently re-normalizes the *returned* product code and rejects anything that isn't an exact GTIN identity match. USDA's fuzzy-search fallback was already strict; the check is now explicit, skips records with no `gtinUpc` rather than treating them as near-misses, and both providers emit a dev-only mismatch diagnostic (provider, requested GTIN, returned GTIN — never a key).
+
+**A second, separate bug found while tracing:** the barcode chain was running **USDA first**, contradicting both the documented design and the founder's stated order. USDA has no barcode endpoint, so every scan spent a fuzzy full-text request that would essentially never match before Open Food Facts did the real work. Barcode order is now explicit (`BARCODE_PROVIDER_ORDER`) rather than inherited from registration order, which only text search is indifferent to.
+
+**Cache audit: cache did not contribute.** Every food-cache key is `vitaId`-scoped (`vita:v1:cache:food:openfoodfacts:<code>`), the query cache is a separate in-memory map keyed by query string, and the two cannot collide. Verified by test: two different barcodes back-to-back return their own products, and re-scanning the first returns the first again.
+
+**Verified against live providers** (6 assertions): the real Kroger Purified Drinking Water barcode `0011110043436` resolves to *Kroger Purified Drinking Water*, its returned GTIN equals the scanned GTIN, and it is not a sausage · a different barcode returns a different product · re-scanning the first returns the first · the UPC-A form resolves to the same `vitaId` as the EAN-13 form · an unknown barcode returns honest not-found rather than a wrong food.
+
+**Favorite controls were present but undiscoverable.** The heart shipped in slice 2.7 on search rows, Recents rows, and the Food Detail header — and does render — but drawn as a bare outline in `surfaces.textTertiary` (45% white on a dark card) it read as decoration, and QA never found it. That is a real product failure, not a misunderstanding. The row heart now sits on a faint circular surface with a border so it reads as a button, and the unfavorited outline moved from tertiary to secondary. The Food Detail header heart stays plain, where position alone makes it a control.
+
+**Still unverified this session:** tap isolation (heart toggles without opening Food Detail) and the cross-surface sync walkthrough. Nested `Pressable` wins the touch by React Native's responder rules, so the behavior should be correct, but the screen-control tooling was disconnected and the simulator could be screenshotted, not driven.

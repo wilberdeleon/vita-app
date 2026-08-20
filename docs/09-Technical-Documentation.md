@@ -108,6 +108,10 @@ Records carry an optional **`dataQuality`** (0–100): a provider-independent tr
 
 **USDA has no barcode endpoint** — a GTIN query is fuzzy full-text, so every candidate is re-verified against its own `gtinUpc` and only an exact match is accepted.
 
+**A barcode is an identifier, never a query.** Both adapters re-normalize the *returned* product's own barcode and accept it only on exact GTIN identity; USDA additionally skips any record without a `gtinUpc` rather than treating it as a near-miss. Showing an unrelated food is worse than admitting nothing was found.
+
+**Route screens under `[id]` must not seed state with `useState` initializers.** `/fuel/food/[id]` and `/fuel/entry/[id]` are single screens: navigating between two ids updates `params` without remounting, so an initializer runs once and never again. This shipped a bug where a scanned barcode displayed an earlier product. Resolve async state together with the id it belongs to, and re-seed derived UI state on an identity change.
+
 **Not-found vs error are distinct**, and must stay so: Open Food Facts answers an unknown barcode with **HTTP 404**, which is a definitive "the database doesn't have this" and maps to not-found. Treating it as an error would send users to retry a lookup that can never succeed instead of offering manual entry.
 
 ## Environment & secrets

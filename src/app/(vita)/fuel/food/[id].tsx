@@ -39,30 +39,51 @@ export default function FoodDetail() {
   const { surfaces } = useTheme();
 
   /**
-   * Resolution order: My Foods first, then the provider cache that search
-   * populated. The synchronous read covers the normal path (the user just
-   * tapped a result); the async read covers a cold start between search and
-   * detail, where only the persisted copy survives.
+   * Resolution order: My Foods and favorites first, then the provider cache
+   * that search or a barcode scan populated, then a persisted read for the
+   * cold-start case where the app restarted between the two.
+   *
+   * **The async result is stored WITH the id it belongs to.** This route is a
+   * single screen: navigating from one food to another updates `params`
+   * without remounting, so state seeded by a `useState` initializer belongs
+   * to whichever food happened to open the screen first and never updates.
+   * That caused a scanned barcode to display an unrelated earlier product —
+   * two different bottles resolving to the same wrong food, because the
+   * screen was still showing the first thing it ever rendered.
    */
-  const cached = readCachedFoodSync(vitaId);
-  const [resolved, setResolved] = useState<VitaFood | undefined>(cached);
-  const food = findFood(vitaId) ?? resolved;
+  const [resolved, setResolved] = useState<{ vitaId: string; food: VitaFood } | null>(null);
+  const direct = findFood(vitaId) ?? readCachedFoodSync(vitaId);
+  const food = direct ?? (resolved?.vitaId === vitaId ? resolved.food : undefined);
 
   useEffect(() => {
-    if (food) return;
+    if (direct) return;
     let active = true;
     void readCachedFood(vitaId).then((result) => {
-      if (active && result) setResolved(result);
+      if (active && result) setResolved({ vitaId, food: result });
     });
     return () => {
       active = false;
     };
-  }, [food, vitaId]);
+  }, [direct, vitaId]);
 
-  const [servingIndex, setServingIndex] = useState(food?.defaultServingIndex ?? 0);
+  const [servingIndex, setServingIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [meal, setMeal] = useState<MealSlot>(() => defaultMealForTime());
   const [saving, setSaving] = useState(false);
+
+  /**
+   * Reset the portion choices whenever the food identity changes, for the
+   * same no-remount reason: without this, opening a second food inherits the
+   * first one's serving, quantity, and meal.
+   */
+  useEffect(() => {
+    setServingIndex(food?.defaultServingIndex ?? 0);
+    setQuantity(1);
+    setMeal(defaultMealForTime());
+    setSaving(false);
+    // Keyed on the resolved food's own id, not the route param, so the
+    // food's preferred default serving is applied once it is actually known.
+  }, [food?.vitaId, food?.defaultServingIndex]);
 
   const serving = food?.servings[servingIndex] ?? food?.servings[0];
 

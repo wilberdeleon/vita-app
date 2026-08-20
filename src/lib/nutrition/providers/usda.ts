@@ -255,9 +255,21 @@ export const usdaProvider: FoodProvider = {
     const payload = asRecord(await fetchJson('usda', 'barcode', url, signal));
     const foods = payload && Array.isArray(payload.foods) ? payload.foods : [];
 
+    /**
+     * Strict identity only. `query=<gtin>` is a fuzzy full-text search here,
+     * so it happily returns plausible-looking but unrelated products; every
+     * candidate must prove it carries this exact normalized GTIN. A record
+     * with no `gtinUpc` at all can never match and is skipped, never
+     * accepted as a near-miss.
+     */
     for (const entry of foods) {
       const food = toVitaFood(entry);
-      if (food?.barcode && food.barcode === target) return food;
+      if (!food?.barcode) continue;
+      if (normalizeGtin(food.barcode) === target) return food;
+    }
+
+    if (__DEV__) {
+      console.warn(`[usda] no exact GTIN match for ${target} among ${foods.length} candidates. Rejected.`);
     }
     return null;
   },
