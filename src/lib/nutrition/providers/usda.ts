@@ -36,22 +36,27 @@ const NUTRIENT_IDS = {
 } as const;
 
 /**
- * Data types worth surfacing, in the order USDA should be trusted.
- * Experimental and market-acquisition types are excluded: they carry
- * research-grade records that are confusing as consumer search results.
- */
-const DATA_TYPES = ['Foundation', 'SR Legacy', 'Branded', 'Survey (FNDDS)'];
-
-/**
- * Per-record trust, by FDC data type.
+ * Per-record trust, by FDC data type — **and** the allowlist of types
+ * worth surfacing at all.
  *
- * This is not pedantry — it fixes a real ranking failure. Searching
- * "banana" against the combined endpoint returns branded products literally
- * *named* "BANANA" (one of them a peanut butter spread at 312 kcal) ahead of
- * "Bananas, raw". Foundation and SR Legacy are laboratory composition data
- * and are the right answer to a bare generic query; Branded records are
- * manufacturer-submitted labels and are the right answer only when the user
- * names the brand.
+ * Filtering happens here, client-side, rather than through the API's
+ * `dataType` query parameter. That is a deliberate reliability decision,
+ * measured rather than assumed: sending `dataType` returned nginx
+ * `400 Bad Request` on **5 of 10** identical valid requests, while the same
+ * queries without it returned **10 of 10**. The parameter is the trigger —
+ * a comma-joined list containing encoded spaces and parentheses
+ * ("Survey %28FNDDS%29") that api.data.gov's edge intermittently rejects.
+ *
+ * Dropping it costs nothing: the same four types come back anyway (verified
+ * across several queries), and ranking — not filtering — is what keeps
+ * generic foods above branded ones now.
+ *
+ * The trust values themselves fix a real ranking failure. Searching
+ * "banana" returned branded products literally *named* "BANANA" (one a
+ * peanut butter spread at 312 kcal) ahead of "Bananas, raw". Foundation and
+ * SR Legacy are laboratory composition data and are the right answer to a
+ * bare generic query; Branded records are manufacturer-submitted labels and
+ * are the right answer only when the user names the brand.
  */
 const DATA_TYPE_QUALITY: Record<string, number> = {
   Foundation: 95,
@@ -158,6 +163,11 @@ function toVitaFood(raw: unknown): VitaFood | null {
   const name = asNonEmptyString(food.description);
   if (fdcId === null || name === null) return null;
 
+  // Client-side type allowlist — see DATA_TYPE_QUALITY. Anything USDA adds
+  // later that we haven't assessed is dropped rather than guessed at.
+  const dataType = asNonEmptyString(food.dataType);
+  if (!dataType || DATA_TYPE_QUALITY[dataType] === undefined) return null;
+
   const per100 = readPer100(food);
   if (!per100) return null;
 
@@ -176,7 +186,7 @@ function toVitaFood(raw: unknown): VitaFood | null {
     servings,
     defaultServingIndex: 0,
     isCustom: false,
-    dataQuality: DATA_TYPE_QUALITY[asNonEmptyString(food.dataType) ?? ''] ?? 80,
+    dataQuality: DATA_TYPE_QUALITY[dataType],
     fetchedAt: new Date().toISOString(),
   };
 }
@@ -200,11 +210,12 @@ export const usdaProvider: FoodProvider = {
     const key = readApiKey();
     if (!key) return [];
 
+    // No `dataType` parameter — see DATA_TYPE_QUALITY for why. Types are
+    // filtered in `toVitaFood` instead.
     const url =
       `${BASE_URL}?api_key=${encodeURIComponent(key)}` +
       `&query=${encodeURIComponent(query)}` +
-      `&pageSize=${PROVIDER_PAGE_SIZE}` +
-      `&dataType=${encodeURIComponent(DATA_TYPES.join(','))}`;
+      `&pageSize=${PROVIDER_PAGE_SIZE}`;
 
     const payload = asRecord(await fetchJson('usda', 'search', url, signal));
     const foods = payload && Array.isArray(payload.foods) ? payload.foods : [];
@@ -239,7 +250,7 @@ export const usdaProvider: FoodProvider = {
     const url =
       `${BASE_URL}?api_key=${encodeURIComponent(key)}` +
       `&query=${encodeURIComponent(gtin)}` +
-      `&pageSize=10&dataType=${encodeURIComponent('Branded')}`;
+      `&pageSize=10`;
 
     const payload = asRecord(await fetchJson('usda', 'barcode', url, signal));
     const foods = payload && Array.isArray(payload.foods) ? payload.foods : [];

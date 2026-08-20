@@ -6,6 +6,8 @@ Single source of truth for release history and completed work.
 
 ## Unreleased
 
+- 2026-08-19 — **USDA live verification: reliability + ranking fixes.** Removed the `dataType` query parameter, which api.data.gov intermittently rejected with nginx `400` on **5 of 10** identical requests (unfiltered: 10/10) — it was silently costing USDA results on about half of all searches. Filtering moved client-side. Also removed a `hasCompleteMacros` ranking bonus that rewarded food type rather than data quality, pushing "Bread, egg" above real eggs.
+
 - 2026-08-19 — **USDA ranking fix.** Real FoodData Central responses showed bare generic queries returning branded junk first — a peanut butter spread named "BANANA" above "Bananas, raw", three products named "EGG" above real eggs. Added `VitaFood.dataQuality`, a provider-independent per-record trust signal (USDA maps its FDC data types; Open Food Facts uses a flat value), reduced the exact-name bonus for branded products whose brand the query never mentioned, and added a capped extra-word penalty. All slice 2.6 field and per-100 g normalization assumptions were confirmed correct.
 
 - 2026-08-19 — **Sprint 2 slice 2.8, Barcode Scanner:** real camera barcode scanning via `expo-camera` on SDK 54 (Expo Go, no dev build, no Xcode). VITA scanner chrome, full permission handling, a synchronous `ref` scan lock against repeat callbacks, torch, and a sequential Open Food Facts → optional USDA lookup chain that distinguishes "product not found" from "lookup failed". Fixed: OFF returns HTTP 404 for unknown barcodes, which was surfacing as a retryable error instead of not-found. Live detection still needs a physical iPhone. (Slice 2.8)

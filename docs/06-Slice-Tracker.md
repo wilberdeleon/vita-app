@@ -456,4 +456,32 @@ Cause: `exactName` (+45) fired on any record whose name equalled the query, and 
 
 **Verified against a real saved USDA payload** (25 results for `egg`), run offline so no quota was spent re-testing. Before: `EGG`, `EGG`, `EGG`. After: `Eggs, Grade A, Large` ×3, then egg breads, then composite dishes, with branded demoted. GTIN (20 assertions) and barcode-pipeline (10 assertions, live) suites both re-run and still pass.
 
-**Still pending the founder's key:** in-app USDA verification — live USDA + Open Food Facts aggregation, Food Detail, logging, Home sync, Recents, Favorites, and the failure-isolation toggle.
+**Verified with the founder's real key (2026-08-19).** See "USDA live verification" below.
+
+### USDA live verification — a second bug, and the reliability fix
+
+**The `dataType` query parameter is unreliable and has been removed.** Measured, not assumed:
+
+| Request shape | Success rate |
+|---|---|
+| `&dataType=Foundation%2CSR%20Legacy%2CBranded%2CSurvey%20%28FNDDS%29` | **5 / 10** |
+| identical query, no `dataType` | **10 / 10** |
+
+api.data.gov's edge intermittently answers the filtered form with a bare nginx `400 Bad Request`. It was silently costing USDA results on roughly half of all searches — the first live run returned USDA data for only **one of four** test queries (`egg`), with `banana`, `chicken breast`, and `rice` all falling back to Open Food Facts alone. Failure isolation worked exactly as designed, which is precisely why the problem was invisible from the UI.
+
+Filtering moved client-side into `toVitaFood`, which drops any record whose `dataType` isn't in the allowlist. Costs nothing: the same four types come back unfiltered (verified across several queries), and *ranking* — not filtering — is what keeps generic foods above branded ones now. All four queries returned USDA results afterwards.
+
+**A third fix: the `hasCompleteMacros` bonus was removed.** It awarded +6 to records carrying fiber and sugar values, which rewards *food type*, not data quality — bread has both, an egg genuinely has neither. It was pushing "Bread, egg" above "Eggs, Grade A, Large" for the query `egg`. Per-record trust belongs in `dataQuality`, where a provider can speak to it honestly.
+
+**Normalization confirmed correct against real responses.** Names, source, source id, brand (`brandName` falling back to `brandOwner`), GTIN normalized to 14 digits, and the four macros all populate as designed. Label servings scale correctly from per-100 g data — real examples observed: `2 Tbsp` → 100 kcal, `1 cup` → 200 kcal, `0.25 cup` → 160 kcal. Foundation and SR Legacy records carry no serving data and correctly fall back to the honest 100 g serving. USDA's ALL-CAPS branded descriptions are title-cased; mixed-case names are left alone.
+
+**Search results after all three fixes:**
+
+- `banana` → Bananas, raw (89 kcal) · Bananas, overripe, raw · Bananas, dehydrated — generic first, branded below. ✅
+- `chicken breast` → three USDA generic chicken-breast records, branded below. ✅
+- `egg` → Eggs, Grade A, Large (white / whole / yolk). ✅
+- `rice` → "Rice crackers" first. ⚠️ **Known limitation, not a logic bug:** USDA's canonical white-rice record is named "Rice, white, long-grain, regular, raw, enriched", so a short prefix match outranks it. Deliberately not tuned around — chasing a perfect #1 for every query against one database's naming conventions is what the "no ML ranking, keep it deterministic" instruction rules out.
+
+**Failure isolation verified live, all four cases:** both providers healthy → 42 results from both · invalid key → USDA `auth/403`, Open Food Facts still returned 17, search did not fail · key unset → USDA silently skipped, not even attempted · key restored → both back. `.env` was never modified; the test overrode the variable in its own process only.
+
+**Not verified: the in-app UI walkthrough for a USDA-sourced food.** The screen-control tooling disconnected mid-session, so the simulator could be screenshotted but not driven. The app boots clean with the key loaded. Everything downstream of the provider layer is provider-independent (grep confirms zero source branching in `src/app`, `src/features`, `src/components`) and was fully verified for Open Food Facts foods in slices 2.6–2.7, so USDA foods traverse the identical path — but that specific walkthrough is the founder's to run.

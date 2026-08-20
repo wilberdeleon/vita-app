@@ -28,7 +28,6 @@ export const RANK_WEIGHTS = {
   namePrefix: 18,
   nameContains: 8,
   hasLabelServing: 10,
-  hasCompleteMacros: 6,
   hasImage: 3,
   /** Long descriptions are usually research records, not what someone is scanning for. */
   verbosePenalty: -6,
@@ -73,14 +72,19 @@ export function scoreFood(food: VitaFood, query: string, providerQuality: number
     score += RANK_WEIGHTS.exactBrandAndName;
   }
 
-  // A food whose first serving is a real label serving ("1 bar (45g)") is
-  // more useful than one offering only the 100 g baseline.
+  /*
+   * A food whose first serving is a real label serving ("1 bar (45g)") is
+   * more useful than one offering only the 100 g baseline.
+   *
+   * There is deliberately NO bonus for carrying optional nutrients. That
+   * was tried and removed: rewarding records that happen to list fiber and
+   * sugar rewards *food type*, not data quality — bread has both, an egg
+   * genuinely has neither — and it pushed "Bread, egg" above "Eggs, Grade
+   * A, Large" for the query "egg". Per-record trust belongs in
+   * `dataQuality`, where the provider can speak to it honestly.
+   */
   const primary = food.servings[food.defaultServingIndex] ?? food.servings[0];
   if (primary && primary.unit !== 'g') score += RANK_WEIGHTS.hasLabelServing;
-
-  if (primary && primary.nutrition.fiber !== undefined && primary.nutrition.sugar !== undefined) {
-    score += RANK_WEIGHTS.hasCompleteMacros;
-  }
 
   if (food.imageUrl) score += RANK_WEIGHTS.hasImage;
   if (food.name.length > VERBOSE_NAME_LENGTH) score += RANK_WEIGHTS.verbosePenalty;

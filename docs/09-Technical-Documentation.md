@@ -64,7 +64,9 @@ USDA adapter    Open Food Facts adapter        ← the only files that know a pr
 
 **Adapters** live in `src/lib/nutrition/providers/`. Raw provider payloads never leave them — verified by grep: no `fetch(` outside that directory and no `source === 'usda'` style branching anywhere in `src/app`, `src/features`, or `src/components`.
 
-**USDA FoodData Central** — free, **CC0 public domain**, no commercial restrictions, attribution requested but not required. Key from `api.data.gov`, 1,000 requests/hour. Nutrients are read by numeric id (names vary by data type) and are always per 100 g, so a label serving is derived by scaling and the 100 g baseline is always offered too. Data types are limited to Foundation, SR Legacy, Branded, and Survey (FNDDS).
+**USDA FoodData Central** — free, **CC0 public domain**, no commercial restrictions, attribution requested but not required. Key from `api.data.gov`, 1,000 requests/hour.
+
+**Do not add a `dataType` query parameter.** It was measured at **5/10 success** versus **10/10** for the identical query without it — api.data.gov's edge intermittently answers the filtered form with a bare nginx `400`, silently costing USDA results on about half of all searches. Data types are filtered client-side in `toVitaFood` against the `DATA_TYPE_QUALITY` allowlist instead. Nutrients are read by numeric id (names vary by data type) and are always per 100 g, so a label serving is derived by scaling and the 100 g baseline is always offered too. Data types are limited to Foundation, SR Legacy, Branded, and Survey (FNDDS).
 
 **Open Food Facts** — free, no key, **ODbL** data and **CC-BY-SA** images; attribution is required wherever the data is shown. A contact email in the `User-Agent` is mandatory (`EXPO_PUBLIC_OFF_CONTACT`); without it the provider reports itself unconfigured rather than sending an anonymous identifier. Two conversions matter: sodium arrives in **grams** and is stored as mg, and energy is read only from the explicit `energy-kcal` field because the generic `energy` field is kilojoules on most records.
 
