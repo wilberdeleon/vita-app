@@ -42,6 +42,27 @@ const NUTRIENT_IDS = {
  */
 const DATA_TYPES = ['Foundation', 'SR Legacy', 'Branded', 'Survey (FNDDS)'];
 
+/**
+ * Per-record trust, by FDC data type.
+ *
+ * This is not pedantry — it fixes a real ranking failure. Searching
+ * "banana" against the combined endpoint returns branded products literally
+ * *named* "BANANA" (one of them a peanut butter spread at 312 kcal) ahead of
+ * "Bananas, raw". Foundation and SR Legacy are laboratory composition data
+ * and are the right answer to a bare generic query; Branded records are
+ * manufacturer-submitted labels and are the right answer only when the user
+ * names the brand.
+ */
+const DATA_TYPE_QUALITY: Record<string, number> = {
+  Foundation: 95,
+  'SR Legacy': 95,
+  // FNDDS is survey data describing composite *dishes* ("Egg burrito",
+  // "Egg, Benedict"). Genuinely useful once someone searches for the dish,
+  // but a weaker answer than lab composition data to a bare ingredient.
+  'Survey (FNDDS)': 82,
+  Branded: 78,
+};
+
 /** Units USDA reports serving sizes in that we can convert to a real serving. */
 const MASS_UNITS = new Set(['g', 'gram', 'grams', 'ml', 'milliliter', 'milliliters']);
 
@@ -155,6 +176,7 @@ function toVitaFood(raw: unknown): VitaFood | null {
     servings,
     defaultServingIndex: 0,
     isCustom: false,
+    dataQuality: DATA_TYPE_QUALITY[asNonEmptyString(food.dataType) ?? ''] ?? 80,
     fetchedAt: new Date().toISOString(),
   };
 }

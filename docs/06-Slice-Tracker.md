@@ -434,3 +434,26 @@ Incidentally confirmed during Test A: the day rolled from 17 → 18 August and y
 **NOT verified — needs a physical iPhone.** The iOS Simulator has no camera, so the narrow path **camera detection → `handleScan` → `normalizeGtin` → lookup** has never executed against a real barcode. Everything either side of it is verified: the lookup chain against the live API above, and Food Detail → log → Fuel/Home → Recents → Favorites → relaunch, all unchanged and already proven for Open Food Facts foods in slices 2.3–2.7. Device tests C, D, E, F, G, H, J remain for the founder.
 
 **Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · no provider branching in UI · no duplicate barcode normalization · no gallery control · SDK unchanged · `src/features/dashboard/` byte-identical to `c61f92e`.
+
+### USDA verification — ranking fix (2026-08-19)
+
+Real FoodData Central responses were inspected before the founder's key arrived, using `DEMO_KEY` — api.data.gov's documented public test key, rate-limited to 30 requests/hour. Not a fabricated credential and never written to `.env`; used only to validate response shapes against the adapter's assumptions.
+
+**Every field assumption from slice 2.6 is correct.** `fdcId`, `dataType`, `description`, `brandName`/`brandOwner`, `gtinUpc`, `servingSize`/`servingSizeUnit`, `householdServingFullText`, and `foodNutrients[].nutrientId`/`.value` all appear as the adapter expects, and nutrients are confirmed **per 100 g** across data types. Foundation and SR Legacy records carry **no serving data at all**, so they correctly fall back to the honest 100 g serving the adapter already builds. No normalization bug.
+
+**A real ranking bug, though.** Searching a bare generic term returned branded junk first:
+
+- `banana` → a **peanut butter spread named "BANANA"** (312 kcal) above "Bananas, raw" (89 kcal).
+- `egg` → three separate Branded products named **"EGG"** above "Eggs, Grade A, Large".
+
+Cause: `exactName` (+45) fired on any record whose name equalled the query, and USDA serves lab composition data and manufacturer labels from the same endpoint with no distinction in the flat per-provider quality score.
+
+**Three changes, all provider-independent:**
+
+1. **`VitaFood.dataQuality`** — an optional 0–100 per-record trust signal. Adapters translate whatever their source knows about record quality into this one number; ranking reads only this and falls back to the provider's flat base. USDA maps FDC data types (Foundation/SR Legacy 95, Survey (FNDDS) 82, Branded 78); Open Food Facts uses a flat 70, since it exposes no per-record verification signal.
+2. **`exactNameBranded` (+15 instead of +45)** when a branded product's name matches but the query never mentioned the brand. Naming the brand restores the full bonus, so "clif bar" still works.
+3. **A capped extra-word penalty** (−2/word, max −8), so "Bananas, raw" beats "Bananas, dehydrated, or banana powder". The cap matters: uncapped it inverted a quality tier, pushing the canonical-but-verbose "Eggs, Grade A, Large, egg whole" below the composite dish "Egg burrito".
+
+**Verified against a real saved USDA payload** (25 results for `egg`), run offline so no quota was spent re-testing. Before: `EGG`, `EGG`, `EGG`. After: `Eggs, Grade A, Large` ×3, then egg breads, then composite dishes, with branded demoted. GTIN (20 assertions) and barcode-pipeline (10 assertions, live) suites both re-run and still pass.
+
+**Still pending the founder's key:** in-app USDA verification — live USDA + Open Food Facts aggregation, Food Detail, logging, Home sync, Recents, Favorites, and the failure-isolation toggle.

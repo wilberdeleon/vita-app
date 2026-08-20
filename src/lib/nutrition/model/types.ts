@@ -97,6 +97,20 @@ export type VitaFood = {
   defaultServingIndex: number;
 
   isCustom: boolean;
+
+  /**
+   * How much this particular record can be trusted, 0–100. Provider-
+   * independent by design: an adapter translates whatever its source knows
+   * about record quality into this one number, and ranking reads only this.
+   *
+   * It exists because a flat per-provider score is too coarse. USDA returns
+   * both laboratory-verified generic composition data *and* crowd-submitted
+   * branded labels from the same endpoint, and those are not equally
+   * trustworthy answers to "banana". Falls back to the provider's base
+   * quality when an adapter has nothing better to say.
+   */
+  dataQuality?: number;
+
   /** ISO timestamp of when this was fetched or created. Drives cache TTL. */
   fetchedAt: string;
 };

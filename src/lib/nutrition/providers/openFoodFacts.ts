@@ -167,6 +167,10 @@ function toVitaFood(raw: unknown): VitaFood | null {
     servings: buildServings(product, per100),
     defaultServingIndex: 0,
     isCustom: false,
+    // Community-maintained: excellent packaged-goods coverage, variable
+    // per-record completeness. One flat value — OFF exposes no per-record
+    // verification signal we can map onto this.
+    dataQuality: 70,
     fetchedAt: new Date().toISOString(),
   };
 }
