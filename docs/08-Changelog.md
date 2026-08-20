@@ -6,6 +6,8 @@ Single source of truth for release history and completed work.
 
 ## Unreleased
 
+- 2026-08-19 — **QA round 2.** Favorite hearts added to logged food rows and the Edit Entry header, both built from the entry's stored snapshot so no provider request is needed. `Add to Log` now unwinds the whole logging stack with `dismissAll()` and returns to Fuel instead of leaving the user several Back presses deep; Save/Delete return to the Food Log. Barcode misidentification is **still unresolved** — a dev-only end-to-end scan trace was added to identify it from a physical device, since no test had used the actual bottle's barcode.
+
 - 2026-08-19 — **QA repair: barcode misidentification + favorite discoverability.** A scanned barcode could display an unrelated earlier product — `/fuel/food/[id]` updates params without remounting, so a `useState`-seeded food never refreshed and every subsequent food showed the first one. Same defect fixed in the entry editor. Open Food Facts barcode lookups now re-verify the returned GTIN and reject mismatches; the barcode chain now runs Open Food Facts first as designed, instead of spending a futile USDA request on every scan. Favorite hearts (present since 2.7 but drawn too faintly to find) now render as visible circular controls.
 
 - 2026-08-19 — **USDA live verification: reliability + ranking fixes.** Removed the `dataType` query parameter, which api.data.gov intermittently rejected with nginx `400` on **5 of 10** identical requests (unfiltered: 10/10) — it was silently costing USDA results on about half of all searches. Filtering moved client-side. Also removed a `hasCompleteMacros` ranking bonus that rewarded food type rather than data quality, pushing "Bread, egg" above real eggs.

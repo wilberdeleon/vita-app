@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ListRow } from '../../../components/ui';
-import { entryServingLabel, type FoodEntry } from '../../../lib/nutrition';
+import { FavoriteButton } from './FavoriteButton';
+import { entryServingLabel, foodFromEntry, type FoodEntry } from '../../../lib/nutrition';
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -28,6 +29,16 @@ export function LoggedEntryRow({ entry, onDelete }: Props) {
   const { surfaces } = useTheme();
   const detail = entry.brand ? `${entry.brand} · ${entryServingLabel(entry)}` : entryServingLabel(entry);
 
+  /**
+   * Favoriting straight from the log, using the entry's own stored snapshot.
+   *
+   * No provider request: the entry already carries the food's identity,
+   * name, brand, and nutrition, which is one of the reasons history stores
+   * snapshots. So a logged food stays favorite-able even when its provider
+   * cache has expired or the device is offline.
+   */
+  const food = foodFromEntry(entry);
+
   return (
     <ListRow
       title={entry.name}
@@ -38,6 +49,7 @@ export function LoggedEntryRow({ entry, onDelete }: Props) {
           <Text style={[styles.kcal, { color: surfaces.textSecondary }]}>
             {Math.round(entry.nutrition.calories)} kcal
           </Text>
+          <FavoriteButton food={food} size={18} withSurface />
           <Pressable
             hitSlop={10}
             onPress={onDelete}

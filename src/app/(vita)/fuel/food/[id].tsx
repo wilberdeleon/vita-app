@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import { BarcodeTracePanel } from '../../../../features/fuel/components/BarcodeTracePanel';
 import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
@@ -10,6 +11,7 @@ import {
   createEntry,
   defaultMealForTime,
   formatPortion,
+  traceBarcode,
   nutritionForServing,
   readCachedFood,
   readCachedFoodSync,
@@ -85,6 +87,14 @@ export default function FoodDetail() {
     // food's preferred default serving is applied once it is actually known.
   }, [food?.vitaId, food?.defaultServingIndex]);
 
+  // Records what this screen actually received and resolved, so a device
+  // trace shows whether a wrong product arrived or was substituted here.
+  useEffect(() => {
+    traceBarcode('detail.routeParam', vitaId);
+    traceBarcode('detail.resolvedId', food?.vitaId ?? 'UNRESOLVED');
+    traceBarcode('detail.renderedName', food?.name ?? 'none');
+  }, [vitaId, food?.vitaId, food?.name]);
+
   const serving = food?.servings[servingIndex] ?? food?.servings[0];
 
   // The single calculation on this screen, and it delegates: scaling lives
@@ -126,9 +136,24 @@ export default function FoodDetail() {
       },
     });
 
-    // Back to the Food Log so the entry that was just created is on screen,
-    // rather than to whichever picker the user arrived through.
-    router.navigate('/fuel/log');
+    /**
+     * Adding to the log finishes the flow, so unwind the whole thing.
+     *
+     * A log can be reached through several stacked screens — Log Food →
+     * Search → Food Detail, or Log Food → Scan → Food Detail — and
+     * navigating to one destination would leave the rest of that stack
+     * underneath, so the user pressed Back three or four times to get out.
+     * `dismissAll()` pops every screen above the tab navigator in one step,
+     * landing on Fuel with the new entry and updated totals already
+     * rendered, and with Back behaving normally afterwards. No duplicate
+     * Fuel root, because the tab screen is never pushed — only revealed.
+     *
+     * Guarded: if there is nothing above the root to dismiss (a deep link
+     * straight to this screen), fall back to navigating to Fuel rather than
+     * throwing or stranding the user here.
+     */
+    if (router.canDismiss()) router.dismissAll();
+    else router.replace('/fuel');
   };
 
   return (
@@ -158,6 +183,8 @@ export default function FoodDetail() {
       <NutritionDetailList nutrition={preview} />
 
       <Button label="+ Add to Log" onPress={handleAdd} disabled={saving} />
+
+      <BarcodeTracePanel />
     </Screen>
   );
 }

@@ -6,7 +6,13 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { Button, EmptyState, Screen, ScreenHeader } from '../../../components/ui';
 import { ScannerFrame } from '../../../features/fuel/components/ScannerFrame';
-import { lookupBarcodeAcrossProviders, normalizeGtin, rememberFoods } from '../../../lib/nutrition';
+import {
+  beginBarcodeTrace,
+  lookupBarcodeAcrossProviders,
+  normalizeGtin,
+  rememberFoods,
+  traceBarcode,
+} from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 
 /**
@@ -63,13 +69,21 @@ export default function ScanBarcode() {
 
     const result = await lookupBarcodeAcrossProviders(gtin, abort.signal);
 
+    traceBarcode('lookup.status', result.status);
+
     if (result.status === 'found') {
+      traceBarcode('provider', result.provider);
+      traceBarcode('food.name', result.food.name);
+      traceBarcode('food.returnedGtin', String(result.food.barcode ?? 'none'));
+      traceBarcode('food.vitaId', result.food.vitaId);
       // Seed the cache so Food Detail resolves it, and so Favorites and
       // Recents can reach it later without another request.
       rememberFoods([result.food]);
+      const href = `/fuel/food/${encodeURIComponent(result.food.vitaId)}`;
+      traceBarcode('navigate.href', href);
       // `replace`, not `push`: backing out of Food Detail should return to
       // the Log Food picker, not to a frozen scanner mid-lookup.
-      router.replace(`/fuel/food/${encodeURIComponent(result.food.vitaId)}`);
+      router.replace(href);
       return;
     }
 
@@ -91,7 +105,13 @@ export default function ScanBarcode() {
   const handleScan = useCallback(
     (result: BarcodeScanningResult) => {
       if (locked.current) return;
+
+      beginBarcodeTrace();
+      traceBarcode('camera.raw', String(result.data));
+      traceBarcode('camera.type', String(result.type));
+
       const gtin = normalizeGtin(result.data);
+      traceBarcode('normalized', gtin ?? 'REJECTED (not a usable GTIN)');
       // A code that isn't a usable GTIN is ignored without locking, so the
       // scanner keeps looking instead of dead-ending on a stray label.
       if (!gtin) return;

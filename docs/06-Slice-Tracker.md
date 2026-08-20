@@ -507,3 +507,21 @@ Fixed by storing the async result **with the id it belongs to** and discarding i
 **Favorite controls were present but undiscoverable.** The heart shipped in slice 2.7 on search rows, Recents rows, and the Food Detail header — and does render — but drawn as a bare outline in `surfaces.textTertiary` (45% white on a dark card) it read as decoration, and QA never found it. That is a real product failure, not a misunderstanding. The row heart now sits on a faint circular surface with a border so it reads as a button, and the unfavorited outline moved from tertiary to secondary. The Food Detail header heart stays plain, where position alone makes it a control.
 
 **Still unverified this session:** tap isolation (heart toggles without opening Food Detail) and the cross-surface sync walkthrough. Nested `Pressable` wins the touch by React Native's responder rules, so the behavior should be correct, but the screen-control tooling was disconnected and the simulator could be screenshotted, not driven.
+
+### QA round 2 — barcode instrumentation, favorite surfaces, post-log navigation (2026-08-19)
+
+**Barcode: NOT signed off.** The founder rescanned on device after `779b0ab` and still saw the wrong product. The previous root-cause conclusion was **wrong in scope**: the stale-`useState` bug was real and is fixed, but it was not needed to explain the report. Two bottles of the *same* Kroger product share one UPC, so "two bottles, same wrong result" is exactly what a single bad lookup of a single barcode looks like.
+
+What was ruled out this round, with evidence:
+- **Open Food Facts data is not mislabelled.** Every Hillshire Farm record sits under GS1 prefix `00445003…`; Kroger's is `0011110…`. No Kroger-prefix code maps to Hillshire.
+- **Food Detail cannot substitute a food.** Both resolution paths (`findFood`, `readCachedFoodSync`) are exact `vitaId` lookups, and after the `779b0ab` fix the async path is discarded when the route param differs.
+- **Cache cannot collide.** Keys are `vitaId`-scoped; the query cache is a separate map.
+- **The provider chain is correct**, re-verified live: the real Kroger barcode returns Kroger, a different barcode returns its own product, re-scanning returns the original, UPC-A and EAN-13 share a `vitaId`, unknown returns not-found.
+
+**The gap is that no test ever used the founder's actual bottle.** The standalone suite used a Kroger barcode found by searching Open Food Facts, not the value the camera produced. So a dev-only trace now records the whole chain — `camera.raw`, `camera.type`, `normalized`, `lookup.status`, `provider`, `food.name`, `food.returnedGtin`, `food.vitaId`, `navigate.href`, `detail.routeParam`, `detail.resolvedId`, `detail.renderedName` — to the console and to an on-screen panel on Food Detail (`BarcodeTracePanel`, `__DEV__` only, no credentials). One physical scan will say exactly where Kroger becomes Hillshire. **Remove the panel once signed off.**
+
+**Favorite surfaces added** (same 2.7 repository, no new state): a heart on every **logged food row** in the Food Log, and one in the **Edit Entry header**. Both build their `VitaFood` from the entry's own snapshot via `foodFromEntry()`, so favoriting something already logged costs no provider request and works with the cache expired or offline. Favoriting from Edit Entry acts on the food identity only — serving, quantity, meal, and the eating event are untouched.
+
+**Post-log navigation fixed.** Logging could leave four screens stacked (Fuel → Log Food → Search → Food Detail), and the user pressed Back repeatedly to escape. `Add to Log` now calls `router.dismissAll()`, popping everything above the tab navigator in one step and landing on Fuel with the entry and totals already rendered — guarded by `canDismiss()` with a `replace('/fuel')` fallback for a deep link straight to the screen. No duplicate Fuel root: the tab screen is revealed, never pushed. Save and Delete in Edit Entry use `router.back()`, returning to the Food Log they came from rather than stacking a second copy.
+
+**Not verified this session:** anything requiring taps. The screen-control tooling stayed disconnected, so the simulator could only be screenshotted. The build boots clean with zero bundle errors.

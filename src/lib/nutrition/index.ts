@@ -89,6 +89,12 @@ export type {
 export { asyncStorageNutritionRepository } from './data/asyncStorageRepository';
 
 export { gtinEquals, isValidGtin, normalizeGtin, type Gtin } from './providers/gtin';
+export {
+  beginBarcodeTrace,
+  getBarcodeTrace,
+  traceBarcode,
+  type BarcodeTraceStage,
+} from './providers/trace';
 export { ProviderError, type FoodProvider, type ProviderErrorKind } from './providers/types';
 export {
   PROVIDERS,

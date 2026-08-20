@@ -2,11 +2,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
 import {
   editableServings,
+  foodFromEntry,
   formatPortion,
   nutritionForServing,
   readCachedFoodSync,
@@ -94,6 +96,13 @@ export default function EditLogEntry() {
 
   const subtitle = entry.brand ?? undefined;
 
+  /**
+   * Favoriting here acts on the *food*, never the eating event: it leaves
+   * serving, quantity, meal, and the entry itself untouched. Built from the
+   * entry's snapshot so it works without a provider round-trip.
+   */
+  const food = foodFromEntry(entry);
+
   const handleSave = async () => {
     if (saving) return;
     setSaving(true);
@@ -113,7 +122,9 @@ export default function EditLogEntry() {
     });
 
     showToast({ message: `Updated · ${entry.name}` });
-    router.navigate('/fuel/log');
+    // Editing is reached from the Food Log, so `back` returns exactly there
+    // without stacking a second copy of it.
+    router.back();
   };
 
   const handleRemove = () => {
@@ -126,12 +137,12 @@ export default function EditLogEntry() {
         void restoreEntry(entry, index);
       },
     });
-    router.navigate('/fuel/log');
+    router.back();
   };
 
   return (
     <Screen>
-      <ScreenHeader title="Edit Entry" back />
+      <ScreenHeader title="Edit Entry" back action={<FavoriteButton food={food} />} />
 
       <View style={styles.hero}>
         <IconBadge icon="fast-food-outline" size={64} />
