@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
 import { FoodRow } from '../../../features/fuel/components/FoodRow';
-import { MIN_QUERY_LENGTH, useFoodSearch } from '../../../lib/nutrition';
+import { MIN_QUERY_LENGTH, parseMealSlot, useFoodSearch } from '../../../lib/nutrition';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -12,13 +13,17 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * normalized, deduped, and ranked.
  */
 export default function SearchFood() {
+  const params = useLocalSearchParams<{ meal?: string }>();
+  // Forwarded to each result so a food opened from a meal-specific flow
+  // lands in that meal. Absent, Food Detail defaults by time of day.
+  const meal = parseMealSlot(params.meal);
   const [query, setQuery] = useState('');
   const { status, results, error, diagnostics, retry } = useFoodSearch(query);
   const { surfaces } = useTheme();
 
   return (
     <Screen>
-      <ScreenHeader title="Search Food" back />
+      <ScreenHeader title="Search Food" subtitle={meal ? `Adding to ${meal}` : undefined} back />
       <TextField
         value={query}
         onChangeText={setQuery}
@@ -47,7 +52,7 @@ export default function SearchFood() {
         <>
           <SectionHeader title="Results" />
           {results.map((food) => (
-            <FoodRow key={food.vitaId} food={food} />
+            <FoodRow key={food.vitaId} food={food} meal={meal} />
           ))}
         </>
       ) : null}

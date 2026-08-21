@@ -41,3 +41,34 @@ const LOG_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 export function isValidLogDate(value: unknown): value is LogDate {
   return typeof value === 'string' && LOG_DATE_PATTERN.test(value);
 }
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+
+/**
+ * A log date as a person reads it — "Friday, August 21".
+ *
+ * Written out by hand rather than via `toLocaleDateString`. VITA is a
+ * US-English product today, and Hermes' Intl support varies by platform and
+ * engine build; a header that silently falls back to "2026-08-21" (or
+ * throws) on one device and not another is not worth the dependency for one
+ * string. Swap this for Intl when localization actually ships.
+ */
+export function formatLogDateLong(logDate: LogDate): string {
+  const date = fromLogDate(logDate);
+  return `${WEEKDAYS[date.getDay()]}, ${MONTHS[date.getMonth()]} ${date.getDate()}`;
+}

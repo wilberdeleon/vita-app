@@ -1,31 +1,29 @@
 /**
- * Meal-slot presentation helpers.
+ * Meal-slot helpers.
  *
- * Moved here from `src/features/dashboard/mealIcons.ts`, where it was an
- * odd fit: only Fuel's two screens ever imported it, so a Fuel concern was
- * reaching into the Dashboard feature — the exact cross-feature import
- * CLAUDE.md rule 4 forbids. Nothing under `src/features/dashboard/`
- * consumed it, so the move leaves Home untouched.
- *
- * Home's own meal rows keep their separate sun-cycle icon set in
- * `features/dashboard/components/MealRow.tsx`. That is the approved Home
- * treatment and is deliberately NOT unified with the list-row icons below —
- * they serve different layouts, and Home's visual design is locked.
+ * The `mealSlotIcon` catalog that used to live here is gone: the Fuel
+ * redesign gave meals a warm sunrise-to-sunset color language, so icon and
+ * accent are chosen together in `features/fuel/mealAccent.ts` and the old
+ * icon-only lookup had no remaining caller. Home keeps its own approved
+ * icon set in `features/dashboard/components/MealRow.tsx` — deliberately
+ * not unified, since Home's visual design is locked.
  */
 
-import type { Ionicons } from '@expo/vector-icons';
-import type { MealSlot } from './types';
+import { MEAL_SLOTS, type MealSlot } from './types';
 
-const LIST_ICONS: Record<MealSlot, keyof typeof Ionicons.glyphMap> = {
-  Breakfast: 'cafe-outline',
-  Lunch: 'restaurant-outline',
-  Dinner: 'fish-outline',
-  Snacks: 'nutrition-outline',
-};
-
-/** Icon for a meal slot in Fuel's list rows. */
-export function mealSlotIcon(slot: MealSlot): keyof typeof Ionicons.glyphMap {
-  return LIST_ICONS[slot];
+/**
+ * Reads a meal slot off a route parameter.
+ *
+ * Fuel's meal rows deep-link into the logging flow with the meal already
+ * chosen (`/fuel/add?meal=Lunch`), and a URL is only as trustworthy as
+ * whatever produced it. Anything that isn't one of the four canonical slots
+ * returns `undefined`, and the caller falls back to its normal default
+ * rather than writing an entry into a meal that doesn't exist.
+ */
+export function parseMealSlot(value: unknown): MealSlot | undefined {
+  return typeof value === 'string' && (MEAL_SLOTS as readonly string[]).includes(value)
+    ? (value as MealSlot)
+    : undefined;
 }
 
 /**

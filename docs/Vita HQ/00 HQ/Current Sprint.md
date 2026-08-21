@@ -31,6 +31,8 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Fuel Visual Refinement added 2026-08-18 (founder direction).** Functionality stays the priority for the rest of the sprint, but Fuel is not considered polished until a dedicated visual/interaction pass runs — the current screens read as *too basic, too bulky, overusing large numbers, filling space because space exists.* Presentation only; the feature architecture does not change. The slice is recorded, **not yet opened or approved** — it enters the normal slice workflow when the preceding slices complete. See [[Roadmap]], [[Fuel]], [[Design Bible]].
 
+**Opened and built 2026-08-21 as slice 2.9 — pending founder review.** The founders opened it directly after the Barcode Scanner rather than after Edge Cases & Polish, so the three remaining unstarted slices (Restaurant Coverage, Water Wiring, Polish & Audit) shifted to 2.10–2.12. Scope was the **Fuel landing screen only**; the remaining Fuel surfaces keep their current presentation. Nothing functional changed. Founder review is on a physical iPhone before any further Sprint 2 work starts. Detail: [[Fuel]], repo `docs/06-Slice-Tracker.md`.
+
 **Binding constraints:** do not upgrade the Expo SDK · no provider secrets in the client · verify provider licensing before caching third-party data · [[Water]] and [[Peptides]] preserved but not expanded · the approved visual design stays locked.
 
 ### Definition of done (from the Build Handbook)

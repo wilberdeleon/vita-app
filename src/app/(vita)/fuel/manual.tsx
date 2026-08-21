@@ -1,8 +1,8 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
-import { createCustomFood, useNutrition, type NutritionFacts } from '../../../lib/nutrition';
+import { createCustomFood, parseMealSlot, useNutrition, type NutritionFacts } from '../../../lib/nutrition';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -32,6 +32,8 @@ function parseAmount(raw: string): number | null {
  * proving the write path. Slice 2.3 restores the intended architecture.)
  */
 export default function AddFoodManually() {
+  const params = useLocalSearchParams<{ meal?: string }>();
+  const meal = parseMealSlot(params.meal);
   const { surfaces } = useTheme();
   const { saveCustomFood } = useNutrition();
 
@@ -113,12 +115,14 @@ export default function AddFoodManually() {
     // `replace`, not `push`: the form has done its job, and backing out of
     // Food Detail should return to the Log Food picker rather than to a
     // filled-in form that would create a second copy of the same food.
-    router.replace(`/fuel/food/${encodeURIComponent(food.vitaId)}`);
+    router.replace(
+      `/fuel/food/${encodeURIComponent(food.vitaId)}${meal ? `?meal=${encodeURIComponent(meal)}` : ''}`,
+    );
   };
 
   return (
     <Screen>
-      <ScreenHeader title="Add Food" back close />
+      <ScreenHeader title="Add Food" subtitle={meal ? `Adding to ${meal}` : undefined} back close />
 
       <TextField label="Food Name" placeholder="e.g. Overnight oats" value={name} onChangeText={setName} />
       <TextField label="Brand (optional)" placeholder="e.g. Chobani" value={brand} onChangeText={setBrand} />
@@ -141,7 +145,7 @@ export default function AddFoodManually() {
       <SectionHeader title="Nutrition per serving" />
       <Card style={styles.nutritionCard}>
         <TextField
-          label="Calories (kcal)"
+          label="Calories"
           placeholder="0"
           keyboardType="decimal-pad"
           value={calories}

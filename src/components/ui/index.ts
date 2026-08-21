@@ -9,6 +9,7 @@ export { ListRow } from './ListRow';
 export { PressableCard } from './PressableCard';
 export { PressableScale } from './PressableScale';
 export { ProgressBar } from './ProgressBar';
+export { ProgressRing } from './ProgressRing';
 export { Screen } from './Screen';
 export { ScreenHeader } from './ScreenHeader';
 export { Section } from './Section';

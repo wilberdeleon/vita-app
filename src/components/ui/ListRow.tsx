@@ -10,7 +10,7 @@ type Props = {
   iconColor?: string;
   title: string;
   subtitle?: string;
-  /** Trailing text, e.g. "300 kcal" or "5 / 8 cups". */
+  /** Trailing text, e.g. "300 cal" or "5 / 8 cups". */
   value?: string;
   chevron?: boolean;
   onPress?: () => void;

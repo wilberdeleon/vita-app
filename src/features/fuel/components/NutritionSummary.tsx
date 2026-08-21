@@ -27,7 +27,7 @@ export function NutritionSummary({ nutrition, portionLabel }: Props) {
       <Text style={[styles.kicker, { color: surfaces.textTertiary }]}>{portionLabel.toUpperCase()}</Text>
       <View style={styles.calorieRow}>
         <Text style={[styles.calories, { color: surfaces.text }]}>{formatCalories(nutrition.calories)}</Text>
-        <Text style={[styles.calorieUnit, { color: surfaces.textTertiary }]}>kcal</Text>
+        <Text style={[styles.calorieUnit, { color: surfaces.textTertiary }]}>Calories</Text>
       </View>
       <View style={[styles.macros, { borderTopColor: surfaces.border }]}>
         {MACROS.map((macro) => (

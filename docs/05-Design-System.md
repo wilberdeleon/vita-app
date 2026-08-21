@@ -93,6 +93,14 @@ Calorie and nutrition values are the named example: they grow disproportionately
 
 The first application is the **Fuel Visual Refinement** slice near the end of Sprint 2 (`docs/04-Master-Roadmap.md`), which evaluates information density, typography scale, number sizing, spacing, card sizing, empty space, hierarchy, search-result density, Food Detail density, logging confirmation, meal rows, and Food Log presentation. Same feature architecture, significantly more refined presentation — it is not a functional redesign.
 
+**Built 2026-08-21 for the Fuel landing screen** (slice 2.9 — pending founder review; the remaining Fuel surfaces are still to come). Three system-level results:
+
+- **Rows in a panel, not a grid of cards.** Where a screen shows several peer items and some are empty, they belong in one surface separated by hairlines. A card per item spends its border, shadow, and padding on emptiness — which is precisely the "filling space because space exists" failure. Fuel's four meal slots cost one row each when empty and expand in place when they have content.
+- **Proportion is the hierarchy signal.** A secondary module reads as secondary by being half width, and a primary action reads as primary by being filled — neither needs to be taller. Nothing on Fuel grew to assert importance.
+- **Calories terminology.** VITA's user-facing copy says **Calories** (or **cal** where a row is tight), never `kcal`. US-English product decision, presentation only: internal fields, provider payload names, and nutrient units are unchanged.
+
+**Meal color language** (Fuel): Breakfast sunrise yellow · Lunch midday orange · Dinner sunset red-orange · Snacks neutral sage with a plain utensils glyph and deliberately no time-of-day signal, since a snack happens at any hour. Warm progression built entirely from existing brand and macro tokens. **Snacks is not purple**, though the founder's concept reference shows it that way — purple is a locked domain color (Atlas and peptides) and the Peptides module sits directly below the meal list. Flagged for founder confirmation.
+
 ### Contextual food visuals (concept — unscheduled)
 
 Food tracking should eventually feel more alive and visually distinctive: a burger shows a small burger, a taco a taco, a bowl a bowl, coffee a cup. **Small, delightful, tasteful, premium, and useful for quick recognition — explicitly not giant food photography dominating the interface.**

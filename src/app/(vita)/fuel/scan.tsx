@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -10,6 +10,7 @@ import {
   beginBarcodeTrace,
   lookupBarcodeAcrossProviders,
   normalizeGtin,
+  parseMealSlot,
   rememberFoods,
   traceBarcode,
 } from '../../../lib/nutrition';
@@ -37,6 +38,15 @@ type ScanState =
  * what it appeared to promise.
  */
 export default function ScanBarcode() {
+  const params = useLocalSearchParams<{ meal?: string }>();
+  /**
+   * Carried through every exit from this screen — the resolved product, and
+   * the search/manual fallbacks — so a scan started from a meal row still
+   * lands in that meal when the barcode misses.
+   */
+  const meal = parseMealSlot(params.meal);
+  const mealSuffix = meal ? `?meal=${encodeURIComponent(meal)}` : '';
+
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<ScanState>({ phase: 'scanning' });
   const [torch, setTorch] = useState(false);
@@ -79,7 +89,7 @@ export default function ScanBarcode() {
       // Seed the cache so Food Detail resolves it, and so Favorites and
       // Recents can reach it later without another request.
       rememberFoods([result.food]);
-      const href = `/fuel/food/${encodeURIComponent(result.food.vitaId)}`;
+      const href = `/fuel/food/${encodeURIComponent(result.food.vitaId)}${mealSuffix}`;
       traceBarcode('navigate.href', href);
       // `replace`, not `push`: backing out of Food Detail should return to
       // the Log Food picker, not to a frozen scanner mid-lookup.
@@ -100,7 +110,7 @@ export default function ScanBarcode() {
 
     // 'not-found' and 'no-providers' both mean there is nothing to open.
     setState({ phase: 'not-found', gtin });
-  }, []);
+  }, [mealSuffix]);
 
   const handleScan = useCallback(
     (result: BarcodeScanningResult) => {
@@ -157,7 +167,7 @@ export default function ScanBarcode() {
             else void requestPermission();
           }}
         />
-        <Button label="Search instead" variant="soft" onPress={() => router.replace('/fuel/search')} />
+        <Button label="Search instead" variant="soft" onPress={() => router.replace(`/fuel/search${mealSuffix}`)} />
       </Screen>
     );
   }
@@ -180,8 +190,8 @@ export default function ScanBarcode() {
         />
         {isError ? <Button label="Try again" onPress={() => void lookup(state.gtin)} /> : null}
         <Button label="Scan again" variant={isError ? 'soft' : 'filled'} onPress={unlock} />
-        <Button label="Search food" variant="soft" onPress={() => router.replace('/fuel/search')} />
-        <Button label="Add manually" variant="soft" onPress={() => router.replace('/fuel/manual')} />
+        <Button label="Search food" variant="soft" onPress={() => router.replace(`/fuel/search${mealSuffix}`)} />
+        <Button label="Add manually" variant="soft" onPress={() => router.replace(`/fuel/manual${mealSuffix}`)} />
         {__DEV__ && isError && state.diagnostics.length > 0 ? (
           <Text style={styles.diagnostics}>{state.diagnostics.join('\n')}</Text>
         ) : null}

@@ -66,8 +66,8 @@ export default function FoodLog() {
       <DailyProgressCard
         headline={
           pending
-            ? `${PENDING} / ${today.targets.calories.toLocaleString()} kcal`
-            : `${consumed.calories.toLocaleString()} / ${today.targets.calories.toLocaleString()} kcal`
+            ? `${PENDING} / ${today.targets.calories.toLocaleString()} Calories`
+            : `${consumed.calories.toLocaleString()} / ${today.targets.calories.toLocaleString()} Calories`
         }
         percentLabel={pending ? PENDING : `${today.caloriePercent}%`}
         progress={pending ? 0 : today.calorieProgress}
@@ -99,7 +99,7 @@ export default function FoodLog() {
           .filter((meal) => meal.itemCount > 0)
           .map((meal) => (
             <View key={meal.slot} style={styles.mealGroup}>
-              <SectionHeader title={`${meal.slot} · ${Math.round(meal.nutrition.calories)} kcal`} />
+              <SectionHeader title={`${meal.slot} · ${Math.round(meal.nutrition.calories)} Calories`} />
               {meal.entries.map((entry) => (
                 <LoggedEntryRow key={entry.id} entry={entry} onDelete={() => handleDelete(entry)} />
               ))}

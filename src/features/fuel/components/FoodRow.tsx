@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { ListRow } from '../../../components/ui';
-import { formatCalories, type VitaFood } from '../../../lib/nutrition';
+import { formatCalories, type MealSlot, type VitaFood } from '../../../lib/nutrition';
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { FavoriteButton } from './FavoriteButton';
@@ -10,6 +10,12 @@ type Props = {
   food: VitaFood;
   /** Hidden on the Favorites screen itself, where every row is favorited. */
   showFavorite?: boolean;
+  /**
+   * Carried through to Food Detail so a food opened from a meal-specific
+   * flow lands in that meal. Unset, Food Detail seeds the meal from the
+   * time of day exactly as before.
+   */
+  meal?: MealSlot;
 };
 
 /**
@@ -22,7 +28,7 @@ type Props = {
  * it was removed in 2.3 precisely because it did nothing. No chevron
  * alongside it — the row body is the tap target, same as the log rows.
  */
-export function FoodRow({ food, showFavorite = true }: Props) {
+export function FoodRow({ food, showFavorite = true, meal }: Props) {
   const { surfaces } = useTheme();
   const serving = food.servings[food.defaultServingIndex] ?? food.servings[0];
   const detail = [food.brand, serving?.label].filter(Boolean).join(' · ');
@@ -32,12 +38,16 @@ export function FoodRow({ food, showFavorite = true }: Props) {
       icon="fast-food-outline"
       title={food.name}
       subtitle={detail || undefined}
-      onPress={() => router.push(`/fuel/food/${encodeURIComponent(food.vitaId)}`)}
+      onPress={() =>
+        router.push(
+          `/fuel/food/${encodeURIComponent(food.vitaId)}${meal ? `?meal=${encodeURIComponent(meal)}` : ''}`,
+        )
+      }
       trailing={
         <View style={styles.trailing}>
           {serving ? (
-            <Text style={[styles.kcal, { color: surfaces.textSecondary }]}>
-              {formatCalories(serving.nutrition.calories)} kcal
+            <Text style={[styles.calories, { color: surfaces.textSecondary }]}>
+              {formatCalories(serving.nutrition.calories)} cal
             </Text>
           ) : null}
           {showFavorite ? <FavoriteButton food={food} size={19} withSurface /> : null}
@@ -53,7 +63,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.m,
   },
-  kcal: {
+  calories: {
     ...typography.caption,
   },
 });

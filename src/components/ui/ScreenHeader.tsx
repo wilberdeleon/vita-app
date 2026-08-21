@@ -8,6 +8,12 @@ import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = {
   title: string;
+  /**
+   * Secondary line beneath the title — currently Fuel's date. Unset
+   * everywhere else, and unset renders exactly as before: the title stays a
+   * single centered-height row, so no existing header shifts.
+   */
+  subtitle?: string;
   /** Official VITA logo lockup (mark + wordmark) instead of a plain title. */
   brand?: boolean;
   /** Show the settings gear on the right (main hub screens). */
@@ -42,6 +48,7 @@ type Props = {
 
 export function ScreenHeader({
   title,
+  subtitle,
   brand = false,
   settings = false,
   back = false,
@@ -73,9 +80,19 @@ export function ScreenHeader({
           <Text style={[styles.wordmark, { color: wordmarkColor }]}>{title}</Text>
         </View>
       ) : (
-        <Text style={[styles.title, { color: iconColor }, back && styles.centered]} numberOfLines={1}>
-          {title}
-        </Text>
+        <View style={styles.titleBlock}>
+          <Text style={[styles.title, { color: iconColor }, back && styles.centered]} numberOfLines={1}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text
+              style={[styles.subtitle, { color: surfaces.textSecondary }, back && styles.centered]}
+              numberOfLines={1}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
       )}
       {settings ? (
         <Pressable
@@ -112,9 +129,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.m,
     minHeight: 44,
   },
+  titleBlock: {
+    flex: 1,
+  },
   title: {
     ...typography.title,
-    flex: 1,
+  },
+  subtitle: {
+    ...typography.caption,
+    marginTop: 2,
   },
   brandRow: {
     flex: 1,

@@ -13,7 +13,7 @@ type Bar = {
 };
 
 type Props = {
-  /** Headline, e.g. "1,267 / 2,000 kcal". */
+  /** Headline, e.g. "1,267 / 2,000 Calories". */
   headline: string;
   /** Right-aligned percent label, e.g. "63%". */
   percentLabel: string;

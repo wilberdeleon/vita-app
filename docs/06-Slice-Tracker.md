@@ -169,9 +169,12 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.6 | Provider Layer + Search | USDA + Open Food Facts adapters, normalization, dedupe, ranking, cache, debounced search | 🟡 Built (OFF verified; USDA blocked on founder key) |
 | 2.7 | Recent + Favorites | History-derived recents, persisted favorites keyed by `vitaId` | 🟡 Built, pending founder review |
 | 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, OFF→USDA chain | 🟡 Built (pipeline + states verified; live detection needs a physical iPhone) |
-| 2.9 | Restaurant Coverage | Edge Function proxy + FatSecret adapter (founder-approved, gated on account setup) | ⬜ Planned |
-| 2.10 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
-| 2.11 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
+| 2.9 | Fuel Visual Refinement | Fuel landing rebuilt as a nutrition command centre: ring + remaining summary, direct Log Food / Scan, inline meals with per-meal Add Food, compact Hydration/Peptides, Calories terminology | 🟡 Built, pending founder review |
+| 2.10 | Restaurant Coverage | Edge Function proxy + FatSecret adapter (founder-approved, gated on account setup) | ⬜ Planned |
+| 2.11 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
+| 2.12 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
+
+**Renumbered 2026-08-21.** The Fuel Visual Refinement slice was recorded on 2026-08-18 as a late-Sprint-2 slice without a number (`docs/04-Master-Roadmap.md`). The founders opened it after 2.8 rather than after Edge Cases & Polish, so it takes 2.9 and the three remaining **unstarted** slices shift by one. Nothing already built was renumbered.
 
 ### Slice 2.1 — Nutrition Foundation 🟡
 
@@ -525,3 +528,31 @@ What was ruled out this round, with evidence:
 **Post-log navigation fixed.** Logging could leave four screens stacked (Fuel → Log Food → Search → Food Detail), and the user pressed Back repeatedly to escape. `Add to Log` now calls `router.dismissAll()`, popping everything above the tab navigator in one step and landing on Fuel with the entry and totals already rendered — guarded by `canDismiss()` with a `replace('/fuel')` fallback for a deep link straight to the screen. No duplicate Fuel root: the tab screen is revealed, never pushed. Save and Delete in Edit Entry use `router.back()`, returning to the Food Log they came from rather than stacking a second copy.
 
 **Not verified this session:** anything requiring taps. The screen-control tooling stayed disconnected, so the simulator could only be screenshotted. The build boots clean with zero bundle errors.
+
+### Slice 2.9 — Fuel Visual Refinement 🟡
+
+The slice recorded on 2026-08-18 as founder direction — *"too basic, too bulky, overusing large numbers, filling space because space exists"* — built against a founder-supplied concept reference. **Presentation and information architecture only.** No provider, search, ranking, dedupe, barcode, logging, editing, favorite, persistence, or theme behavior was changed, and no mock nutrition data was introduced anywhere.
+
+**The structural decision.** The previous screen's problem was not its spacing, it was its *containers*: four features rendered as four full-width cards of equal visual weight, with the day's actual food hidden behind a row labelled "Food Log". Fuel now reads as one vertical narrative — status, action, content, secondary — and the load-bearing change is that **meals are rows in a single panel, not four cards.** An untouched Lunch costs one 56pt row instead of a card with its own border, shadow, and padding, which is what frees the space for the foods a person actually ate.
+
+**New information hierarchy.**
+
+1. **Header** — `Fuel` with the current log date beneath it (`formatLogDateLong`), settings gear unchanged in its permanent top-right slot.
+2. **Summary** (`FuelSummaryCard`) — a calorie ring (eaten) beside the headline that decisions are actually made on (remaining), a progress bar, `N% of 2,000 Calories`, then the three macro bars below a hairline. One card, one statement.
+3. **Primary actions** (`FuelQuickActions`) — a filled **Log Food** card ("Search, scan, or add") beside **Scan Barcode** ("Quick scan a product"). Both open the routes that already existed; the primary reads as primary through fill, not through size.
+4. **Today's Meals** (`TodayMealsPanel`) — all four canonical slots as rows in one panel, meals with entries expanded by default, `+ Add food` per meal, and a compact `View all` to the full Food Log.
+5. **Secondary trackers** (`FuelTrackerCard` ×2) — half-width Hydration and Peptides modules. Their proportion is what says "secondary"; nothing else has to.
+
+**Meal color language** (`features/fuel/mealAccent.ts`) — Breakfast sunrise yellow (`palette.carbs`), Lunch midday orange (`palette.primary`), Dinner sunset red-orange (`palette.fat`), Snacks neutral sage (`palette.sage`) with a plain utensils glyph and no time-of-day signal. **Deliberate deviation from the reference:** the concept shows Snacks in purple, but purple is a locked domain color (Atlas and peptides, Sprint 0.1) and the Peptides module sits directly below — a purple Snacks row would read as a peptide entry. Every value used is an existing brand or macro token; no new hex was invented. Ionicons has no sunrise/sunset glyph, so Breakfast and Dinner use the closest stock equivalents tinted warm, same approximation Home already documents.
+
+**Meal-specific logging.** `+ Add food` on a meal deep-links the *existing* flow with that meal attached — `/fuel/add?meal=Lunch` → Search / Scan / Manual / Recents / Favorites → Food Detail — and Food Detail seeds its meal from the parameter instead of the time of day. Implemented as a forwarded route parameter validated by a new `parseMealSlot()` in the nutrition domain, not as new state: an unrecognized value falls back to the existing default, and the meal picker stays visible and editable. This changes what is *preselected*, never what is possible. The MealSlot architecture is untouched.
+
+**Calories terminology.** `kcal` is gone from user-facing copy: Fuel summary, Food Log, meal subtotals, food rows, logged rows, the Add-to-Log toast, `NutritionSummary`, and the manual-entry field label now read `Calories` or `cal`. Home's meal rows were included — a four-character copy change with no layout or structural effect — because leaving `552 kcal` on Home beside `552 cal` on Fuel would be a visible inconsistency in one app. **Internal naming was not touched:** `NutritionFacts.calories`, `MealSlotSummary.kcal`, and Open Food Facts' `energy-kcal_100g` are unchanged, because this was a copy audit, not a rename.
+
+**Everything preserved and verified present:** shared nutrition domain · USDA · Open Food Facts · search aggregation, normalization, ranking, dedupe · barcode scanning with strict GTIN validation · the dev-only barcode trace panel (**kept — the Kroger issue is not signed off**) · custom and manual foods · Food Detail · portions and quantity · meal assignment · daily logging · edit · delete + Undo · Recents · Favorites and their persistence · favorite-from-logged-row · Home ↔ Fuel synchronization · date awareness · persistent state · provider failure isolation · Light/Dark/System · Expo Go on SDK 54.
+
+**Files.** New: `components/ui/ProgressRing.tsx` (SVG ring on the existing `react-native-svg` dependency), `features/fuel/mealAccent.ts`, and `features/fuel/components/{FuelSummaryCard,FuelQuickActions,TodayMealsPanel,MealFoodRow,FuelTrackerCard}.tsx`. Changed: the Fuel tab route (rewritten), the five logging routes and `FoodRow` (meal forwarding + copy), `food/[id]` (meal preselection + copy), `ScreenHeader` (optional `subtitle`, unset everywhere else so no existing header shifts), `dates.ts` (`formatLogDateLong`), `mealSlots.ts` (`mealSlotIcon` removed — no remaining caller once meals got icon *and* accent together; replaced by `parseMealSlot`), and copy-only edits to `LoggedEntryRow`, `NutritionSummary`, `log.tsx`, `manual.tsx`, and Home's `MealRow`.
+
+**Verification.** `npx tsc --noEmit` and `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` both clean. `npx expo export --platform ios` succeeds (1403 modules). Rendered in Expo Go on the iOS Simulator in **both an empty day and a populated day** — ring, remaining figure, macro fills, meal color progression, expanded Breakfast with two foods, per-meal subtotals, and compact empty rows all confirmed against the reference.
+
+**Not verified this session — same tooling gap as the previous two QA rounds.** The simulator MCP refuses to attach (it reports Xcode "not selected" even though `xcode-select -p` already resolves to `/Applications/Xcode.app/Contents/Developer`), and `osascript` has no assistive access, so the simulator can be screenshotted and deep-linked but **not tapped or scrolled**. Everything below the fold — the Hydration/Peptides row's full extent and its dock clearance — is therefore confirmed only by the portion visible on screen, and every tap-dependent path (meal preselection end to end, favorite toggling from a meal row, edit, delete + Undo, the barcode flow) is reasoned-and-typechecked, not exercised. These need the founder's physical iPhone.

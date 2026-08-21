@@ -10,9 +10,11 @@ import { PortionEditor } from '../../../../features/fuel/components/PortionEdito
 import {
   createEntry,
   defaultMealForTime,
+  formatCalories,
   formatPortion,
   traceBarcode,
   nutritionForServing,
+  parseMealSlot,
   readCachedFood,
   readCachedFoodSync,
   useNutrition,
@@ -33,8 +35,20 @@ import { useTheme } from '../../../../theme/ThemeProvider';
  * point of normalizing at the provider boundary rather than here.
  */
 export default function FoodDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, meal: mealParam } = useLocalSearchParams<{ id: string; meal?: string }>();
   const vitaId = decodeURIComponent(id ?? '');
+
+  /**
+   * The meal chosen before the user ever got here.
+   *
+   * Fuel's meal rows deep-link the whole logging flow with `?meal=Lunch`,
+   * and every screen in between forwards it, so "add food to Lunch" does
+   * not end with being asked which meal it was. Validated rather than
+   * trusted — an unrecognized value falls back to the time-of-day default.
+   * The picker below is still shown and still editable: this changes what
+   * is preselected, never what is possible.
+   */
+  const preselectedMeal = parseMealSlot(mealParam);
 
   const { findFood, addEntry, removeEntry } = useNutrition();
   const { showToast } = useToast();
@@ -70,7 +84,7 @@ export default function FoodDetail() {
 
   const [servingIndex, setServingIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [meal, setMeal] = useState<MealSlot>(() => defaultMealForTime());
+  const [meal, setMeal] = useState<MealSlot>(() => preselectedMeal ?? defaultMealForTime());
   const [saving, setSaving] = useState(false);
 
   /**
@@ -81,11 +95,11 @@ export default function FoodDetail() {
   useEffect(() => {
     setServingIndex(food?.defaultServingIndex ?? 0);
     setQuantity(1);
-    setMeal(defaultMealForTime());
+    setMeal(preselectedMeal ?? defaultMealForTime());
     setSaving(false);
     // Keyed on the resolved food's own id, not the route param, so the
     // food's preferred default serving is applied once it is actually known.
-  }, [food?.vitaId, food?.defaultServingIndex]);
+  }, [food?.vitaId, food?.defaultServingIndex, preselectedMeal]);
 
   // Records what this screen actually received and resolved, so a device
   // trace shows whether a wrong product arrived or was substituted here.
@@ -129,7 +143,7 @@ export default function FoodDetail() {
     await addEntry(entry);
 
     showToast({
-      message: `Logged · ${food.name} — ${Math.round(entry.nutrition.calories)} kcal`,
+      message: `Logged · ${food.name} — ${formatCalories(entry.nutrition.calories)} Calories`,
       actionLabel: 'Undo',
       onAction: () => {
         void removeEntry(entry.id);

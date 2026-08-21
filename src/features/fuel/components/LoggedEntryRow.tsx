@@ -46,8 +46,8 @@ export function LoggedEntryRow({ entry, onDelete }: Props) {
       onPress={() => router.push(`/fuel/entry/${encodeURIComponent(entry.id)}`)}
       trailing={
         <View style={styles.trailing}>
-          <Text style={[styles.kcal, { color: surfaces.textSecondary }]}>
-            {Math.round(entry.nutrition.calories)} kcal
+          <Text style={[styles.calories, { color: surfaces.textSecondary }]}>
+            {Math.round(entry.nutrition.calories)} cal
           </Text>
           <FavoriteButton food={food} size={18} withSurface />
           <Pressable
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.m,
   },
-  kcal: {
+  calories: {
     ...typography.caption,
   },
 });

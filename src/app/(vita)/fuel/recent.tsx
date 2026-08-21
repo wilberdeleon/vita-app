@@ -1,8 +1,8 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
 import { FoodRow } from '../../../features/fuel/components/FoodRow';
-import { useRecentFoods } from '../../../lib/nutrition';
+import { parseMealSlot, useRecentFoods } from '../../../lib/nutrition';
 import { palette, spacing } from '../../../theme/tokens';
 
 /**
@@ -11,11 +11,14 @@ import { palette, spacing } from '../../../theme/tokens';
  * `useRecentFoods`.
  */
 export default function RecentFoods() {
+  const params = useLocalSearchParams<{ meal?: string }>();
+  const meal = parseMealSlot(params.meal);
+  const suffix = meal ? `?meal=${encodeURIComponent(meal)}` : '';
   const { recents, isLoading } = useRecentFoods();
 
   return (
     <Screen>
-      <ScreenHeader title="Recent Foods" back />
+      <ScreenHeader title="Recent Foods" subtitle={meal ? `Adding to ${meal}` : undefined} back />
 
       {isLoading ? (
         <View style={styles.centered}>
@@ -25,7 +28,7 @@ export default function RecentFoods() {
         <>
           <SectionHeader title="Recently logged" />
           {recents.map((recent) => (
-            <FoodRow key={recent.food.vitaId} food={recent.food} />
+            <FoodRow key={recent.food.vitaId} food={recent.food} meal={meal} />
           ))}
         </>
       ) : (
@@ -35,7 +38,7 @@ export default function RecentFoods() {
             title="No recent foods yet"
             body="Foods you log will show up here so you can log them again in seconds."
           />
-          <Button label="Search foods" variant="soft" onPress={() => router.push('/fuel/search')} />
+          <Button label="Search foods" variant="soft" onPress={() => router.push(`/fuel/search${suffix}`)} />
         </View>
       )}
     </Screen>

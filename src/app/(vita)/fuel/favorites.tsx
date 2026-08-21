@@ -1,9 +1,9 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
 import { FoodRow } from '../../../features/fuel/components/FoodRow';
 import { FavoriteButton } from '../../../features/fuel/components/FavoriteButton';
-import { foodFromEntry, useNutrition, type VitaFood } from '../../../lib/nutrition';
+import { foodFromEntry, parseMealSlot, useNutrition, type VitaFood } from '../../../lib/nutrition';
 import { spacing } from '../../../theme/tokens';
 
 /**
@@ -16,6 +16,9 @@ import { spacing } from '../../../theme/tokens';
  * either way.
  */
 export default function FavoriteFoods() {
+  const params = useLocalSearchParams<{ meal?: string }>();
+  const meal = parseMealSlot(params.meal);
+  const suffix = meal ? `?meal=${encodeURIComponent(meal)}` : '';
   const { favorites, findFood, entries } = useNutrition();
 
   const resolve = (vitaId: string): VitaFood | undefined => {
@@ -33,7 +36,7 @@ export default function FavoriteFoods() {
 
   return (
     <Screen>
-      <ScreenHeader title="Favorites" back />
+      <ScreenHeader title="Favorites" subtitle={meal ? `Adding to ${meal}` : undefined} back />
 
       {rows.length > 0 ? (
         <>
@@ -41,7 +44,7 @@ export default function FavoriteFoods() {
           {rows.map((food) => (
             <View key={food.vitaId} style={styles.row}>
               <View style={styles.grow}>
-                <FoodRow food={food} showFavorite={false} />
+                <FoodRow food={food} showFavorite={false} meal={meal} />
               </View>
               <FavoriteButton food={food} withSurface />
             </View>
@@ -54,7 +57,7 @@ export default function FavoriteFoods() {
             title="No favorites yet"
             body="Tap the heart on any food to keep it one tap away."
           />
-          <Button label="Search foods" variant="soft" onPress={() => router.push('/fuel/search')} />
+          <Button label="Search foods" variant="soft" onPress={() => router.push(`/fuel/search${suffix}`)} />
         </View>
       )}
     </Screen>

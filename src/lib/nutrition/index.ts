@@ -23,6 +23,7 @@ export {
 } from './model/types';
 
 export {
+  formatLogDateLong,
   fromLogDate,
   isToday,
   isValidLogDate,
@@ -31,7 +32,7 @@ export {
   type LogDate,
 } from './model/dates';
 
-export { defaultMealForTime, mealSlotIcon } from './model/mealSlots';
+export { defaultMealForTime, parseMealSlot } from './model/mealSlots';
 
 export { MACROS, type MacroDescriptor, type MacroKey } from './model/macros';
 
