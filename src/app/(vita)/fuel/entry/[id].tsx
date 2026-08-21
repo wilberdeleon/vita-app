@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
-import { BarcodeTracePanel } from '../../../../features/fuel/components/BarcodeTracePanel';
 import { FoodAvatar } from '../../../../features/fuel/components/FoodAvatar';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
@@ -189,8 +188,6 @@ export default function EditLogEntry() {
       <Pressable onPress={handleRemove} hitSlop={8} accessibilityRole="button">
         <Text style={[styles.remove, { color: palette.fat }]}>Remove from log</Text>
       </Pressable>
-
-      <BarcodeTracePanel />
     </Screen>
   );
 }

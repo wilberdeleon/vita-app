@@ -1,39 +1,31 @@
 /**
- * Development-only trace of a single barcode scan, end to end.
+ * Development-only console trace of a single barcode scan, end to end.
  *
  * Physical-device QA reported a scanned bottle resolving to an unrelated
- * product, while the same barcode resolved correctly in a standalone
- * provider test. That gap can only be closed with the *actual* value the
- * camera produced on the device — which nothing was recording.
+ * product while the same barcode resolved correctly in every standalone
+ * test. Closing that gap needed the *actual* value the camera produced on
+ * the device, which nothing was recording.
  *
- * This keeps the last scan's stages in memory so the running app can show
- * them. It is a diagnostic aid, not product behavior: every writer is
- * guarded by `__DEV__`, the buffer holds one scan, and nothing here is
- * rendered in a production build.
+ * It answered the question: the cause is an upstream Open Food Facts record
+ * filed under one company's barcode carrying another company's product. So
+ * the on-screen trace panel is gone — a debug block does not belong in
+ * founder QA once it has done its job — and what remains is the console
+ * log, which costs nothing and still tells the whole story when a scan
+ * misbehaves. The "Not the right product?" recovery is now the user-facing
+ * answer to a wrong result.
  *
- * Never record credentials or raw provider payloads — stage names, barcode
- * values, and food identities only.
+ * Every writer is guarded by `__DEV__`, so none of this exists in a
+ * production build. Never record credentials or raw provider payloads —
+ * stage names, barcode values, and food identities only.
  */
 
-export type BarcodeTraceStage = {
-  stage: string;
-  detail: string;
-};
-
-let trace: BarcodeTraceStage[] = [];
-
-/** Starts a new trace, discarding the previous scan's. */
+/** Marks the start of a scan in the log, so one scan reads as one block. */
 export function beginBarcodeTrace(): void {
   if (!__DEV__) return;
-  trace = [];
+  console.log('[barcode] ── new scan ──────────────────────────────');
 }
 
 export function traceBarcode(stage: string, detail: string): void {
   if (!__DEV__) return;
-  trace.push({ stage, detail });
   console.log(`[barcode] ${stage}: ${detail}`);
-}
-
-export function getBarcodeTrace(): BarcodeTraceStage[] {
-  return __DEV__ ? trace : [];
 }

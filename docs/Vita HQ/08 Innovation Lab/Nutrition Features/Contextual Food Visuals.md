@@ -15,7 +15,9 @@ tags: [fuel, nutrition, visual-design, illustration, delight, provider-independe
 
 🏗 In Development — scoped in by the founders on 2026-08-21 and **partly built**. The resolution *architecture* now ships: a shared three-tier resolver (real provider image → VITA category visual → generic) with 24 categories, used by every food surface through one component (repo `src/features/fuel/foodVisual.ts`, `FoodAvatar`).
 
-**The asset strategy is still open, which is the whole remaining idea.** Categories currently render stock Ionicons glyphs; several share one and are separated only by accent color, and `banana` renders an apple. Custom VITA artwork replaces the icon/color pair per category and changes nothing else — no category, no classifier rule, no caller. **Do not read this as released**: the plumbing is done, the drawings are not.
+**First artwork tranche shipped 2026-08-21.** The stock-glyph approach was tried and failed on device — an icon font's only general food glyph is a burger and a drink, so every unclassified food was drawn as a burger and every banana as an apple. Replaced with **14 hand-drawn VITA vector shapes** (banana, apple, egg, burger, pizza, taco, burrito, chips, bottle, coffee, drumstick, bread, bowl, and a fork-and-knife generic), rendered through the existing SVG dependency — no new package, no raster assets.
+
+**Still open, and why this is not released:** the set covers the high-value categories, not the taxonomy. Fries, desserts, shakes, and snack bars deliberately fall back to the generic rather than borrow a neighbouring food's picture, and the founders' fuller ambition — a genuinely distinctive VITA illustration language rather than clean functional line art — is untouched. Adding a drawing is now a one-file change with no caller impact, which is the point of stopping here.
 
 ## Category
 

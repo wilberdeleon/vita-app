@@ -109,12 +109,22 @@ export function summarizeMeals(entries: readonly FoodEntry[]): MealSummary[] {
 }
 
 /**
- * Remaining against a target. Floors at zero: "−180 kcal remaining" reads
- * as a penalty, and VITA does not use guilt mechanics. Going over is shown
- * by the progress bar passing 100%, not by a negative number.
+ * Remaining against a target. Floors at zero — a negative "remaining" is
+ * not a quantity anyone thinks in, and "−180 remaining" reads as a penalty.
+ *
+ * Going over is reported by `over()` as its own positive number instead, so
+ * the UI can say "236 Calories over" rather than either scolding the user
+ * or hiding the fact behind a flat zero. Both are statements of what
+ * happened; neither is a judgement, which is the whole distinction VITA's
+ * no-guilt rule turns on.
  */
 export function remaining(consumed: number, target: number): number {
   return Math.max(0, target - consumed);
+}
+
+/** How far past the target, or zero when still under it. See `remaining`. */
+export function over(consumed: number, target: number): number {
+  return Math.max(0, consumed - target);
 }
 
 /**
@@ -155,8 +165,13 @@ export function roundForDisplay(nutrition: NutritionFacts): NutritionFacts {
 export type DailyTotals = {
   nutrition: NutritionFacts;
   targets: NutritionTargets;
+  /** Zero once the target is met — the overage is `caloriesOver`. */
   caloriesRemaining: number;
+  /** Zero until the target is passed. Exactly one of the two is non-zero. */
+  caloriesOver: number;
+  /** 0..1, clamped, so an over-target day fills the ring rather than overflowing it. */
   calorieProgress: number;
+  /** Unclamped, so it can honestly read 112%. */
   caloriePercent: number;
 };
 
@@ -167,6 +182,7 @@ export function dailyTotals(entries: readonly FoodEntry[], targets: NutritionTar
     nutrition,
     targets,
     caloriesRemaining: remaining(nutrition.calories, targets.calories),
+    caloriesOver: over(nutrition.calories, targets.calories),
     calorieProgress: progress(nutrition.calories, targets.calories),
     caloriePercent: percent(nutrition.calories, targets.calories),
   };

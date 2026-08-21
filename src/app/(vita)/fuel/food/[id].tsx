@@ -2,9 +2,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
-import { BarcodeTracePanel } from '../../../../features/fuel/components/BarcodeTracePanel';
 import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
 import { FoodAvatar } from '../../../../features/fuel/components/FoodAvatar';
+import { WrongProductAction, providerLabel } from '../../../../features/fuel/components/WrongProductAction';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
@@ -36,8 +36,16 @@ import { useTheme } from '../../../../theme/ThemeProvider';
  * point of normalizing at the provider boundary rather than here.
  */
 export default function FoodDetail() {
-  const { id, meal: mealParam } = useLocalSearchParams<{ id: string; meal?: string }>();
+  const { id, meal: mealParam, from } = useLocalSearchParams<{ id: string; meal?: string; from?: string }>();
   const vitaId = decodeURIComponent(id ?? '');
+
+  /**
+   * Whether the scanner opened this screen. Only a barcode result gets the
+   * recovery affordance and the provenance line: a barcode is an exact
+   * identity claim, so being wrong about one is a different kind of wrong
+   * than a search result the user picked themselves.
+   */
+  const fromScan = from === 'scan';
 
   /**
    * The meal chosen before the user ever got here.
@@ -135,6 +143,7 @@ export default function FoodDetail() {
 
   const portionLabel = formatPortion(quantity, serving.label);
   const subtitle = [food.brand, food.restaurant].filter(Boolean).join(' · ');
+  const mealSuffix = preselectedMeal ? `?meal=${encodeURIComponent(preselectedMeal)}` : '';
 
   const handleAdd = async () => {
     if (saving) return;
@@ -194,6 +203,12 @@ export default function FoodDetail() {
         <FoodAvatar food={food} size={64} />
         <Text style={[styles.name, { color: surfaces.text }]}>{food.name}</Text>
         {subtitle ? <Text style={[styles.subtitle, { color: surfaces.textTertiary }]}>{subtitle}</Text> : null}
+        {/* Provenance, only where it earns its place: it is what makes an
+            incorrect-product report actionable, and Open Food Facts
+            requires attribution wherever its data is shown. */}
+        {fromScan ? (
+          <Text style={[styles.source, { color: surfaces.textTertiary }]}>Source: {providerLabel(food)}</Text>
+        ) : null}
       </View>
 
       <NutritionSummary nutrition={preview} portionLabel={portionLabel} />
@@ -212,7 +227,7 @@ export default function FoodDetail() {
 
       <Button label="+ Add to Log" onPress={handleAdd} disabled={saving} />
 
-      <BarcodeTracePanel />
+      {fromScan ? <WrongProductAction food={food} mealSuffix={mealSuffix} /> : null}
     </Screen>
   );
 }
@@ -231,5 +246,10 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.caption,
     textAlign: 'center',
+  },
+  source: {
+    ...typography.micro,
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

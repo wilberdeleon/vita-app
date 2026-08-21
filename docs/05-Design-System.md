@@ -101,7 +101,7 @@ The first application is the **Fuel Visual Refinement** slice near the end of Sp
 
 **Meal color language** (Fuel): Breakfast sunrise yellow · Lunch midday orange · Dinner sunset red-orange · Snacks neutral sage with a plain utensils glyph and deliberately no time-of-day signal, since a snack happens at any hour. Warm progression built entirely from existing brand and macro tokens. **Snacks is not purple**, though the founder's concept reference shows it that way — purple is a locked domain color (Atlas and peptides) and the Peptides module sits directly below the meal list. Flagged for founder confirmation.
 
-### Food visuals — three tiers (built 2026-08-21, artwork pending)
+### Food visuals — three tiers (built 2026-08-21)
 
 Every surface that shows a food resolves its picture through one shared
 function, never per screen:
@@ -112,15 +112,31 @@ function, never per screen:
    24 broad categories.
 3. **The generic food treatment**, when the name says nothing reliable.
 
-Two rules hold this together. **Ambiguity resolves to generic, never to a
-guess** — an unrecognized name gets the neutral treatment, which is a
-correct answer, and brand-name rules are a list that never ends. And **the
-taxonomy is the durable part, not the icons**: several categories currently
-share a stock glyph, separated only by accent color, and custom VITA
-artwork replaces that pair without touching the categories, the classifier,
-or a single caller. Category travels with the resolved visual even when an
-image wins, so a surface can tint or label by category regardless of which
-tier answered.
+Three rules hold this together.
+
+**A wrong picture is worse than no picture.** This is the governing rule and
+it was learned the hard way: the first implementation borrowed an icon
+font, whose only general food glyph is a burger and a drink — so every food
+VITA could not classify was confidently drawn as a burger, and every banana
+as an apple. A category with no honest drawing now resolves to the neutral
+generic instead of borrowing a different food's picture.
+
+**The generic must be neutral.** A fork and knife say "food, unspecified"
+and cannot be mistaken for a particular dish. A specific food can never
+serve as a fallback.
+
+**Ambiguity resolves to generic, never to a guess.** An unrecognized name
+gets the neutral treatment, which is a correct answer. The one exception is
+a deliberately tiny list of household product names ("Big Mac") that no
+amount of generic word matching can reach — an exception list, not a
+strategy.
+
+The drawings live in `src/features/fuel/foodArt.ts`: outline-only vector
+shapes on a 24×24 grid, uniform stroke, round joins, one color so a single
+drawing serves Light and Dark, and stroke weight scaled to render size so a
+row icon and a hero icon carry equal optical weight. Category travels with
+the resolved visual even when a real image wins, so a surface can tint or
+label by category regardless of which tier answered.
 
 ### Contextual food visuals (concept — unscheduled)
 

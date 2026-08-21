@@ -612,3 +612,54 @@ That single record explains the symptom exactly and explains why every VITA-side
 The GS1 mod-10 check digit is now recorded (`isValidGtin` existed but had **no caller**) and deliberately **not enforced**: the symbology validates its own check digit in hardware, so a failure would more likely mean our parsing is wrong than the scan is, and blocking the primary flow on an unproven theory is the wrong trade while the cause is still unconfirmed.
 
 **Barcode status: OPEN.** Not fixed, not worked around. Nothing was hardcoded, special-cased, renamed, or text-matched.
+
+### Slice 2.9c — Fuel final visual polish + barcode recovery (2026-08-21)
+
+Founder approved and **locked** the Fuel redesign. Structure untouched; this is detail polish over three device-QA findings.
+
+#### Contextual food visuals were confidently wrong — root cause
+
+The resolver architecture was sound; **the pictures it pointed at were not**. Two mappings did the damage:
+
+- **The generic fallback was itself a specific food.** `food` → `fast-food-outline`, which draws a **burger and a drink**. Any food VITA could not classify — most foods — was therefore drawn as a burger. Five other categories (`burger`, `taco`, `burrito`, `sandwich`, `fries`) shared that same glyph, so they were indistinguishable from each other *and* from "unknown".
+- **`banana` → `nutrition-outline`, which draws an apple.** So did `fruit`, `oatmeal`, and `bread`.
+
+Classification was largely fine — `Banana nut` already resolved to `banana`. Ionicons simply has no banana, taco, or burrito, and its one general food glyph is a burger. **A wrong picture is worse than no picture**, which is what made this worse than the generic fallback it replaced.
+
+#### Fix: a real VITA illustration set
+
+`features/fuel/foodArt.ts` — **14 hand-drawn shapes** on a 24×24 grid, rendered through `react-native-svg` (already a dependency; no new package, no raster assets): banana · apple · egg · burger · pizza · taco · burrito · chips · bottle · coffee · drumstick · bread · bowl · utensils. Outline only, uniform stroke, round joins, single color so one drawing serves Light and Dark. Stroke weight scales with render size so a 20pt row icon and a 34pt hero carry equal optical weight.
+
+Drawn, reviewed as rendered images, and revised: the first taco was indistinguishable from the bowl, the first drumstick read as a rattle, the first burrito as a sticking plaster. All three were redrawn and re-rendered at true list size before shipping.
+
+**The generic is now a fork and knife** — "food, unspecified", which cannot be mistaken for a particular dish. That is the entire requirement for a fallback and exactly what the burger failed.
+
+**Categories with no honest drawing point at the generic rather than borrowing another food's picture**: `fries`, `smoothie`, `dessert`, and `snack` resolve to utensils, because a bag of crisps is not a portion of fries and a protein bar is not a cookie. Shared drawings are used *only* where genuinely correct — a bowl serves oatmeal, pasta, rice, and salad honestly.
+
+#### Classifier tightening
+
+Whole-word matching kept, plus: a tolerated regular plural (`(?:s|es)?`) after "Blueberries" fell through to generic; and a deliberately tiny **branded-term list** checked ahead of the keyword rules, because nothing in "Big Mac" means burger and the founders named it as required behavior. Twelve entries, household names only, documented as an exception list rather than a strategy.
+
+All 40 founder-named cases verified programmatically against the real compiled module: banana / banana nut / banana nut bread · eggs · hamburger / cheeseburger / Big Mac / Whopper · pizza · taco · burrito · Hot Cheetos / Doritos / potato chips · water · coffee · apple / orange / blueberries · chicken · steak · unknown → generic. Provider image beats category in every case; non-http image references are ignored.
+
+#### Calorie ring
+
+The identity returns **inside** the ring: `2,326` with `Calories` beneath it, within the circle. The label only needs to name the unit — the ring is what communicates consumption — and that is what makes it fit where "Calories consumed" did not.
+
+**Over-target is now stated rather than hidden.** Past the target the right-hand figure switches from what is left to what is over — `326 · Calories over` instead of a flat `0 remaining`, which discards the only number still worth reading. Ring, bar, and percentage switch to amber together (one state change, not three competing colors); **amber, not red — information, not a verdict.** Ring and bar cap at 100% so the geometry stays honest while the percentage keeps counting (`116% of 2,000 Calories`). New `over()` and `caloriesOver` in the nutrition domain, alongside the existing floored `remaining()` whose no-guilt rationale is now stated in terms of both.
+
+Macro structure unchanged.
+
+#### Barcode: "Not the right product?"
+
+Shown **only** on a Food Detail reached from the scanner, with origin carried as a route parameter (`?from=scan`) — never inferred from the provider, since an Open Food Facts result arrives from ordinary Search just as often. Opens a native action sheet (`ActionSheetIOS`, `Alert` on Android) offering **Search for food · Scan again · Add manually · Report incorrect product**, each routing into a flow that already exists. Nothing here logs food and nothing duplicates an existing path.
+
+A subtle `Source: Open Food Facts` line sits under the brand on barcode-originated detail only — it is what makes a report actionable, and Open Food Facts requires attribution wherever its data is shown.
+
+**Reporting is honestly incomplete.** There is no backend, so nothing is transmitted and the dialog says so in as many words, then shows the barcode, the displayed identity, and the source so the founder can act on it by hand. Claiming a report had been filed would be worse than not offering the option — the user would stop looking for another way to fix it. **Deferred capability: incorrect-product report submission.**
+
+Exact GTIN lookup is untouched: correct record, or honest not-found. No Kroger special case, no prefix heuristics, no fuzzy replacement, no silent substitution.
+
+#### Trace panel removed
+
+The on-screen debug block is gone from both Food Detail and Edit Entry, and `trace.ts` is now console-only — a debug panel does not belong in founder QA once it has done its job. The `traceBarcode` console log stays: it costs nothing and still tells the whole story when a scan misbehaves. "Not the right product?" is now the user-facing answer to a wrong result.

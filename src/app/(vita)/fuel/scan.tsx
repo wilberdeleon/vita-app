@@ -47,6 +47,13 @@ export default function ScanBarcode() {
    */
   const meal = parseMealSlot(params.meal);
   const mealSuffix = meal ? `?meal=${encodeURIComponent(meal)}` : '';
+  /**
+   * Marks the Food Detail this scan opens as barcode-originated, so it can
+   * offer the "Not the right product?" recovery. Carried as a route
+   * parameter rather than inferred from the provider — an Open Food Facts
+   * result arrives from ordinary Search just as often, and does not need it.
+   */
+  const detailSuffix = `${mealSuffix}${mealSuffix ? '&' : '?'}from=scan`;
 
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<ScanState>({ phase: 'scanning' });
@@ -90,7 +97,7 @@ export default function ScanBarcode() {
       // Seed the cache so Food Detail resolves it, and so Favorites and
       // Recents can reach it later without another request.
       rememberFoods([result.food]);
-      const href = `/fuel/food/${encodeURIComponent(result.food.vitaId)}${mealSuffix}`;
+      const href = `/fuel/food/${encodeURIComponent(result.food.vitaId)}${detailSuffix}`;
       traceBarcode('navigate.href', href);
       // `replace`, not `push`: backing out of Food Detail should return to
       // the Log Food picker, not to a frozen scanner mid-lookup.
@@ -111,7 +118,7 @@ export default function ScanBarcode() {
 
     // 'not-found' and 'no-providers' both mean there is nothing to open.
     setState({ phase: 'not-found', gtin });
-  }, [mealSuffix]);
+  }, [detailSuffix]);
 
   const handleScan = useCallback(
     (result: BarcodeScanningResult) => {

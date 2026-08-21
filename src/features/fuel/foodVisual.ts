@@ -14,17 +14,22 @@
  * re-implementing the same rules slightly differently.
  *
  * ── On the artwork ──────────────────────────────────────────────────────
- * The **taxonomy** below is the durable part; the icons are not. Ionicons
- * has roughly a dozen food glyphs, so several categories currently share
- * one — `taco`, `burrito`, and `sandwich` all render the fast-food glyph,
- * separated only by accent color. That is an honest placeholder, not the
- * intended end state.
+ * Categories point at drawings in `foodArt.ts`, not at an icon font. The
+ * font could not say what this needs to say: it has no banana, no taco and
+ * no burrito, and its one general food glyph is a **burger and a drink** —
+ * so the generic fallback itself was a burger, and every food VITA could
+ * not classify was confidently drawn as one. That is the defect this
+ * mapping exists to prevent.
  *
- * When custom VITA artwork exists, it replaces the `icon`/`color` pair in
- * `CATEGORY_VISUALS` and nothing else changes: `FoodCategory`, the
- * classifier, and every caller stay exactly as they are. That is why the
- * category is carried on the returned visual even when an image wins — the
- * caller can tint or label by category regardless of which tier answered.
+ * **A category with no honest drawing points at `utensils`, the neutral
+ * generic.** Fries do not become a bag of crisps and a protein bar does not
+ * become a cookie; they become "food, unspecified", which is a correct
+ * answer. Generic is preferable to wrong, always. New drawings are added to
+ * `foodArt.ts` and pointed at here — no caller changes, no classifier
+ * changes.
+ *
+ * The category is carried on the returned visual even when a real image
+ * wins, so a caller can tint or label by category regardless of tier.
  *
  * ── On certainty ────────────────────────────────────────────────────────
  * Matching is deliberately conservative and returns `'food'` rather than
@@ -34,8 +39,8 @@
  * unrecognized name gets the neutral treatment, which is a correct answer.
  */
 
-import type { Ionicons } from '@expo/vector-icons';
 import { palette } from '../../theme/tokens';
+import type { ArtKey } from './foodArt';
 
 export type FoodCategory =
   | 'banana'
@@ -63,40 +68,74 @@ export type FoodCategory =
   | 'snack'
   | 'food';
 
-type IconName = keyof typeof Ionicons.glyphMap;
-
-export type CategoryVisual = { icon: IconName; color: string };
+export type CategoryVisual = { art: ArtKey; color: string };
 
 /**
- * Category → placeholder glyph and accent. Colors come from the existing
- * brand and macro tokens only; this file introduces no new hex.
+ * Category → drawing and accent. Colors come from the existing brand and
+ * macro tokens only; this file introduces no new hex.
+ *
+ * Several categories share a drawing **only where the drawing is genuinely
+ * correct for all of them** — a bowl serves oatmeal, pasta, rice, and salad
+ * honestly. Where it would not be (fries, desserts, protein bars, shakes),
+ * the category resolves to `utensils` rather than borrowing a picture of a
+ * different food.
  */
 const CATEGORY_VISUALS: Record<FoodCategory, CategoryVisual> = {
-  banana: { icon: 'nutrition-outline', color: palette.carbs },
-  fruit: { icon: 'nutrition-outline', color: palette.journey },
-  burger: { icon: 'fast-food-outline', color: palette.primary },
-  pizza: { icon: 'pizza-outline', color: palette.fat },
-  taco: { icon: 'fast-food-outline', color: palette.carbs },
-  burrito: { icon: 'fast-food-outline', color: palette.gold },
-  bowl: { icon: 'restaurant-outline', color: palette.journey },
-  oatmeal: { icon: 'nutrition-outline', color: palette.gold },
-  eggs: { icon: 'egg-outline', color: palette.carbs },
-  chicken: { icon: 'restaurant-outline', color: palette.gold },
-  meat: { icon: 'flame-outline', color: palette.fat },
-  sandwich: { icon: 'fast-food-outline', color: palette.gold },
-  fries: { icon: 'fast-food-outline', color: palette.carbs },
-  chips: { icon: 'bag-handle-outline', color: palette.carbs },
-  coffee: { icon: 'cafe-outline', color: palette.cardWarm },
-  smoothie: { icon: 'pint-outline', color: palette.peptide },
-  bread: { icon: 'nutrition-outline', color: palette.gold },
-  pasta: { icon: 'restaurant-outline', color: palette.carbs },
-  rice: { icon: 'restaurant-outline', color: palette.sage },
-  salad: { icon: 'leaf-outline', color: palette.journey },
-  dessert: { icon: 'ice-cream-outline', color: palette.peptide },
-  beverage: { icon: 'water-outline', color: palette.water },
-  snack: { icon: 'bag-handle-outline', color: palette.sage },
-  food: { icon: 'fast-food-outline', color: palette.primary },
+  banana: { art: 'banana', color: palette.carbs },
+  fruit: { art: 'apple', color: palette.journey },
+  burger: { art: 'burger', color: palette.primary },
+  pizza: { art: 'pizza', color: palette.fat },
+  taco: { art: 'taco', color: palette.carbs },
+  burrito: { art: 'burrito', color: palette.gold },
+  bowl: { art: 'bowl', color: palette.journey },
+  oatmeal: { art: 'bowl', color: palette.gold },
+  eggs: { art: 'egg', color: palette.carbs },
+  chicken: { art: 'drumstick', color: palette.gold },
+  meat: { art: 'drumstick', color: palette.fat },
+  sandwich: { art: 'bread', color: palette.gold },
+  // No fry drawing yet, and a crisp bag would be a different food.
+  fries: { art: 'utensils', color: palette.carbs },
+  chips: { art: 'chips', color: palette.carbs },
+  coffee: { art: 'coffee', color: palette.cardWarm },
+  // A shake is not a bottle and not a coffee cup.
+  smoothie: { art: 'utensils', color: palette.peptide },
+  bread: { art: 'bread', color: palette.gold },
+  pasta: { art: 'bowl', color: palette.carbs },
+  rice: { art: 'bowl', color: palette.sage },
+  salad: { art: 'bowl', color: palette.journey },
+  // A cookie is not an ice cream and not a cake.
+  dessert: { art: 'utensils', color: palette.peptide },
+  beverage: { art: 'bottle', color: palette.water },
+  // "Protein bar" and "trail mix" are not a bag of crisps.
+  snack: { art: 'utensils', color: palette.sage },
+  food: { art: 'utensils', color: palette.primary },
 };
+
+/**
+ * Product names that are their own category, checked before the keyword
+ * rules because they are more specific than any word in them.
+ *
+ * Deliberately tiny and deliberately explicit. The founders named "Big Mac
+ * → burger" and "Hot Cheetos → chips" as required behavior, and no amount
+ * of generic word matching gets there — nothing in "Big Mac" means burger.
+ * This is an exception list, not a strategy: it stays short, every entry
+ * earns its place by being a household name, and anything not on it falls
+ * through to the ordinary conservative rules.
+ */
+const BRANDED_TERMS: ReadonlyArray<{ term: string; category: FoodCategory }> = [
+  { term: 'big mac', category: 'burger' },
+  { term: 'quarter pounder', category: 'burger' },
+  { term: 'whopper', category: 'burger' },
+  { term: 'mcnugget', category: 'chicken' },
+  { term: 'mcnuggets', category: 'chicken' },
+  { term: 'cheetos', category: 'chips' },
+  { term: 'doritos', category: 'chips' },
+  { term: 'fritos', category: 'chips' },
+  { term: 'pringles', category: 'chips' },
+  { term: 'ruffles', category: 'chips' },
+  { term: 'takis', category: 'chips' },
+  { term: 'oreo', category: 'dessert' },
+];
 
 /**
  * Keyword rules, evaluated **in order, most specific first**.
@@ -133,9 +172,10 @@ const RULES: ReadonlyArray<{ category: FoodCategory; keywords: readonly string[]
   {
     category: 'fruit',
     keywords: [
-      'apple', 'orange', 'berry', 'berries', 'strawberry', 'blueberry', 'raspberry',
-      'grape', 'grapes', 'melon', 'watermelon', 'peach', 'pear', 'mango', 'pineapple',
-      'kiwi', 'cherry', 'cherries', 'avocado', 'fruit',
+      'apple', 'orange', 'berry', 'berries', 'strawberry', 'strawberries',
+      'blueberry', 'blueberries', 'raspberry', 'raspberries', 'grape', 'melon',
+      'watermelon', 'peach', 'pear', 'mango', 'pineapple', 'kiwi', 'cherry',
+      'cherries', 'avocado', 'fruit',
     ],
   },
   { category: 'snack', keywords: ['snack', 'trail mix', 'granola bar', 'protein bar', 'energy bar'] },
@@ -147,11 +187,31 @@ const RULES: ReadonlyArray<{ category: FoodCategory; keywords: readonly string[]
  * words keeps the rules from firing on fragments of unrelated words.
  * Multi-word keywords are matched as phrases.
  */
+/**
+ * Whole-word (or whole-phrase) matcher with a tolerated regular plural.
+ *
+ * Substring matching would classify "grapefruit juice" by `grape` and
+ * "barbecue" by `bar`, so the word has to stand alone. The optional `s`/`es`
+ * exists because "Blueberries" otherwise missed `blueberry` and fell all
+ * the way through to generic — one rule beats maintaining two spellings of
+ * every noun. Irregular plurals (`berries`, `cherries`) still need their
+ * own entry, and have one.
+ */
+function wordPattern(keyword: string): RegExp {
+  return new RegExp(
+    `(^|[^a-z0-9])${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:s|es)?([^a-z0-9]|$)`,
+    'i',
+  );
+}
+
+const COMPILED_BRANDS = BRANDED_TERMS.map((entry) => ({
+  category: entry.category,
+  pattern: wordPattern(entry.term),
+}));
+
 const COMPILED = RULES.map((rule) => ({
   category: rule.category,
-  patterns: rule.keywords.map(
-    (keyword) => new RegExp(`(^|[^a-z0-9])${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`, 'i'),
-  ),
+  patterns: rule.keywords.map(wordPattern),
 }));
 
 /**
@@ -161,6 +221,9 @@ const COMPILED = RULES.map((rule) => ({
  */
 export function classifyFood(name: string): FoodCategory {
   const text = name.toLowerCase();
+  for (const brand of COMPILED_BRANDS) {
+    if (brand.pattern.test(text)) return brand.category;
+  }
   for (const rule of COMPILED) {
     if (rule.patterns.some((pattern) => pattern.test(text))) return rule.category;
   }
