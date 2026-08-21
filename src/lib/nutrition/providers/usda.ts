@@ -15,6 +15,7 @@
 import { scaleNutrition } from '../model/nutrition';
 import type { NutritionFacts, ServingOption, VitaFood } from '../model/types';
 import { normalizeGtin } from './gtin';
+import { traceBarcode } from './trace';
 import { asFiniteNumber, asNonEmptyString, asRecord, fetchJson } from './http';
 import { PROVIDER_PAGE_SIZE, type FoodProvider } from './types';
 
@@ -252,8 +253,10 @@ export const usdaProvider: FoodProvider = {
       `&query=${encodeURIComponent(gtin)}` +
       `&pageSize=10`;
 
+    traceBarcode('usda.requested', target);
     const payload = asRecord(await fetchJson('usda', 'barcode', url, signal));
     const foods = payload && Array.isArray(payload.foods) ? payload.foods : [];
+    traceBarcode('usda.candidates', String(foods.length));
 
     /**
      * Strict identity only. `query=<gtin>` is a fuzzy full-text search here,
@@ -265,8 +268,12 @@ export const usdaProvider: FoodProvider = {
     for (const entry of foods) {
       const food = toVitaFood(entry);
       if (!food?.barcode) continue;
-      if (normalizeGtin(food.barcode) === target) return food;
+      if (normalizeGtin(food.barcode) === target) {
+        traceBarcode('usda.identity', `${target} → MATCH (${food.name})`);
+        return food;
+      }
     }
+    traceBarcode('usda.identity', `${target} → no exact match`);
 
     if (__DEV__) {
       console.warn(`[usda] no exact GTIN match for ${target} among ${foods.length} candidates. Rejected.`);

@@ -108,6 +108,7 @@ export function createEntry({ food, servingIndex, quantity, meal, logDate }: Cre
     },
     name: food.name,
     ...(food.brand ? { brand: food.brand } : {}),
+    ...(food.imageUrl ? { imageUrl: food.imageUrl } : {}),
     serving: {
       label: serving.label,
       quantity,
@@ -159,6 +160,7 @@ export function foodFromEntry(entry: FoodEntry): VitaFood {
     sourceId: entry.foodRef.sourceId,
     name: entry.name,
     ...(entry.brand ? { brand: entry.brand } : {}),
+    ...(entry.imageUrl ? { imageUrl: entry.imageUrl } : {}),
     servings: [servingFromEntry(entry)],
     defaultServingIndex: 0,
     isCustom: entry.foodRef.source === 'vita-custom',

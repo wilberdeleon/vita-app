@@ -34,6 +34,10 @@ The founders' read on Fuel as built today: **too basic, too bulky, overusing lar
 
 Two decisions worth carrying: **Snacks is neutral sage, not the reference's purple** (purple is the locked Atlas/peptide domain color and the Peptides module sits just below), and **`kcal` is gone from user-facing copy** in favor of *Calories* / *cal* app-wide. Both flagged for founder confirmation. Detail: repo `docs/06-Slice-Tracker.md`, `docs/05-Design-System.md`.
 
+**Approved and locked 2026-08-21.** The layout, density, meal structure, quick actions, and hydration/peptide placement are settled; Fuel is not to be restructured again. A polish pass the same day refined the copy (*Calories consumed* / *Calories remaining*; macros as progress toward the user's own configured targets, with no warning state and no invented dietary rules), fixed a persistence bug that was **permanently erasing product images from favorites**, and introduced the shared three-tier food visual resolver — see [[Contextual Food Visuals]], which is now *in development*, not released: the plumbing ships, the artwork does not.
+
+**Barcode remains the one open defect.** A Kroger water bottle still resolves to Hillshire Farm sausage, and the cause is now traced upstream: Open Food Facts record `0011110816405` sits under Kroger's own GS1 company prefix but carries Hillshire Farm name, brand, imagery, and nutrition. VITA's identity checks correctly confirm it, because the code returned genuinely is the code requested — **no client-side check can catch a database that is wrong about itself.** Not fixed, nothing hardcoded; awaiting one physical scan to confirm the bottle's actual code against that record.
+
 ### Contextual food visuals — concept, unscheduled
 
 Food tracking should eventually feel more alive and visually distinctive — a burger shows a small burger, a taco a taco, oatmeal a bowl, coffee a cup. **Small, delightful, tasteful, premium, and useful for quick recognition — never giant food photos dominating the interface.**

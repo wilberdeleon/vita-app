@@ -5,6 +5,7 @@ import { formatCalories, type MealSlot, type VitaFood } from '../../../lib/nutri
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { FavoriteButton } from './FavoriteButton';
+import { FoodAvatar } from './FoodAvatar';
 
 type Props = {
   food: VitaFood;
@@ -27,6 +28,11 @@ type Props = {
  * The heart returned in slice 2.7 now that it toggles real persisted state;
  * it was removed in 2.3 precisely because it did nothing. No chevron
  * alongside it — the row body is the tap target, same as the log rows.
+ *
+ * The leading visual goes through the shared resolver rather than a fixed
+ * glyph, so a search result with a product photograph shows it and one
+ * without falls back to its category — the same answer this food gets on
+ * every other surface.
  */
 export function FoodRow({ food, showFavorite = true, meal }: Props) {
   const { surfaces } = useTheme();
@@ -35,7 +41,7 @@ export function FoodRow({ food, showFavorite = true, meal }: Props) {
 
   return (
     <ListRow
-      icon="fast-food-outline"
+      leading={<FoodAvatar food={food} size={36} />}
       title={food.name}
       subtitle={detail || undefined}
       onPress={() =>

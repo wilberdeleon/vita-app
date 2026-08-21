@@ -22,6 +22,7 @@ import { scaleNutrition } from '../model/nutrition';
 import type { NutritionFacts, ServingOption, VitaFood } from '../model/types';
 import { normalizeGtin } from './gtin';
 import { asFiniteNumber, asNonEmptyString, asRecord, fetchJson } from './http';
+import { traceBarcode } from './trace';
 import { ProviderError, PROVIDER_PAGE_SIZE, type FoodProvider } from './types';
 
 /**
@@ -209,6 +210,7 @@ export const openFoodFactsProvider: FoodProvider = {
     if (!contact) return null;
 
     const url = `${PRODUCT_URL}/${encodeURIComponent(gtin)}.json?fields=${encodeURIComponent(PRODUCT_FIELDS)}`;
+    traceBarcode('off.requested', gtin);
 
     let payload: Record<string, unknown> | null;
     try {
@@ -225,15 +227,30 @@ export const openFoodFactsProvider: FoodProvider = {
        * A 404 here is a definitive answer — the database was reached and
        * does not have this product — so it maps to "not found".
        */
-      if (error instanceof ProviderError && error.status === 404) return null;
+      if (error instanceof ProviderError && error.status === 404) {
+        traceBarcode('off.result', '404 — not in database');
+        return null;
+      }
+      traceBarcode('off.result', 'request failed');
       throw error;
     }
 
     // Some responses still return 200 with `status: 0`; treated the same way.
-    if (!payload || asFiniteNumber(payload.status) !== 1) return null;
+    if (!payload || asFiniteNumber(payload.status) !== 1) {
+      traceBarcode('off.result', 'status != 1 — not found');
+      return null;
+    }
+
+    const rawProduct = asRecord(payload.product);
+    traceBarcode('off.returnedCode', String(rawProduct?.code ?? 'none'));
+    traceBarcode('off.returnedName', String(rawProduct?.product_name ?? 'none'));
+    traceBarcode('off.returnedBrand', String(rawProduct?.brands ?? 'none'));
 
     const food = toVitaFood(payload.product);
-    if (!food) return null;
+    if (!food) {
+      traceBarcode('off.result', 'record unusable (no name or no macros)');
+      return null;
+    }
 
     /**
      * Independently re-verify the returned product's own barcode against
@@ -248,6 +265,7 @@ export const openFoodFactsProvider: FoodProvider = {
      */
     const requested = normalizeGtin(gtin);
     const returned = normalizeGtin(food.barcode);
+    traceBarcode('off.identity', `${requested ?? 'invalid'} vs ${returned ?? 'none'} → ${requested && returned && requested === returned ? 'MATCH' : 'REJECT'}`);
     if (!requested || !returned || requested !== returned) {
       if (__DEV__) {
         console.warn(

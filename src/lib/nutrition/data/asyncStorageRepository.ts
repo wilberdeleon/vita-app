@@ -40,6 +40,18 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
 }
 
+/**
+ * A stored image reference is only trusted if it is an http(s) URL.
+ *
+ * Persisted JSON is as trustworthy as the last write, and an image field is
+ * the one value here that gets handed straight to a network-loading view.
+ * Restricting the scheme keeps a corrupted or hand-edited record from
+ * turning into a `file:`/`data:` reference the renderer would try to honor.
+ */
+function isImageUrl(value: unknown): value is string {
+  return isNonEmptyString(value) && (value.startsWith('https://') || value.startsWith('http://'));
+}
+
 function parseNutrition(value: unknown): NutritionFacts | null {
   if (!isRecord(value)) return null;
   if (
@@ -103,6 +115,7 @@ function parseEntry(value: unknown): FoodEntry | null {
     },
     name,
     ...(isNonEmptyString(brand) ? { brand } : {}),
+    ...(isImageUrl(value.imageUrl) ? { imageUrl: value.imageUrl } : {}),
     serving: {
       label: serving.label,
       quantity: serving.quantity,
@@ -147,16 +160,28 @@ function parseCustomFoodShape(value: unknown, source: VitaFood['source']): VitaF
 
   const defaultIndex = isFiniteNumber(value.defaultServingIndex) ? value.defaultServingIndex : 0;
 
+  /**
+   * Every field of `VitaFood` that the app can still use must be listed
+   * here. This function is the *only* way a stored food comes back, so a
+   * field omitted below is a field silently deleted on read — which is
+   * exactly what happened to `imageUrl`: favorites were written with the
+   * product image and reconstructed without it, so favoriting a food (or
+   * relaunching) replaced its real photo with a generic glyph. `restaurant`
+   * and `dataQuality` were being lost the same way.
+   */
   return {
     vitaId: value.vitaId,
     source,
     sourceId: value.sourceId,
     name: value.name,
     ...(isNonEmptyString(value.brand) ? { brand: value.brand } : {}),
+    ...(isNonEmptyString(value.restaurant) ? { restaurant: value.restaurant } : {}),
     ...(isNonEmptyString(value.barcode) ? { barcode: value.barcode } : {}),
+    ...(isImageUrl(value.imageUrl) ? { imageUrl: value.imageUrl } : {}),
     servings,
     defaultServingIndex: defaultIndex >= 0 && defaultIndex < servings.length ? defaultIndex : 0,
     isCustom: source === 'vita-custom',
+    ...(isFiniteNumber(value.dataQuality) ? { dataQuality: value.dataQuality } : {}),
     fetchedAt: isNonEmptyString(value.fetchedAt) ? value.fetchedAt : new Date(0).toISOString(),
   };
 }

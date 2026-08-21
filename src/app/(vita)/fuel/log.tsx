@@ -72,8 +72,12 @@ export default function FoodLog() {
         percentLabel={pending ? PENDING : `${today.caloriePercent}%`}
         progress={pending ? 0 : today.calorieProgress}
         bars={MACROS.map((macro) => ({
-          label: macro.label,
-          valueLabel: `${pending ? PENDING : consumed[macro.key]} / ${today.targets[macro.key]}${macro.unit}`,
+          // Same macro semantics as the Fuel summary: progress toward the
+          // user's configured targets, with Protein the one that reads as a
+          // goal to reach. Kept identical here so the two surfaces cannot
+          // describe the same numbers differently.
+          label: macro.key === 'protein' ? `${macro.label} Goal` : macro.label,
+          valueLabel: `${pending ? PENDING : consumed[macro.key]} / ${today.targets[macro.key]} ${macro.unit}`,
           progress: pending ? 0 : progress(consumed[macro.key], today.targets[macro.key]),
           color: palette[macro.key],
         }))}

@@ -8,6 +8,7 @@ import { Button, EmptyState, Screen, ScreenHeader } from '../../../components/ui
 import { ScannerFrame } from '../../../features/fuel/components/ScannerFrame';
 import {
   beginBarcodeTrace,
+  isValidGtin,
   lookupBarcodeAcrossProviders,
   normalizeGtin,
   parseMealSlot,
@@ -119,9 +120,24 @@ export default function ScanBarcode() {
       beginBarcodeTrace();
       traceBarcode('camera.raw', String(result.data));
       traceBarcode('camera.type', String(result.type));
+      traceBarcode('camera.digits', String(String(result.data).replace(/\D/g, '').length));
 
       const gtin = normalizeGtin(result.data);
       traceBarcode('normalized', gtin ?? 'REJECTED (not a usable GTIN)');
+      /**
+       * The GS1 mod-10 check digit, recorded but **not enforced**.
+       *
+       * A camera that misreads one digit produces a different, entirely
+       * valid-looking barcode, and a lookup of that code returns whatever
+       * genuinely owns it — an unrelated product that every downstream
+       * identity check will happily confirm. This says whether that
+       * happened. It does not reject the scan: the symbology already
+       * validates its own check digit in hardware, so a failure here would
+       * more likely mean our parsing is wrong than that the scan is, and
+       * blocking the primary flow on an unproven theory is the wrong trade
+       * while the real cause is still being confirmed on device.
+       */
+      traceBarcode('gtin.checkDigit', isValidGtin(result.data) ? 'valid' : 'INVALID — likely misread');
       // A code that isn't a usable GTIN is ignored without locking, so the
       // scanner keeps looking instead of dead-ending on a stray label.
       if (!gtin) return;

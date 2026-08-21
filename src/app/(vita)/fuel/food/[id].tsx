@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { BarcodeTracePanel } from '../../../../features/fuel/components/BarcodeTracePanel';
 import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
+import { FoodAvatar } from '../../../../features/fuel/components/FoodAvatar';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
@@ -140,6 +141,19 @@ export default function FoodDetail() {
     setSaving(true);
 
     const entry = createEntry({ food, servingIndex, quantity, meal });
+
+    /**
+     * The log snapshot, traced because device QA reported the wrong product
+     * on **Edit Entry** — a screen that reads a stored entry, not a provider
+     * response. These four lines say whether a wrong identity was already
+     * wrong when it arrived here, or became wrong at the moment it was
+     * written.
+     */
+    traceBarcode('log.foodRef', `${entry.foodRef.source}:${entry.foodRef.sourceId}`);
+    traceBarcode('log.snapshotName', entry.name);
+    traceBarcode('log.snapshotBrand', entry.brand ?? 'none');
+    traceBarcode('log.snapshotGtin', food.barcode ?? 'none');
+
     await addEntry(entry);
 
     showToast({
@@ -177,7 +191,7 @@ export default function FoodDetail() {
       <ScreenHeader title={food.name} back action={<FavoriteButton food={food} />} />
 
       <View style={styles.hero}>
-        <IconBadge icon="fast-food-outline" size={64} />
+        <FoodAvatar food={food} size={64} />
         <Text style={[styles.name, { color: surfaces.text }]}>{food.name}</Text>
         {subtitle ? <Text style={[styles.subtitle, { color: surfaces.textTertiary }]}>{subtitle}</Text> : null}
       </View>

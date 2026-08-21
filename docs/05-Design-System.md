@@ -101,6 +101,27 @@ The first application is the **Fuel Visual Refinement** slice near the end of Sp
 
 **Meal color language** (Fuel): Breakfast sunrise yellow · Lunch midday orange · Dinner sunset red-orange · Snacks neutral sage with a plain utensils glyph and deliberately no time-of-day signal, since a snack happens at any hour. Warm progression built entirely from existing brand and macro tokens. **Snacks is not purple**, though the founder's concept reference shows it that way — purple is a locked domain color (Atlas and peptides) and the Peptides module sits directly below the meal list. Flagged for founder confirmation.
 
+### Food visuals — three tiers (built 2026-08-21, artwork pending)
+
+Every surface that shows a food resolves its picture through one shared
+function, never per screen:
+
+1. **The real provider image**, when the food has one. A photograph beats
+   anything we can infer.
+2. **A VITA category visual**, inferred conservatively from the name across
+   24 broad categories.
+3. **The generic food treatment**, when the name says nothing reliable.
+
+Two rules hold this together. **Ambiguity resolves to generic, never to a
+guess** — an unrecognized name gets the neutral treatment, which is a
+correct answer, and brand-name rules are a list that never ends. And **the
+taxonomy is the durable part, not the icons**: several categories currently
+share a stock glyph, separated only by accent color, and custom VITA
+artwork replaces that pair without touching the categories, the classifier,
+or a single caller. Category travels with the resolved visual even when an
+image wins, so a surface can tint or label by category regardless of which
+tier answered.
+
 ### Contextual food visuals (concept — unscheduled)
 
 Food tracking should eventually feel more alive and visually distinctive: a burger shows a small burger, a taco a taco, a bowl a bowl, coffee a cup. **Small, delightful, tasteful, premium, and useful for quick recognition — explicitly not giant food photography dominating the interface.**

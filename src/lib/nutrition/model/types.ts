@@ -142,6 +142,16 @@ export type FoodEntry = {
 
   name: string;
   brand?: string;
+  /**
+   * The food's image at the moment it was logged, denormalized for exactly
+   * the same reason `name`/`brand` are: the log must render without
+   * resolving anything. Without it, a logged food's visual depended on the
+   * provider cache still holding that food *this session*, so a scanned
+   * product showed its real image right after the scan and a generic glyph
+   * after the next launch. Optional — most foods have no image, and a
+   * missing one is a normal state, not a defect.
+   */
+  imageUrl?: string;
 
   serving: {
     label: string;

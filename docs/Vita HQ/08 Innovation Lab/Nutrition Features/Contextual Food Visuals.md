@@ -13,7 +13,9 @@ tags: [fuel, nutrition, visual-design, illustration, delight, provider-independe
 
 ## Status
 
-📝 Defined — captured from founder direction 2026-08-18. The *feeling* is clear and the constraints are settled; the asset strategy is not. **Unscheduled** — deliberately not part of the Sprint 2 Fuel Visual Refinement slice unless the founders scope it in.
+🏗 In Development — scoped in by the founders on 2026-08-21 and **partly built**. The resolution *architecture* now ships: a shared three-tier resolver (real provider image → VITA category visual → generic) with 24 categories, used by every food surface through one component (repo `src/features/fuel/foodVisual.ts`, `FoodAvatar`).
+
+**The asset strategy is still open, which is the whole remaining idea.** Categories currently render stock Ionicons glyphs; several share one and are separated only by accent color, and `banana` renders an apple. Custom VITA artwork replaces the icon/color pair per category and changes nothing else — no category, no classifier rule, no caller. **Do not read this as released**: the plumbing is done, the drawings are not.
 
 ## Category
 

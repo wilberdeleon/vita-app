@@ -556,3 +556,59 @@ The slice recorded on 2026-08-18 as founder direction — *"too basic, too bulky
 **Verification.** `npx tsc --noEmit` and `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` both clean. `npx expo export --platform ios` succeeds (1403 modules). Rendered in Expo Go on the iOS Simulator in **both an empty day and a populated day** — ring, remaining figure, macro fills, meal color progression, expanded Breakfast with two foods, per-meal subtotals, and compact empty rows all confirmed against the reference.
 
 **Not verified this session — same tooling gap as the previous two QA rounds.** The simulator MCP refuses to attach (it reports Xcode "not selected" even though `xcode-select -p` already resolves to `/Applications/Xcode.app/Contents/Developer`), and `osascript` has no assistive access, so the simulator can be screenshotted and deep-linked but **not tapped or scrolled**. Everything below the fold — the Hydration/Peptides row's full extent and its dock clearance — is therefore confirmed only by the portion visible on screen, and every tap-dependent path (meal preselection end to end, favorite toggling from a meal row, edit, delete + Undo, the barcode flow) is reasoned-and-typechecked, not exercised. These need the founder's physical iPhone.
+
+### Slice 2.9b — Fuel polish + barcode QA (2026-08-21)
+
+Founder approved the `dee1ddf` redesign and locked its layout. This is the follow-up polish pass over four areas, plus the still-open barcode defect. **No structural change to the approved Fuel screen.**
+
+#### Calories and macro semantics
+
+`cal eaten` → **`Calories consumed`**, kept alongside `Calories remaining`; compact row values still abbreviate (`105 cal`). The ring label moved from *inside* the ring to directly beneath it — "Calories consumed" is wider than the ring's inner diameter, and shrinking approved copy to fit would have been the wrong trade. That is the only layout change on the locked screen.
+
+Macros now read as progress toward **the user's configured targets**: `Protein Goal · 30 / 160 g`, with Carbs and Fat carrying no verb because their targets are neither floors nor ceilings — labelling them either way would be VITA inventing dietary advice. Nothing warns, reddens, or changes state at 100%. `StatBar` stacks label above value: side by side they shared one ~93pt column on an SE-class screen, which fitted "Protein" but not "Protein Goal". The same labels are used on the Food Log so the two surfaces cannot describe identical numbers differently.
+
+#### Food image loss — root cause found, in the founder's own data
+
+**`parseCustomFoodShape()` in `asyncStorageRepository.ts` rebuilt `VitaFood` field by field and never copied `imageUrl`.** It is the only path by which a stored food comes back, so a field missing from that object literal is a field silently deleted on read. `restaurant` and `dataQuality` were being lost the same way.
+
+Three things compounded it:
+
+1. **The loss became permanent, not just per-read.** `toggleFavorite` writes `favoritesRef.current` — which after a load holds *parsed* favorites. So the next favorite toggle rewrote every favorite in its stripped form, erasing the image from storage for good.
+2. **The stripped copy shadowed an intact one.** `findFood()` checks favorites before the provider cache, so once a food was favorited its image-less definition won over the cached copy that still had the image.
+3. **`FoodEntry` had nowhere to keep an image**, so `foodFromEntry()` — which builds the food for a logged row's heart — could never produce one.
+
+Proof from the simulator's existing QA data, same `vitaId`, before any fix: cached copy `imageUrl = …/front_en.15.200.jpg`, favorited copy `imageUrl = undefined`.
+
+**Fixes.** The read path now preserves `imageUrl` (validated as http(s) — a stored image reference is the one persisted value handed straight to a network-loading view), `restaurant`, and `dataQuality`. `FoodEntry` gained an `imageUrl` snapshot field, denormalized for the same reason `name`/`brand` already are, and carried by `createEntry` → storage → `parseEntry` → `foodFromEntry`. A logged food's picture now comes from its own snapshot with no lookup, no cache read, and no network from a list row. No second image system, no UI-side patch.
+
+**Verified on device:** favorite written with an image → full relaunch → cold load from storage → Favorites and Food Detail both render the real product photograph.
+
+#### Contextual food visuals — architecture, not artwork
+
+`features/fuel/foodVisual.ts` resolves one visual in three tiers: **real provider image → VITA category visual → generic treatment**. `FoodAvatar` renders it, and Fuel's meals, Search, Recents, Favorites, Food Detail, and Edit Entry all call it — no screen classifies for itself. `ListRow` gained a `leading` slot so a row can show a photograph instead of a glyph.
+
+24 categories with conservative, order-sensitive whole-word matching. Order is the design: `bowl` before `burrito` before `chicken` so "Chicken Burrito Bowl" resolves to its form rather than its first ingredient; `salad` before `chicken`; `dessert` before `chips` so a chocolate chip cookie is not a crisp. Ambiguous names return `food` rather than guess — "Big Mac" is a burger to a person and nothing to a keyword matcher, and brand rules would be a list that never ends.
+
+**Artwork is explicitly NOT done.** Ionicons has ~12 food glyphs, so several categories share one and are separated only by accent color; `banana` currently renders an apple. The durable part is the taxonomy — custom VITA artwork replaces the `icon`/`color` pair in `CATEGORY_VISUALS` and nothing else changes. Category is carried on the returned visual even when an image wins, so a caller can tint or label by category regardless of which tier answered.
+
+#### Kroger barcode — root cause identified upstream, NOT fixed
+
+**The previous round's conclusion was wrong.** It recorded "Open Food Facts data is not mislabelled — every Hillshire Farm record sits under GS1 prefix `00445003…`; Kroger's is `0011110…`". That was reasoned from a prefix sample, not verified.
+
+Querying Open Food Facts directly for `brands_tags=hillshire-farm` returns, as its first result:
+
+```
+0011110816405  |  BEEF SMOKED SAUSAGE  |  Hillshire Farm  |  categories: Sausages
+```
+
+`0011110` is **The Kroger Co.'s** GS1 company prefix. The record's front image is a photograph of a Hillshire Farm sausage package, and its nutriments are sausage data (128 kcal/100 g, 2.3 g carbs). So there is an Open Food Facts record filed under a **Kroger-prefix barcode** carrying **Hillshire Farm sausage** name, brand, imagery, and nutrition.
+
+That single record explains the symptom exactly and explains why every VITA-side defence passes: the product endpoint returns precisely the code that was requested, so strict GTIN identity verification *correctly* confirms it. USDA has no record for that GTIN, so cross-checking would not have caught it either (verified: 0 candidates).
+
+**This is upstream data corruption, not a client bug** — and no client logic can distinguish "correct" from "unrelated" when the database itself is wrong, because the client has no ground truth. Claiming a fix would be dishonest.
+
+**Still required:** the founder's actual scanned value. The trace now captures the full chain — `camera.raw`, `camera.type`, `camera.digits`, `normalized`, `gtin.checkDigit`, `off.requested`, `off.returnedCode`, `off.returnedName`, `off.returnedBrand`, `off.identity`, `usda.requested/candidates/identity`, `navigate.href`, `detail.*`, `log.foodRef`, `log.snapshot*`, `edit.*` — and renders on **both** Food Detail and Edit Entry, since the wrong product has now been seen on both. One scan confirms or refutes `00011110816405` in a single screenshot.
+
+The GS1 mod-10 check digit is now recorded (`isValidGtin` existed but had **no caller**) and deliberately **not enforced**: the symbology validates its own check digit in hardware, so a failure would more likely mean our parsing is wrong than the scan is, and blocking the primary flow on an unproven theory is the wrong trade while the cause is still unconfirmed.
+
+**Barcode status: OPEN.** Not fixed, not worked around. Nothing was hardcoded, special-cased, renamed, or text-matched.

@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, EmptyState, IconBadge, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
+import { BarcodeTracePanel } from '../../../../features/fuel/components/BarcodeTracePanel';
+import { FoodAvatar } from '../../../../features/fuel/components/FoodAvatar';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
 import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
@@ -12,6 +14,7 @@ import {
   formatPortion,
   nutritionForServing,
   readCachedFoodSync,
+  traceBarcode,
   useNutrition,
   type MealSlot,
 } from '../../../../lib/nutrition';
@@ -71,6 +74,23 @@ export default function EditLogEntry() {
     setMeal(entry.meal);
     setSaving(false);
   }, [entryId, entry?.id]);
+
+  /**
+   * What this screen is showing, from the stored entry itself.
+   *
+   * Device QA reported the wrong product **here**, on a screen that reads
+   * the log rather than a provider. If the trace shows the scan resolved
+   * correctly and this snapshot is wrong, the fault is in the write; if the
+   * snapshot matches what the provider returned, the wrong identity arrived
+   * from upstream and was recorded faithfully.
+   */
+  useEffect(() => {
+    if (!entry) return;
+    traceBarcode('edit.entryId', entry.id);
+    traceBarcode('edit.foodRef', `${entry.foodRef.source}:${entry.foodRef.sourceId}`);
+    traceBarcode('edit.snapshotName', entry.name);
+    traceBarcode('edit.snapshotBrand', entry.brand ?? 'none');
+  }, [entry?.id, entry?.name, entry?.brand, entry?.foodRef.source, entry?.foodRef.sourceId]);
 
   const serving = resolved?.servings[servingIndex] ?? resolved?.servings[0];
 
@@ -145,7 +165,7 @@ export default function EditLogEntry() {
       <ScreenHeader title="Edit Entry" back action={<FavoriteButton food={food} />} />
 
       <View style={styles.hero}>
-        <IconBadge icon="fast-food-outline" size={64} />
+        <FoodAvatar food={food} size={64} />
         <Text style={[styles.name, { color: surfaces.text }]}>{entry.name}</Text>
         {subtitle ? <Text style={[styles.subtitle, { color: surfaces.textTertiary }]}>{subtitle}</Text> : null}
       </View>
@@ -169,6 +189,8 @@ export default function EditLogEntry() {
       <Pressable onPress={handleRemove} hitSlop={8} accessibilityRole="button">
         <Text style={[styles.remove, { color: palette.fat }]}>Remove from log</Text>
       </Pressable>
+
+      <BarcodeTracePanel />
     </Screen>
   );
 }

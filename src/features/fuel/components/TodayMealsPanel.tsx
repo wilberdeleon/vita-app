@@ -128,7 +128,7 @@ export function TodayMealsPanel({ meals, isLoading }: Props) {
               <View style={styles.entries}>
                 <View style={[styles.divider, { backgroundColor: surfaces.border }]} />
                 {meal.entries.map((entry) => (
-                  <MealFoodRow key={entry.id} entry={entry} accentColor={accent.color} />
+                  <MealFoodRow key={entry.id} entry={entry} />
                 ))}
                 <PressableScale
                   pressedScale={0.99}

@@ -1,22 +1,19 @@
 import { router } from 'expo-router';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { IconBadge, PressableScale } from '../../../components/ui';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../../../components/ui';
 import {
   entryServingLabel,
   foodFromEntry,
   formatCalories,
-  readCachedFoodSync,
-  useNutrition,
   type FoodEntry,
 } from '../../../lib/nutrition';
-import { radii, spacing, typography } from '../../../theme/tokens';
+import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { FavoriteButton } from './FavoriteButton';
+import { FoodAvatar } from './FoodAvatar';
 
 type Props = {
   entry: FoodEntry;
-  /** Tint for the leading placeholder, so a food reads as part of its meal. */
-  accentColor: string;
 };
 
 /**
@@ -32,31 +29,20 @@ type Props = {
  * navigating: nested inside the row's own Pressable, it wins the touch by
  * React Native's responder rules.
  *
- * Contextual visuals, cheaply: if the food's definition is already resolved
- * in memory — it is a custom food, a favorite, or a search/scan populated
- * the food cache this session — its real product image is shown. Otherwise
- * a tinted glyph.
- *
- * Both lookups are free: `findFood` scans the in-memory custom/favorite
- * arrays and `readCachedFoodSync` is a Map `get`. Neither touches the
- * network or storage, which is the point — a list row must not do I/O per
- * item. The tradeoff is that the memo is session-scoped, so after a cold
- * start a previously-scanned food falls back to the glyph until something
- * resolves it again. That is deliberate for this slice: an icon is a fine
- * answer, and per-row async reads would be real machinery in exchange for a
- * decoration. A persistent image treatment can come with the Food
- * Illustration pass.
+ * The food's picture comes from the entry's own stored snapshot via the
+ * shared resolver — no lookup, no cache read, and no network from a list
+ * row. Earlier this row consulted the in-memory provider cache, which is
+ * session-scoped, so a scanned product showed its photo right after the
+ * scan and a generic glyph after the next launch. The image now lives on
+ * the entry alongside the name and nutrition it was already denormalizing,
+ * for exactly the same reason.
  */
-export function MealFoodRow({ entry, accentColor }: Props) {
+export function MealFoodRow({ entry }: Props) {
   const { surfaces } = useTheme();
-  const { findFood } = useNutrition();
 
-  const resolved = findFood(entry.foodRef.vitaFoodId) ?? readCachedFoodSync(entry.foodRef.vitaFoodId);
-  const imageUrl = resolved?.imageUrl;
-
-  // Built from the entry's own stored snapshot rather than the resolved
-  // food, so a logged food stays favorite-able offline and long after any
-  // provider cache has expired.
+  // Built from the entry's own stored snapshot, so a logged food stays
+  // favorite-able — and picturable — offline and long after any provider
+  // cache has expired.
   const food = foodFromEntry(entry);
   const detail = entry.brand ? `${entry.brand} · ${entryServingLabel(entry)}` : entryServingLabel(entry);
 
@@ -68,16 +54,7 @@ export function MealFoodRow({ entry, accentColor }: Props) {
       accessibilityRole="button"
       accessibilityLabel={`Edit ${entry.name}`}
     >
-      {imageUrl ? (
-        <Image
-          source={{ uri: imageUrl }}
-          style={[styles.image, { backgroundColor: surfaces.track }]}
-          resizeMode="cover"
-          accessibilityIgnoresInvertColors
-        />
-      ) : (
-        <IconBadge icon="fast-food-outline" size={36} color={accentColor} />
-      )}
+      <FoodAvatar food={food} size={36} />
 
       <View style={styles.text}>
         <Text style={[styles.name, { color: surfaces.text }]} numberOfLines={1}>
@@ -102,11 +79,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.m,
     paddingVertical: spacing.s,
-  },
-  image: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.pill,
   },
   text: {
     flex: 1,
