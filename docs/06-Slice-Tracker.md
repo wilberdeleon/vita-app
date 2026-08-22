@@ -155,21 +155,21 @@ New: `components/ui/ProgressRing.tsx`'s sibling change is `glass.premium` in `th
 
 ---
 
-## Sprint 2 — Fuel — 🟡 In Progress (started 2026-08-17)
+## Sprint 2 — Fuel — 🟢 Feature-complete, in closeout (started 2026-08-17 · audited 2026-08-21)
 
 Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprint 2 Fuel plan. Architecture principle the founders approved explicitly: **prove the nutrition engine before introducing external providers**, so the core loop is testable before a single network call exists.
 
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
-| 2.1 | Nutrition Foundation | Model, pure calculations, persistence behind a repository, `NutritionProvider`; Fuel reads real state | 🟡 Built, pending founder review |
-| 2.2 | Core Logging | Manual food → custom food → entry → meal → daily totals; delete + Undo | 🟡 Built, pending founder review |
-| 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log; dark-mode progress-track correction | 🟡 Built, pending founder review |
-| 2.4 | Edit + Delete | Edit route reusing `PortionEditor`; delete + Undo preserved | 🟡 Built, pending founder review |
-| 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | 🟡 Built, pending founder review |
-| 2.6 | Provider Layer + Search | USDA + Open Food Facts adapters, normalization, dedupe, ranking, cache, debounced search | 🟡 Built (OFF verified; USDA blocked on founder key) |
-| 2.7 | Recent + Favorites | History-derived recents, persisted favorites keyed by `vitaId` | 🟡 Built, pending founder review |
-| 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, OFF→USDA chain | 🟡 Built (pipeline + states verified; live detection needs a physical iPhone) |
-| 2.9 | Fuel Visual Refinement | Fuel landing rebuilt as a nutrition command centre: ring + remaining summary, direct Log Food / Scan, inline meals with per-meal Add Food, compact Hydration/Peptides, Calories terminology | 🟡 Built, pending founder review |
+| 2.1 | Nutrition Foundation | Model, pure calculations, persistence behind a repository, `NutritionProvider`; Fuel reads real state | ✅ Approved |
+| 2.2 | Core Logging | Manual food → custom food → entry → meal → daily totals; delete + Undo | ✅ Approved |
+| 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log; dark-mode progress-track correction | ✅ Approved |
+| 2.4 | Edit + Delete | Edit route reusing `PortionEditor`; delete + Undo preserved | ✅ Approved |
+| 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | ✅ Approved |
+| 2.6 | Provider Layer + Search | USDA + Open Food Facts adapters, normalization, dedupe, ranking, cache, debounced search | ✅ Approved — USDA key now configured; both providers verified live 2026-08-21 |
+| 2.7 | Recent + Favorites | History-derived recents, persisted favorites keyed by `vitaId` | ✅ Approved |
+| 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, OFF→USDA chain | ✅ Approved — pipeline verified live; **live camera detection still needs a physical iPhone** |
+| 2.9 | Fuel Visual Refinement | Fuel landing rebuilt as a nutrition command centre: ring + remaining summary, direct Log Food / Scan, inline meals with per-meal Add Food, compact Hydration/Peptides, Calories terminology | ✅ Approved |
 | 2.10 | Restaurant Provider Research | FatSecret Basic evaluated as a restaurant/branded source: cost, quota, auth, coverage, storage terms | 🔬 **Research COMPLETE — integration DEFERRED** (see below) |
 | 2.11 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
 | 2.12 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
@@ -685,3 +685,37 @@ The on-screen debug block is gone from both Food Detail and Edit Entry, and `tra
 **Reconsidered only if** FatSecret confirms in writing that logged nutrition may persist in a user's own diary · or VITA deliberately designs a compliant alternative near launch · or a different provider becomes the preferred restaurant source.
 
 Launch-gated follow-up and the eight unresolved questions to put to FatSecret: `docs/04-Master-Roadmap.md` → **Launch readiness follow-ups**.
+
+
+### Sprint 2 closeout audit — 2026-08-21
+
+Audited the integrated system as it exists at `1f9b172`, not the previous PASS reports.
+
+**Verdict: CONDITIONAL PASS.** Every automated and logic-level check passes; what remains is founder physical-device QA and one known upstream data defect that no client change can close.
+
+**Executed verification** (there is no committed test suite — see the finding below, so this was run against the real compiled modules rather than asserted):
+
+- `npx tsc --noEmit` and `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — both clean.
+- `npx expo export --platform ios` — succeeds.
+- **61 assertions** across GTIN normalization and check digits, nutrition arithmetic (remaining/over/progress/percent/rounding, partial optional nutrients, per-meal summarization), log dates, the `createEntry → foodFromEntry` snapshot round-trip including image persistence, meal-slot parsing and time defaults, display formatting, and the food-visual resolver's three tiers across fourteen representative foods — **all pass**.
+- **6 dedupe/ranking assertions** — same GTIN merges across providers; a branded restaurant item does **not** merge with a generic; a >5% calorie gap keeps same-named foods separate; ranking is deterministic regardless of provider arrival order.
+- **Live provider run** against USDA and Open Food Facts: `big mac` → *Big Mac (McDonalds)* first; `banana` → *Bananas, raw* first; `chipotle chicken bowl` → *Chipotle Chicken Bowl* first. Barcode `0011110043436` → *Kroger Purified Drinking Water* with the returned GTIN matching; an invalid code → honest `not-found`. Aborting mid-flight settles both providers as `aborted` rather than surfacing partial results.
+
+**A ranking "defect" was raised and then withdrawn on evidence.** A synthetic case suggested a generic USDA *Hamburger* could outrank *Big Mac — McDonald's*. Against the live providers it does not — USDA's own branded record wins the query, and the synthetic scenario (a Foundation-quality "Hamburger" returned for `big mac`) does not occur. **No ranking change was made**, per the instruction not to tune ranking without a real deterministic defect.
+
+**Defect found and fixed:** the Favorites screen rendered its empty state before storage hydrated, so a user with saved favorites was briefly told they had none. Recents and Food Log already guard this and Fuel's summary holds an em dash for the same reason; Favorites now shows a spinner while `status === 'loading'`. One-screen fix, matching the existing pattern.
+
+**Clean on inspection:** zero `TODO`/`FIXME`/`HACK` in `src/` · no `vita-fixture` outside a historical comment · no singular `'Snack'` type · no user-facing `kcal` (only the internal `MealSlotSummary.kcal` field, deliberately unrenamed) · every `console.*` guarded by `__DEV__` · no debug/trace panel in the UI · **zero provider-specific branching in any UI layer and zero raw provider fields outside adapters** · no duplicate nutrition arithmetic outside the domain · every UI and Fuel component consumed · no unused dependency added · `.env` untracked and ignored, no secret in any tracked file · no screenshots, exports, or QA seed data tracked.
+
+**Known-stale statuses corrected in this pass:** slices 2.1–2.9 were still marked "pending founder review" after the founders declared them approved; 2.6 still said USDA was blocked on a key that is now configured and returning results.
+
+**Open findings carried forward, not fixed:**
+
+| Finding | Why not fixed here |
+|---|---|
+| **No committed test suite.** Sprint 2 shipped a substantial pure-logic domain — GTIN, nutrition arithmetic, dedupe, ranking, classification — with no `jest`/`vitest` and no test files. The 67 assertions above were run ad-hoc and are not repeatable in CI. | Adding a test framework is a dependency and a slice of its own, not closeout scope. **Recommended as the first task of Sprint 3.** |
+| **Kroger barcode** still resolves to Hillshire Farm sausage. Root cause is an upstream Open Food Facts record filed under Kroger's company prefix. | No client-side rule can detect a database that is wrong about itself. The `Not the right product?` recovery is the shipped answer; the upstream correction needs founder authorization. |
+| `expo@54.0.36` / `expo-constants@18.0.13` are one patch behind the SDK 54 expectation. | Patch drift inside SDK 54, not an SDK upgrade — but it is still a dependency change with regression risk and no demonstrated need, so it is reported rather than applied. |
+| `src/lib/nutrition/index.ts` re-exports ~23 symbols used only inside the domain. | Deliberate domain API surface; trimming is churn with no functional benefit. Observation only. |
+
+**Not verifiable in this environment:** every tap-dependent path. The simulator MCP refuses to attach (it reports Xcode "not selected" although `xcode-select -p` already resolves correctly) and `osascript` has no assistive access, so screens can be rendered, deep-linked, and screenshotted but **not driven**. Add-to-log, edit, delete + Undo, favorite toggling, meal preselection end-to-end, the action sheet, and live camera detection are typechecked and reasoned but not exercised. **This is the whole of the outstanding QA and it needs the founder's iPhone.**

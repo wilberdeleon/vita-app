@@ -8,7 +8,7 @@
 
 ## Snapshot — 2026-08-17
 
-**Sprint 2 — Fuel is 🟡 in progress** (founder-authorized 2026-08-17, branch `sprint-2-fuel`). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), and the App-Wide Visual Consistency Pass (2026-08-16). **The official roadmap was restructured 2026-08-17** — Fuel is now formally Sprint 2 (was 3), Journey splits into Sprints 3 and 4, and Water/Peptides and Settings finally get sprints of their own. See [[Roadmap]] and [[Decision Log]].
+**Sprint 2 — Fuel is 🟢 feature-complete and in closeout** (founder-authorized 2026-08-17, branch `sprint-2-fuel`; closeout audit 2026-08-21 — CONDITIONAL PASS, merge gated on founder device QA; see [[Current Sprint]]). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), and the App-Wide Visual Consistency Pass (2026-08-16). **The official roadmap was restructured 2026-08-17** — Fuel is now formally Sprint 2 (was 3), Journey splits into Sprints 3 and 4, and Water/Peptides and Settings finally get sprints of their own. See [[Roadmap]] and [[Decision Log]].
 
 **Theming is app-wide.** Light, Dark, and System work across every existing screen; System follows the device appearance live. Home/Dashboard is the documented visual source of truth — see [[Design Bible]], [[Color System]], [[Decision Log]]. The pass was a design-system migration, **not** a feature sprint: no routes, tabs, sections, data, navigation, interactions, or copy changed. Detail lives in the repo's `docs/06-Slice-Tracker.md`; this page does not duplicate it.
 
@@ -31,7 +31,7 @@ The entire application shell exists and runs in the iOS Simulator via Expo Go �
 | Data | Mock fixtures served through `api.ts` boundaries — no live data |
 | Auth | Mock signed-in user; gate logic real, provider internals fake |
 | Supabase | Client architecture in place; **not connected** (no migrations, no edge functions) |
-| Barcode scanner | Static visual mock; real camera ships in **Sprint 2 — Fuel**, now in progress |
+| Barcode scanner | ✅ Real camera scanning shipped in Sprint 2. One open upstream defect: an Open Food Facts record filed under Kroger's barcode prefix carries Hillshire Farm's product — `Not the right product?` recovery ships as the answer |
 
 ## What's next
 

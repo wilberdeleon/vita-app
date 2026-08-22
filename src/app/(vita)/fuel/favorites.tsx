@@ -1,10 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
 import { FoodRow } from '../../../features/fuel/components/FoodRow';
 import { FavoriteButton } from '../../../features/fuel/components/FavoriteButton';
 import { foodFromEntry, parseMealSlot, useNutrition, type VitaFood } from '../../../lib/nutrition';
-import { spacing } from '../../../theme/tokens';
+import { palette, spacing } from '../../../theme/tokens';
 
 /**
  * Favorited foods, newest first.
@@ -19,7 +19,7 @@ export default function FavoriteFoods() {
   const params = useLocalSearchParams<{ meal?: string }>();
   const meal = parseMealSlot(params.meal);
   const suffix = meal ? `?meal=${encodeURIComponent(meal)}` : '';
-  const { favorites, findFood, entries } = useNutrition();
+  const { status, favorites, findFood, entries } = useNutrition();
 
   const resolve = (vitaId: string): VitaFood | undefined => {
     const stored = findFood(vitaId);
@@ -38,7 +38,18 @@ export default function FavoriteFoods() {
     <Screen>
       <ScreenHeader title="Favorites" subtitle={meal ? `Adding to ${meal}` : undefined} back />
 
-      {rows.length > 0 ? (
+      {/*
+        Favorites are empty until storage hydrates, so rendering the empty
+        state immediately would tell a user with saved favorites that they
+        have none — the same false-zero problem the Fuel summary and Food
+        Log already guard against, and Recents solves with its own loading
+        flag. A spinner for the frame or two it takes, then the truth.
+      */}
+      {status === 'loading' ? (
+        <View style={styles.centered}>
+          <ActivityIndicator color={palette.primary} />
+        </View>
+      ) : rows.length > 0 ? (
         <>
           <SectionHeader title="Your favorites" />
           {rows.map((food) => (
@@ -75,5 +86,9 @@ const styles = StyleSheet.create({
   },
   emptyBlock: {
     gap: spacing.m,
+  },
+  centered: {
+    paddingVertical: spacing.xxxl,
+    alignItems: 'center',
   },
 });
