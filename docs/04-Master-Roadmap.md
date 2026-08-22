@@ -12,13 +12,13 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
-**Sprint 2 — Fuel** · Status: 🟡 In Progress (started 2026-08-17, branch `sprint-2-fuel`)
+**Sprint 3 — Water + Peptides** · Status: 🟡 Current (planning and architecture approved by the founders 2026-08-21)
 
-Objective: turn Fuel from a set of presentation-only screens into a real nutrition tracking system — one shared nutrition domain driving both Fuel and Home, real food providers, real barcode scanning, and food logging that survives a restart.
+Objective: turn Water and Peptides from the Sprint 0 placeholder logs they still are into real, persisted, date-aware features at the quality bar Sprint 2 set for Fuel.
 
-Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, and the App-Wide Visual Consistency Pass.
+Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, the App-Wide Visual Consistency Pass, and **Sprint 2 — Fuel** (audited and merged into `main` 2026-08-21, merge commit `44eeae6`, closed by `473cb59`).
 
-**Next: Sprint 3 — Water + Peptides.** Sprint 2's physical QA is accepted and Sprint 2 is merged into `main` (2026-08-21); the one remaining entry condition is creating a fresh branch (expected `sprint-3-water-peptides`) off `main`.
+Sprint 3's planning and architecture audit is approved by the founders. Entry conditions: device QA accepted ✅ · Sprint 2 merged ✅ · sprint branch cut — the remaining step.
 
 ---
 
@@ -40,8 +40,8 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | 0.1 — Polish | Global design polish over the Sprint 0 shell | ✅ Complete |
 | 1 — Dashboard / Home | Build the Home experience that defines the quality standard for the app | ✅ Complete |
 | — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
-| **2 — Fuel** | **Build the smartest nutrition experience possible** | **🟡 Current** |
-| **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ⬜ **Next** |
+| 2 — Fuel | Build the smartest nutrition experience possible | ✅ Complete |
+| **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | **🟡 Current** |
 | 4 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
 | 5 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
 | 6 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |
@@ -94,7 +94,7 @@ Status: ✅ Complete (2026-08-16), founder-approved on a physical iPhone
 
 ---
 
-# Sprint 2 — Fuel 🟡
+# Sprint 2 — Fuel ✅
 
 Objective: build the smartest nutrition experience possible.
 
@@ -120,9 +120,9 @@ The founders' assessment of Fuel as built today: too basic, too bulky, over-reli
 
 Fuel-specific micro-interactions may be introduced here rather than deferred wholesale to Sprint 8 — see Sprint 8 below for the division. Design direction detail lives in `docs/05-Design-System.md` → "Future direction (founder direction, 2026-08-18)". **Contextual food visuals** (small food illustrations/icons) are a related but separate, currently unscheduled concept — parked in `docs/10-Ideas-Parking-Lot.md`, not part of this slice unless the founders scope it in.
 
-*This is founder-stated direction recorded ahead of time. The slice is not yet formally opened, scoped, or approved — that happens under the normal slice workflow when the preceding slices complete.*
+*Recorded ahead of time as founder-stated direction; it shipped as slice 2.9 and is founder-approved. See `docs/06-Slice-Tracker.md`.*
 
-Status: 🟡 In Progress
+Status: ✅ Complete — audited 2026-08-21, merged into `main` as `44eeae6`
 
 ---
 
@@ -140,11 +140,11 @@ Deliverable: Water and Peptides as genuinely functional health-tracking experien
 
 Sprint 3 opens only after all three are true:
 
-1. Sprint 2 final physical-device QA is accepted by the founders.
+1. Sprint 2 final physical-device QA is accepted by the founders. ✅ Done 2026-08-21.
 2. Sprint 2 is merged into `main`. ✅ Done 2026-08-21 (merge commit `44eeae6`).
 3. A fresh sprint branch is created off `main` — expected name `sprint-3-water-peptides`.
 
-None of these have happened yet. The branch is not created during planning.
+Conditions 1 and 2 are met. The branch is not created during planning — it is cut when the sprint is formally opened.
 
 ## Why Water and Peptides are one sprint
 
@@ -213,7 +213,7 @@ Standalone proposals for the calculator and site tracking live in the Vita HQ In
 
 **Not a provider-integration sprint.** FatSecret and restaurant provider selection stay deferred to launch readiness — see "Launch readiness follow-ups" at the end of this document. Nothing from that list moves into Sprint 3.
 
-Status: ⬜ Planned — next sprint
+Status: 🟡 Current — planning and architecture approved 2026-08-21; opening under the normal slice workflow
 
 ---
 

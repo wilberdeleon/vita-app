@@ -12,7 +12,7 @@ Built in Slice 0.6 under `src/app/(vita)/water/`:
 
 - **Summary** (`index.tsx`) — daily hydration log and progress
 - **Add** (`add.tsx`) — quick logging in cups or ounces (`CupsRow` component in `src/features/water/`)
-- Reached from the [[Dashboard]] quick stats, not the dock
+- **Reached from [[Fuel]]'s Hydration card — the only entry point in the app today.** Not in the dock. *Corrected 2026-08-21:* this page previously said Water was reached from the Dashboard quick stats. It is not — Home's water tile is a read-only metric with no press handler (`QuickStatsRow`/`MetricTile` carry no `onPress`). Home currently *displays* a hydration figure from a fixture and does not navigate anywhere. Wiring Home's water tile and water goal pillar to real hydration state is **Sprint 3 slice 3.4**
 - Domain color: **blue `#2F80ED`** ([[Color System]])
 
 ## Target state

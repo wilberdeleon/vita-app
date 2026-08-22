@@ -47,7 +47,7 @@ Two prerequisite decisions are resolved (founders, 2026-07-09): VITA supports Li
 
 **Restructured 2026-07-09 (founders):** Slice 1 (Dashboard Layout) was scoped as page structure only — hierarchy, spacing, scroll — not component styling. Founders split the original "Dashboard Layout" slice's card-positioning work out into its own dedicated slice, **Dashboard Components**, inserted as Slice 2: reusable card/container primitives (shadows, radius, press feedback) built once, before any section's actual content. Remaining slices renumbered accordingly (9 slices total, was 8).
 
-**Health Metrics content locked (founders, 2026-07-09):** Steps, Water, Meals Logged, Sleep. **Peptides is explicitly excluded** from the primary Dashboard metrics — the current mock data (`features/dashboard/mock.ts`) still shows Peptides in that slot and needs updating when the Health Metrics slice is built.
+**Health Metrics content locked (founders, 2026-07-09):** Steps, Water, Meals Logged, Sleep. **Peptides is explicitly excluded** from the primary Dashboard metrics. *Resolved — note retired 2026-08-21:* the mock data no longer carries a Peptides metric. `features/dashboard/mock.ts` now lists Steps · Water · Workouts · Sleep · Streak, so there is nothing left to update here.
 
 **Slice 1.3 design revision (founders, 2026-07-10):** after initial build, founders replaced the generic Ionicons sun/moon badge with a bespoke **`TimeOfDayIllustration`** component — a circular-cropped landscape mark (layered mountains, small reflective lake) with one fixed composition, recolored across four states (morning/afternoon/evening/night) and ready for both light/dark color schemes. Existing greeting time-detection logic, minute re-evaluation, greeting copy, and card layout/dimensions were explicitly preserved — only the icon badge was replaced. New files: `src/components/ui/TimeOfDayIllustration.tsx`. Additive-only change to `src/features/dashboard/greeting.ts` (new `illustration` field; the three original fields' computation is untouched). **Not yet founder-tested in Expo Go — do not treat as fully approved until visually confirmed.** Artwork corrected 2026-07-10 against the founders' actual concept reference (sun nestled into a soft rolling ridge, moon floating free with a few stars, foreground pine silhouettes, gradient sky/lake) — the first pass was built from the written brief alone before the reference image was received. Same file only (`TimeOfDayIllustration.tsx`); geometry still identical across all four states, still no dark-mode-specific composition.
 
@@ -171,10 +171,15 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, OFF→USDA chain | ✅ Approved — pipeline verified live; **live camera detection still needs a physical iPhone** |
 | 2.9 | Fuel Visual Refinement | Fuel landing rebuilt as a nutrition command centre: ring + remaining summary, direct Log Food / Scan, inline meals with per-meal Add Food, compact Hydration/Peptides, Calories terminology | ✅ Approved |
 | 2.10 | Restaurant Provider Research | FatSecret Basic evaluated as a restaurant/branded source: cost, quota, auth, coverage, storage terms | 🔬 **Research COMPLETE — integration DEFERRED** (see below) |
-| 2.11 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
-| 2.12 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
+| 2.11 | Water Wiring | Water on the same engine; UI untouched | ↪️ **Superseded — moved to Sprint 3** |
+| 2.12 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ✅ **Done as the Sprint 2 closeout audit** |
 
 **Renumbered 2026-08-21.** The Fuel Visual Refinement slice was recorded on 2026-08-18 as a late-Sprint-2 slice without a number (`docs/04-Master-Roadmap.md`). The founders opened it after 2.8 rather than after Edge Cases & Polish, so it takes 2.9 and the three remaining **unstarted** slices shift by one. Nothing already built was renumbered.
+
+**Status of 2.11 and 2.12 reconciled 2026-08-21** (both rows previously read ⬜ Planned inside a sprint that had already closed and merged, which read as unfinished Sprint 2 work):
+
+- **2.11 — Water Wiring is superseded, not skipped.** The 2026-08-21 roadmap reorder moved Water + Peptides to Sprint 3, and wiring Water to a real engine is that sprint's own work — Sprint 3 slice 3.2 (Water Domain + Persistence), which builds Water its own domain rather than attaching it to the nutrition engine. Water's Sprint 2 treatment was exactly what the Fuel plan promised: entry points preserved, fixtures untouched, nothing removed. No Water code shipped in Sprint 2 and none was expected to.
+- **2.12 — Polish & Audit was executed as the Sprint 2 closeout audit** (commit `71333ad`), written up below under "Sprint 2 closeout audit — 2026-08-21". It covered the empty/loading/error review (which found and fixed the Favorites false-empty state), the verification run, and the doc reconciliation. What it did *not* do is add a committed test suite — recorded as an open finding in `docs/07-Audit-Log.md` and carried into Sprint 3 slice 3.1.
 
 ### Slice 2.1 — Nutrition Foundation 🟡
 
