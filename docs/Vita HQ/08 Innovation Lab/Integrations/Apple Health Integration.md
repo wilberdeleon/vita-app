@@ -13,7 +13,7 @@ tags: [integration, apple-health, healthkit, data-quality]
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as Sprint 5 (Health), Slice 5.
+📋 Planned — promoted 2026-07-09. Named directly in the then-official [[Roadmap]] as Health, Slice 5. **⚠️ Health is no longer a scheduled sprint** since the 2026-08-17 restructure ([[Open Questions]] #14).
 
 ## Category
 
@@ -77,9 +77,9 @@ Improves data completeness for every downstream metric ([[Health Age]] especiall
 
 **Current Status:** 🟢 Concept Complete
 
-**Next Step Required:** None — promoted to the official roadmap; awaiting Sprint 5 to begin.
+**Next Step Required:** Founder decision on where this lands, now that Health has no scheduled sprint.
 
-**Estimated Sprint:** Sprint 5 — Health, Slice 5
+**Estimated Sprint:** ⚠️ none — Health, Slice 5 under the old structure; unscheduled today
 
 **Dependencies:**
 - HealthKit entitlement + permission flow

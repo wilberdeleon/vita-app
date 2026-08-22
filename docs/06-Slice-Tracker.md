@@ -719,3 +719,11 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | `src/lib/nutrition/index.ts` re-exports ~23 symbols used only inside the domain. | Deliberate domain API surface; trimming is churn with no functional benefit. Observation only. |
 
 **Not verifiable in this environment:** every tap-dependent path. The simulator MCP refuses to attach (it reports Xcode "not selected" although `xcode-select -p` already resolves correctly) and `osascript` has no assistive access, so screens can be rendered, deep-linked, and screenshotted but **not driven**. Add-to-log, edit, delete + Undo, favorite toggling, meal preselection end-to-end, the action sheet, and live camera detection are typechecked and reasoned but not exercised. **This is the whole of the outstanding QA and it needs the founder's iPhone.**
+
+---
+
+## Sprint 3 — Water + Peptides — ⬜ Not started
+
+**Next sprint, per the founder roadmap reorder of 2026-08-21** (Water + Peptides moved ahead of Journey; Journey becomes Sprints 4 and 5). Scope, the ten proposed slices, and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
+
+**Not opened.** No slice is scoped or approved, no branch exists, and no implementation has begun. Sprint 3 opens only after Sprint 2's final physical-device QA is accepted, Sprint 2 is merged into `main`, and a fresh `sprint-3-water-peptides` branch is cut from `main`. Slice-by-slice progress will be tracked here once the sprint is formally opened under the normal workflow.

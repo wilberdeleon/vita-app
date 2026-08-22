@@ -18,7 +18,11 @@ Built in Slice 0.8 as `src/features/journey/` with three tabs:
 
 ## Target state
 
-**Sprint 2** of the [[Roadmap]] (renumbered from Sprint 3 under the old structure, per the official 2026-07-09 roadmap): Journey Overview, Timeline, Milestones, Achievements, Streak System, Rewards & Celebrations, Journey Detail Screen, Journey Polish — real weight tracking, weekly photos, a progress timeline, Journey Stages driven by actual consistency.
+**Sprints 4 and 5** of the [[Roadmap]] — **Journey / Weight (4)** and **Journey / Photos (5)**. *Journey was Sprint 2 under the 2026-07-09 plan; the 2026-08-17 restructure split it into two sprints, and the **2026-08-21 founder reorder** moved both one place later, behind [[Water]] + [[Peptides]].*
+
+**⚠️ Deferred, not cancelled or reduced.** Journey remains a major pillar of VITA and the next major experience after Sprint 3. **Every requirement and decision on this page stands unchanged** — weight logging and history, the Journey data architecture, progress views, progress photos, photo comparisons, and the existing visual concepts. Only the scheduling moved; nothing was narrowed because the sprint number changed. Weight (Sprint 4) still precedes Photos (Sprint 5), since it owns the core Journey data architecture Photos builds on.
+
+Scope: Journey Overview, Timeline, Milestones, Achievements, Streak System, Rewards & Celebrations, Journey Detail Screen, Journey Polish — real weight tracking, weekly photos, a progress timeline, Journey Stages driven by actual consistency.
 
 **⚠️ Streak System design note:** the Streak System slice needs deliberate design to avoid contradicting [[Core Principles]] #6 (no punishment for missing a day) and [[UX Principles]] #1 (no guilt mechanics, ever) — a naive reset-to-zero streak would violate both. Flagged in detail on [[Roadmap]].
 

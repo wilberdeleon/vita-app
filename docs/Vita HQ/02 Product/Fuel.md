@@ -22,6 +22,8 @@ The eight-screen flow under `src/app/(vita)/fuel/` and the Fuel hub tab are othe
 
 **Screenshot Food Analysis** ([[Mobile Order Screenshot Import]]) is explicitly **deferred out of Sprint 2's approved scope** and currently has no scheduled sprint — see [[Open Questions]] #14.
 
+**Fuel's Hydration and Peptides modules belong to Sprint 3.** The redesigned Fuel landing screen is approved and finished; **it is not redesigned again.** [[Water]] + [[Peptides]] — moved ahead of Journey to **Sprint 3** by the founder reorder of 2026-08-21 — turns those two compact modules into real entry points and daily summaries backed by real, persisted data, without re-opening Fuel's layout, hierarchy, or visual system.
+
 ### Fuel Visual Refinement — founder direction, 2026-08-18
 
 Functionality stays the priority for the rest of Sprint 2, but **before Sprint 2 counts as polished, Fuel gets a dedicated visual/interaction refinement slice** — added to [[Roadmap]] after the functional slices and before Final Verification.
@@ -70,4 +72,4 @@ Full proposal: [[Contextual Food Visuals]].
 - FatSecret account registration and Premier Free eligibility are founder tasks — Claude stops at that dependency rather than inventing credentials.
 - Whether nutrition targets become user-editable in Sprint 2, given [[Settings]] has no sprint until 7.
 
-**Related:** [[Product Overview]] · [[Dashboard]] · [[Water]] · [[Atlas Capabilities]]
+**Related:** [[Product Overview]] · [[Dashboard]] · [[Water]] · [[Peptides]] · [[Atlas Capabilities]]

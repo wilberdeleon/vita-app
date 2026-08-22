@@ -13,7 +13,7 @@ tags: [peptides, calculator, dose, reconstitution, safety-sensitive, units]
 
 ## Status
 
-📋 Planned — named directly in founder direction 2026-08-18 as a proposed slice of **Sprint 5 — Water & Peptides** ([[Roadmap]]). The concept is clear and the math is well-defined; what is not settled is the unit model's edge behavior and how the derivation is shown.
+📋 Planned — named directly in founder direction 2026-08-18 as a proposed slice of **Sprint 3 — Water + Peptides** ([[Roadmap]]), proposed slice **3.7**. *Sprint 5 when recorded; moved forward by the founder roadmap reorder of 2026-08-21, which put Water + Peptides ahead of Journey — so this is now due in the next sprint rather than the fourth one out.* The concept is clear and the math is well-defined; what is not settled is the unit model's edge behavior and how the derivation is shown.
 
 ## Category
 
@@ -67,7 +67,7 @@ This is the feature that makes VITA credible to GLP-1 users and peptide trackers
 
 ## Dependencies
 
-- **User Peptide Setup must exist first** — vial strength and reconstitution volume are the calculator's inputs. That is the preceding Sprint 5 slice (Peptide Data Foundation).
+- **User Peptide Setup must exist first** — vial strength and reconstitution volume are the calculator's inputs. That is the preceding slice, 3.5 — Peptide Definition + User Setup Architecture.
 - **A typed unit model** shared across setup, calculator, and log entry.
 - **A testing framework decision** — see above.
 - **The medical/legal boundary** ([[Open Questions]] #17): the calculator performs arithmetic on user-supplied numbers and must not drift into recommending a dose. Presenting a conversion is not the same as advising a dose, and the copy must keep that line visible.
@@ -80,7 +80,7 @@ This is the feature that makes VITA credible to GLP-1 users and peptide trackers
 
 ## Related Ideas
 
-[[Injection Site Tracking]] — the other half of making a peptide log genuinely interactive; both are proposed Sprint 5 slices.
+[[Injection Site Tracking]] — the other half of making a peptide log genuinely interactive; both are proposed Sprint 3 slices.
 
 ## Tags
 
@@ -92,12 +92,12 @@ This is the feature that makes VITA credible to GLP-1 users and peptide trackers
 
 **Current Status:** 🟡 Needs Refinement — the behavior is fully specified; the unit model's edge cases (rounding, syringe types, precision displayed) and how the derivation is surfaced still need design.
 
-**Next Step Required:** Define the typed unit model and the rounding/precision rules, with the test cases written alongside them — at Sprint 5 planning, not before.
+**Next Step Required:** Define the typed unit model and the rounding/precision rules, with the test cases written alongside them — at Sprint 3 planning, not before.
 
-**Estimated Sprint:** Sprint 5 — Water & Peptides (proposed slice 4).
+**Estimated Sprint:** Sprint 3 — Water + Peptides (proposed slice 3.7).
 
 **Dependencies:**
-- User Peptide Setup (preceding Sprint 5 slice)
+- User Peptide Setup (preceding Sprint 3 slice, 3.5)
 - Testing framework decision
 - Medical/legal boundary — [[Open Questions]] #17
 

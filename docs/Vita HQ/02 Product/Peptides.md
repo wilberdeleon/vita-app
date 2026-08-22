@@ -19,9 +19,9 @@ Built in Slice 0.7 under `src/app/(vita)/peptides/`:
 
 ## Target state
 
-**Sprint 5 — Water & Peptides** ([[Roadmap]]). *Corrects the earlier note here that Peptides had no sprint anywhere — true under the 2026-07-09 plan, resolved by the 2026-08-17 restructure ([[Open Questions]] #11, closed).*
+**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the next sprint after Fuel.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Peptides its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position, which means the catalog sourcing and medical-content questions below are now due sooner.
 
-Sprint 2 preserves the existing Peptide log but **deliberately does not extend it**; the real work is Sprint 5.
+Sprint 2 preserves the existing Peptide log but **deliberately does not extend it**; the real work is Sprint 3. The compact Peptides module on the redesigned [[Fuel]] screen becomes a real entry point and summary backed by that work — Sprint 3 does **not** redesign Fuel.
 
 ### Founder direction, 2026-08-18
 
@@ -76,8 +76,8 @@ Engineering detail in repo `docs/09-Technical-Documentation.md` → "Future arch
 ## Dependencies / open questions
 
 - **Placement:** same question as [[Water]] — core area in the Product Bible, absent from primary navigation ([[Open Questions]] #4).
-- **Purple is shared with Atlas.** Fine while peptides is a quiet flow; **revisit before Sprint 5** — this direction makes Peptides substantially less quiet ([[Color System]]).
+- **Purple is shared with Atlas.** Fine while peptides is a quiet flow; **revisit before Sprint 3** — this direction makes Peptides substantially less quiet ([[Color System]]).
 - **Health-data sensitivity:** medication data is among the most sensitive data Vita will hold. Storage, encryption, and disclosure posture must be decided before live data ships ([[Supabase & Database]]).
-- **Catalog sourcing and legal boundary** — [[Open Questions]] #17, owner: founders, **before** Sprint 5 implementation.
+- **Catalog sourcing and legal boundary** — [[Open Questions]] #17, owner: founders, **before** Sprint 3 implementation — now the next sprint.
 
 **Related:** [[Product Overview]] · [[Settings]] · [[Future Features]]

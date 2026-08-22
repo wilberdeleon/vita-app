@@ -13,7 +13,7 @@ tags: [atlas, voice, conversational, most-distant-capability]
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as Sprint 6 (Premium), Slice 5 — still deliberately the most distant capability, just now with a scheduled home rather than an open-ended "eventually."
+📋 Planned — promoted 2026-07-09. Named directly in the then-official [[Roadmap]] as Premium, Slice 5 — deliberately the most distant capability. **⚠️ Premium is no longer a scheduled sprint** since the 2026-08-17 restructure, so it is back to an open-ended "eventually" ([[Open Questions]] #14).
 
 ## Category
 
@@ -74,14 +74,14 @@ The single most premium-feeling capability Vita could ship — a strong Elite-ti
 
 *Portfolio-review snapshot — distinct from Status above (lifecycle stage). This tracks how close the idea is to a buildable sprint.*
 
-**Current Status:** 🟡 Needs Refinement — roadmapped, but voice infrastructure is entirely unexplored and text coaching (Sprint 4) has to prove itself first.
+**Current Status:** 🟡 Needs Refinement — voice infrastructure is entirely unexplored and text coaching (**Sprint 6 — Atlas**) has to prove itself first.
 
-**Next Step Required:** Prove Atlas text coaching quality in Sprint 4; separately scope voice infrastructure (provider, latency, on-device vs. cloud).
+**Next Step Required:** Prove Atlas text coaching quality in Sprint 6; separately scope voice infrastructure (provider, latency, on-device vs. cloud).
 
-**Estimated Sprint:** Sprint 6 — Premium, Slice 5
+**Estimated Sprint:** ⚠️ none — Premium, Slice 5 under the old structure; unscheduled today
 
 **Dependencies:**
-- Atlas text coaching maturity (Sprint 4)
+- Atlas text coaching maturity (Sprint 6 — Atlas)
 - Voice infrastructure selection
 - Sensitive-moment tone/copy work ([[Atlas Personality]])
 

@@ -14,10 +14,10 @@
 
 | Idea | Status | Priority | Tier |
 |---|---|---|---|
-| [[Health Age]] | 📋 Planned — Sprint 5 | Critical | Pro |
-| [[Biomarker Age]] | 📋 Planned — Sprint 5 | High | Elite |
+| [[Health Age]] | 📋 Planned — ⚠️ no scheduled sprint | Critical | Pro |
+| [[Biomarker Age]] | 📋 Planned — ⚠️ no scheduled sprint | High | Elite |
 | [[Longevity Dashboard]] | 📝 Defined | High | Elite |
-| [[Peptide Dose Calculator]] | 📋 Planned — Sprint 5 | High | Free |
-| [[Injection Site Tracking]] | 📋 Planned — Sprint 5 | Medium | Free |
+| [[Peptide Dose Calculator]] | 📋 Planned — **Sprint 3** | High | Free |
+| [[Injection Site Tracking]] | 📋 Planned — **Sprint 3** | Medium | Free |
 
 **Related:** [[Innovation Lab]] · [[Future Features]] · [[Long-Term Vision]]

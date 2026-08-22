@@ -13,7 +13,7 @@ tags: [atlas, fuel, nutrition, image-understanding, ocr, screenshot-import, prem
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as Sprint 3 (Fuel), Slice 7, under the name **"Screenshot Food Analysis."**
+📋 Planned — promoted 2026-07-09. Named in the then-official [[Roadmap]] as Fuel, Slice 7, under the name **"Screenshot Food Analysis."** **⚠️ Explicitly deferred out of Sprint 2 — Fuel's approved scope**, so it currently has no scheduled sprint ([[Open Questions]] #14).
 
 ## Category
 
@@ -86,9 +86,9 @@ Everything the founders named, in rough order of how naturally each extends the 
 
 **Current Status:** 🟢 Concept Complete
 
-**Next Step Required:** None — promoted to the official roadmap; awaiting Sprint 3 to begin.
+**Next Step Required:** Founder decision on where this lands, now that it is deferred out of Fuel's approved scope.
 
-**Estimated Sprint:** Sprint 3 — Fuel, Slice 7 ("Screenshot Food Analysis")
+**Estimated Sprint:** ⚠️ none — was Fuel, Slice 7 ("Screenshot Food Analysis") under the old structure; deferred out of Sprint 2 scope
 
 **Dependencies:**
 - Atlas Vision

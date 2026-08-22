@@ -13,7 +13,7 @@ tags: [biomarker-age, longevity, labs, trust-sensitive, post-health-age]
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as Sprint 5 (Health), Slice 4. The concept is clear; data-entry mechanics and scientific claims are both still open.
+📋 Planned — promoted 2026-07-09. Named directly in the then-official [[Roadmap]] as Health, Slice 4. **⚠️ Health is no longer a scheduled sprint** since the 2026-08-17 restructure ([[Open Questions]] #14). The concept is clear; data-entry mechanics and scientific claims are both still open.
 
 ## Category
 
@@ -79,7 +79,7 @@ The strongest Elite-tier justification in the current backlog — a feature genu
 
 **Next Step Required:** Wait for [[Health Age]] to ship and prove the scoring model; separately resolve the lab-data ingestion mechanism (manual entry vs. OCR vs. lab API).
 
-**Estimated Sprint:** Sprint 5 — Health, Slice 4
+**Estimated Sprint:** ⚠️ none — Health, Slice 4 under the old structure; unscheduled today
 
 **Dependencies:**
 - [[Health Age]] shipping first

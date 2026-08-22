@@ -18,7 +18,7 @@ Primary navigation (founder decision, 2026-07-06): **Dashboard · Fuel · My Jou
 | Atlas | The AI health strategist (V1: polished placeholder) | [[Atlas]] |
 | Settings | Profile, preferences, privacy | [[Settings]] |
 
-Supporting flows (built, reached from Dashboard/quick actions rather than the dock): [[Water]] and [[Peptides]]. Their long-term placement is an [[Open Questions|open question]].
+Supporting flows (built, reached from Dashboard/quick actions and from the [[Fuel]] screen's compact modules rather than the dock): [[Water]] and [[Peptides]]. Both become real, persisted features in **Sprint 3 — Water + Peptides**, the next sprint after Fuel following the founder roadmap reorder of 2026-08-21 ([[Roadmap]]). Their long-term navigation placement is still an [[Open Questions|open question]] (#4).
 
 ## Navigation as implemented (verified 2026-07-06; Settings placement locked 2026-07-09)
 

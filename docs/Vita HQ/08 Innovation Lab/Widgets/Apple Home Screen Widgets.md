@@ -13,7 +13,7 @@ tags: [widgets, ios, widgetkit, home-screen, atlas, engagement, premium, free-ti
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as Sprint 6 (Premium), Slice 1 ("Widgets"). Live Activities (this idea's own future enhancement) was additionally pulled forward into its own Slice 2, ahead of this idea's other future enhancements.
+📋 Planned — promoted 2026-07-09. Named directly in the then-official [[Roadmap]] as Premium, Slice 1 ("Widgets"). **⚠️ Premium is no longer a scheduled sprint** since the 2026-08-17 restructure ([[Open Questions]] #14). Live Activities (this idea's own future enhancement) was additionally pulled forward into its own Slice 2, ahead of this idea's other future enhancements.
 
 ## Category
 
@@ -98,9 +98,9 @@ Everything the founders named, in the order given:
 
 **Current Status:** 🟢 Concept Complete
 
-**Next Step Required:** None — promoted to the official roadmap; awaiting Sprint 6 to begin.
+**Next Step Required:** Founder decision on where this lands, now that Premium has no scheduled sprint.
 
-**Estimated Sprint:** Sprint 6 — Premium, Slice 1 ("Widgets"); Live Activities specifically is Slice 2 of the same sprint.
+**Estimated Sprint:** ⚠️ none — Premium, Slice 1 ("Widgets") under the old structure, with Live Activities as Slice 2; unscheduled today.
 
 **Dependencies:**
 - Live data (all domains)

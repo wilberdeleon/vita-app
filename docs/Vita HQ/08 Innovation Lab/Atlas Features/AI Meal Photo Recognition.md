@@ -59,7 +59,7 @@ The single most demo-able, most viscerally impressive AI moment currently in the
 - **Generic food/nutrition database** — a *different* data need than Mobile Order Screenshot Import's restaurant-menu data: this needs broad ingredient- and dish-level nutrition data (USDA-style), which sharpens rather than duplicates the open food-database provider question on [[Fuel]]
 - **Honest accuracy ceiling.** Single-image portion/volume estimation has real, industry-known error margins with no reference object or depth data. This should shape both the UX (review-and-edit is mandatory, not optional polish) and any marketing language (a fast draft, not a precise measurement) — overpromising accuracy here is a direct trust risk ([[Core Principles]] #5)
 - Live [[Fuel]] data model (Sprints 1–5 — currently mock)
-- Camera capture flow and permissions — Vita's only existing camera work today is the barcode scanner, currently a static mock ([[Fuel]] Sprint 3 scope, renumbered from Sprint 2 under the old structure)
+- Camera capture flow and permissions — Vita's only existing camera work today is the barcode scanner — **real camera scanning shipped in Sprint 2 — [[Fuel]]** (2026-08-21), so the permission and camera groundwork now exists
 
 ## Future Enhancements
 

@@ -37,6 +37,18 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Binding constraints:** do not upgrade the Expo SDK · no provider secrets in the client · verify provider licensing before caching third-party data · [[Water]] and [[Peptides]] preserved but not expanded · the approved visual design stays locked.
 
+## Sprint 3 — Water + Peptides — ⬜ Next, not opened
+
+**Roadmap reorder, founder decision 2026-08-21.** Water + Peptides moves ahead of [[My Journey|Journey]] and becomes Sprint 3; Journey / Weight becomes Sprint 4 and Journey / Photos Sprint 5. Reason: establish more of VITA's daily health-tracking infrastructure before beginning the larger Journey experience. **Journey is deferred, not cancelled or reduced.** See [[Roadmap]] and [[Decision Log]].
+
+**Objective:** bring both daily logs to real, persisted functionality — [[Water]] and [[Peptides]] as genuinely functional health-tracking features rather than the visual mocks they are today, backing the compact Hydration and Peptides modules on the redesigned [[Fuel]] screen. **Fuel is not redesigned again.**
+
+**Proposed slices (illustrative, not yet approved):** Sprint Foundation / Shared Daily Tracking Architecture → Water Data Model + Persistence → Water Logging + Goal Experience → Water Visual Polish / Fuel Integration → Peptide Definition + User Setup Architecture → Peptide Logging + History → Dose / Unit Calculator → Injection Site Tracking → Peptide UX / Fuel Integration → Sprint Audit / Polish. Full scope on [[Roadmap]].
+
+**Entry conditions — none met yet.** Sprint 3 opens only after Sprint 2's final physical-device QA is accepted by the founders, Sprint 2 is merged into `main`, and a fresh branch (expected `sprint-3-water-peptides`) is cut from `main`. No slice is scoped or approved and no branch exists.
+
+**Open before implementation:** peptide catalog sourcing and the medical/legal boundary ([[Open Questions]] #17) · who owns the hydration goal preference, Water or [[Settings]] ([[Open Questions]] #16) · Peptides sharing purple with [[Atlas]] ([[Color System]]).
+
 ### Definition of done (from the Build Handbook)
 
 Functionality works · UI matches the Design System · no known critical bugs · documentation updated · audit completed · founder approval.

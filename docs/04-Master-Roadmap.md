@@ -6,7 +6,7 @@ It outlines the major phases, sprints, and milestones that move the product from
 
 It intentionally avoids implementation details. Those belong in the Slice Tracker and Technical Documentation.
 
-**Source of truth:** this file mirrors the founders' official Sprint Roadmap. **Restructured 2026-08-17 (founder authorization, Sprint 2 approval)** — this supersedes the 8-sprint structure issued 2026-07-09 (Foundation → Dashboard → Journey → Fuel → Atlas → Health → Premium → Beta) that previously lived here. See "What changed in the 2026-08-17 restructure" below for what moved and what is no longer scheduled. Vita HQ (`docs/Vita HQ/01 Vision/Roadmap.md`) mirrors this page; update both together if the plan changes again.
+**Source of truth:** this file mirrors the founders' official Sprint Roadmap. **Reordered 2026-08-21 (founder decision): Water + Peptides moves ahead of Journey.** The order is now Fuel → Water + Peptides → Journey / Weight → Journey / Photos → Atlas → Settings → Final Polish. Journey is deferred, not cancelled or reduced — see "What changed in the 2026-08-21 reorder" below. **Restructured 2026-08-17 (founder authorization, Sprint 2 approval)** — this supersedes the 8-sprint structure issued 2026-07-09 (Foundation → Dashboard → Journey → Fuel → Atlas → Health → Premium → Beta) that previously lived here. See "What changed in the 2026-08-17 restructure" below for what moved and what is no longer scheduled. Vita HQ (`docs/Vita HQ/01 Vision/Roadmap.md`) mirrors this page; update both together if the plan changes again.
 
 ---
 
@@ -17,6 +17,8 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 Objective: turn Fuel from a set of presentation-only screens into a real nutrition tracking system — one shared nutrition domain driving both Fuel and Home, real food providers, real barcode scanning, and food logging that survives a restart.
 
 Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, and the App-Wide Visual Consistency Pass.
+
+**Next: Sprint 3 — Water + Peptides.** It opens only after Sprint 2's final physical QA is accepted, Sprint 2 is merged into `main`, and a fresh branch (expected `sprint-3-water-peptides`) is created off `main`.
 
 ---
 
@@ -30,7 +32,7 @@ Projects define the product. Sprints define major milestones. Slices define indi
 
 ---
 
-# Sprint Plan (official, founders 2026-08-17)
+# Sprint Plan (official — founders 2026-08-17, reordered 2026-08-21)
 
 | Sprint | Objective | Status |
 |---|---|---|
@@ -39,9 +41,9 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | 1 — Dashboard / Home | Build the Home experience that defines the quality standard for the app | ✅ Complete |
 | — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
 | **2 — Fuel** | **Build the smartest nutrition experience possible** | **🟡 Current** |
-| 3 — Journey / Weight | The weight half of the Journey experience | ⬜ Planned |
-| 4 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
-| 5 — Water & Peptides | Bring both existing logs to real, persisted functionality | ⬜ Planned |
+| **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ⬜ **Next** |
+| 4 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
+| 5 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
 | 6 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |
 | 7 — Settings / Account | Profile, notifications, preferences, units, appearance, privacy | ⬜ Planned |
 | 8 — Final Polish & Animations | Motion, micro-interactions, and final quality pass | ⬜ Planned |
@@ -124,11 +126,106 @@ Status: 🟡 In Progress
 
 ---
 
-# Sprint 3 — Journey / Weight
+# Sprint 3 — Water + Peptides
+
+Objective: build out VITA's daily health-tracking infrastructure beyond food — turn Water and Peptides from the lightweight logs they are today into real, persisted, date-aware features.
+
+Deliverable: Water and Peptides as genuinely functional health-tracking experiences, at the quality bar Sprint 2 set for Fuel, feeding the compact Hydration and Peptides modules on the redesigned Fuel screen.
+
+**Moved here 2026-08-21 by founder decision** — was Sprint 5 under the 2026-08-17 structure. Nothing in its scope was cut; only its position changed. The reasoning: establish more of VITA's daily health-tracking infrastructure before starting the larger Journey experience. See "What changed in the 2026-08-21 reorder" below.
+
+**Resolves a previously flagged gap.** Water and Peptides had no sprint anywhere in the 2026-07-09 roadmap — logged as Gap #1 and #2 there and as Open Question #11. The 2026-08-17 restructure closed that gap; this reorder moves the sprint earlier.
+
+## Entry conditions
+
+Sprint 3 opens only after all three are true:
+
+1. Sprint 2 final physical-device QA is accepted by the founders.
+2. Sprint 2 is merged into `main`.
+3. A fresh sprint branch is created off `main` — expected name `sprint-3-water-peptides`.
+
+None of these have happened yet. The branch is not created during planning.
+
+## Why Water and Peptides are one sprint
+
+Both already live inside the Fuel / daily-health-tracking ecosystem, and both need the same class of machinery: daily logging, a user goal or saved setup, history, editing, persistence, date awareness, daily rollover, and a compact summary surfaced on Fuel. Building them together means that machinery is designed once, with two real consumers proving it, rather than being invented twice.
+
+**This is not an instruction to force one universal data model.** Shared infrastructure exists only where it is genuinely reusable — date-keyed daily logs, persistent repositories, add/edit/delete flows, daily summaries, history, Fuel landing summaries, and app-lifecycle date rollover are the plausible candidates. A hydration entry (an amount and a unit) and a peptide administration (a compound, a reconstitution-derived dose, a site, a time) have genuinely different domain shapes; where they differ, they stay separate. Sprint 2's Food Definition ≠ Food Entry separation is the precedent for keeping distinct concerns distinct.
+
+## Fuel ownership — Sprint 3 extends Fuel, it does not redesign it
+
+The redesigned Fuel screen is approved and finished. Its compact **Hydration** and **Peptides** modules are the entry points and daily summaries for this sprint's work — Sprint 3 backs them with real functionality and real numbers instead of mock values.
+
+**No second Fuel landing redesign is planned or authorized.** Sprint 3 changes what those modules display and where tapping them leads; it does not re-open Fuel's layout, hierarchy, or visual system.
+
+## Proposed slices — reconciled 2026-08-21
+
+Sprint 3 is substantial enough that it must not be treated as one implementation task. The six-slice plan recorded 2026-08-18 is preserved below and expanded into ten controlled slices; every original slice survives, and the additions are a shared-foundation slice at the front, finer splits inside Water and Peptides, and an audit slice at the end — matching how Sprint 2 was actually run.
+
+**Slice names and boundaries remain illustrative and are not yet approved.** The sprint is planned and opened properly under the normal slice workflow once the entry conditions above are met.
+
+| # | Slice | Scope | 2026-08-18 slice it derives from |
+|---|---|---|---|
+| 3.1 | Sprint Foundation / Shared Daily Tracking Architecture | The genuinely shared pieces only: date-keyed daily log patterns, persistence layer, daily rollover on app lifecycle, and the Fuel-summary contract | new — extracted from slices 1 and 3 |
+| 3.2 | Water Data Model + Persistence | Hydration entry model, unit model (cups · oz · mL · L), goal storage, date-aware daily state | Water Foundation |
+| 3.3 | Water Logging + Goal Experience | User-defined goal flow, quick-add amounts, custom amount, edit/remove a logged entry | Water Foundation |
+| 3.4 | Water Visual Polish / Fuel Integration | Progress visualization, the Fuel Hydration module backed by real data, motion and refinement | Water Experience |
+| 3.5 | Peptide Definition + User Setup Architecture | Catalog + Custom, the three-part model, vial amount, reconstitution volume, start date, saved setup | Peptide Data Foundation |
+| 3.6 | Peptide Logging + History | Log entry flow, history list, editing, deletion, date awareness | Peptide History & Polish |
+| 3.7 | Dose / Unit Calculator | The reconstitution model and bidirectional syringe units ⇄ mg/mcg conversion, with tests | Peptide Calculator |
+| 3.8 | Injection Site Tracking | Site picker, simple body visual, recent-site history, rotation information | Injection Site Tracking |
+| 3.9 | Peptide UX / Fuel Integration | The Fuel Peptides module backed by real data, disclaimer placement, interaction refinement | Peptide History & Polish |
+| 3.10 | Sprint Audit / Polish | Integrated-system audit, calculator test coverage, edge cases, final verification | new — mirrors Sprint 2's closeout |
+
+**Carried forward from the Sprint 2 closeout audit:** Sprint 2 shipped without a committed test suite, and that audit recommended adding one as the first task of the next sprint. That recommendation now lands on Sprint 3 — which is a good fit, since the dose/unit calculator (3.7) requires thorough tests regardless. See `docs/07-Audit-Log.md` (2026-08-21).
+
+### Water — direction
+
+*Preserved from the founder direction recorded 2026-08-18. Unchanged by the reorder.*
+
+Water exists conceptually inside Fuel today and was deliberately **not** a Sprint 2 focus: Sprint 2 preserved its entry points and necessary integration only, and did not remove it. The deep hydration work belongs here.
+
+The target is a small, useful hydration system rather than a static `5 of 8 cups` counter:
+
+- **User-defined daily goal** in cups, ounces, millilitres, or litres. VITA does not assume every user wants exactly 8 cups. The goal persists until changed. Flow: set goal → log throughout the day → see progress toward it. The long-term goal *preference* may end up owned by Settings (Sprint 7) — sequencing question, tracked in Vita HQ `00 HQ/Open Questions.md`.
+- **Fast logging** via quick amounts (e.g. +8 / +12 / +16 / +24 oz) plus a custom amount, following the user's unit system.
+- **Editing and removing** a logged amount where appropriate — a mis-tap should not be permanent.
+- **A more satisfying progress visual** — fill level, bottle/glass, circular progress, fluid motion, or a clean bar. **Do not assume a literal animated water bottle is automatically right**; design it inside VITA's premium visual system.
+- **Date-aware behavior:** today's intake, daily rollover, goal, progress, and history later. Full hydration analytics are out of scope unless explicitly planned.
+- **Synchronization with Fuel** — the Hydration module on the Fuel screen reads the same state, so the two never disagree.
+
+### Peptides — direction
+
+*Preserved from the founder direction recorded 2026-08-18. Unchanged by the reorder.*
+
+Peptides should become a genuinely interactive tracker rather than a basic logging form, while staying **informational and tracking-oriented**. Founder-stated scope: peptide/product being tracked · vial amount · reconstitution volume · dose · syringe units · injection site · date/time · notes · history · site rotation.
+
+- **Catalog + Custom.** A searchable/selectable peptide list — approved peptide-based medications where appropriate, common research peptides, and a Custom option for anything not listed. Data sourcing and product/legal boundaries must be defined **before** implementation. No catalog data is authored during planning.
+- **Short educational information** per peptide — name, category/class, general mechanism, target/receptor context, high-level research purpose. Brief, factual, and sourced when implemented. No medical claims are authored in advance of that review.
+- **⚠️ Safety/medical boundary.** The feature must clearly distinguish FDA-approved medications from investigational/research compounds, and must not present research compounds as approved treatments. An unobtrusive disclaimer — informational purposes, not medical advice, consult a healthcare professional, research compounds may not be approved for human use — with placement decided during implementation. Exact copy is reviewed then, not now. Do not make the app unusable with a giant disclaimer on every screen. VITA does not prescribe.
+- **Vial / reconstitution model and a bidirectional calculator.** Given vial amount + reconstitution volume (e.g. 10 mg vial, 1 mL bacteriostatic water): entering syringe units shows the calculated mg/mcg dose, and entering a mg/mcg dose shows the equivalent syringe units. This exists specifically because many users think in syringe units and do not intuitively do the conversion. It is a tracking and calculation aid, **not dosing advice**. It must be implemented transparently, with **verified math, normalized internal units (mg · mcg · mL · syringe units — never free-form strings for dose math), and thorough tests**.
+- **Saved regimen/setup** — peptide, vial strength, reconstitution amount, start/setup date, typical dose, schedule where appropriate — so daily logging is fast and vial math is not retyped per injection. Flow: Peptides → select active peptide → enter dose/units → select site → log.
+- **Injection site logging and rotation.** Site taxonomy (abdomen/left/right, thigh/left/right, upper arm, other) researched at implementation. A simple body/model graphic to tap — a clean visual aid, **not** a complex 3D model unless later justified. Rotation support (remember recent sites, show last used, highlight recent areas, suggest another eligible area) is presented as **organizational guidance, not personalized medical advice**; any claim about injection technique or site selection must be sourced and reviewed.
+- **History** — date, peptide, dose, units, site, notes, with viewing, editing, and appropriate deletion, all date-aware. Frequency/consistency/site-rotation views are possible later; complex health analytics are not added automatically.
+- **Data architecture:** keep **Peptide Definition** (what the compound is), **User Peptide Setup** (this user's vial/reconstitution configuration), and **Peptide Log Entry** (one recorded administration) as three separate concerns — mirroring the Food Definition ≠ Food Entry separation Sprint 2 established. Do not collapse them into one record. See `docs/09-Technical-Documentation.md` → "Future architecture considerations".
+
+Standalone proposals for the calculator and site tracking live in the Vita HQ Innovation Lab; this section is the sprint-scope view, not the full proposal.
+
+**Not a provider-integration sprint.** FatSecret and restaurant provider selection stay deferred to launch readiness — see "Launch readiness follow-ups" at the end of this document. Nothing from that list moves into Sprint 3.
+
+Status: ⬜ Planned — next sprint
+
+---
+
+# Sprint 4 — Journey / Weight
 
 Objective: build the weight half of Vita's emotional core.
 
-Deliverable: a Journey experience that motivates through progress, not just data display.
+Deliverable: a Journey experience that motivates through progress, not just data display — weight logging, weight history, and the foundational Journey data architecture everything later builds on.
+
+**Deferred, not reduced (founder decision 2026-08-21).** This was Sprint 3 under the 2026-08-17 structure and now follows Water + Peptides. Journey remains a major pillar of VITA and its next major experience. **Every previously documented requirement, slice, and decision stands unchanged** — only its position in the sequence moved.
+
+The eight slices written for Journey under the earlier structure (Journey Overview · Journey Timeline · Milestones · Achievements · Streak System · Rewards & Celebrations · Journey Detail Screen · Journey Polish) were authored as one sprint and have still not been divided between Weight and Photos. That split is a planning task for whenever this sprint opens. See Vita HQ `01 Vision/Roadmap.md`.
 
 **⚠️ Design-risk flag (Streak System), carried forward from the 2026-07-09 roadmap:** a literal streak that resets to zero on a missed day conflicts with the "Progress over Perfection" principle and the "no guilt mechanics — ever" rule that Journey Stages was explicitly built to satisfy. Resolve the design approach (grace days, a non-punishing "current run" reframing, etc.) before that slice starts.
 
@@ -136,62 +233,13 @@ Status: ⬜ Planned
 
 ---
 
-# Sprint 4 — Journey / Photos
+# Sprint 5 — Journey / Photos
 
 Objective: build the transformation-photo half of the Journey experience.
 
 Deliverable: photo capture, comparison, and progress storytelling that makes change visible.
 
-Status: ⬜ Planned
-
----
-
-# Sprint 5 — Water & Peptides
-
-Objective: bring both existing logs to real, persisted functionality.
-
-Deliverable: Water and Peptides as genuinely functional features rather than the visual mocks they are today.
-
-**Resolves a previously flagged gap.** Water and Peptides had no sprint anywhere in the 2026-07-09 roadmap — logged as Gap #1 and #2 there and as Open Question #11. This sprint closes both.
-
-## Proposed slices — founder direction, 2026-08-18
-
-Recorded ahead of the sprint so the scope is not rediscovered later. **Slice names and boundaries are illustrative and not yet approved**; the sprint is planned and opened under the normal workflow when Sprint 4 completes.
-
-| # | Slice | Scope |
-|---|---|---|
-| 1 | Water Foundation | User-defined daily goal, quick logging, persistence, date-aware daily reset |
-| 2 | Water Experience | Progress visualization, quick-add amounts, polish |
-| 3 | Peptide Data Foundation | Peptide catalog + Custom entry, user vial/reconstitution setup, log entry model |
-| 4 | Peptide Calculator | Reconstitution model and bidirectional syringe units ↔ dose conversion |
-| 5 | Injection Site Tracking | Site picker, simple body visual, site-rotation history |
-| 6 | Peptide History & Polish | Log review, editing, interaction refinement, disclaimer placement |
-
-### Water — direction
-
-Water exists conceptually inside Fuel today and is deliberately **not** a Sprint 2 focus: Sprint 2 preserves its entry points and necessary integration only, and does not remove it. The deep hydration work belongs here.
-
-The target is a small, useful hydration system rather than a static `5 of 8 cups` counter:
-
-- **User-defined daily goal** in cups, ounces, millilitres, or litres. VITA does not assume every user wants exactly 8 cups. The goal persists until changed. Flow: set goal → log throughout the day → see progress toward it. The long-term goal *preference* may end up owned by Settings (Sprint 7) — sequencing question, tracked in Vita HQ `00 HQ/Open Questions.md`.
-- **Fast logging** via quick amounts (e.g. +8 / +12 / +16 / +24 oz) plus a custom amount, following the user's unit system.
-- **A more satisfying progress visual** — fill level, bottle/glass, circular progress, fluid motion, or a clean bar. **Do not assume a literal animated water bottle is automatically right**; design it inside VITA's premium visual system.
-- **Date-aware behavior:** today's intake, daily rollover, goal, progress, and history later. Full hydration analytics are out of scope unless explicitly planned.
-
-### Peptides — direction
-
-Peptides should become a genuinely interactive tracker rather than a basic logging form, while staying **informational and tracking-oriented**. Founder-stated scope: peptide/product being tracked · vial amount · reconstitution volume · dose · syringe units · injection site · date/time · history · site rotation.
-
-- **Catalog + Custom.** A searchable/selectable peptide list with a Custom option for anything not listed. Data sourcing and product/legal boundaries must be defined **before** implementation.
-- **Short educational information** per peptide — name, category/class, general mechanism, target/receptor context, high-level research purpose. Content must come from reliable sources and be written carefully. No medical claims are authored in advance of that review.
-- **⚠️ Safety/medical boundary.** The feature must clearly distinguish FDA-approved medications from investigational/research compounds, and must not present research compounds as approved treatments. An unobtrusive disclaimer — informational purposes, not medical advice, consult a healthcare professional, research compounds may not be approved for human use — with placement decided during implementation. Exact copy is reviewed then, not now. Do not make the app unusable with a giant disclaimer on every screen.
-- **Vial / reconstitution model and a bidirectional calculator.** Given vial amount + reconstitution volume (e.g. 10 mg vial, 1 mL bacteriostatic water): entering syringe units shows the calculated mg/mcg dose, and entering a mg/mcg dose shows the equivalent syringe units. This exists specifically because many users think in syringe units and do not intuitively do the conversion. It must be implemented transparently, with **verified math, normalized internal units (mg · mcg · mL · syringe units — never free-form strings for dose math), and tests**.
-- **Saved regimen/setup** — peptide, vial strength, reconstitution amount, start date, typical dose, schedule where appropriate — so daily logging is fast and vial math is not retyped per injection. Flow: Peptides → select active peptide → enter dose/units → select site → log.
-- **Injection site logging and rotation.** Site taxonomy (abdomen/left/right, thigh/left/right, upper arm, other) researched at implementation. A simple body/model graphic to tap — a clean visual aid, **not** a complex 3D model unless later justified. Rotation support (remember recent sites, show last used, highlight recent areas, suggest another eligible area) is presented as **organizational guidance, not personalized medical advice**; any claim about injection technique or site selection must be sourced and reviewed.
-- **History** — date, peptide, dose, units, site, notes, with editing. Frequency/consistency/site-rotation views are possible later; complex health analytics are not added automatically.
-- **Data architecture:** keep **Peptide Definition** (what the compound is), **User Peptide Setup** (this user's vial/reconstitution configuration), and **Peptide Log Entry** (one recorded administration) as three separate concerns — mirroring the Food Definition ≠ Food Entry separation Sprint 2 established. Do not collapse them into one record. See `docs/09-Technical-Documentation.md` → "Future architecture considerations".
-
-Standalone proposals for the calculator and site tracking live in the Vita HQ Innovation Lab; this section is the sprint-scope view, not the full proposal.
+**Deferred, not reduced (founder decision 2026-08-21).** This was Sprint 4 under the 2026-08-17 structure. Progress photos, photo comparison, and the existing visual concepts are all preserved exactly as documented; only the sprint number changed. It stays immediately after Journey / Weight, which owns the core Journey data architecture it depends on.
 
 Status: ⬜ Planned
 
@@ -237,16 +285,45 @@ Status: ⬜ Planned
 
 ---
 
+# What changed in the 2026-08-21 reorder
+
+**Founder decision: Water + Peptides moves ahead of Journey.** The reason: establish more of VITA's daily health-tracking infrastructure before beginning the larger Journey experience. Fuel, Water, and Peptides are the daily-logging core of the app and share the same patterns; Journey is a bigger, separate experience that benefits from that foundation being real first.
+
+**This is a sequencing change only.** No sprint's scope was cut, reduced, or cancelled, and no work was invented.
+
+| Sprint | Was (2026-08-17) | Now (2026-08-21) |
+|---|---|---|
+| 2 | Fuel | Fuel — unchanged |
+| 3 | Journey / Weight | **Water + Peptides** (was Sprint 5) |
+| 4 | Journey / Photos | **Journey / Weight** (was Sprint 3) |
+| 5 | Water & Peptides | **Journey / Photos** (was Sprint 4) |
+| 6 | Atlas | Atlas — unchanged |
+| 7 | Settings / Account | Settings / Account — unchanged |
+| 8 | Final Polish & Animations | Final Polish & Animations — unchanged |
+
+The reorder is a rotation inside sprints 3–5. **Sprints 6, 7, and 8 keep their existing numbers**, and the relative order of everything after Journey is unchanged.
+
+**Preserved explicitly:**
+
+- **Journey is deferred, not cancelled.** It remains a major pillar of VITA and the next major experience after Sprint 3. Weight planning, weight logging and history, the Journey data architecture, progress views, progress photos, photo comparisons, and every existing visual concept stay exactly as documented. Only their scheduling changed.
+- **Journey / Weight still comes before Journey / Photos** — Weight owns the core Journey data architecture that Photos builds on.
+- **Sprint 2 — Fuel's scope is unchanged.** Nothing is added to it retroactively.
+- **Water and Peptides scope is unchanged** — the founder direction recorded 2026-08-18 is preserved in full under Sprint 3 above, expanded from six proposed slices to ten so the sprint is implementable in controlled chunks.
+- **FatSecret and restaurant provider selection remain deferred to launch readiness.** They do not move into Sprint 3. Sprint 3 is not a provider-integration sprint.
+- **Health and Premium remain unscheduled**, and the five orphaned Innovation Lab ideas keep their 📋 Planned status. This reorder does not resolve that — it is still flagged for founder attention below.
+
+---
+
 # What changed in the 2026-08-17 restructure
 
 Recorded so nothing is silently dropped. The prior structure (founders, 2026-07-09) was: Foundation → Dashboard → Journey → Fuel → Atlas → Health → Premium → Beta.
 
 **Moved:**
 - **Fuel** 3 → **2** (confirms the 2026-08-01/02 reprioritization ahead of Journey; the repo doc previously still read "Sprint 2 = Journey, Sprint 3 = Fuel", which is what this restructure corrects).
-- **Journey** 2 → split across **3 (Weight)** and **4 (Photos)**.
+- **Journey** 2 → split across **3 (Weight)** and **4 (Photos)** *(both renumbered again on 2026-08-21 — now 4 and 5)*.
 - **Atlas** 4 → **6**.
 
-**Added:** Sprint 0.1 and the Visual Consistency Pass recorded as first-class completed entries · **Sprint 5 — Water & Peptides** · **Sprint 7 — Settings / Account**.
+**Added:** Sprint 0.1 and the Visual Consistency Pass recorded as first-class completed entries · **Water & Peptides** as a sprint of its own, numbered 5 at the time *(moved to Sprint 3 on 2026-08-21)* · **Sprint 7 — Settings / Account**.
 
 **Replaced:** Sprint 7 — Beta → **Sprint 8 — Final Polish & Animations**. The Beta sprint's non-polish slices (Analytics, Crash Reporting, App Store Preparation, Final QA & Launch Checklist) have no explicit home in the new structure.
 

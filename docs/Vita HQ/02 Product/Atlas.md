@@ -19,16 +19,16 @@
 
 ## Target state — ⚠️ scope reversed 2026-07-09
 
-**Sprint 4** of the [[Roadmap]] (renumbered from Sprint 6 under the old structure): Atlas Home, Chat Experience, **Meal Planning** ([[Meal Planning]], promoted to 📋 Planned), **Workout Planning** ([[Workout Generation]], promoted to 📋 Planned), Health Guidance, Memory & Context, Recommendations, Atlas Polish.
+**Sprint 6** of the [[Roadmap]] (Sprint 4 under the 2026-07-09 numbering; renumbered to 6 by the 2026-08-17 restructure and unchanged by the 2026-08-21 reorder): Atlas Home, Chat Experience, **Meal Planning** ([[Meal Planning]], promoted to 📋 Planned), **Workout Planning** ([[Workout Generation]], promoted to 📋 Planned), Health Guidance, Memory & Context, Recommendations, Atlas Polish.
 
-This **directly reverses** the prior locked decision — "Atlas V1 is a polished placeholder only. Do not implement AI coaching yet" (repo Master Roadmap Sprint 6 scope decision, logged in the [[Decision Log]]). The new official roadmap commits to a full AI health coach as part of the core Sprint plan, not a post-V1 stretch goal. See the [[Decision Log]] for the superseding entry.
+This **directly reverses** the prior locked decision — "Atlas V1 is a polished placeholder only. Do not implement AI coaching yet" (repo Master Roadmap Atlas scope decision under the old numbering, logged in the [[Decision Log]]). The new official roadmap commits to a full AI health coach as part of the core Sprint plan, not a post-V1 stretch goal. See the [[Decision Log]] for the superseding entry.
 
-**Voice Atlas** ([[Voice Atlas]], promoted to 📋 Planned) lands later, in **Sprint 6 — Premium**, consistent with it being sequenced last in [[Atlas Capabilities]]'s recommendation (voice amplifies whatever coaching quality already exists, so text has to be proven first).
+**Voice Atlas** ([[Voice Atlas]], promoted to 📋 Planned) lands later, in the **Premium** set — ⚠️ currently unscheduled since the 2026-08-17 restructure ([[Open Questions]] #14) — consistent with it being sequenced last in [[Atlas Capabilities]]'s recommendation (voice amplifies whatever coaching quality already exists, so text has to be proven first).
 
 ## Future ideas
 
 - Atlas presence across the app (Dashboard nudges, Journey milestone commentary) rather than only a tab
-- [[Advanced Coaching (Proactive Check-Ins)]] — not explicitly named in Sprint 4, but adjacent to its Recommendations slice and Sprint 6's Smart Notifications slice
+- [[Advanced Coaching (Proactive Check-Ins)]] — not explicitly named in the Atlas sprint, but adjacent to its Recommendations slice and to Smart Notifications in the unscheduled Premium set
 
 ## Dependencies
 
@@ -38,6 +38,6 @@ This **directly reverses** the prior locked decision — "Atlas V1 is a polished
 ## Open questions
 
 - Does the `planet` dock icon survive the space-aesthetic removal decision? ([[Open Questions]] #8)
-- The scope reversal itself is now committed at the roadmap level, but the underlying [[Future AI]] engineering decisions (model, cost, privacy) remain entirely unresolved — the roadmap names *what* ships in Sprint 4, not *how*.
+- The scope reversal itself is now committed at the roadmap level, but the underlying [[Future AI]] engineering decisions (model, cost, privacy) remain entirely unresolved — the roadmap names *what* ships in Sprint 6, not *how*.
 
 **Related:** [[Atlas Personality]] · [[Atlas Capabilities]] · [[Coaching Strategy]] · [[Prompt Library]]

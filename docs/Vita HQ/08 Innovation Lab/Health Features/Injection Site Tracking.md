@@ -13,7 +13,7 @@ tags: [peptides, injection-site, rotation, visual-picker, safety-sensitive]
 
 ## Status
 
-📋 Planned — named directly in founder direction 2026-08-18 as a proposed slice of **Sprint 5 — Water & Peptides** ([[Roadmap]]). The experience is defined; the site taxonomy and the boundary between organizational guidance and medical advice are not.
+📋 Planned — named directly in founder direction 2026-08-18 as a proposed slice of **Sprint 3 — Water + Peptides** ([[Roadmap]]), proposed slice **3.8**. *Sprint 5 when recorded; moved forward by the founder roadmap reorder of 2026-08-21, which put Water + Peptides ahead of Journey.* The experience is defined; the site taxonomy and the boundary between organizational guidance and medical advice are not.
 
 ## Category
 
@@ -59,7 +59,7 @@ Depth in an underserved niche. Together with the [[Peptide Dose Calculator]], th
 
 ## Dependencies
 
-- **Peptide Log Entry model** must carry a structured site field — the preceding Sprint 5 slice (Peptide Data Foundation). See the three-part model on [[Peptides]]: Peptide Definition ≠ User Peptide Setup ≠ Peptide Log Entry.
+- **Peptide Log Entry model** must carry a structured site field — established in the earlier Sprint 3 slices (3.5 Peptide Definition + User Setup, 3.6 Peptide Logging + History). See the three-part model on [[Peptides]]: Peptide Definition ≠ User Peptide Setup ≠ Peptide Log Entry.
 - **Site taxonomy research** at implementation.
 - **Medical-content review** for any wording that touches technique or site choice — [[Open Questions]] #17.
 - A body graphic asset that fits VITA's visual system ([[Design Bible]]) — quiet and diagrammatic, not clinical or alarming.
@@ -72,7 +72,7 @@ Depth in an underserved niche. Together with the [[Peptide Dose Calculator]], th
 
 ## Related Ideas
 
-[[Peptide Dose Calculator]] — the other proposed Sprint 5 peptide slice; together they define the interactive tracker.
+[[Peptide Dose Calculator]] — the other proposed Sprint 3 peptide slice; together they define the interactive tracker.
 
 ## Tags
 
@@ -84,12 +84,12 @@ Depth in an underserved niche. Together with the [[Peptide Dose Calculator]], th
 
 **Current Status:** 🟡 Needs Refinement — the experience is defined; the site taxonomy and the exact wording of rotation guidance are not, and the wording is the risk-bearing part.
 
-**Next Step Required:** Research and fix the site taxonomy, and draft the rotation copy for medical review — at Sprint 5 planning.
+**Next Step Required:** Research and fix the site taxonomy, and draft the rotation copy for medical review — at Sprint 3 planning.
 
-**Estimated Sprint:** Sprint 5 — Water & Peptides (proposed slice 5).
+**Estimated Sprint:** Sprint 3 — Water + Peptides (proposed slice 3.8).
 
 **Dependencies:**
-- Peptide Log Entry model (preceding Sprint 5 slice)
+- Peptide Log Entry model (preceding Sprint 3 slices, 3.5–3.6)
 - Site taxonomy research
 - Medical-content review of rotation language — [[Open Questions]] #17
 
