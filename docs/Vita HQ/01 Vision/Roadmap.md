@@ -20,7 +20,7 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 
 **Sprint 2 — Fuel is 🟡 in progress** (started 2026-08-17, branch `sprint-2-fuel`). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), and the App-Wide Visual Consistency Pass (2026-08-16). See [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what shipped in each.
 
-**Next: Sprint 3 — Water + Peptides**, per the founder reorder of 2026-08-21. It opens only after Sprint 2's final physical QA is accepted, Sprint 2 is merged into `main`, and a fresh `sprint-3-water-peptides` branch is cut from `main`.
+**Next: Sprint 3 — Water + Peptides**, per the founder reorder of 2026-08-21. Sprint 2's final physical QA is accepted and Sprint 2 is merged into `main` (2026-08-21); the one remaining entry condition is cutting a fresh `sprint-3-water-peptides` branch from `main`.
 
 *The prior sequencing warning here — that Fuel and Journey were swapped in build order but not renumbered — is resolved. The 2026-08-17 restructure renumbered them properly; the 2026-08-21 reorder then moved Water + Peptides ahead of Journey.*
 
@@ -151,7 +151,7 @@ Design direction: [[Design Bible]] → "Density and restraint". **Contextual foo
 
 **Why these two together.** Both already live inside the Fuel / daily-health-tracking ecosystem, and both need the same class of machinery: daily logging, a user goal or saved setup, history, editing, persistence, date awareness, daily rollover, and a compact summary on Fuel. Designing that once with two real consumers beats inventing it twice. **This is not a mandate for one universal data model** — shared infrastructure exists only where genuinely reusable (date-keyed daily logs, persistent repositories, add/edit/delete flows, daily summaries, history, Fuel landing summaries, app-lifecycle date rollover). A hydration entry and a peptide administration have different domain shapes; where they differ they stay separate, exactly as Sprint 2 kept Food Definition ≠ Food Entry.
 
-**Entry conditions.** Sprint 3 opens only after Sprint 2's final physical-device QA is accepted, Sprint 2 is merged into `main`, and a fresh branch (expected `sprint-3-water-peptides`) is cut from `main`. None of these have happened yet.
+**Entry conditions.** Sprint 2's final physical-device QA is accepted and Sprint 2 is merged into `main` (2026-08-21). The one remaining condition is cutting a fresh branch (expected `sprint-3-water-peptides`) from `main`.
 
 **Fuel is not redesigned again.** The redesigned Fuel screen is approved and finished. Its compact **Hydration** and **Peptides** modules become real entry points and summaries backed by this sprint's functionality — Sprint 3 changes what they display and where they lead, not Fuel's layout, hierarchy, or visual system. See [[Fuel]].
 

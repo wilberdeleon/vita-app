@@ -18,7 +18,7 @@ Objective: turn Fuel from a set of presentation-only screens into a real nutriti
 
 Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, and the App-Wide Visual Consistency Pass.
 
-**Next: Sprint 3 — Water + Peptides.** It opens only after Sprint 2's final physical QA is accepted, Sprint 2 is merged into `main`, and a fresh branch (expected `sprint-3-water-peptides`) is created off `main`.
+**Next: Sprint 3 — Water + Peptides.** Sprint 2's physical QA is accepted and Sprint 2 is merged into `main` (2026-08-21); the one remaining entry condition is creating a fresh branch (expected `sprint-3-water-peptides`) off `main`.
 
 ---
 
@@ -141,7 +141,7 @@ Deliverable: Water and Peptides as genuinely functional health-tracking experien
 Sprint 3 opens only after all three are true:
 
 1. Sprint 2 final physical-device QA is accepted by the founders.
-2. Sprint 2 is merged into `main`.
+2. Sprint 2 is merged into `main`. ✅ Done 2026-08-21 (merge commit `44eeae6`).
 3. A fresh sprint branch is created off `main` — expected name `sprint-3-water-peptides`.
 
 None of these have happened yet. The branch is not created during planning.

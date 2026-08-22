@@ -6,7 +6,7 @@ VITA is a personal health companion that measures transformation, not just numbe
 
 ## Status
 
-Sprint 0 — Visual Foundation: Complete. Sprint 0.1 — Polish: Complete. Sprint 1 — Dashboard/Home: Complete. App-Wide Visual Consistency Pass: Complete. Sprint 2 — Fuel: In closeout. Sprint 3 — Water + Peptides: Next.
+Sprint 0 — Visual Foundation: Complete. Sprint 0.1 — Polish: Complete. Sprint 1 — Dashboard/Home: Complete. App-Wide Visual Consistency Pass: Complete. Sprint 2 — Fuel: Complete (merged to `main` 2026-08-21). Sprint 3 — Water + Peptides: Next.
 
 Remaining roadmap: Sprint 3 — Water + Peptides · Sprint 4 — Journey / Weight · Sprint 5 — Journey / Photos · Sprint 6 — Atlas · Sprint 7 — Settings / Account · Sprint 8 — Final Polish & Animations.
 

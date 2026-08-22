@@ -19,7 +19,7 @@ The nine-slice plan originally defined on [[Roadmap]] was superseded mid-sprint 
 
 The two prerequisite decisions that gated this sprint's UI work resolved 2026-07-09 (VITA supports Light + Dark via semantic tokens; Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]) both shipped as part of the theme system above.
 
-## Sprint 2 — Fuel — 🟢 Feature-complete, in closeout (started 2026-08-17 · audited 2026-08-21)
+## Sprint 2 — Fuel — ✅ Complete (started 2026-08-17 · audited 2026-08-21 · merged to `main` 2026-08-21)
 
 **Founder-authorized 2026-08-17.** Branch: `sprint-2-fuel`. The 2026-08-17 roadmap restructure makes Fuel officially Sprint 2 (it was Sprint 3 under the 2026-07-09 plan) — see [[Roadmap]] and [[Decision Log]].
 
@@ -45,7 +45,7 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Proposed slices (illustrative, not yet approved):** Sprint Foundation / Shared Daily Tracking Architecture → Water Data Model + Persistence → Water Logging + Goal Experience → Water Visual Polish / Fuel Integration → Peptide Definition + User Setup Architecture → Peptide Logging + History → Dose / Unit Calculator → Injection Site Tracking → Peptide UX / Fuel Integration → Sprint Audit / Polish. Full scope on [[Roadmap]].
 
-**Entry conditions — none met yet.** Sprint 3 opens only after Sprint 2's final physical-device QA is accepted by the founders, Sprint 2 is merged into `main`, and a fresh branch (expected `sprint-3-water-peptides`) is cut from `main`. No slice is scoped or approved and no branch exists.
+**Entry conditions — two of three met.** Sprint 2's final physical-device QA is accepted and Sprint 2 is merged into `main` (2026-08-21, merge commit `44eeae6`). Remaining: cut a fresh branch (expected `sprint-3-water-peptides`) from `main`. No slice is scoped or approved and no branch exists.
 
 **Open before implementation:** peptide catalog sourcing and the medical/legal boundary ([[Open Questions]] #17) · who owns the hydration goal preference, Water or [[Settings]] ([[Open Questions]] #16) · Peptides sharing purple with [[Atlas]] ([[Color System]]).
 

@@ -155,7 +155,7 @@ New: `components/ui/ProgressRing.tsx`'s sibling change is `glass.premium` in `th
 
 ---
 
-## Sprint 2 — Fuel — 🟢 Feature-complete, in closeout (started 2026-08-17 · audited 2026-08-21)
+## Sprint 2 — Fuel — ✅ Complete (started 2026-08-17 · audited 2026-08-21 · founder device QA passed and merged to `main` 2026-08-21)
 
 Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprint 2 Fuel plan. Architecture principle the founders approved explicitly: **prove the nutrition engine before introducing external providers**, so the core loop is testable before a single network call exists.
 
@@ -726,4 +726,4 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Next sprint, per the founder roadmap reorder of 2026-08-21** (Water + Peptides moved ahead of Journey; Journey becomes Sprints 4 and 5). Scope, the ten proposed slices, and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
 
-**Not opened.** No slice is scoped or approved, no branch exists, and no implementation has begun. Sprint 3 opens only after Sprint 2's final physical-device QA is accepted, Sprint 2 is merged into `main`, and a fresh `sprint-3-water-peptides` branch is cut from `main`. Slice-by-slice progress will be tracked here once the sprint is formally opened under the normal workflow.
+**Not opened.** No slice is scoped or approved, no branch exists, and no implementation has begun. Sprint 2's device QA is accepted and Sprint 2 is merged into `main` (2026-08-21); the one remaining entry condition is cutting a fresh `sprint-3-water-peptides` branch from `main`. Slice-by-slice progress will be tracked here once the sprint is formally opened under the normal workflow.
