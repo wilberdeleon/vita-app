@@ -9,7 +9,9 @@ Single source of truth for implementation details: stack, architecture rules, an
 - **Platform:** Native-first — Expo SDK 54 / React Native, managed workflow, EAS builds. TypeScript throughout (strict mode). SDK 54 is pinned to match the current App Store Expo Go client (54.x) so founders can test on real iPhones; upgrade the SDK only when the App Store Expo Go supports it.
 - **Navigation:** Expo Router (file-based) in `src/app/`.
 - **Backend:** Supabase (auth, database, storage). Schema changes via numbered migrations in `supabase/migrations/`.
-- **Deliberately not pre-committed:** state-management library, component library, testing framework. These are per-slice decisions made when a slice needs them.
+- **Deliberately not pre-committed:** state-management library and component library. These are per-slice decisions made when a slice needs them.
+- **Testing (decided Sprint 3 slice 3.1, 2026-08-22):** `jest` with the `jest-expo` preset, pinned to the SDK (`jest-expo@~54.0.18`), plus `@types/jest`. **Dev dependencies only** — no native module, nothing in the app bundle, Expo Go unaffected. Config in `jest.config.js`; tests live in co-located `__tests__` folders as `*.test.ts(x)`; run with `npm test`. Chosen over Vitest because it is Expo's own supported preset and leaves component testing available later without a second migration. This closes the deferral the stack notes carried since Sprint 0 and the open finding from the Sprint 2 closeout audit.
+- **Tests must be timezone-independent.** Build dates from local components (`new Date(y, m, d)`) and assert with local getters. A test that only passes in one timezone teaches people to ignore the suite. Where a timezone-sensitive property matters — the `new Date('YYYY-MM-DD')` UTC trap — state it as a property (round-trip over many days) rather than as a comparison that happens to fail only at negative offsets.
 
 ## Repository layout
 
@@ -19,7 +21,7 @@ Single source of truth for implementation details: stack, architecture rules, an
 - `src/components/ui/` — Design System primitives only, no business logic
 - `src/components/shell/` — floating dock, headers, app frame
 - `src/theme/` — design tokens and theme system
-- `src/lib/` — cross-cutting domain and infrastructure shared by more than one feature (Supabase client, `journeyStages`, `nutrition/`)
+- `src/lib/` — cross-cutting domain and infrastructure shared by more than one feature (Supabase client, `journeyStages`, `daily/`, `nutrition/`)
 - `supabase/` — migrations and edge functions
 - `assets/` — icon, splash, fonts, images
 
@@ -30,6 +32,16 @@ Single source of truth for implementation details: stack, architecture rules, an
 3. **Routes stay thin.** Logic lives in `src/features/`, not in `src/app/` screens.
 4. **One home per concern.** Supabase client only in `src/lib/supabase/`; tokens only in `src/theme/`; every schema change is a migration file.
 5. **Appearance resolves through the theme, never through raw palette surfaces.** Backgrounds, text, and borders come from `useTheme().surfaces`; `palette` supplies theme-invariant values only (brand, domain, macro, semantic colors). Importing `palette.text`/`palette.card`/`palette.background`/`palette.track` into a component pins it to light mode permanently. See [Design System](05-Design-System.md) for the full split and the documented exceptions.
+
+## Shared daily foundation (Sprint 3 slice 3.1)
+
+`src/lib/daily/` holds what every date-keyed feature needs and none of them should own: one local-calendar date model (`dates.ts`), one id scheme (`ids.ts`), one storage namespace and key builder (`keys.ts`), the read-time guards persisted data is validated with (`guards.ts`), the AsyncStorage helpers (`storage.ts`), the day-keyed store (`dayStore.ts`), and the app-lifecycle day rollover (`useDayRollover.ts`).
+
+All of it was written for nutrition in Sprint 2 and promoted unchanged when Water and Peptides needed the same behavior. `src/lib/nutrition` re-exports every moved symbol under its original name, so its public API is unaffected and no screen or feature file changed.
+
+**It is deliberately narrow — there is no shared "entry" type.** A glass of water and a peptide administration have genuinely different shapes, and hiding that behind a type parameter would make both harder to read. Shared infrastructure ends where the domains begin.
+
+**`NutritionRepository` is not built on `dayStore`,** and that is on purpose. It is merged, approved, and holds real user data; rewriting its storage layer to prove a new abstraction would be regression risk with no user-visible gain. Only `NAMESPACE` moved out of `nutrition/data/keys.ts` — every key string it produces is unchanged and is pinned by test, because those keys name data already on users' devices.
 
 ## Nutrition architecture (Sprint 2)
 
@@ -216,7 +228,7 @@ Collapsing these would repeat exactly the mistake the nutrition model avoids: a 
 **Dose math is safety-adjacent and must be treated as such.** The bidirectional calculator (vial amount + reconstitution volume ⇄ syringe units ⇄ mg/mcg) is the reason this feature exists for users who think in syringe units, so it has to be right and it has to be legible:
 
 - **Normalize units internally.** mg · mcg · mL · syringe units, as typed values — never free-form strings for anything feeding a calculation.
-- **Unit tests are a requirement, not a preference,** including rounding behavior and the round-trip property (units → dose → units). This is the first place in VITA where a testing-framework decision (deliberately deferred per the stack notes above) actually has to be made.
+- **Unit tests are a requirement, not a preference,** including rounding behavior and the round-trip property (units → dose → units). The testing-framework decision this used to depend on was made in slice 3.1 — `jest` + `jest-expo`, see the stack notes above — so the calculator slice inherits a working harness rather than choosing one.
 - **Show the derivation, not just the answer.** A calculated dose the user cannot sanity-check is worse than no calculator.
 - The entry snapshot principle applies here too: a log entry records the dose that was actually administered, and later edits to a vial setup must not silently rewrite history.
 

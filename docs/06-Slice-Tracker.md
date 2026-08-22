@@ -727,8 +727,63 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 ---
 
-## Sprint 3 — Water + Peptides — ⬜ Not started
+## Sprint 3 — Water + Peptides — 🟡 In Progress
 
-**Next sprint, per the founder roadmap reorder of 2026-08-21** (Water + Peptides moved ahead of Journey; Journey becomes Sprints 4 and 5). Scope, the ten proposed slices, and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
+**Opened 2026-08-22.** Branch `sprint-3-water-peptides`, cut from `main` at `4ab32c5`. Founder-authorized against the approved Sprint 3 Planning & Architecture Audit; all three entry conditions met (device QA accepted · Sprint 2 merged · branch cut). Scope and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
 
-**Not opened.** No slice is scoped or approved, no branch exists, and no implementation has begun. Sprint 2's device QA is accepted and Sprint 2 is merged into `main` (2026-08-21); the one remaining entry condition is cutting a fresh `sprint-3-water-peptides` branch from `main`. Slice-by-slice progress will be tracked here once the sprint is formally opened under the normal workflow.
+**Slice plan approved by the founders 2026-08-21.** Two changes from the illustrative plan recorded in the roadmap: the test harness folds into 3.1 rather than being deferred, and **the calculator moves ahead of peptide logging** — logging records a dose, so building it before the dose math exists would mean building it twice.
+
+| # | Slice | Objective | Status |
+|---|-------|-----------|--------|
+| 3.1 | Shared Daily Foundation + Test Harness | Promote the shared date/id/key/storage primitives; stand up the first committed test suite. No behavior change | ✅ Built — pending founder review |
+| 3.2 | Water Domain + Persistence | Hydration model, unit normalization, repository, provider; water that actually saves | ⬜ Planned |
+| 3.3 | Water Goal + Logging Experience | First-run goal, quick-add + custom amount, today's entries, edit/delete with Undo | ⬜ Planned |
+| 3.4 | Water Visual Refinement + Fuel/Home Integration | Vertical-fill progress visual, 7-day strip, Fuel Hydration card and Home water tile on real state | ⬜ Planned |
+| 3.5 | Peptide Definitions, Catalog + User Setup | Definition/Setup models, small typed catalog, Custom, setup CRUD | ⬜ Planned |
+| 3.6 | Dose / Unit Calculator | Pure bidirectional syringe-units ⇄ mass conversion, fully tested | ⬜ Planned |
+| 3.7 | Peptide Logging + History | Log entry with snapshot fields, history by date, edit/delete | ⬜ Planned |
+| 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ⬜ Planned |
+| 3.9 | Peptides UX Polish, Safety Copy + Fuel Integration | Landing rebuild, disclaimer placement, Fuel Peptides card on real state | ⬜ Planned |
+| 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
+
+**Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
+
+**Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.1 — Shared Daily Foundation + Test Harness 🟡
+
+**Objective:** promote the genuinely reusable daily/date infrastructure out of the nutrition domain and stand up VITA's first committed automated test suite — with the app behaving identically before and after. An enabling slice; nothing a user can see changes.
+
+**Why it exists.** Two things were true after Sprint 2: the only correct local-calendar date model in the codebase lived inside `src/lib/nutrition`, where Water and Peptides could not reach it without importing the nutrition domain; and the Sprint 2 closeout audit's open finding — no committed tests — was about to be inherited by a sprint containing safety-adjacent dose arithmetic. Both are cheaper to fix before two new domains are built on top than after.
+
+**New — `src/lib/daily/`.** The shared substrate for every date-keyed feature:
+
+| Module | What it is |
+|---|---|
+| `dates.ts` | `LogDate` and the local-calendar date model — **moved from `nutrition/model/dates.ts`, logic byte-identical** |
+| `ids.ts` | `newId(prefix)` — moved from `nutrition/model/foods.ts` |
+| `keys.ts` | `NAMESPACE` plus `dayKey`/`dayKeyPrefix`/`singletonKey` |
+| `guards.ts` | `isRecord`/`isFiniteNumber`/`isNonEmptyString`/`isPositiveNumber` |
+| `storage.ts` | `readJson`/`writeJson`/`removeKey`/`allKeys`, with unparseable JSON treated as absent rather than thrown |
+| `dayStore.ts` | `createDayKeyedStore<T>(domain, parse)` — one storage key per day, caller-supplied record parser |
+| `useDayRollover.ts` | The `AppState → active` local-day rollover, generalized from `NutritionProvider` |
+
+**Deliberately not here: a shared entry type.** A glass of water and a peptide administration have genuinely different shapes, and unifying them behind a type parameter would make both harder to read. Shared infrastructure ends where the domains begin.
+
+**How nutrition compatibility was preserved.** `src/lib/nutrition/index.ts` re-exports every moved symbol under its original name, so its public API is unchanged and **no file under `src/features/` or `src/app/` was touched** — verified by `git diff --name-only`. Inside nutrition, seven files changed: five import-path rewrites, one `NAMESPACE` import, and the rollover swap. `model/foods.ts` re-exports `newId` rather than dropping it, so anything importing it from there still resolves.
+
+**What was deliberately NOT retrofitted.** `NutritionRepository` still uses its own storage helpers and its own key builders rather than `dayStore` and the shared guards. It is approved, merged, and holds real user data; rewriting its storage layer to prove a new abstraction would be regression risk bought with no user-visible gain. Consolidation is a later opportunity, recorded rather than taken.
+
+**Storage keys are a compatibility contract.** Only `NAMESPACE` moved out of `nutrition/data/keys.ts`; every key string it builds is unchanged, and `src/lib/daily/__tests__/keys.test.ts` now pins those exact strings — `vita:v1:foodlog:<date>`, `vita:v1:targets`, `vita:v1:myfoods`, `vita:v1:favorites`, `vita:v1:cache:food:<id>`. These name data already on users' devices; a change here would not throw, it would silently orphan a real food log.
+
+**Test harness — the deferred stack decision, now made.** `jest` + `jest-expo` + `@types/jest`, installed with `npx expo install --dev` so the versions match SDK 54 (`jest-expo@~54.0.18`). **Dev dependencies only — nothing enters the app bundle and no native module was added**, so Expo Go compatibility is untouched. Config is `jest.config.js`, deliberately minimal: the Expo preset, a `__tests__/*.test.ts(x)` match, and source-only paths. Scripts: `npm test`, `npm run test:watch`. `jest-expo` was chosen over Vitest because it is Expo's own supported preset and leaves component testing available later without a second migration.
+
+**62 tests across 4 suites**, all passing. `dates` (36) — formatting and padding, late-night local-calendar behavior, month/year boundaries, a leap day, the non-leap Feb 29 rollover, format-vs-calendar validation, rejection of non-strings, `todayLogDate` bracketed against a midnight crossing, and every month and weekday name. `keys` (11) — the nutrition key strings pinned, plus domain isolation. `guards` (11) — `NaN`/`Infinity`/`null`/array cases. `dayStore` (15) — round-trip, wholesale replacement, key removal on an emptied day, parser rejection including day-mismatch, unparseable JSON, newest-first history, gaps, `maxDays`, and cross-domain isolation.
+
+**Every test is timezone-independent by construction.** Dates are built from local components and checked with local getters, so they pass identically in UTC, Los Angeles, and Auckland. The `new Date('YYYY-MM-DD')` UTC trap is expressed as a **round-trip property over 365 consecutive days** rather than as a direct comparison — asserting the trap directly would only fail in negative-offset timezones and pass everywhere else, which is exactly the machine-dependent test this suite should not contain. No DST-specific test was written; controlling the process timezone is a harness capability this slice did not need, and a fragile version of it would be worse than none.
+
+**Validation.** `npm test` — 62/62 pass · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · `npx expo export --platform ios` — succeeds (3.43 MB bundle) · `npx expo install --check` — reports only the pre-existing `expo`/`expo-constants` patch drift carried from Sprint 2, unchanged here, with `jest-expo` not flagged · `git diff --name-only` — confirms zero files changed under `src/features/` or `src/app/`.
+
+**Verified running in Expo Go on the iOS Simulator, and the run produced an unplanned end-to-end proof of the date model.** The first launch happened on a simulator whose clock still read **2026-08-21**: Fuel rendered `Friday, August 21` and loaded that day's real persisted food log — 2,326 Calories, Breakfast and Lunch populated, Big Mac and Bananas intact — which is direct evidence that **food data written before this slice still reads correctly after it**. The simulator was then rebooted, resyncing its clock to 2026-08-22, and the same build rendered `Saturday, August 22` with an empty day, `0 Calories`, and all four meal slots showing `No foods logged`. Same code, two device dates, the correct log for each. Home rendered correctly on the new date, and Fuel's Hydration (`5 of 8 cups · 63%`) and Peptides (`1 logged today`) modules still show their Sprint 0 fixtures exactly as before — the regression boundary held.
+
+**Not verified:** tap-driven paths, unchanged from the standing limitation — the simulator can be deep-linked and screenshotted but not driven. No physical-device testing was performed in this slice, and none was needed: nothing user-facing changed.

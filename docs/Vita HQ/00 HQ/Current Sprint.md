@@ -19,6 +19,20 @@ The nine-slice plan originally defined on [[Roadmap]] was superseded mid-sprint 
 
 The two prerequisite decisions that gated this sprint's UI work resolved 2026-07-09 (VITA supports Light + Dark via semantic tokens; Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]) both shipped as part of the theme system above.
 
+## Sprint 3 — Water + Peptides — 🟡 In Progress (opened 2026-08-22)
+
+**Founder-authorized 2026-08-22** against the approved Sprint 3 Planning & Architecture Audit. Branch: `sprint-3-water-peptides`, cut from `main`. All three entry conditions met — device QA accepted, Sprint 2 merged, branch cut.
+
+**Objective:** turn [[Water]] and [[Peptides]] from the Sprint 0 placeholder logs they still are into real, persisted, date-aware features at the quality bar Sprint 2 set for [[Fuel]]. Both are genuinely placeholders today: neither saves anything, and both "Add" buttons discard what the user entered.
+
+**Ten approved slices:** Shared Daily Foundation + Test Harness → Water Domain + Persistence → Water Goal + Logging → Water Visual Refinement + Fuel/Home Integration → Peptide Definitions, Catalog + Setup → Dose / Unit Calculator → Peptide Logging + History → Injection Site Tracking → Peptides UX Polish + Safety Copy → Sprint Audit. Live progress: repo `docs/06-Slice-Tracker.md`.
+
+**The calculator comes before logging** — a log entry records a dose, so building logging first would mean building it twice.
+
+**Safety framing the founders set for this sprint.** No field named *typical dose* or anything else implying VITA supplies a medically appropriate amount; if repeat-logging convenience is ever needed it uses neutral user-owned framing such as *last logged amount*. Schedules read **"Scheduled today"**, never "Due today" — VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations. The Sprint 3 catalog carries name, classification, and broad category only; **no educational prose ships until [[Open Questions]] #17 is resolved**.
+
+**Slice 3.1 built (2026-08-22)** — an enabling slice with no user-visible change: the shared daily/date foundation promoted to `src/lib/daily/`, and VITA's **first committed test suite** (`jest` + `jest-expo`, dev-only, 62 tests). Closes the no-tests finding carried out of the Sprint 2 closeout audit.
+
 ## Sprint 2 — Fuel — ✅ Complete (started 2026-08-17 · audited 2026-08-21 · merged to `main` 2026-08-21)
 
 **Founder-authorized 2026-08-17.** Branch: `sprint-2-fuel`. The 2026-08-17 roadmap restructure makes Fuel officially Sprint 2 (it was Sprint 3 under the 2026-07-09 plan) — see [[Roadmap]] and [[Decision Log]].

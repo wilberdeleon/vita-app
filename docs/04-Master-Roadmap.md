@@ -12,13 +12,13 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
-**Sprint 3 — Water + Peptides** · Status: 🟡 Current (planning and architecture approved by the founders 2026-08-21)
+**Sprint 3 — Water + Peptides** · Status: 🟡 In Progress (opened 2026-08-22, branch `sprint-3-water-peptides`)
 
 Objective: turn Water and Peptides from the Sprint 0 placeholder logs they still are into real, persisted, date-aware features at the quality bar Sprint 2 set for Fuel.
 
 Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, the App-Wide Visual Consistency Pass, and **Sprint 2 — Fuel** (audited and merged into `main` 2026-08-21, merge commit `44eeae6`, closed by `473cb59`).
 
-Sprint 3's planning and architecture audit is approved by the founders. Entry conditions: device QA accepted ✅ · Sprint 2 merged ✅ · sprint branch cut — the remaining step.
+Sprint 3's planning and architecture audit is founder-approved and all three entry conditions are met. Slice 3.1 (Shared Daily Foundation + Test Harness) is built and pending founder review.
 
 ---
 
@@ -142,9 +142,9 @@ Sprint 3 opens only after all three are true:
 
 1. Sprint 2 final physical-device QA is accepted by the founders. ✅ Done 2026-08-21.
 2. Sprint 2 is merged into `main`. ✅ Done 2026-08-21 (merge commit `44eeae6`).
-3. A fresh sprint branch is created off `main` — expected name `sprint-3-water-peptides`.
+3. A fresh sprint branch is created off `main` — expected name `sprint-3-water-peptides`. ✅ Done 2026-08-22 (cut from `main` at `4ab32c5`).
 
-Conditions 1 and 2 are met. The branch is not created during planning — it is cut when the sprint is formally opened.
+All three met. Sprint 3 is open; slice-by-slice progress is tracked in `docs/06-Slice-Tracker.md`.
 
 ## Why Water and Peptides are one sprint
 
@@ -213,7 +213,7 @@ Standalone proposals for the calculator and site tracking live in the Vita HQ In
 
 **Not a provider-integration sprint.** FatSecret and restaurant provider selection stay deferred to launch readiness — see "Launch readiness follow-ups" at the end of this document. Nothing from that list moves into Sprint 3.
 
-Status: 🟡 Current — planning and architecture approved 2026-08-21; opening under the normal slice workflow
+Status: 🟡 In Progress — opened 2026-08-22 on branch `sprint-3-water-peptides`; the ten approved slices are tracked in `docs/06-Slice-Tracker.md`
 
 ---
 

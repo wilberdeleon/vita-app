@@ -9,18 +9,17 @@
  * source-agnostic.
  */
 
-import { todayLogDate, type LogDate } from './dates';
+import { todayLogDate, type LogDate } from '../../daily/dates';
+import { newId } from '../../daily/ids';
 import { scaleNutrition } from './nutrition';
 import type { FoodEntry, MealSlot, NutritionFacts, ServingOption, VitaFood } from './types';
 
 /**
- * Collision-resistant enough for a local log: a millisecond timestamp plus
- * random suffix. Deliberately not a uuid dependency — ids never leave the
- * device in Sprint 2, and when Supabase arrives it issues its own.
+ * Re-exported, not redefined. `newId` moved to `src/lib/daily/ids.ts` in
+ * Sprint 3 slice 3.1 so Water and Peptides share one id scheme; keeping the
+ * name exported from here means nothing that imports it had to change.
  */
-export function newId(prefix: string): string {
-  return `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-}
+export { newId };
 
 export type CustomFoodInput = {
   name: string;

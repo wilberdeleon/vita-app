@@ -22,10 +22,10 @@ import {
   useRef,
   type PropsWithChildren,
 } from 'react';
-import { AppState, type AppStateStatus } from 'react-native';
+import { todayLogDate, type LogDate } from '../../daily/dates';
+import { useDayRollover } from '../../daily/useDayRollover';
 import { asyncStorageNutritionRepository } from '../data/asyncStorageRepository';
 import type { NutritionRepository } from '../data/FoodLogRepository';
-import { todayLogDate, type LogDate } from '../model/dates';
 import { toFavorite, type FavoriteFood } from '../model/favorites';
 import { DEFAULT_TARGETS, type FoodEntry, type NutritionTargets, type VitaFood } from '../model/types';
 
@@ -184,15 +184,20 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
    * Day rollover. Someone who logs breakfast, backgrounds the app, and
    * returns the next morning should not be shown yesterday's totals under
    * "Today". Only rolls when the user is actually following today.
+   *
+   * The behavior is unchanged from Sprint 2 — the mechanics moved to
+   * `src/lib/daily/useDayRollover` in slice 3.1 so Water and Peptides get the
+   * same rollover rather than each writing their own AppState listener.
    */
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (status: AppStateStatus) => {
-      if (status !== 'active' || !followToday.current) return;
-      const today = todayLogDate();
-      if (today !== logDateRef.current) void load(today);
-    });
-    return () => subscription.remove();
-  }, [load]);
+  const readLogDate = useCallback(() => logDateRef.current, []);
+  const readFollowToday = useCallback(() => followToday.current, []);
+  const handleRollover = useCallback((today: LogDate) => void load(today), [load]);
+
+  useDayRollover({
+    getCurrentDate: readLogDate,
+    getIsFollowingToday: readFollowToday,
+    onRollover: handleRollover,
+  });
 
   const commit = useCallback(
     async (next: FoodEntry[]) => {

@@ -44,7 +44,7 @@
 ## Engineering (not blocking today)
 
 9. **Supabase project provisioning.** Architecture is in place but no Supabase project is connected (no migrations exist). When a data slice begins: who owns the Supabase org, and which regions/tiers? *Owner: founders + Claude, at first data slice.*
-10. **Deferred stack choices.** State management, component library, and testing framework are deliberately per-slice decisions. First likely to surface: testing, once real data logic lands. *Owner: Claude proposes at the relevant slice.*
+10. **Deferred stack choices.** State management and component library remain deliberately per-slice decisions. **Testing ✅ RESOLVED 2026-08-22** (Sprint 3, slice 3.1): `jest` + `jest-expo`, dev-only, pinned to SDK 54 — see [[Tech Stack]] and [[Decision Log]]. It surfaced exactly where predicted, once real data logic landed and Sprint 3's dose arithmetic made ad-hoc verification untenable. *Owner: Claude proposes at the relevant slice.*
 
 ---
 

@@ -1,14 +1,17 @@
 /**
- * Log dates.
+ * Log dates — VITA's one date model, shared by every daily-tracking domain.
  *
- * A food entry belongs to a *calendar day as the user experienced it*, not
- * to a UTC instant. Someone logging a late dinner at 11pm in Los Angeles
- * means "today", even though UTC has already rolled over. So every log date
- * is derived from the device's local calendar, and `loggedAt` keeps the
- * precise instant separately for ordering.
+ * A logged thing belongs to a *calendar day as the user experienced it*,
+ * not to a UTC instant. Someone logging a late dinner (or a glass of water,
+ * or an injection) at 11pm in Los Angeles means "today", even though UTC
+ * has already rolled over. So every log date is derived from the device's
+ * local calendar, and a separate `loggedAt` instant keeps ordering precise.
  *
- * Sprint 2 is about today, but nothing here is today-only — the same key
- * format supports history whenever a history screen ships.
+ * Written for nutrition in Sprint 2 and promoted here unchanged in Sprint 3
+ * slice 3.1, when Water and Peptides needed the same behavior. Nothing about
+ * it was nutrition-specific; a second date model would only be a second set
+ * of timezone bugs. `src/lib/nutrition` re-exports every name below under
+ * its original name, so its public API is unaffected by the move.
  */
 
 /** 'YYYY-MM-DD' in the device's local timezone. */

@@ -32,7 +32,9 @@ SDK-54 specifics worth knowing (from repo Technical Documentation):
 
 ## Deliberately not chosen (per-slice decisions)
 
-**State-management library · component library · testing framework.** These are decided when a slice actually needs them — an explicit founder-approved position, not an oversight.
+**State-management library · component library.** These are decided when a slice actually needs them — an explicit founder-approved position, not an oversight.
+
+**Testing framework — decided 2026-08-22 (Sprint 3, slice 3.1).** `jest` with Expo's own `jest-expo` preset, pinned to SDK 54, plus `@types/jest`. **Dev dependencies only** — no native module, nothing in the app bundle, Expo Go unaffected. Tests live in co-located `__tests__` folders; `npm test` runs them. Chosen over Vitest because it is Expo's supported preset and leaves component testing available later without a second migration. The deferral ended here because Sprint 3 contains safety-adjacent dose arithmetic that must not ship on ad-hoc verification. Standing rule: **tests must be timezone-independent** — build dates from local components, and express timezone-sensitive behavior as a property rather than a comparison that only fails at some UTC offsets.
 
 ## Running the app
 

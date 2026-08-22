@@ -15,7 +15,7 @@ import {
   type DailyTotals,
   type MealSummary,
 } from '../model/nutrition';
-import type { LogDate } from '../model/dates';
+import type { LogDate } from '../../daily/dates';
 import type { FoodEntry, NutritionTargets } from '../model/types';
 import { useNutrition } from './NutritionProvider';
 
