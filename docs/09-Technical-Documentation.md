@@ -86,7 +86,28 @@ Records carry an optional **`dataQuality`** (0–100): a provider-independent tr
 
 **Caching.** Query results are in-memory with a 5-minute TTL (queries are too varied to persist, and search should feel live). Individual foods are persisted with a 30-day TTL under `vita:v1:cache:food:{vitaId}` — this one is load-bearing, because Food Detail resolves a provider food that is not in My Foods. Neither cache bulk-downloads or accumulates a redistributable copy of a provider database; ODbL's share-alike obligation attaches to publishing a derived database, which this is not.
 
-**Key handling.** The USDA key is a rate-limiting identifier rather than a true secret, which is why `EXPO_PUBLIC_` is acceptable for development. USDA does deactivate keys found published publicly, so **a public release should move these calls behind a proxy.** FatSecret is a different case entirely — its client secret must stay server-side, which is why it is deferred to a slice that can add a Supabase Edge Function.
+**Key handling.** The USDA key is a rate-limiting identifier rather than a true secret, which is why `EXPO_PUBLIC_` is acceptable for development. USDA does deactivate keys found published publicly, so **a public release should move these calls behind a proxy.**
+
+### Provider roster
+
+**Current providers (development and Sprint 2):**
+
+| Provider | Role | Licence / terms posture |
+|---|---|---|
+| **USDA FoodData Central** | Generic, foundational, and raw/basic US foods | CC0 public domain — no retention restriction |
+| **Open Food Facts** | Packaged and branded products, product images, barcode lookup | ODbL data / CC-BY-SA images — attribution required; retaining individual user-chosen records on-device is ordinary API use |
+
+**Deferred provider:**
+
+| Provider | Intended role | Status |
+|---|---|---|
+| **FatSecret** | Restaurant and stronger branded food coverage | **Deferred** by founder decision, 2026-08-21 |
+
+**Why FatSecret is deferred.** Its Developer Terms require removing or re-requesting any Content not explicitly *storable indefinitely* within **24 hours**. The indefinitely-storable list is identifiers only — `food_id`, `serving_id`, `food_category_id` and similar — and does **not** include nutrition values, food names, brand names, serving descriptions, or image URLs. VITA persists all of those permanently inside `FoodEntry`, by design: it is what lets Fuel and Home compute totals with no lookup, no async, and no loading state, and what keeps a logged day truthful after a provider revises a food. **The retention rules conflict with permanent `FoodLogEntry` snapshots, and the snapshots win.** Snapshots are not redesigned during Sprint 2.
+
+A second blocker sits under the intended architecture: FatSecret binds OAuth 2.0 tokens to an IP allowlist, and Supabase Edge Functions cannot provide static egress IPs. FatSecret's client secret would still have to stay server-side whenever this is revisited — that part of the plan was sound.
+
+**No workaround was built.** No ID-only favorites, no history re-fetching, no temporary shim, and `fatsecret` remains excluded from every persisted-definition allowlist. Full findings with quotes: `docs/07-Audit-Log.md` (2026-08-21). Launch-gated re-evaluation and the eight open questions: `docs/04-Master-Roadmap.md` → Launch readiness follow-ups.
 
 ### Recents and Favorites (slice 2.7)
 
@@ -94,7 +115,7 @@ Records carry an optional **`dataQuality`** (0–100): a provider-independent tr
 
 **`foodFromEntry()`** rebuilds a loggable `VitaFood` from an entry snapshot alone, which is what lets a recent survive an expired provider cache, a deleted custom food, or being offline. Opening Recents also re-seeds the food cache from history.
 
-**Favorites** are keyed by `vitaId` and persisted at `vita:v1:favorites`, newest first. `PERSISTABLE_SOURCES` gates whether the food *definition* may be retained: USDA (CC0), Open Food Facts (ODbL — retaining individual user-chosen records on-device is ordinary API use; share-alike attaches to publishing a derived database), and custom foods. **FatSecret is excluded** until its caching/storage terms are verified; a favorite from it will store identity only and resolve live. A stored definition is dropped on read if its source is no longer permitted, so a terms change needs no migration.
+**Favorites** are keyed by `vitaId` and persisted at `vita:v1:favorites`, newest first. `PERSISTABLE_SOURCES` gates whether the food *definition* may be retained: USDA (CC0), Open Food Facts (ODbL — retaining individual user-chosen records on-device is ordinary API use; share-alike attaches to publishing a derived database), and custom foods. **FatSecret is excluded** — its caching/storage terms were verified on 2026-08-21 and permit only identifiers to be retained, so the provider is deferred entirely rather than partially accommodated. No ID-only favorite path was built; see Provider roster above. A stored definition is dropped on read if its source is no longer permitted, so a terms change needs no migration.
 
 ### Barcode scanning (slice 2.8)
 

@@ -170,7 +170,7 @@ Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprin
 | 2.7 | Recent + Favorites | History-derived recents, persisted favorites keyed by `vitaId` | 🟡 Built, pending founder review |
 | 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, OFF→USDA chain | 🟡 Built (pipeline + states verified; live detection needs a physical iPhone) |
 | 2.9 | Fuel Visual Refinement | Fuel landing rebuilt as a nutrition command centre: ring + remaining summary, direct Log Food / Scan, inline meals with per-meal Add Food, compact Hydration/Peptides, Calories terminology | 🟡 Built, pending founder review |
-| 2.10 | Restaurant Coverage | Edge Function proxy + FatSecret adapter (founder-approved, gated on account setup) | ⬜ Planned |
+| 2.10 | Restaurant Provider Research | FatSecret Basic evaluated as a restaurant/branded source: cost, quota, auth, coverage, storage terms | 🔬 **Research COMPLETE — integration DEFERRED** (see below) |
 | 2.11 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
 | 2.12 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
 
@@ -663,3 +663,25 @@ Exact GTIN lookup is untouched: correct record, or honest not-found. No Kroger s
 #### Trace panel removed
 
 The on-screen debug block is gone from both Food Detail and Edit Entry, and `trace.ts` is now console-only — a debug panel does not belong in founder QA once it has done its job. The `traceBarcode` console log stays: it costs nothing and still tells the whole story when a scan misbehaves. "Not the right product?" is now the user-facing answer to a wrong result.
+
+
+### Slice 2.10 — Restaurant Provider Research (FatSecret) 🔬 research complete, integration deferred
+
+**Founder decision, 2026-08-21: defer FatSecret to late-stage / pre-launch provider selection.** Research is finished and sufficient; implementation does not proceed. **Restaurant coverage is NOT delivered** — no adapter, no Edge Function, no credentials, no attribution UI, no persistence change. `fatsecret` stays out of every persisted-definition allowlist, exactly as slice 2.7 left it.
+
+**What the research established** (full findings, with quotes and sources, in `docs/07-Audit-Log.md`, 2026-08-21):
+
+- Basic is **genuinely free** — self-signup, no credit card, **5,000 calls/day**, US dataset. **Premier Free** (unlimited calls, verification required) may be open to start-ups under $1M revenue and funding.
+- Restaurant coverage exists: `food_brands.get` accepts `brand_type` of `"manufacturer"`, `"restaurant"`, or `"supermarket"`, and `foods.search` returns `food_type` of `Generic` or `Brand` with `brand_name`. Actual per-chain coverage is unproven without a live key.
+- Attribution is required, and reaches beyond the app UI into the **App Store / Google Play listing**.
+
+**Why it is deferred — two blockers.**
+
+1. **Storage policy vs. VITA's snapshot architecture.** The Developer Terms require removing or re-requesting any Content not explicitly storable indefinitely **within 24 hours**. The indefinitely-storable list is identifiers only (`food_id`, `serving_id`, `food_category_id`, and similar). Nutrition values, food names, brand names, serving descriptions and image URLs are not on it. `FoodEntry` stores every one of those permanently and deliberately — that is *why* Fuel and Home render totals with no lookup, no async, and no loading state, and why a logged day stays truthful after a provider revises a food.
+2. **Server-side authentication.** FatSecret binds OAuth 2.0 tokens to an IP allowlist (up to 15 addresses on Basic). Supabase's own documentation states Edge Functions **cannot** provide static egress IPs; the documented workaround is a paid static-IP proxy, which reintroduces the cost the project rule forbids. OAuth 1.0 two-legged signing may be exempt, but that rests on community reports rather than documentation.
+
+**The founders' ruling: VITA's architecture wins.** Offline nutrition history, permanent `FoodLogEntry` snapshots, historical consistency, immediate Fuel/Home rendering, and the existing Favorites and Recents architecture are not weakened to accommodate one external provider. **No compromise workaround was built** — no ID-only favorites, no re-fetching history, no temporary shim. Snapshots are not redesigned during Sprint 2.
+
+**Reconsidered only if** FatSecret confirms in writing that logged nutrition may persist in a user's own diary · or VITA deliberately designs a compliant alternative near launch · or a different provider becomes the preferred restaurant source.
+
+Launch-gated follow-up and the eight unresolved questions to put to FatSecret: `docs/04-Master-Roadmap.md` → **Launch readiness follow-ups**.

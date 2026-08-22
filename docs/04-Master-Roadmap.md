@@ -306,3 +306,46 @@ A sprint is complete when:
 - Founder approval has been received.
 
 Only then does development move to the next sprint.
+
+
+---
+
+## Launch readiness follow-ups
+
+Work that is deliberately **not** done during feature sprints because its inputs — pricing, licensing, terms, provider landscape — will have changed by the time VITA is close to shipping. Revisit each of these in the launch-readiness phase, not before.
+
+### Restaurant provider selection
+
+**Status: open. FatSecret research complete 2026-08-21; integration deferred by founder decision.**
+
+VITA's current providers cover generic foods (USDA FoodData Central) and packaged/barcoded products (Open Food Facts) well. The gap is restaurant menu items — McDonald's, Chick-fil-A, Chipotle, Starbucks, Taco Bell, Wendy's, Burger King, Subway — where a user searching `Big Mac` should get *Big Mac — McDonald's*, not a generic hamburger.
+
+Before public launch, evaluate the field again from scratch:
+
+- **FatSecret** — re-open with the questions below answered
+- **Any other viable restaurant/branded provider available at that time**
+- Current **pricing** · **licensing** · **persistence rights** · **coverage** · **API reliability** · **attribution** · **quota** · **authentication requirements**
+
+**Do not assume today's provider landscape will still be the best option at launch.** The 2026 evaluation is a snapshot, not a conclusion.
+
+**Premier Free** may be worth applying for if VITA still qualifies (start-ups under $1M revenue and funding). It removes the 5,000/day quota but is **not known** to change Content storage rights — question 3 below exists to settle that. **Do not apply, create accounts, or obtain credentials without separate authorization.**
+
+### FatSecret — unresolved questions to put to them
+
+Preserved verbatim so they are asked as written rather than paraphrased into something weaker:
+
+1. May FatSecret-derived nutrition values be stored indefinitely once a user explicitly logs that food into their own personal diary/history?
+2. Are food name, restaurant/brand, serving description, and nutrient values considered permanently storable when incorporated into a user-generated food diary entry?
+3. Does Premier Free change any Content storage rights, or only quota/features?
+4. Are OAuth 1.0 two-legged requests subject to the same IP restrictions as OAuth 2.0 token requests?
+5. Is a dynamic serverless egress environment officially supported?
+6. What attribution is required inside a native mobile application?
+7. What exact attribution must appear in App Store / Google Play listings?
+8. Are restaurant menu items fully available under Basic/Premier Free for the U.S. dataset?
+
+Questions 1 and 2 are the decisive ones: a "yes" makes FatSecret straightforward, and a "no" means any integration must be designed around re-fetching rather than snapshots. Evidence and quotes behind all of this: `docs/07-Audit-Log.md` (2026-08-21) and `docs/09-Technical-Documentation.md` → Food providers.
+
+### Also launch-gated
+
+- **Move the USDA key behind a proxy.** It is a rate-limiting identifier rather than a true secret, which is why `EXPO_PUBLIC_` is acceptable in development — but USDA deactivates keys found published publicly.
+- **Open Food Facts attribution sweep.** ODbL data and CC-BY-SA images require attribution wherever shown; today only the barcode-originated Food Detail carries a source line.
