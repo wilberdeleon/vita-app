@@ -128,14 +128,73 @@ describe('isValidLogDate', () => {
   });
 
   /**
-   * Documenting the actual contract rather than the one the name suggests:
-   * this guards the *shape* of a persisted key, not the existence of the day.
-   * Storage keys are the thing it protects, and a key of '2026-02-30' is
-   * unreachable through `toLogDate` — no Date produces it.
+   * Hardened in slice 3.2, before Water began trusting `LogDate` as a
+   * persistence key. The shape test alone accepted days that do not exist,
+   * which made the validator useless as a boundary against a corrupted or
+   * hand-edited record — the only job it has.
    */
-  it('is a format check, not a calendar check', () => {
-    expect(isValidLogDate('2026-02-30')).toBe(true);
-    expect(isValidLogDate('2026-13-01')).toBe(true);
+  it('rejects days that do not exist on the calendar', () => {
+    const impossible = [
+      '2026-02-29', // 2026 is not a leap year
+      '2026-02-30',
+      '2026-04-31', // April has 30 days
+      '2026-06-31',
+      '2026-09-31',
+      '2026-11-31',
+      '2026-13-01', // no thirteenth month
+      '2026-00-10', // no zeroth month
+      '2026-01-00', // no zeroth day
+      '2026-01-32',
+      '2026-12-32',
+    ];
+    for (const value of impossible) {
+      expect(isValidLogDate(value)).toBe(false);
+    }
+  });
+
+  it('accepts real dates, including a genuine leap day', () => {
+    const real = [
+      '2024-02-29', // 2024 is a leap year
+      '2000-02-29', // century leap year
+      '2026-02-28',
+      '2026-12-31',
+      '2026-01-01',
+      '2026-04-30',
+      '2026-06-30',
+    ];
+    for (const value of real) {
+      expect(isValidLogDate(value)).toBe(true);
+    }
+  });
+
+  it('rejects the non-leap centuries the naive rule gets wrong', () => {
+    // 1900 is divisible by 4 but is not a leap year; 2000 is.
+    expect(isValidLogDate('1900-02-29')).toBe(false);
+    expect(isValidLogDate('2000-02-29')).toBe(true);
+  });
+
+  /**
+   * The compatibility guarantee. `isValidLogDate` guards data already on
+   * users' devices, so hardening it must not reject anything the app could
+   * legitimately have written. Every log date VITA can produce comes from
+   * `toLogDate`, so proving the validator accepts everything `toLogDate`
+   * emits proves no existing food log entry or storage key was invalidated.
+   */
+  it('accepts every date toLogDate can produce, across four years and two leap days', () => {
+    const start = new Date(2023, 0, 1);
+    for (let day = 0; day < 366 * 4; day += 1) {
+      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + day);
+      expect(isValidLogDate(toLogDate(date))).toBe(true);
+    }
+  });
+
+  it('does not fall into the UTC parsing trap while checking the calendar', () => {
+    // If the calendar check used `new Date('YYYY-MM-DD')`, the parsed value
+    // would be UTC midnight and its local date would differ at negative
+    // offsets — making these results timezone-dependent. They are not.
+    expect(isValidLogDate('2026-01-01')).toBe(true);
+    expect(isValidLogDate('2026-12-31')).toBe(true);
+    expect(isValidLogDate('2026-07-01')).toBe(true);
   });
 });
 

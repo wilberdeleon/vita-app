@@ -736,7 +736,7 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
 | 3.1 | Shared Daily Foundation + Test Harness | Promote the shared date/id/key/storage primitives; stand up the first committed test suite. No behavior change | ✅ Built — pending founder review |
-| 3.2 | Water Domain + Persistence | Hydration model, unit normalization, repository, provider; water that actually saves | ⬜ Planned |
+| 3.2 | Water Domain + Persistence | Hydration model, unit normalization, repository, provider; water that actually saves | ✅ Built — pending founder review |
 | 3.3 | Water Goal + Logging Experience | First-run goal, quick-add + custom amount, today's entries, edit/delete with Undo | ⬜ Planned |
 | 3.4 | Water Visual Refinement + Fuel/Home Integration | Vertical-fill progress visual, 7-day strip, Fuel Hydration card and Home water tile on real state | ⬜ Planned |
 | 3.5 | Peptide Definitions, Catalog + User Setup | Definition/Setup models, small typed catalog, Custom, setup CRUD | ⬜ Planned |
@@ -749,6 +749,56 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.2 — Water Domain + Persistence 🟡
+
+**Objective:** replace Water's Sprint 0 fixture with a real, persisted, date-aware hydration domain. An engine slice — the goal experience is 3.3 and the progress visualization is 3.4, so the screens change only as much as proving the engine requires.
+
+**What Water actually was.** Not "basic" — non-functional. `getWaterToday()` returned a frozen `{ cups: 5, goalCups: 8 }`, the Cups/Ounces toggle only swapped which array of chips rendered (no conversion existed anywhere), and **"+ Add Water" called `router.back()`**, discarding whatever the user had entered. Fuel's Hydration card and Home's water tile agreed with each other only because both read the same frozen constant.
+
+**Shared-date hardening, folded into this slice.** `isValidLogDate` checked the shape of a `YYYY-MM-DD` string but not the calendar, so `2026-02-29`, `2026-04-31`, and `2026-13-01` all passed. Survivable while nothing produced such a value — `toLogDate` only emits real dates — but useless as a boundary against a corrupted record, which is the only job it has. It now round-trips the date through local component construction (`toLogDate(fromLogDate(v)) === v`), deliberately **not** `new Date('YYYY-MM-DD')`, which would reintroduce the UTC trap. **Compatibility is proven, not assumed:** a test asserts the hardened validator accepts every date `toLogDate` can produce across four years and two leap days, so no existing nutrition entry or storage key was invalidated. It also correctly rejects `1900-02-29` while accepting `2000-02-29`.
+
+**New — `src/lib/water/`.**
+
+| Module | What it is |
+|---|---|
+| `model/types.ts` | `VolumeUnit`, `WaterEntry`, `WaterGoal`, `WaterPreferences` |
+| `model/units.ts` | Conversion constants, `toMl`/`fromMl`, display rounding, labels, `parseAmount` |
+| `model/totals.ts` | `totalMl`, `goalMl`, `ratio`/`progress`/`percent`, `remainingMl`, `overMl`, `isGoalMet`, `sortByLoggedAt` |
+| `model/entries.ts` | `createWaterEntry` — the one place both representations of an amount are written |
+| `data/keys.ts` | Water's keys, built from the shared helpers |
+| `data/WaterRepository.ts` | The persistence interface — the Supabase swap point |
+| `data/asyncStorageRepository.ts` | AsyncStorage implementation, built on `createDayKeyedStore`, with read-time validation |
+| `state/WaterProvider.tsx` | Context + reducer + shadow refs + optimistic commit + day rollover |
+| `state/useWaterToday.ts` | The derived read model |
+
+**Canonical unit: millilitres.** Conversion constants are exact by definition — 1 US fl oz = 29.5735295625 mL, 1 US cup = 8 fl oz, 1 L = 1000 mL — and `floz`/`cup` are explicitly **US customary**, so a future non-US locale adds members rather than silently changing what these mean. Arithmetic happens in mL; rounding happens only at the display boundary, and a rounded display value is never converted back into storage.
+
+**Both representations are stored.** `amountMl` is canonical; `enteredAmount` + `enteredUnit` snapshot what the user actually typed, on the same principle as `FoodEntry.nutrition`. Someone who logs "16 oz" and later switches to millilitres still sees that they logged 16 oz, not a reconstructed 473 mL they never entered.
+
+**The goal is stored as the pair the user authored,** not as millilitres — "8 cups" converted to 1892.7 mL and read back in cups risks displaying 8.0000001, and the goal is the one number a user set deliberately. **There is no default goal.** A missing goal is `null`, and every derived value (`progress`, `percent`, `remaining`) is honest about it. Inventing 64 oz to make the numbers non-null would be VITA issuing a hydration recommendation, which it does not do.
+
+**Storage keys** — `vita:v1:water:log:YYYY-MM-DD`, `vita:v1:water:goal`, `vita:v1:water:prefs`, built through the shared `dayKey`/`singletonKey` helpers so they cannot drift from the rest of the app or collide with `vita:v1:foodlog:…`.
+
+**Read-time validation** follows nutrition's philosophy exactly: malformed JSON and non-array payloads read as an empty day rather than crashing; a record is **dropped, never repaired**; `NaN`, `Infinity`, zero, and negative amounts are rejected; an unusable authored pair is rejected; an impossible calendar date is rejected; and an entry whose own `logDate` contradicts the key it was read from is rejected, which is what stops it being double-counted the moment its real day is opened. Reading is never a write — corrupt data stays on disk untouched rather than being silently rewritten.
+
+**A real defect the tests caught before it shipped.** `isVolumeUnit` used `value in ML_PER_UNIT`, and `in` walks the prototype chain — so `'toString'` and `'constructor'` passed validation, then indexed the conversion table to a function and made `toMl` return `NaN`, poisoning the whole day's total. Now `Object.prototype.hasOwnProperty.call`. This is precisely the class of bug the slice 3.1 harness was introduced to catch.
+
+**UI changes were kept to engine binding only.** Water's index shows the real total, the day's entries (read-only), and either goal progress or an honest "you haven't set a daily goal yet"; Add Water offers the four real units, fixed per-unit quick-adds, a bound custom field, and a save button that is disabled until the amount is valid. `CupsRow` was **deleted** rather than kept — an icon per cup cannot honestly represent a 500 mL or 16.9 oz entry, and it is already approved for replacement.
+
+**Temporary behaviour to revisit in 3.3, recorded so it is not inherited silently:** (1) there is no way to *set* a goal in the app yet, so a real user sees the goal-not-set state until 3.3 ships the first-run flow — the domain, repository, and `setGoal` action all exist and are tested; (2) saving an entry in a unit other than the current preference **updates the display preference**, on the reasoning that the unit you log in is the unit you think in. Both are one-line removals.
+
+**Fuel integration.** `fuel.tsx` reads `useWaterToday()` instead of the deleted fixture. `FuelTrackerCard` was not touched — only the data flowing into it. With a goal set the card shows the total and a percentage; **without one it shows the total and omits the percentage entirely**, which is why that prop was already optional. `None logged` on an empty day. **Home was deliberately not wired — that is slice 3.4**, so Home's water tile and water goal pillar still read their Dashboard fixture.
+
+**Fixtures removed:** `src/features/water/{types,mock,api}.ts` and `components/CupsRow.tsx`, after grep confirmed nothing imported them. **Peptide fixtures untouched** — they belong to slice 3.5.
+
+**Tests: 100 new, 166 total across 8 suites, all passing.** `units` (31) — exact constants, every conversion pair, cross-unit equivalence, round trips across all four units, display precision per unit, label inflection, `parseAmount` rejecting empty/zero/negative/`NaN`/`Infinity`, and the prototype-chain case. `totals` (30) — empty day, no goal, zero and negative goals, over-goal, clamping, and an exhaustive check that `progress` never returns `NaN`/`Infinity` for any combination of total and goal. `repository` (31) — round trip, authored-pair preservation, restart, wholesale replacement, key removal on an emptied day, date isolation, entry/key date mismatch, unparseable JSON, non-array payloads, malformed records, `NaN`/`Infinity`/zero/negative amounts, impossible dates, malformed goal and prefs, no-rewrite-on-read, and isolation from the nutrition food log. `entries` (8) — both representations written, local-day derivation including a late-night drink, id uniqueness across 200 entries, and refusal to build an entry from a non-drink.
+
+**Validation.** `npm test` 166/166 · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo export --platform ios` succeeds (3.45 MB) · `npx expo install --check` reports only the pre-existing Sprint 2 patch drift · `git diff` confirms **zero changes** under `src/lib/nutrition/`, `src/features/peptides/`, `src/app/(vita)/peptides/`, `src/features/dashboard/`, `dashboard.tsx`, or `supabase/`.
+
+**Verified on device, including the persistence paths taps cannot reach.** Because the simulator still cannot be driven — `xcode-select -p` resolves correctly yet the simulator integration reports it does not, the same false negative recorded since Sprint 2 — the app's real AsyncStorage store was seeded in the documented on-disk format (as a previous session would have written it) and the app relaunched. Results: a 16 fl oz entry and a 1 cup entry summed **cross-unit to `24 fl oz`**, with `40 fl oz to go of 64 fl oz` — correct to the millilitre. Entries rendered as **`16 fl oz` and `1 cup`**, their authored values, not converted millilitres. A deliberately corrupt `-250 mL` record and a record whose `logDate` claimed the previous day were **both dropped** — either surviving would have changed the visible total. Yesterday's seeded entry stayed intact under its own key while today was read repeatedly, and inspecting the store afterwards confirmed **the corrupt records were still on disk untouched** — read-time validation drops without repairing, on a real device. Removing the goal key produced `Logged today. You haven't set a daily goal yet.` with no progress bar, and Fuel's card dropped its percentage while keeping `24 fl oz`. A deliberately corrupted `{"unit":"gallons"}` preference fell back to fl oz without crashing. The simulator's storage was restored to its pre-test state afterwards.
+
+**Not verified:** the tap path — choosing a quick-add, typing a custom amount, and pressing Add Water. The write side is covered by repository tests against a real AsyncStorage mock, and the read side is proven on device above, but **nobody has yet tapped Add Water on a running build**. That needs the founder's iPhone.
 
 ### Slice 3.1 — Shared Daily Foundation + Test Harness 🟡
 

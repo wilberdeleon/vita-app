@@ -21,7 +21,7 @@ Single source of truth for implementation details: stack, architecture rules, an
 - `src/components/ui/` — Design System primitives only, no business logic
 - `src/components/shell/` — floating dock, headers, app frame
 - `src/theme/` — design tokens and theme system
-- `src/lib/` — cross-cutting domain and infrastructure shared by more than one feature (Supabase client, `journeyStages`, `daily/`, `nutrition/`)
+- `src/lib/` — cross-cutting domain and infrastructure shared by more than one feature (Supabase client, `journeyStages`, `daily/`, `nutrition/`, `water/`)
 - `supabase/` — migrations and edge functions
 - `assets/` — icon, splash, fonts, images
 
@@ -42,6 +42,26 @@ All of it was written for nutrition in Sprint 2 and promoted unchanged when Wate
 **It is deliberately narrow — there is no shared "entry" type.** A glass of water and a peptide administration have genuinely different shapes, and hiding that behind a type parameter would make both harder to read. Shared infrastructure ends where the domains begin.
 
 **`NutritionRepository` is not built on `dayStore`,** and that is on purpose. It is merged, approved, and holds real user data; rewriting its storage layer to prove a new abstraction would be regression risk with no user-visible gain. Only `NAMESPACE` moved out of `nutrition/data/keys.ts` — every key string it produces is unchanged and is pinned by test, because those keys name data already on users' devices.
+
+## Water architecture (Sprint 3 slice 3.2)
+
+`src/lib/water/` is the single source of truth for hydration. It lives in `src/lib/` because Fuel's Hydration module reads the same state the Water screen does, and features never import each other.
+
+```
+WaterEntry[]  →  WaterState  →  derived totals  →  Water screen + Fuel
+```
+
+**Millilitres are canonical.** Every stored amount is mL; conversion happens only at the edges, and a rounded display value is never converted back into storage. Constants are exact by definition: 1 US fl oz = 29.5735295625 mL, 1 US cup = 8 fl oz, 1 L = 1000 mL. `floz` and `cup` are explicitly **US customary** — an imperial fluid ounce is 28.4131 mL, so a future non-US locale adds units rather than changing what these mean.
+
+**Every entry stores both representations.** `amountMl` for arithmetic, plus `enteredAmount` + `enteredUnit` as a snapshot of what the user typed — the same principle as `FoodEntry.nutrition`. Changing the display preference must never rewrite what someone recorded.
+
+**The goal is stored as the authored pair**, not as millilitres, so it reads back exactly as set. **There is no default goal**: `null` means not set, and `progress`/`percent`/`remaining` are all honest about it rather than dividing by an invented target. Water owns its own preferences under `vita:v1:water:prefs`; Settings (Sprint 7) will read and write that same key rather than creating a second source.
+
+**Storage keys** use the shared helpers: `vita:v1:water:log:<YYYY-MM-DD>` (one per day, via `createDayKeyedStore`), `vita:v1:water:goal`, `vita:v1:water:prefs`.
+
+**Read-time validation** mirrors nutrition's: malformed JSON and non-array payloads read as an empty day; records are dropped rather than repaired; `NaN`, `Infinity`, zero, negative, impossible-date, and wrong-day records are rejected. **Reading never writes** — corrupt data stays on disk untouched instead of being silently rewritten.
+
+`WaterRepository` is the Supabase swap point, with the same all-async shape as `FoodLogRepository`. `WaterProvider` mirrors `NutritionProvider`'s pattern (Context + reducer + shadow refs + optimistic commit + shared day rollover) **without** a generic `TrackerProvider<T>` — the providers look alike because the pattern is right, not because the domains are the same.
 
 ## Nutrition architecture (Sprint 2)
 
@@ -208,6 +228,8 @@ Two constraints that do carry over regardless of implementation:
 - **Classification belongs with the normalized model, not the adapters.** `VitaFood` is already provider-independent; a visual category is a property of the normalized food, derived once, rather than something each provider adapter invents differently.
 
 ### Water (Sprint 3)
+
+**Built in slice 3.2 — see "Water architecture" above for what shipped.** The constraints below were the direction; they are recorded as met.
 
 - The daily goal is **user-defined** with a unit (cups/oz/mL/L) — not a hardcoded 8 cups — and persists until changed. Where the preference is *stored* interacts with Settings (Sprint 7), which lands later; sequencing is an open question, not an assumption to make silently.
 - Hydration is **date-aware in the same way food logging already is**: local-calendar day keys, daily rollover on `AppState` → `active`, today's intake separate from history. The `logDate` / `loggedAt` split and the versioned per-day storage keys in `src/lib/nutrition/data/keys.ts` are the working precedent — reuse the pattern rather than inventing a second date model.

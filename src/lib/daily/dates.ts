@@ -40,9 +40,33 @@ export function isToday(logDate: LogDate): boolean {
 
 const LOG_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Guards persisted keys, which are only as trustworthy as the last write. */
+/**
+ * Guards persisted keys and stored dates, which are only as trustworthy as
+ * the last write.
+ *
+ * Checks the calendar, not just the shape. The shape test alone accepted
+ * `2026-02-29`, `2026-04-31`, and `2026-13-01` — days that do not exist.
+ * That was survivable while nothing produced such a value (`toLogDate` only
+ * emits real dates), but it made the validator useless as a boundary against
+ * a corrupted or hand-edited record, which is the only job it has. Hardened
+ * in Sprint 3 slice 3.2, before Water began trusting `LogDate` as a
+ * persistence key.
+ *
+ * The calendar check is a local round-trip: build the date from its own
+ * components and see whether it still describes itself. An impossible date
+ * normalizes to a different real one — `new Date(2026, 1, 29)` is March 1 —
+ * so the comparison fails. Deliberately *not* `new Date('YYYY-MM-DD')`,
+ * which parses as UTC and would reject or accept dates depending on the
+ * device's offset from it.
+ *
+ * One consequence worth naming: a year below 100 is rejected, because
+ * `new Date(26, ...)` means 1926. No real log date is affected, and the
+ * alternative — special-casing two-digit years — would add a branch to
+ * protect values VITA can never produce.
+ */
 export function isValidLogDate(value: unknown): value is LogDate {
-  return typeof value === 'string' && LOG_DATE_PATTERN.test(value);
+  if (typeof value !== 'string' || !LOG_DATE_PATTERN.test(value)) return false;
+  return toLogDate(fromLogDate(value)) === value;
 }
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;

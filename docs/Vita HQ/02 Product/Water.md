@@ -6,12 +6,20 @@
 
 ---
 
-## Current state (verified in repo, Sprint 0 — mock data)
+## Current state (verified in repo, Sprint 3 slice 3.2 — real persistence)
+
+**Water became a real feature on 2026-08-22.** Entries persist across restarts, keyed to the local calendar day with automatic rollover; millilitres are the canonical unit with exact US customary conversion (fl oz · cups · mL · L); each entry keeps both the canonical amount and a snapshot of what the user typed, so changing display units never rewrites history; persistence sits behind a `WaterRepository` interface ready for Supabase. [[Fuel]]'s Hydration card reads the same state, so the two cannot disagree.
+
+**No default goal exists.** A goal is unset until the user sets one, and the UI says so rather than showing progress toward a number VITA invented. The first-run goal experience is **slice 3.3**; the progress visualization and [[Dashboard]] wiring are **slice 3.4**.
+
+Engineering detail: repo `docs/09-Technical-Documentation.md` → "Water architecture", and `docs/06-Slice-Tracker.md` → slice 3.2.
+
+## What it was before (Sprint 0 — mock data, superseded)
 
 Built in Slice 0.6 under `src/app/(vita)/water/`:
 
 - **Summary** (`index.tsx`) — daily hydration log and progress
-- **Add** (`add.tsx`) — quick logging in cups or ounces (`CupsRow` component in `src/features/water/`)
+- **Add** (`add.tsx`) — quick logging in cups or ounces. *Neither screen saved anything: the unit toggle performed no conversion, and the Add button discarded what the user entered. `CupsRow` and the whole `src/features/water/` fixture layer were deleted in slice 3.2.*
 - **Reached from [[Fuel]]'s Hydration card — the only entry point in the app today.** Not in the dock. *Corrected 2026-08-21:* this page previously said Water was reached from the Dashboard quick stats. It is not — Home's water tile is a read-only metric with no press handler (`QuickStatsRow`/`MetricTile` carry no `onPress`). Home currently *displays* a hydration figure from a fixture and does not navigate anywhere. Wiring Home's water tile and water goal pillar to real hydration state is **Sprint 3 slice 3.4**
 - Domain color: **blue `#2F80ED`** ([[Color System]])
 

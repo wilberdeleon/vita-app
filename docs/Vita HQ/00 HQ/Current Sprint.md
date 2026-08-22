@@ -33,6 +33,8 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Slice 3.1 built (2026-08-22)** — an enabling slice with no user-visible change: the shared daily/date foundation promoted to `src/lib/daily/`, and VITA's **first committed test suite** (`jest` + `jest-expo`, dev-only, 62 tests). Closes the no-tests finding carried out of the Sprint 2 closeout audit.
 
+**Slice 3.2 built (2026-08-22) — [[Water]] is real.** Water was not "basic", it was non-functional: a frozen `5 of 8 cups`, a unit toggle that converted nothing, and an Add button that discarded what the user typed. It now has a persisted, date-aware domain in `src/lib/water/` — millilitres canonical, exact US customary conversion, every entry storing both the canonical amount and a snapshot of what the user actually typed, and a repository boundary ready for Supabase. **No default goal is invented**: a goal is `null` until the user sets one and the screens say so, because VITA does not issue a hydration recommendation. [[Fuel]]'s Hydration card now reads the same state, and drops its percentage entirely when there is no goal. 166 tests. **First-run goal UX is slice 3.3; Home hydration wiring is slice 3.4.**
+
 ## Sprint 2 — Fuel — ✅ Complete (started 2026-08-17 · audited 2026-08-21 · merged to `main` 2026-08-21)
 
 **Founder-authorized 2026-08-17.** Branch: `sprint-2-fuel`. The 2026-08-17 roadmap restructure makes Fuel officially Sprint 2 (it was Sprint 3 under the 2026-07-09 plan) — see [[Roadmap]] and [[Decision Log]].

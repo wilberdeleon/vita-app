@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ToastProvider } from '../components/ui';
 import { AuthProvider } from '../features/auth/AuthProvider';
 import { NutritionProvider } from '../lib/nutrition';
+import { WaterProvider } from '../lib/water';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
 function RootStack() {
@@ -19,17 +20,24 @@ function RootStack() {
 }
 
 /**
- * `NutritionProvider` sits at the root rather than inside Fuel because Home
- * reads the same nutrition state — the whole point of the Sprint 2 engine
- * is that there is one day's data, not one per screen.
+ * The domain providers sit at the root rather than inside their features,
+ * because more than one screen reads each of them — Home and Fuel both read
+ * nutrition, and Fuel's Hydration module reads the same water state the Water
+ * screen does. The whole point is that there is one day's data, not one copy
+ * per screen.
+ *
+ * They are siblings, not nested for any reason: neither domain reads the
+ * other, and ordering them here implies a dependency that does not exist.
  */
 export default function RootLayout() {
   return (
     <ThemeProvider>
       <NutritionProvider>
-        <ToastProvider>
-          <RootStack />
-        </ToastProvider>
+        <WaterProvider>
+          <ToastProvider>
+            <RootStack />
+          </ToastProvider>
+        </WaterProvider>
       </NutritionProvider>
     </ThemeProvider>
   );
