@@ -13,7 +13,7 @@ tags: [health-age, longevity, flagship, ai-scoring, trust-sensitive]
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as Sprint 5 (Health), Slice 3. The concept and its role in the product are clear; the scoring model is not — that gap survives the promotion and is now the critical path.
+📋 Planned — promoted 2026-07-09. Named directly in the then-official [[Roadmap]] as Health, Slice 3. **⚠️ Health is no longer a scheduled sprint** since the 2026-08-17 restructure, so this idea currently has no sprint; its 📋 Planned status is deliberately not reverted ([[Open Questions]] #14). The concept and its role in the product are clear; the scoring model is not — that gap survives the promotion and is now the critical path.
 
 ## Category
 
@@ -79,7 +79,7 @@ The clearest premium hook in the current idea backlog — differentiated from ev
 
 **Next Step Required:** Define a scientifically defensible scoring model, with founder + credibility review, before design work starts.
 
-**Estimated Sprint:** Sprint 5 — Health, Slice 3
+**Estimated Sprint:** ⚠️ none — Health, Slice 3 under the old structure; unscheduled today
 
 **Dependencies:**
 - Scoring model definition (the real blocker)

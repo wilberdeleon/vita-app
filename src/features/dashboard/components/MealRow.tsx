@@ -43,7 +43,7 @@ export function MealRow({ meal }: Props) {
         <View style={styles.text}>
           <Text style={[styles.slot, { color: surfaces.text }]}>{meal.slot}</Text>
           <View style={styles.statusRow}>
-            <Text style={[styles.kcal, { color: surfaces.textTertiary }]}>{meal.kcal} kcal</Text>
+            <Text style={[styles.calories, { color: surfaces.textTertiary }]}>{meal.kcal} cal</Text>
             <View
               style={[
                 styles.dot,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
-  kcal: {
+  calories: {
     ...typography.caption,
   },
   dot: {

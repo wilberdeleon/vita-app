@@ -1,64 +1,90 @@
 import { router } from 'expo-router';
-import { restaurantIconFor } from '../../../features/dashboard/mealIcons';
-import { DailyProgressCard, ListRow, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
-import { getFuelToday } from '../../../features/fuel/api';
-import { palette } from '../../../theme/tokens';
+import { StyleSheet, Text, View } from 'react-native';
+import { Screen, ScreenHeader, Section, SectionHeader } from '../../../components/ui';
+import { FuelQuickActions } from '../../../features/fuel/components/FuelQuickActions';
+import { FuelSummaryCard } from '../../../features/fuel/components/FuelSummaryCard';
+import { FuelTrackerCard } from '../../../features/fuel/components/FuelTrackerCard';
+import { TodayMealsPanel } from '../../../features/fuel/components/TodayMealsPanel';
+import { getPeptideToday } from '../../../features/peptides/api';
+import { getWaterToday } from '../../../features/water/api';
+import { formatLogDateLong, percent, progress, useDailyNutrition } from '../../../lib/nutrition';
+import { palette, spacing, typography } from '../../../theme/tokens';
 
+/**
+ * Fuel — a compact daily nutrition command centre, not a menu of cards.
+ *
+ * The screen answers, in order and without navigating anywhere: how much
+ * have I eaten and how much is left · how do I log something right now ·
+ * what have I actually eaten today, by meal · how are hydration and
+ * peptides doing.
+ *
+ * What changed in the redesign is the *shape* of the screen, not the data
+ * behind it. Every figure below still comes from the shared nutrition
+ * engine — `useDailyNutrition()` derives totals from the same entry array
+ * Home reads, and the water and peptide summaries come from their own
+ * feature APIs exactly as before. Nothing on this screen is a fixture
+ * invented for the layout, and no provider, search, logging, favorite, or
+ * barcode behaviour was touched.
+ *
+ * Fuel scrolls, deliberately. Trying to fit meals, macros, actions, and two
+ * secondary trackers into one viewport is what produced the oversized,
+ * information-free cards this redesign replaces.
+ */
 export default function Fuel() {
-  const today = getFuelToday();
+  const today = useDailyNutrition();
+  const water = getWaterToday();
+  const peptides = getPeptideToday();
 
   return (
-    <Screen dockClearance>
-      <ScreenHeader title="Fuel" settings />
+    <Screen dockClearance contentGap={spacing.xl}>
+      <ScreenHeader title="Fuel" subtitle={formatLogDateLong(today.logDate)} settings />
 
-      <SectionHeader title="Today's Summary" />
-      <DailyProgressCard
-        headline={`${today.kcal.current.toLocaleString()} / ${today.kcal.goal.toLocaleString()} kcal`}
-        percentLabel={`${Math.round((today.kcal.current / today.kcal.goal) * 100)}%`}
-        progress={today.kcal.current / today.kcal.goal}
-        bars={today.macros.map((macro) => ({
-          label: macro.label,
-          valueLabel: `${macro.current} / ${macro.goal}${macro.unit}`,
-          progress: macro.current / macro.goal,
-          color: macro.color,
-        }))}
-      />
+      <FuelSummaryCard today={today} />
 
-      <SectionHeader title="Today's Meals" actionLabel="View all" onAction={() => router.push('/fuel/log')} />
-      {today.meals.map((meal) => (
-        <ListRow
-          key={meal.id}
-          icon={restaurantIconFor(meal.slot)}
-          title={meal.name}
-          subtitle={meal.slot}
-          value={`${meal.kcal} kcal`}
+      {today.error ? <Text style={[styles.error, { color: palette.fat }]}>{today.error}</Text> : null}
+
+      <FuelQuickActions />
+
+      <Section
+        header={
+          <SectionHeader title="Today's Meals" actionLabel="View all" onAction={() => router.push('/fuel/log')} />
+        }
+      >
+        <TodayMealsPanel meals={today.meals} isLoading={today.isLoading} />
+      </Section>
+
+      <View style={styles.trackers}>
+        <FuelTrackerCard
+          icon="water"
+          color={palette.water}
+          title="Hydration"
+          value={`${water.cups} of ${water.goalCups} cups`}
+          progress={progress(water.cups, water.goalCups)}
+          percentLabel={`${percent(water.cups, water.goalCups)}%`}
+          actionLabel="+ Add Water"
+          onAction={() => router.push('/water')}
         />
-      ))}
-
-      <SectionHeader title="Logs" />
-      <ListRow
-        icon="restaurant-outline"
-        title="Food Log"
-        value={`${today.mealsLogged} / ${today.mealSlots} logged`}
-        chevron
-        onPress={() => router.push('/fuel/log')}
-      />
-      <ListRow
-        icon="water-outline"
-        iconColor={palette.water}
-        title="Water Log"
-        value={`${today.waterCups.current} / ${today.waterCups.goal} cups`}
-        chevron
-        onPress={() => router.push('/water')}
-      />
-      <ListRow
-        icon="medical-outline"
-        iconColor={palette.peptide}
-        title="Peptide Log"
-        value={`${today.peptides.logged} / ${today.peptides.goal} logged`}
-        chevron
-        onPress={() => router.push('/peptides')}
-      />
+        <FuelTrackerCard
+          icon="medical-outline"
+          color={palette.peptide}
+          title="Peptides"
+          value={peptides.logged === 1 ? '1 logged today' : `${peptides.logged} logged today`}
+          progress={progress(peptides.logged, peptides.goal)}
+          actionLabel="View Peptides"
+          onAction={() => router.push('/peptides')}
+        />
+      </View>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  error: {
+    ...typography.caption,
+  },
+  trackers: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.m,
+  },
+});

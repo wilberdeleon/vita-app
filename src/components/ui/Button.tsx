@@ -10,12 +10,29 @@ type Props = {
   color?: string;
   icon?: keyof typeof Ionicons.glyphMap;
   variant?: 'filled' | 'soft';
+  /** Dims the button and ignores presses — for forms that aren't valid yet. */
+  disabled?: boolean;
 };
 
-export function Button({ label, onPress, color = palette.primary, icon, variant = 'filled' }: Props) {
+export function Button({
+  label,
+  onPress,
+  color = palette.primary,
+  icon,
+  variant = 'filled',
+  disabled = false,
+}: Props) {
   const filled = variant === 'filled';
   return (
-    <PressableScale onPress={onPress} style={[styles.button, { backgroundColor: filled ? color : `${color}1A` }]}>
+    <PressableScale
+      onPress={onPress}
+      disabled={disabled}
+      style={[
+        styles.button,
+        { backgroundColor: filled ? color : `${color}1A` },
+        disabled && styles.disabled,
+      ]}
+    >
       {icon ? <Ionicons name={icon} size={18} color={filled ? palette.textOnColor : color} /> : null}
       <Text style={[styles.label, { color: filled ? palette.textOnColor : color }]}>{label}</Text>
     </PressableScale>
@@ -35,5 +52,8 @@ const styles = StyleSheet.create({
   label: {
     ...typography.bodyMedium,
     fontWeight: '600',
+  },
+  disabled: {
+    opacity: 0.4,
   },
 });

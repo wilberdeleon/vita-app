@@ -12,6 +12,6 @@
 
 | Idea | Status | Priority | Tier |
 |---|---|---|---|
-| [[Apple Health Integration]] | 📋 Planned — Sprint 5 | Medium | Free |
+| [[Apple Health Integration]] | 📋 Planned — ⚠️ no scheduled sprint | Medium | Free |
 
 **Related:** [[Innovation Lab]] · [[Future Features]] · [[Tech Stack]]

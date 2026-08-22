@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { ToastProvider } from '../components/ui';
 import { AuthProvider } from '../features/auth/AuthProvider';
+import { NutritionProvider } from '../lib/nutrition';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
 function RootStack() {
@@ -16,10 +18,19 @@ function RootStack() {
   );
 }
 
+/**
+ * `NutritionProvider` sits at the root rather than inside Fuel because Home
+ * reads the same nutrition state — the whole point of the Sprint 2 engine
+ * is that there is one day's data, not one per screen.
+ */
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <RootStack />
+      <NutritionProvider>
+        <ToastProvider>
+          <RootStack />
+        </ToastProvider>
+      </NutritionProvider>
     </ThemeProvider>
   );
 }

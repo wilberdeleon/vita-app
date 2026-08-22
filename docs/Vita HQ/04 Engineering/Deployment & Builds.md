@@ -17,7 +17,7 @@
 
 ## Target state
 
-- **Development builds** via EAS when the app outgrows Expo Go (first forcing function: the real barcode scanner in **Sprint 3** — [[Fuel]], renumbered from Sprint 2 under the old structure — may need camera modules beyond Expo Go's defaults — verify at planning).
+- **Development builds** via EAS when the app outgrows Expo Go (first forcing function: the real barcode scanner in **Sprint 2 — [[Fuel]]**, which shipped 2026-08-21 — may need camera modules beyond Expo Go's defaults — verify at planning).
 - **TestFlight** distribution for founder/beta testing.
 - **App Store release** at Version 1 ([[Roadmap]]) — requires an Apple Developer account, bundle identifier decision, privacy nutrition labels (health data!), and account-deletion support ([[Authentication]]).
 

@@ -1,6 +1,6 @@
 # Report: Ready for Development
 
-**Snapshot as of:** 2026-07-09 · **Regenerate:** ask Claude to refresh whenever an idea's status or dependencies change.
+**Snapshot as of:** 2026-07-09 · **Sprint column reconciled 2026-08-21** to the current roadmap (2026-08-17 restructure + 2026-08-21 reorder) · **Regenerate:** ask Claude to refresh whenever an idea's status or dependencies change.
 
 **Method:** ideas at 📋 Planned or later, OR at 📝 Defined with no blocking dependency left unresolved. This is the report to check before starting a new [[Roadmap]] sprint or session-sprint ([[Claude Workflow]]).
 
@@ -10,16 +10,20 @@
 
 The official [[Roadmap]] issued 2026-07-09 named these directly, promoting them from the Innovation Lab:
 
-| Idea | Sprint | Readiness | Confidence |
+| Idea | Sprint (current numbering) | Readiness | Confidence |
 |---|---|---|---|
-| [[Apple Health Integration]] | Sprint 5 — Health, Slice 5 | 🟢 Concept Complete | 8.5/10 |
-| [[Mobile Order Screenshot Import]] | Sprint 3 — Fuel, Slice 7 | 🟢 Concept Complete | 8.5/10 |
-| [[Meal Planning]] | Sprint 4 — Atlas, Slice 3 | 🟢 Concept Complete | 7.5/10 |
-| [[Apple Home Screen Widgets]] | Sprint 6 — Premium, Slice 1–2 | 🟢 Concept Complete | 8/10 |
-| [[Health Age]] | Sprint 5 — Health, Slice 3 | 🟡 Needs Refinement (scoring model undefined) | 6.5/10 |
-| [[Workout Generation]] | Sprint 4 — Atlas, Slice 4 | 🟡 Needs Refinement (tracking-module scope open) | 6/10 |
-| [[Biomarker Age]] | Sprint 5 — Health, Slice 4 | 🟡 Needs Refinement (sequenced after Health Age) | 5.5/10 |
-| [[Voice Atlas]] | Sprint 6 — Premium, Slice 5 | 🟡 Needs Refinement (voice infra unexplored) | 5/10 |
+| [[Meal Planning]] | **Sprint 6 — Atlas**, Slice 3 | 🟢 Concept Complete | 7.5/10 |
+| [[Workout Generation]] | **Sprint 6 — Atlas**, Slice 4 | 🟡 Needs Refinement (tracking-module scope open) | 6/10 |
+| [[Apple Health Integration]] | ⚠️ none — was Health, Slice 5 | 🟢 Concept Complete | 8.5/10 |
+| [[Mobile Order Screenshot Import]] | ⚠️ none — deferred out of Sprint 2 — Fuel | 🟢 Concept Complete | 8.5/10 |
+| [[Apple Home Screen Widgets]] | ⚠️ none — was Premium, Slices 1–2 | 🟢 Concept Complete | 8/10 |
+| [[Health Age]] | ⚠️ none — was Health, Slice 3 | 🟡 Needs Refinement (scoring model undefined) | 6.5/10 |
+| [[Biomarker Age]] | ⚠️ none — was Health, Slice 4 | 🟡 Needs Refinement (sequenced after Health Age) | 5.5/10 |
+| [[Voice Atlas]] | ⚠️ none — was Premium, Slice 5 | 🟡 Needs Refinement (voice infra unexplored) | 5/10 |
+
+**⚠️ Six of these eight have no scheduled sprint.** The 2026-08-17 restructure dropped Health and Premium, and Screenshot Food Analysis was deferred out of Sprint 2's approved scope. Their 📋 Planned status is deliberately preserved rather than reverted — [[Open Questions]] #14, awaiting founder direction.
+
+**Named in the current roadmap but living outside this table:** [[Peptide Dose Calculator]] (proposed slice 3.7) and [[Injection Site Tracking]] (proposed slice 3.8) are both scoped into **Sprint 3 — Water + Peptides**, the next sprint after Fuel per the 2026-08-21 reorder.
 
 **Honest read:** "Planned" means the roadmap named it, not that it's implementation-ready today — every one of these still depends on live data (Vita is still on mock data per [[Project Status]]), and four of the eight (marked 🟡) have real unresolved gaps even after promotion. Apple Health Integration and Mobile Order Screenshot Import are the closest to genuinely ready.
 

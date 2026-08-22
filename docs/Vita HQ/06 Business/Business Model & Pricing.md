@@ -32,6 +32,6 @@ The [[Innovation Lab]]'s idea template tags every idea with a **Recommended Tier
 
 ## Recommendation to resolve this page
 
-A founder pricing discussion once **Sprint 6 — Premium** is underway (when the product's premium feel is real — see [[Roadmap]], which also includes a Subscription Experience slice there), documented here and in the [[Decision Log]]. Pricing before polish would price the wrong product.
+A founder pricing discussion once the **Premium** work is underway (when the product's premium feel is real — it carried the Subscription Experience slice; ⚠️ **currently unscheduled** since the 2026-08-17 restructure, see [[Roadmap]] and [[Open Questions]] #14), documented here and in the [[Decision Log]]. Pricing before polish would price the wrong product.
 
 **Related:** [[Launch Plan]] · [[Competitive Landscape]] · [[Future AI]] · [[Long-Term Vision]]

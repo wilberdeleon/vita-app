@@ -1,51 +1,115 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
-import { restaurantIconFor } from '../../../features/dashboard/mealIcons';
-import { Button, Card, DailyProgressCard, ListRow, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
-import { getFuelToday } from '../../../features/fuel/api';
-import { spacing, typography } from '../../../theme/tokens';
+import { StyleSheet, Text, View } from 'react-native';
+import {
+  Button,
+  Card,
+  DailyProgressCard,
+  EmptyState,
+  Screen,
+  ScreenHeader,
+  SectionHeader,
+  useToast,
+} from '../../../components/ui';
+import { LoggedEntryRow } from '../../../features/fuel/components/LoggedEntryRow';
+import {
+  MACROS,
+  progress,
+  roundForDisplay,
+  useDailyNutrition,
+  useNutrition,
+  type FoodEntry,
+} from '../../../lib/nutrition';
+import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
+const PENDING = '—';
+
 export default function FoodLog() {
-  const today = getFuelToday();
+  const today = useDailyNutrition();
+  const { removeEntry, restoreEntry } = useNutrition();
+  const { showToast } = useToast();
   const { surfaces } = useTheme();
+
+  const consumed = roundForDisplay(today.nutrition);
+  const pending = today.isLoading;
+
+  const handleDelete = (entry: FoodEntry) => {
+    // Captured before removal so Undo restores the entry to where it was,
+    // not to the end of the list.
+    const index = today.entries.findIndex((candidate) => candidate.id === entry.id);
+    void removeEntry(entry.id);
+    showToast({
+      message: `Removed · ${entry.name}`,
+      actionLabel: 'Undo',
+      onAction: () => {
+        void restoreEntry(entry, index);
+      },
+    });
+  };
 
   return (
     <Screen>
-      <ScreenHeader title="Log Food" back />
+      <ScreenHeader title="Food Log" back />
 
       <Card>
         <Text style={[styles.count, { color: surfaces.text }]}>
-          {today.mealsLogged} / {today.mealSlots} logged
+          {pending ? PENDING : `${today.mealsLoggedCount} / ${today.totalMealSlots} logged`}
         </Text>
         <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
           Track your meals and stay on top of your nutrition.
         </Text>
       </Card>
 
+      {today.error ? <Text style={[styles.error, { color: palette.fat }]}>{today.error}</Text> : null}
+
       <SectionHeader title="Today's Goal" />
       <DailyProgressCard
-        headline={`${today.kcal.current.toLocaleString()} / ${today.kcal.goal.toLocaleString()} kcal`}
-        percentLabel={`${Math.round((today.kcal.current / today.kcal.goal) * 100)}%`}
-        progress={today.kcal.current / today.kcal.goal}
-        bars={today.macros.map((macro) => ({
-          label: macro.label,
-          valueLabel: `${macro.current} / ${macro.goal}${macro.unit}`,
-          progress: macro.current / macro.goal,
-          color: macro.color,
+        headline={
+          pending
+            ? `${PENDING} / ${today.targets.calories.toLocaleString()} Calories`
+            : `${consumed.calories.toLocaleString()} / ${today.targets.calories.toLocaleString()} Calories`
+        }
+        percentLabel={pending ? PENDING : `${today.caloriePercent}%`}
+        progress={pending ? 0 : today.calorieProgress}
+        bars={MACROS.map((macro) => ({
+          // Same macro semantics as the Fuel summary: progress toward the
+          // user's configured targets, with Protein the one that reads as a
+          // goal to reach. Kept identical here so the two surfaces cannot
+          // describe the same numbers differently.
+          label: macro.key === 'protein' ? `${macro.label} Goal` : macro.label,
+          valueLabel: `${pending ? PENDING : consumed[macro.key]} / ${today.targets[macro.key]} ${macro.unit}`,
+          progress: pending ? 0 : progress(consumed[macro.key], today.targets[macro.key]),
+          color: palette[macro.key],
         }))}
       />
 
-      <SectionHeader title="Today's Meals" />
-      {today.meals.map((meal) => (
-        <ListRow
-          key={meal.id}
-          icon={restaurantIconFor(meal.slot)}
-          title={meal.name}
-          subtitle={meal.slot}
-          value={`${meal.kcal} kcal`}
-        />
-      ))}
+      {pending ? null : today.isEmpty ? (
+        <>
+          <SectionHeader title="Today's Meals" />
+          <EmptyState
+            icon="restaurant-outline"
+            title="No food logged yet"
+            body="Tap Log Food to add your first meal of the day."
+          />
+        </>
+      ) : (
+        /**
+         * Grouped by meal, and only meals with something in them. Rendering
+         * all four with three empty headings turns a short log into a mostly
+         * blank screen; the meal a food belongs to is chosen when it's added,
+         * so an empty slot here isn't a control, just noise.
+         */
+        today.meals
+          .filter((meal) => meal.itemCount > 0)
+          .map((meal) => (
+            <View key={meal.slot} style={styles.mealGroup}>
+              <SectionHeader title={`${meal.slot} · ${Math.round(meal.nutrition.calories)} Calories`} />
+              {meal.entries.map((entry) => (
+                <LoggedEntryRow key={entry.id} entry={entry} onDelete={() => handleDelete(entry)} />
+              ))}
+            </View>
+          ))
+      )}
 
       <Button label="+ Log Food" onPress={() => router.push('/fuel/add')} />
     </Screen>
@@ -59,5 +123,11 @@ const styles = StyleSheet.create({
   },
   hint: {
     ...typography.caption,
+  },
+  error: {
+    ...typography.caption,
+  },
+  mealGroup: {
+    gap: spacing.s,
   },
 });

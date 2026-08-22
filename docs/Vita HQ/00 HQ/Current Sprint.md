@@ -19,9 +19,35 @@ The nine-slice plan originally defined on [[Roadmap]] was superseded mid-sprint 
 
 The two prerequisite decisions that gated this sprint's UI work resolved 2026-07-09 (VITA supports Light + Dark via semantic tokens; Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]) both shipped as part of the theme system above.
 
-## Sprint 2 — Fuel (next, in progress)
+## Sprint 2 — Fuel — 🟢 Feature-complete, in closeout (started 2026-08-17 · audited 2026-08-21)
 
-**Reprioritized ahead of Journey** (the official [[Roadmap]]'s original Sprint 2) per founder direction, 2026-08-01/02 — see [[Roadmap]] for the flagged sequencing note. Fuel inherits the theme system, `GlassSurface` card language, and spacing/typography patterns established in Sprint 1 rather than building its own visual language from scratch.
+**Founder-authorized 2026-08-17.** Branch: `sprint-2-fuel`. The 2026-08-17 roadmap restructure makes Fuel officially Sprint 2 (it was Sprint 3 under the 2026-07-09 plan) — see [[Roadmap]] and [[Decision Log]].
+
+**Objective:** turn Fuel from presentation-only screens into a real nutrition tracking system. Fuel inherits the theme system, card language, and spacing/typography patterns established in Sprint 1 rather than building its own — the approved visual design is locked, and Fuel is not redesigned.
+
+**Approved architecture — prove the engine before the network.** The nutrition foundation (food entries → daily state → calculated totals → persistence) is built and proven *before* external food providers are introduced. The shared nutrition domain is promoted to `src/lib/nutrition/` so neither [[Fuel]] nor [[Dashboard]] imports the other's internals, per CLAUDE.md rule 4 — the same promotion [[Journey Stages]] received.
+
+**Slice sequence:** Nutrition Foundation → Core Logging → Home Integration → Recents/Favorites/Custom Foods → Provider Layer → Food Search → Barcode Scanner → Edge Cases & Polish → **Fuel Visual Refinement** → Final Verification. Live progress: repo `docs/06-Slice-Tracker.md`.
+
+**Fuel Visual Refinement added 2026-08-18 (founder direction).** Functionality stays the priority for the rest of the sprint, but Fuel is not considered polished until a dedicated visual/interaction pass runs — the current screens read as *too basic, too bulky, overusing large numbers, filling space because space exists.* Presentation only; the feature architecture does not change. The slice is recorded, **not yet opened or approved** — it enters the normal slice workflow when the preceding slices complete. See [[Roadmap]], [[Fuel]], [[Design Bible]].
+
+**Closeout audit 2026-08-21 — CONDITIONAL PASS.** Fuel is feature-complete for this development phase: logging, Food Detail, edit/delete/undo, Home synchronization, USDA, Open Food Facts, search aggregation, recents, favorites, barcode scanning and its incorrect-product recovery, the approved visual redesign, food-image persistence, and the VITA food illustrations. Both typechecks clean, iOS export succeeds, 67 executed assertions pass, and a live provider run returns the right foods for real queries. One defect found and fixed (Favorites showed an empty state before storage hydrated). **Merge is gated on founder physical-device QA only** — the tooling here can render and screenshot screens but cannot tap them, so every touch-dependent path is reasoned rather than exercised. Two things are carried forward deliberately: Sprint 2 has **no committed test suite** (recommended as Sprint 3's first task), and the Kroger barcode remains an upstream Open Food Facts data error that no client change can fix. Detail: repo `docs/06-Slice-Tracker.md` → Sprint 2 closeout audit, and `docs/07-Audit-Log.md`.
+
+**Opened and built 2026-08-21 as slice 2.9 — since approved.** The founders opened it directly after the Barcode Scanner rather than after Edge Cases & Polish, so the three remaining unstarted slices (Restaurant Coverage, Water Wiring, Polish & Audit) shifted to 2.10–2.12. Scope was the **Fuel landing screen only**; the remaining Fuel surfaces keep their current presentation. Nothing functional changed. Founder review is on a physical iPhone before any further Sprint 2 work starts. Detail: [[Fuel]], repo `docs/06-Slice-Tracker.md`.
+
+**Binding constraints:** do not upgrade the Expo SDK · no provider secrets in the client · verify provider licensing before caching third-party data · [[Water]] and [[Peptides]] preserved but not expanded · the approved visual design stays locked.
+
+## Sprint 3 — Water + Peptides — ⬜ Next, not opened
+
+**Roadmap reorder, founder decision 2026-08-21.** Water + Peptides moves ahead of [[My Journey|Journey]] and becomes Sprint 3; Journey / Weight becomes Sprint 4 and Journey / Photos Sprint 5. Reason: establish more of VITA's daily health-tracking infrastructure before beginning the larger Journey experience. **Journey is deferred, not cancelled or reduced.** See [[Roadmap]] and [[Decision Log]].
+
+**Objective:** bring both daily logs to real, persisted functionality — [[Water]] and [[Peptides]] as genuinely functional health-tracking features rather than the visual mocks they are today, backing the compact Hydration and Peptides modules on the redesigned [[Fuel]] screen. **Fuel is not redesigned again.**
+
+**Proposed slices (illustrative, not yet approved):** Sprint Foundation / Shared Daily Tracking Architecture → Water Data Model + Persistence → Water Logging + Goal Experience → Water Visual Polish / Fuel Integration → Peptide Definition + User Setup Architecture → Peptide Logging + History → Dose / Unit Calculator → Injection Site Tracking → Peptide UX / Fuel Integration → Sprint Audit / Polish. Full scope on [[Roadmap]].
+
+**Entry conditions — none met yet.** Sprint 3 opens only after Sprint 2's final physical-device QA is accepted by the founders, Sprint 2 is merged into `main`, and a fresh branch (expected `sprint-3-water-peptides`) is cut from `main`. No slice is scoped or approved and no branch exists.
+
+**Open before implementation:** peptide catalog sourcing and the medical/legal boundary ([[Open Questions]] #17) · who owns the hydration goal preference, Water or [[Settings]] ([[Open Questions]] #16) · Peptides sharing purple with [[Atlas]] ([[Color System]]).
 
 ### Definition of done (from the Build Handbook)
 

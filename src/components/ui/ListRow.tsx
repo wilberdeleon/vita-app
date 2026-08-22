@@ -10,16 +10,32 @@ type Props = {
   iconColor?: string;
   title: string;
   subtitle?: string;
-  /** Trailing text, e.g. "300 kcal" or "5 / 8 cups". */
+  /** Trailing text, e.g. "300 cal" or "5 / 8 cups". */
   value?: string;
   chevron?: boolean;
   onPress?: () => void;
   /** Trailing element overriding value/chevron (e.g. a heart icon). */
   trailing?: React.ReactNode;
+  /**
+   * Leading element overriding the icon badge — used where the row shows a
+   * real product photograph rather than a glyph. `icon` is ignored when
+   * this is set.
+   */
+  leading?: React.ReactNode;
 };
 
 /** Card-style row — meals, log entries, settings items. */
-export function ListRow({ icon, iconColor = palette.primary, title, subtitle, value, chevron = false, onPress, trailing }: Props) {
+export function ListRow({
+  icon,
+  iconColor = palette.primary,
+  title,
+  subtitle,
+  value,
+  chevron = false,
+  onPress,
+  trailing,
+  leading,
+}: Props) {
   const { surfaces } = useTheme();
 
   return (
@@ -29,7 +45,7 @@ export function ListRow({ icon, iconColor = palette.primary, title, subtitle, va
       style={[styles.row, { backgroundColor: surfaces.card, borderColor: surfaces.border }]}
       pressedScale={0.98}
     >
-      {icon ? <IconBadge icon={icon} color={iconColor} /> : null}
+      {leading ?? (icon ? <IconBadge icon={icon} color={iconColor} /> : null)}
       <View style={styles.textBlock}>
         <Text style={[styles.title, { color: surfaces.text }]} numberOfLines={1}>
           {title}

@@ -152,3 +152,578 @@ New: `components/ui/ProgressRing.tsx`'s sibling change is `glass.premium` in `th
 **Deferred:** theme preference persistence — `ThemeProvider` holds `mode` in `useState`, so the Appearance choice resets on cold restart. No `AsyncStorage`/`SecureStore` in the project yet. Not started here; needs its own slice.
 
 **Next: Sprint 2 — Fuel.** Not started.
+
+---
+
+## Sprint 2 — Fuel — 🟢 Feature-complete, in closeout (started 2026-08-17 · audited 2026-08-21)
+
+Branch `sprint-2-fuel`. Founder-authorized 2026-08-17 against the approved Sprint 2 Fuel plan. Architecture principle the founders approved explicitly: **prove the nutrition engine before introducing external providers**, so the core loop is testable before a single network call exists.
+
+| # | Slice | Objective | Status |
+|---|-------|-----------|--------|
+| 2.1 | Nutrition Foundation | Model, pure calculations, persistence behind a repository, `NutritionProvider`; Fuel reads real state | ✅ Approved |
+| 2.2 | Core Logging | Manual food → custom food → entry → meal → daily totals; delete + Undo | ✅ Approved |
+| 2.3 | Food Detail + Servings | Serving selector, fractional quantity, meal assignment, Add to Log; dark-mode progress-track correction | ✅ Approved |
+| 2.4 | Edit + Delete | Edit route reusing `PortionEditor`; delete + Undo preserved | ✅ Approved |
+| 2.5 | Home Synchronization | Home nutrition on the shared engine; Home's rendering provably unchanged | ✅ Approved |
+| 2.6 | Provider Layer + Search | USDA + Open Food Facts adapters, normalization, dedupe, ranking, cache, debounced search | ✅ Approved — USDA key now configured; both providers verified live 2026-08-21 |
+| 2.7 | Recent + Favorites | History-derived recents, persisted favorites keyed by `vitaId` | ✅ Approved |
+| 2.8 | Barcode Scanner | `expo-camera`, VITA overlay, permission states, scan lock, OFF→USDA chain | ✅ Approved — pipeline verified live; **live camera detection still needs a physical iPhone** |
+| 2.9 | Fuel Visual Refinement | Fuel landing rebuilt as a nutrition command centre: ring + remaining summary, direct Log Food / Scan, inline meals with per-meal Add Food, compact Hydration/Peptides, Calories terminology | ✅ Approved |
+| 2.10 | Restaurant Provider Research | FatSecret Basic evaluated as a restaurant/branded source: cost, quota, auth, coverage, storage terms | 🔬 **Research COMPLETE — integration DEFERRED** (see below) |
+| 2.11 | Water Wiring | Water on the same engine; UI untouched | ⬜ Planned |
+| 2.12 | Polish & Audit | Empty/loading/error review, Light/Dark sweep, full verification | ⬜ Planned |
+
+**Renumbered 2026-08-21.** The Fuel Visual Refinement slice was recorded on 2026-08-18 as a late-Sprint-2 slice without a number (`docs/04-Master-Roadmap.md`). The founders opened it after 2.8 rather than after Edge Cases & Polish, so it takes 2.9 and the three remaining **unstarted** slices shift by one. Nothing already built was renumbered.
+
+### Slice 2.1 — Nutrition Foundation 🟡
+
+**Objective:** replace Fuel's presentation-only nutrition with a real engine — one shared source of truth that persists, survives a restart, and is ready for Home to read in slice 2.5. No external providers, no logging UI yet.
+
+**What the audit found, and what it means.** Fuel and Home each carried an independent nutrition fixture. Both showed `1267 / 2000 kcal`, but Fuel's meals summed to 1250 and Home's to 1740 — neither reconciled with its own headline. `Macro` and `MacroSummary` were field-for-field identical types in two features. Fuel said `'Snack'`, Home said `'Snacks'`, and `restaurantIconFor()` only mapped the singular, so Home's slot would have returned `undefined` had it ever called it. There was no persistence anywhere in `src/` — no `AsyncStorage`, no `SecureStore`, no `expo-sqlite` — and not a single `fetch()`.
+
+**New — `src/lib/nutrition/`.** In `lib/`, not `features/fuel/`, because both Fuel and Dashboard consume nutrition and features never import each other (CLAUDE.md rule 4) — the same promotion `journeyStages.ts` received.
+
+- `model/types.ts` — `VitaFood`, `ServingOption`, `NutritionFacts`, `FoodEntry`, `NutritionTargets`, `MealSlot`, `FoodSource`, `DEFAULT_TARGETS`
+- `model/nutrition.ts` — pure: `scaleNutrition`, `addNutrition`, `sumEntries`, `groupByMeal`, `summarizeMeals`, `dailyTotals`, `remaining`, `progress`, `percent`, `roundForDisplay`
+- `model/dates.ts` — local-calendar log dates (`toLogDate`, `todayLogDate`, `isValidLogDate`)
+- `model/mealSlots.ts` — canonical meal icons + `defaultMealForTime()` (moved from `features/dashboard/mealIcons.ts`)
+- `model/macros.ts` — the three macros defined once, theme-free, keys chosen to match the color token names
+- `data/` — `FoodLogRepository` interface, AsyncStorage implementation, namespaced `vita:v1:` keys
+- `state/` — `NutritionProvider` (Context + `useReducer`, mirroring `ThemeProvider`; no state library added) and `useDailyNutrition()`
+
+**Three decisions worth recording.** (1) **Entry nutrition is snapshotted**, already multiplied by quantity, so a later provider correction never rewrites January's log and daily totals stay a pure sum with no async. (2) **Persisted data is validated on read** — `NaN`, corrupted records, and entries whose `logDate` contradicts their storage key are dropped rather than repaired, because a guessed value in a food log is worse than a missing one. (3) **Optional nutrients stay absent when absent** through scaling and addition, so "unknown sodium" never becomes "0 mg sodium".
+
+**Deleted.** `FUEL_TODAY` (contradictory totals; its water/peptide counts also duplicated fixtures those features already owned — the Fuel hub now reads `getWaterToday()`/`getPeptideToday()` directly at the route level, which is composition, not a cross-feature import). `Macro`, `FuelToday`, `LoggedMeal` from `features/fuel/types.ts`. `getFuelToday()` from its api. `features/dashboard/mealIcons.ts` — grep confirmed nothing under `src/features/dashboard/` imported it; only Fuel's two screens did.
+
+**Changed.** `src/app/_layout.tsx` mounts `NutritionProvider` above the router. `(tabs)/fuel.tsx` and `fuel/log.tsx` render real state with a designed empty state and an em-dash placeholder during hydration — showing a real `0` that jumps to `1,267` a frame later would read as data loss. New `EmptyState` primitive (19 total).
+
+**Deviation from the approved plan, flagged:** the plan put `isFavorite` on `VitaFood`. Implemented instead as a separate favorites store keyed by `vitaId`, resolved at read time (slice 2.7). A denormalized mutable flag on a cached food is a staleness bug waiting to happen; the behavior the founders asked for — favorites working identically regardless of source — is unchanged.
+
+**Validation.** `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo install --check` clean · iOS Metro bundle exported with zero errors (3.27 MB, 1363 modules) · run in Expo Go on the iOS Simulator and confirmed by screenshot: Fuel renders `0 / 2,000 kcal · 0%`, macros `0/160g · 0/214g · 0/64g`, the empty state, and `Food Log 0 / 4 logged`, with Water and Peptides still on their own fixtures as intended.
+
+**Not yet proven.** The persistence **write** path is unexercised end-to-end — nothing in the app can create an entry until slice 2.2. Hydration (read) is confirmed working. Do not treat "logging survives a restart" as verified until 2.2 demonstrates it.
+
+**Found, not fixed — needs a founder decision.** With real data, an empty day shows every progress bar as a solid near-white track in dark mode, which reads as *100% complete* rather than 0%. The cause is the deliberately theme-invariant `ProgressBar` track (`palette.track`), approved 2026-08-16 as decision (3) precisely because changing it would change Home. It was harmless while the fixtures always showed partial progress. It is not harmless now. Flagged rather than changed, since the founders locked it. Also noted: a pre-existing `[Layout children]: No route named "(auth)"` warning in `src/app/_layout.tsx` (the route is `(auth)/sign-in`), unrelated to this slice.
+
+### Slice 2.2 — Core Logging 🟡
+
+**Objective:** make the write path real. Create a reusable custom food, log it to a meal, see every total move, remove it, undo the removal — all persisted. This is the slice that proves the engine 2.1 built.
+
+**What shipped.**
+
+- **Custom foods (My Foods).** `CustomFoodRepository` alongside `FoodLogRepository`, both satisfied by one `NutritionRepository` implementation. A custom food is a *definition*; the log is a record of eating it — so logging the same breakfast every day creates one food and many entries, never a duplicate food per log. `saveCustomFood` replaces by `vitaId` rather than appending, so a future edit updates the food instead of spawning a near-duplicate.
+- **Factories** (`model/foods.ts`, pure): `createCustomFood`, `createEntry`, `servingLabel`, `entryServingLabel`, `newId`. A food typed in by hand and a food from a provider produce the identical `VitaFood`, which is what keeps Favorites, Recents, and Food Detail source-agnostic later.
+- **Manual entry is real.** `manual.tsx` was nine uncontrolled inputs discarding everything on Save. It is now a controlled form: name, optional brand, serving size + unit, the four required macros, a collapsible "More nutrition" group (saturated fat, fiber, sugar, sodium), and a meal picker seeded from the time of day. Save is disabled until valid. Saving creates the food, logs one serving, shows a confirmation toast with Undo, and returns to the Food Log.
+- **Food Log is real.** Meal-grouped sections with per-entry rows, per-meal calorie subtotals, an explicit remove control on each row, and delete-with-Undo.
+- **`Toast` primitive** (20 total) — the confirmation surface. Not a modal and not a success screen: logging is meant to take seconds, and a screen to dismiss after every banana turns two taps into three. Carrying Undo also removes the need for a confirm dialog in front of a destructive action, which is both faster and kinder than asking "are you sure?" every time.
+- **`Button` gains `disabled`** (backward compatible; `PressableScale` already supported it).
+
+**Decisions worth recording.** (1) **Blank ≠ zero.** `parseAmount` returns `null` for an empty field, so an omitted sodium is stored as absent rather than `0 mg` — entering 0 g of fat is a fact, leaving it blank is not. (2) **The four macros are required, everything else optional** — the founder-stated minimum, without forcing a full nutrition label. (3) **Delete has no confirm dialog**, because Undo makes it reversible; a gate in front of a reversible action is friction without safety. (4) **Only meals with entries are rendered** in the Food Log — four headings over one entry turns a short log into a mostly blank screen, and the meal is chosen when the food is added, so an empty slot here is not a control.
+
+**Also corrected:** the Food Log screen's header said "Log Food", which is what `/fuel/add` is called. It now says "Food Log".
+
+**Validation.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` clean · iOS bundle exported with zero errors (3.29 MB) · **driven end-to-end in Expo Go on the simulator**: created "Protein Oats" (1 serving, 300 kcal / 24P / 40C / 7F, Breakfast) → Food Log showed `1 / 4 logged`, `300 / 2,000 kcal · 15%`, macro bars at 24/160g, 40/214g, 7/64g, and a `BREAKFAST · 300 KCAL` section → **killed Expo Go and relaunched: the entry survived**, and the Fuel hub showed the same numbers → deleted the entry (totals fell to 0 immediately) → Undo restored it.
+
+**Persistence is now proven end-to-end**, closing the gap flagged in slice 2.1.
+
+**One change made during verification:** the Undo toast window was 4.2s. A first Undo attempt missed it — that was a slow test rather than a defect, but 4.2s is genuinely tight for an action the user has to notice, read, decide on, and reach. Raised to 6s for toasts carrying an action; plain acknowledgements stay at 2.6s.
+
+**Still open from slice 2.1, unchanged:** the theme-invariant progress track still reads as a full bar at 0% in dark mode. Confirmed light-mode-only during this slice's verification — in light mode the pale track reads correctly as empty. Founder decision.
+
+### Slice 2.3 — Food Detail + Servings 🟡
+
+**Objective:** make Food Detail the reusable decision point between a food *definition* and a food *log entry* — serving, quantity, meal — with nutrition recalculating live before anything is committed.
+
+**Food Detail consumes only the normalized model.** Nothing on the screen knows whether a food was typed in by hand, came from the interim fixture catalog, or (later) from USDA, Open Food Facts, FatSecret, or a barcode scan. That is the point of normalizing at the provider boundary rather than in the screen.
+
+To make that true today rather than aspirationally, the placeholder catalog got its own adapter (`features/fuel/fixtureCatalog.ts`) — a provider adapter in miniature, mapping `FoodItem` → `VitaFood`. Search, Recent, and Favorites now render normalized foods too. `FoodSource` gains an interim `'vita-fixture'` member so those foods carry honest provenance instead of masquerading as user-created; both the adapter and that member are deleted in slice 2.6 with nothing downstream changing. `features/fuel/api.ts` was removed — fully superseded.
+
+**Built for the edit flow, not just for adding.** `PortionEditor` (serving + quantity + meal) is its own component precisely because editing an existing entry needs the same three controls and the same arithmetic. Building it inline would have guaranteed a second, subtly different editor in slice 2.4.
+
+**Calculation is not duplicated.** The screen calls `nutritionForServing()` from the engine; the only screen-local logic is which serving is selected. Display rounding moved into a new `model/format.ts` — `formatCalories` (whole numbers), `formatAmount` (one decimal only when there is one), `formatServingCount`, `pluralizeUnit`. Half of 7 g fat renders as `3.5g`, not `4g`, because rounding that would be a visible lie at exactly the moment the user is checking the math.
+
+**Other changes.** `Stepper` gains `step`, `formatValue`, and a `quantize()` guard — floating-point steps otherwise drift 1.5 into 1.4999999999999998 after a few presses, which would then be *stored*. `FoodRow` lost its heart: it had no `onPress` and toggled nothing, the same deceptive-control problem as the barcode mock's gallery button. It returns as a working control in slice 2.7. Search/Recent/Favorites gained real empty states.
+
+**Manual flow restored to the intended architecture.** Slice 2.2 logged directly from the form as the shortest path to proving the write path. It now creates the food and hands off: `Add Manually → save custom food → Food Detail → serving/quantity/meal → Add to Log`. Navigation uses `replace`, not `push`, so backing out of Food Detail returns to the Log Food picker rather than a filled-in form that would create a second copy of the same food.
+
+### Progress-track correction (founder-approved refinement, 2026-08-17)
+
+**Refines, not reverses, the 2026-08-16 decision** that kept `ProgressBar`'s track deliberately theme-invariant. That decision was sound while every bar was fed by a fixture showing partial progress. Once real logging arrived, an empty day rendered a near-white bar on a near-black card — reading as *100% complete* rather than 0%. The founders reclassified this as a usability defect rather than an aesthetic preference and approved a minimal correction.
+
+**The change is one line:** the track resolves through `surfaces.track` instead of the `palette.track` literal. **Light mode is byte-identical** — `lightSurfaces.track` *is* `palette.track` (`#EFEDE9`), the same value the literal held. Only dark changes, to `rgba(255,255,255,0.12)`.
+
+**Home verified in dark mode.** All three of Home's `ProgressBar` consumers were checked on device: `JourneySection` (gold journey bar), `MacroRow` (protein/carbs/fat rows), and `MetricTile` (the 3px accents under Steps/Water/Workouts/Sleep/Streak). Every bar reads correctly, and Home is more legible than before — the near-white tracks had been competing with the content they sat under. No file under `src/features/dashboard/` was modified.
+
+**Validation.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` clean · iOS bundle exported with zero errors · grep confirms no new component reads a raw `palette` surface value.
+
+**Driven end-to-end in Expo Go on the simulator:**
+- Manual → Food Detail handoff works; the meal picker is gone from the form and the button reads "Save & Continue".
+- **Quantity math, all four cases exactly as specified:** 0.5 → `150 kcal / 12g / 20g / 3.5g` · 1 → `300 / 24 / 40 / 7` · 1.5 → `450 / 36 / 60 / 10.5` · 2 → `600 / 48 / 80 / 14`. The kicker pluralizes correctly (`0.5 SERVINGS`, `1 SERVING`).
+- **Two meals:** Breakfast 1 serving (300 kcal) + Lunch 2 servings (600 kcal) → `BREAKFAST · 300 KCAL`, `LUNCH · 600 KCAL`, day total `900 / 2,000 kcal · 45%`, macros `72 / 120 / 21`. Subtotals and macros reconcile with the grand total exactly.
+- **Persistence:** killed Expo Go and relaunched — both entries survived with correct quantities, meals, and the `2 × 1 serving` label.
+- **Themes:** Light and Dark both correct on Food Detail, Food Log, and Home.
+
+**Not yet true, by design:** Home's nutrition still comes from its own fixture (`733 calories remaining`, `107 / 160g` protein) and therefore does **not** agree with Fuel's real totals. Home Integration is slice 2.5. Fuel-internal consistency — day total vs. meal subtotals vs. macros — is verified above.
+
+**Serving selection is architecturally present but visually unexercised:** custom and fixture foods each carry exactly one serving today, so `PortionEditor` correctly renders no picker. The multi-serving branch ships with real provider foods in slice 2.6 and has not been seen on screen yet.
+
+### Slice 2.4 — Edit + Delete 🟡
+
+**Objective:** correct an existing log entry — serving, quantity, meal — without creating duplicate data or breaking totals.
+
+**One editor, not two.** The edit route reuses `PortionEditor`, `NutritionSummary`, `NutritionDetailList`, `nutritionForServing()`, and the shared formatters. This is exactly why `PortionEditor` was extracted in slice 2.3 rather than built inline: the add and edit flows must never drift apart on serving arithmetic, and two editors would have guaranteed that they eventually did.
+
+**Entry identity is preserved.** Editing calls `updateEntry(id, changes)` with only the mutable fields — `meal`, `serving`, `nutrition`. `id`, `logDate`, `loggedAt`, and `foodRef` are untouched, so an edited entry is still the same eating event rather than a delete-and-recreate. That matters once sync and history exist. `logDate` is structurally unchangeable: `updateEntry`'s type is `Partial<Omit<FoodEntry, 'id' | 'logDate'>>`, so a date can't be reassigned by accident.
+
+**The food definition is never touched.** Editing an entry to 2 servings does not rewrite "Protein Oats" to 600 kcal per serving. Verified on device: after editing one entry through 2 servings → 0.5 servings → a meal move, reopening the editor still resolves 300 kcal / 24g / 40g / 7g per serving from the definition.
+
+**New pure helpers** (`model/foods.ts`): `servingFromEntry()` reconstructs a one-serving option from an entry by dividing its snapshot back out by quantity; `editableServings()` picks what to offer in three cases — the food resolves and a serving matches (offer the food's set), the food resolves but nothing matches (keep the entry's own serving first so the stored value is never silently rewritten), or the food is gone entirely (the entry's own serving is all there is). **This is the snapshot design paying off:** an entry stays fully editable after its custom food is deleted or a provider result falls out of cache.
+
+**Entry point.** Tapping a log row opens the editor — the interaction the row's card styling already implies. No chevron was added: value + delete + chevron is three trailing elements competing in one row. The one-tap `×` delete from slice 2.2 is untouched, and the editor carries a secondary "Remove from log" for parity.
+
+**Cancel is safe by construction.** The editor holds serving/quantity/meal in local state and writes nothing until Save, so backing out cannot partially persist.
+
+**Test results — all seven pass, driven on device:**
+
+| Test | Result |
+|---|---|
+| A — Quantity edit, 1 → 2 servings | 600 kcal, 48/80/14; day total 300+600 → 1,200. **One entry, no duplicate.** |
+| B — Fractional edit, 2 → 0.5 | 150 kcal, 12/20/**3.5**; centralized rounding intact. Also proves per-serving nutrition was correctly recovered from a 2-serving snapshot. |
+| C — Meal move, Breakfast → Lunch | Breakfast section disappeared, `LUNCH · 750 KCAL` absorbed both entries, **daily total unchanged at 750** with identical macros. |
+| D — Cancel | Changed 1 → 2, backed out; stored entry still 1 serving / 300 kcal. Repeated later in light mode with the same result. |
+| E — Persistence | Killed Expo Go and relaunched; edited values (0.5 × 1 serving, Lunch) survived. |
+| F — Delete + Undo | Entry removed, totals fell immediately; Undo restored it **in its original position** with identical serving label, quantity, meal, and nutrition. |
+| G — Permanent delete | Deleted, let the 6s window expire, killed and relaunched — still gone (600 kcal, one entry). |
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` clean · iOS bundle exported with zero errors · grep confirms no new raw light-only `palette` surface reads. Light and Dark both verified on the new screen.
+
+**Flagged, not expanded (per the scope instruction):** the editor seeds `meal` from the entry rather than `defaultMealForTime()` — confirmed on device (Lunch stayed selected at 2:19 AM, when the time-of-day default would have been Breakfast). Two things the architecture *could* support but that were deliberately left out: editing an entry's **date** (no history UI exists yet, and it would need a date picker), and stamping an **`editedAt`** timestamp (useful for future sync conflict resolution, but it changes the persisted shape and belongs with the Supabase work).
+
+**Unchanged and still true:** Home's nutrition remains its own fixture, so Home ↔ Fuel totals still disagree. That is slice 2.5.
+
+### Slice 2.5 — Home Synchronization 🟡 — **one source of truth achieved**
+
+**The architecture milestone this sprint was built for.** Daily nutrition now has exactly one owner. `src/lib/nutrition` holds the entries; `useDailyNutrition()` derives totals; Fuel and Home both read that and nothing else. The contradictory fixtures the Sprint 2 audit opened with — Fuel's meals summing to 1250, Home's to 1740, both printing `1267` — no longer exist anywhere in the codebase.
+
+**What changed on Dashboard — three files, no components.**
+
+- `types.ts` — `calories` and `mealSlots` removed from `DashboardData`. `MealSlot` is now a **re-export of the canonical `src/lib/nutrition` type** rather than a redeclaration, so `'Snack'` vs `'Snacks'` cannot drift apart again: there is one definition. `CalorieSummary`/`MacroSummary`/`MealSlotSummary` stay, documented as **view models** — see the note below.
+- `mock.ts` — the `calories` block and the four fake `mealSlots` deleted. The nutrition goal pillar's `complete` becomes a placeholder, recomputed from real data.
+- `(tabs)/dashboard.tsx` — assembles those view models from `useDailyNutrition()`.
+
+**No file under `src/features/dashboard/components/` was modified** — verified as byte-identical to the approved commit `1a9dec9`, not asserted.
+
+**On `MacroSummary`, which the audit flagged for removal — kept, deliberately.** Its duplicate partner was Fuel's `Macro`, and that was already deleted back in slice 2.1, so nothing in `src/lib/nutrition` now carries this shape. Fuel's own progress bars want a different one (`{ label, valueLabel, progress, color }`). Inventing a shared display type that suits neither, and editing a locked Dashboard component to adopt it, would buy no data-integrity gain — **the data is already single-source; only the render shape is local.** Flagged rather than silently kept.
+
+**Goal pillars stay honest.** Only the *nutrition* pillar is recomputed. Water, Movement, and Recovery have no feature behind them yet and keep their fixture values, so "N of 4 goals complete" doesn't quietly become a nutrition-only number. Visible effect: Home now reads **2 of 4** on an empty day, where the fixture always claimed 3 of 4.
+
+**Nutrition completion semantics — needs founder confirmation.** "Complete" is currently `caloriesConsumed >= calorieTarget`. That is a product choice, not a derived fact; a range-based definition ("within 10% of target") or a macro-aware one are equally defensible.
+
+**Calories remaining** derives from `target − consumed` and floors at zero — the pre-existing `HomeSummaryCard` behavior, unchanged, and consistent with the engine's `remaining()`. Going over target reads as 0 remaining rather than a negative number, matching the no-guilt-mechanics rule.
+
+**Empty day needs no new empty state.** All four meal rows always render — Home's approved presentation — so an empty day is four honest zero rows. Multiple foods in one meal aggregate to a total plus a count (`1200 kcal • 2 logged`), which is the existing `MealRow` behavior; Fuel's Food Log remains the per-entry view.
+
+**Code audits (all clean).** No cross-feature imports · no remaining nutrition fields in `dashboard/mock.ts` · `getDashboard()` supplies only non-nutrition data · `'Snack'` singular appears only inside explanatory comments · no new light-only `palette` surface reads.
+
+**Test results — all seven pass, driven on device:**
+
+| Test | Result |
+|---|---|
+| A — Empty day | Fuel `0 / 2,000`; Home **2,000 remaining** (was a hardcoded `733`), macros 0, four zeroed meal rows, **2 of 4** goals |
+| B — Add Breakfast 300 | Both surfaces 300; Home 1,700 remaining, protein 24/160g, `Breakfast 300 kcal • Logged` — **no restart** |
+| C — Add Lunch 600 | Day 900 in both; Breakfast 300, Lunch 600; macros 72/120/21 identical on both |
+| D — Edit 1 → 2 bowls | Both jump to 1,200; Home 800 remaining, protein 96/160g |
+| E — Move Breakfast → Lunch | Home: Breakfast 0, `Lunch 1200 kcal • 2 logged`; **daily total unchanged**, macros unchanged |
+| F — Delete / Undo | Delete propagated (Home 1,400 remaining); Undo restored (Home still 1,400 — a failed undo would have read 2,000) |
+| G — Relaunch | Fuel `600 / 2,000`, macros 48/80/14; Home 1,400 remaining, protein 48/160g — exactly consistent |
+
+Incidentally confirmed during Test A: the day rolled from 17 → 18 August and yesterday's entries correctly did not appear as today's.
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors.
+
+**Dependency note, not caused by this slice:** `expo install --check` now reports `expo@54.0.36 → ~54.0.37` and `expo-constants@18.0.13 → ~18.0.14`. `package.json` and the lockfile are byte-identical to commit `1a9dec9` — these are patch releases Expo published upstream. Nothing is broken and no SDK change is involved. Left untouched pending founder direction.
+
+**What is still honestly mock on Home:** Journey, steps, sleep, workouts, streak, the water quick-stat, and the Water/Movement/Recovery goal pillars. None of them compete with the nutrition domain.
+
+### Slice 2.6 — Provider Layer + Real Search 🟡
+
+**The fixture catalog is gone.** `features/fuel/fixtureCatalog.ts`, `mock.ts`, `types.ts`, and the interim `'vita-fixture'` source member are all deleted, and Search, Food Detail, and Edit kept working without a single change to their logic. That was the point of the abstraction, and it held.
+
+**Cost: $0, zero billing risk.** USDA is free (CC0, no paid tier exists). Open Food Facts is free and needs no key. Full comparison table in the slice-2.6 checkpoint.
+
+**Architecture.** Adapters in `src/lib/nutrition/providers/` are the only files that know a provider's response shape. Verified by grep: no `fetch(` outside that directory, and no `source === 'usda'`-style branching anywhere in `src/app`, `src/features`, or `src/components`.
+
+**Two real bugs caught by real data**, both worth recording:
+
+1. **GTIN leading zeros.** The unit checks (20 assertions, run standalone) caught that a barcode passed through a JSON *number* loses its leading zero — UPC-A `028400157827` arrives as 11 digits and was being rejected as a non-standard length. That is exactly the mismatch the module exists to prevent. Fixed by accepting any 8–14 digit run and padding to 14.
+2. **Double-counted portion labels.** Provider serving labels are full phrases ("1 bar (68 g)"), not unit nouns, so the existing `formatServingCount(quantity, unit)` rendered **"1 1 SERVING (68 G)"**. Replaced with `formatPortion(quantity, label)`, which multiplies instead — "2 × 1 bar (68 g)" — matching the convention log rows already used. Adapters now keep `unit` a countable noun and the descriptive phrase in `label`.
+
+**Open Food Facts search endpoint changed mid-slice.** The legacy `cgi/search.pl` worked, then began returning HTTP 503 under repeated use. Switched to **Search-a-licious**, which OFF's current docs point to for full-text search. Tradeoff, documented rather than hidden: Search-a-licious does not index serving fields at all (confirmed — 43 fields, none serving-related), so OFF search results offer only the honest 100 g baseline. Label servings remain available from the product endpoint that `lookupBarcode` uses. Enriching an opened result from that endpoint is a recommended follow-up.
+
+**Verified on device (Open Food Facts):** searched `clif bar` → real results with brand, serving label, and calories, exact-name matches ranked first → opened "Clif Bar Cool Mint Chocolate" → Food Detail rendered `368 kcal · 14.7g / 63.2g / 8.8g` with no provider-specific code → logged to Breakfast → Fuel showed `968 / 2,000` alongside an existing custom-food entry (368 + 600, macros reconciling) → killed and relaunched → entry persisted and **Home read 1,032 remaining**, exactly consistent.
+
+**Provider failure isolation proved itself twice, live:** USDA is unconfigured (no key) and search still returned Open Food Facts results throughout; and when OFF 503'd, the error state, Retry button, and dev-only diagnostics (`openfoodfacts: bad-response @ search`) all rendered correctly — a category and a stage, never a key.
+
+**Search behavior.** 350 ms debounce; minimum query length **2** (one character matches nearly everything and wastes a call against OFF's documented 10 searches/minute); `AbortController` plus a run-sequence guard so a slow earlier response can never overwrite a newer one; 6 s per-provider timeout.
+
+**BLOCKED: USDA is unverified.** The adapter is written and type-checks, but no request has ever been made because there is no key. It cannot be verified until the founder registers one — instructions in the checkpoint.
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · `src/features/dashboard/` byte-identical to `dbe0c91` · dead `formatServingCount`/`pluralizeUnit` removed rather than left behind.
+
+**Dependency note, still not caused by this slice:** `expo-constants@18.0.13 → ~18.0.14` remains flagged upstream. Untouched per the founder's lock.
+
+### Slice 2.7 — Recents + Favorites 🟡
+
+**Recents have no storage of their own.** The log already holds the truth — a food is recent precisely because the user logged it — so a parallel "recents" list would only be a second thing that can disagree with the first. The reserved `vita:v1:recents` key was **deleted** rather than filled. `useRecentFoods` reads the most recent days of log keys, collapses to one row per `vitaId` (entries arrive newest-first, so the first occurrence is already the latest use), and caps the result.
+
+**Limits:** 30 days scanned, 25 rows shown. One storage key per day is what makes the scan cheap — only those days are read, and keys are enumerated and sorted rather than walked date by date, because gaps are normal and walking would read nothing on every skipped day.
+
+**History is self-sufficient.** New pure `foodFromEntry()` rebuilds a usable `VitaFood` from an entry's snapshot alone — name, brand, provenance, and the serving actually used. A recent food stays loggable with the provider cache expired, the custom food deleted, or the device offline. No API call, nothing fabricated. Opening the Recents screen also re-seeds the food cache from history, so tapping a recent always resolves in Food Detail.
+
+**This paid off visibly during verification:** a food logged from the retired `vita-fixture` catalog — a source that no longer exists in the codebase after slice 2.6 — still rendered and remained loggable, rebuilt entirely from its entry snapshot.
+
+**Favorites** are keyed by `vitaId`, never by a search-result object reference, so favoriting once persists across every surface and every encounter. Stored newest-first, which gives the Favorites screen a deterministic order with no sort at render time.
+
+**Provider-aware storage, provider-independent presentation.** `PERSISTABLE_SOURCES` gates whether a favorite may retain the food *definition*: `usda` (CC0), `openfoodfacts` (ODbL — retaining individual user-chosen records on-device is ordinary API use; share-alike attaches to *publishing* a derived database), and `vita-custom`. **`fatsecret` is deliberately excluded** — its caching and storage terms differ and are unverified, so a favorite from it will store identity only and resolve the definition live. The row renders identically either way, and a stored definition is dropped on read if its source is no longer permitted, so a terms change takes effect without a migration.
+
+**The heart returned** in `FoodRow` (Search, Recents) and in Food Detail's header via a new optional `action` slot on `ScreenHeader` — additive and ignored when `settings`/`close` are set, so every existing screen renders unchanged. State comes from the shared store, which is why the surfaces agree without any of them refreshing or knowing about each other.
+
+**Test results — all eight pass, driven on device:**
+
+| Test | Result |
+|---|---|
+| A — Custom recent | Custom food appears in Recents; survived repeated kill/relaunch |
+| B — External recent | Open Food Facts food appears and stayed usable after relaunch **with no re-search and no network call** |
+| C — Recent dedup | Logged the same food twice → still exactly one row |
+| D — Favorite custom | Persisted across kill/relaunch |
+| E — Favorite external | Persisted, and opened from its stored definition after a full restart |
+| F — Unfavorite | Removed from Food Detail; Favorites and the Recents heart both updated |
+| G — Cross-surface | Favorited in Recents → Food Detail heart already filled → unfavorited there → Recents reflected it. In live search the favorited entry showed filled while a **near-identical result from a different brand entry showed hollow** — proving identity keying, not name matching |
+| H — Re-log | Opening a recent and logging moved it to the top; still one row, totals updated |
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · no provider branching in Recents/Favorites UI · no fixture resurrection · no separate recents persistence · only normalized `VitaFood` is persisted, never a raw provider payload · no cross-feature imports · `src/features/dashboard/` byte-identical to `2fe86a4`.
+
+**Known limitation:** two rows can legitimately share a name — the fixture-era "Protein Oats (bowl)" and the custom "Protein Oats (1 serving)" are genuinely different definitions with different `vitaId`s and different servings. Dedup is by identity, not by name, which is correct: merging them would hide a real distinction.
+
+**USDA remains unverified** pending the optional free key. Not a failure of this slice — the adapter, configuration, docs, and failure isolation are all in place, and search runs on Open Food Facts alone.
+
+### Slice 2.8 — Barcode Scanner 🟡
+
+**Camera.** `expo-camera@~17.0.10`, the SDK 54-compatible version — installed with `npx expo install`, **no SDK change** (`expo` stays `~54.0.36`). Works in Expo Go with no development build and no Xcode. `app.json` gains the `expo-camera` plugin with a camera-permission string so a future dev build is correct; Expo Go uses its own string, which is why the on-device prompt reads "Expo Go would like to access the Camera".
+
+**Scan types** restricted to `upc_a`, `upc_e`, `ean13`, `ean8` — the grocery formats. Narrowing the set stops the detector firing on QR codes and shipping labels that are never food. Detected values go through the existing `normalizeGtin()`; grep confirms no second normalization anywhere.
+
+**The scan lock is a `ref`, not state.** `onBarcodeScanned` fires many times per second while a code stays in frame. A `useState` flag is not sufficient — React batches, so several callbacks slip through before the re-render lands, each firing its own lookup and its own navigation. The ref flips synchronously on the first detection; `onBarcodeScanned` is additionally detached while a lookup runs, as a second guard. A value that isn't a usable GTIN is ignored **without** locking, so a stray label doesn't dead-end the scanner.
+
+**Lookup runs sequentially**, unlike text search. A GTIN is an exact identity: the first trustworthy match is the answer, so asking every provider would only spend rate-limited quota. Open Food Facts goes first (barcode-native, one O(1) product endpoint); USDA is an optional fallback and is **skipped silently when unconfigured** rather than reported as a failure.
+
+**USDA barcode has a caveat worth recording:** FoodData Central has no barcode endpoint, so a GTIN query is a fuzzy full-text search that returns near-misses. Every candidate is re-checked against its own `gtinUpc` through `normalizeGtin`, and only an exact GTIN identity is accepted — a scan must return *that* product or nothing.
+
+**A real bug the live API caught.** Open Food Facts answers an unknown barcode with **HTTP 404**, not a 200 carrying `status: 0`. Left to the generic handler that surfaced as a lookup *error* — which would have told the user to retry something that can never succeed, instead of offering manual entry. A 404 on the product endpoint is a definitive answer and now maps to "not found". This is exactly the not-found-vs-error distinction the slice brief called for, and it would have shipped wrong.
+
+**Pipeline verified against the live API** (10 assertions, standalone runner):
+
+- UPC-A `722252387530` and EAN-13 `0722252387530` both resolve, and produce the **same `vitaId`** — barcode identity is representation-independent.
+- The resolved product carries a **real label serving ("68 g")**, not just the 100 g baseline — the OFF *product* endpoint has serving data that Search-a-licious lacks, which is the 2.6 tradeoff paying off here.
+- Four macros present, barcode normalized to 14 digits, provenance `openfoodfacts`.
+- A genuinely unknown barcode returns **`not-found`, not `error`**.
+- Junk input returns `not-found` **without making a request**.
+
+*Aside worth knowing:* several "obviously fake" codes (`9999999999994`, `0123456789012`, `1111111111116`) are **real community records** in Open Food Facts. A valid GTIN is not automatically food, and the database is not automatically empty — which is why §18's rule matters and why the not-found test had to use a code verified absent.
+
+**Verified on the simulator:** permission-undetermined state (icon, explanation, "Allow camera", "Search instead") · the OS prompt · **denied** state switching copy to "Camera access is off" with "Open Settings" · granted → live scanner with orange corner brackets, instruction, close and torch controls · torch toggle reflecting on/off.
+
+**NOT verified — needs a physical iPhone.** The iOS Simulator has no camera, so the narrow path **camera detection → `handleScan` → `normalizeGtin` → lookup** has never executed against a real barcode. Everything either side of it is verified: the lookup chain against the live API above, and Food Detail → log → Fuel/Home → Recents → Favorites → relaunch, all unchanged and already proven for Open Food Facts foods in slices 2.3–2.7. Device tests C, D, E, F, G, H, J remain for the founder.
+
+**Static.** `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS bundle exported with zero errors · no provider branching in UI · no duplicate barcode normalization · no gallery control · SDK unchanged · `src/features/dashboard/` byte-identical to `c61f92e`.
+
+### USDA verification — ranking fix (2026-08-19)
+
+Real FoodData Central responses were inspected before the founder's key arrived, using `DEMO_KEY` — api.data.gov's documented public test key, rate-limited to 30 requests/hour. Not a fabricated credential and never written to `.env`; used only to validate response shapes against the adapter's assumptions.
+
+**Every field assumption from slice 2.6 is correct.** `fdcId`, `dataType`, `description`, `brandName`/`brandOwner`, `gtinUpc`, `servingSize`/`servingSizeUnit`, `householdServingFullText`, and `foodNutrients[].nutrientId`/`.value` all appear as the adapter expects, and nutrients are confirmed **per 100 g** across data types. Foundation and SR Legacy records carry **no serving data at all**, so they correctly fall back to the honest 100 g serving the adapter already builds. No normalization bug.
+
+**A real ranking bug, though.** Searching a bare generic term returned branded junk first:
+
+- `banana` → a **peanut butter spread named "BANANA"** (312 kcal) above "Bananas, raw" (89 kcal).
+- `egg` → three separate Branded products named **"EGG"** above "Eggs, Grade A, Large".
+
+Cause: `exactName` (+45) fired on any record whose name equalled the query, and USDA serves lab composition data and manufacturer labels from the same endpoint with no distinction in the flat per-provider quality score.
+
+**Three changes, all provider-independent:**
+
+1. **`VitaFood.dataQuality`** — an optional 0–100 per-record trust signal. Adapters translate whatever their source knows about record quality into this one number; ranking reads only this and falls back to the provider's flat base. USDA maps FDC data types (Foundation/SR Legacy 95, Survey (FNDDS) 82, Branded 78); Open Food Facts uses a flat 70, since it exposes no per-record verification signal.
+2. **`exactNameBranded` (+15 instead of +45)** when a branded product's name matches but the query never mentioned the brand. Naming the brand restores the full bonus, so "clif bar" still works.
+3. **A capped extra-word penalty** (−2/word, max −8), so "Bananas, raw" beats "Bananas, dehydrated, or banana powder". The cap matters: uncapped it inverted a quality tier, pushing the canonical-but-verbose "Eggs, Grade A, Large, egg whole" below the composite dish "Egg burrito".
+
+**Verified against a real saved USDA payload** (25 results for `egg`), run offline so no quota was spent re-testing. Before: `EGG`, `EGG`, `EGG`. After: `Eggs, Grade A, Large` ×3, then egg breads, then composite dishes, with branded demoted. GTIN (20 assertions) and barcode-pipeline (10 assertions, live) suites both re-run and still pass.
+
+**Verified with the founder's real key (2026-08-19).** See "USDA live verification" below.
+
+### USDA live verification — a second bug, and the reliability fix
+
+**The `dataType` query parameter is unreliable and has been removed.** Measured, not assumed:
+
+| Request shape | Success rate |
+|---|---|
+| `&dataType=Foundation%2CSR%20Legacy%2CBranded%2CSurvey%20%28FNDDS%29` | **5 / 10** |
+| identical query, no `dataType` | **10 / 10** |
+
+api.data.gov's edge intermittently answers the filtered form with a bare nginx `400 Bad Request`. It was silently costing USDA results on roughly half of all searches — the first live run returned USDA data for only **one of four** test queries (`egg`), with `banana`, `chicken breast`, and `rice` all falling back to Open Food Facts alone. Failure isolation worked exactly as designed, which is precisely why the problem was invisible from the UI.
+
+Filtering moved client-side into `toVitaFood`, which drops any record whose `dataType` isn't in the allowlist. Costs nothing: the same four types come back unfiltered (verified across several queries), and *ranking* — not filtering — is what keeps generic foods above branded ones now. All four queries returned USDA results afterwards.
+
+**A third fix: the `hasCompleteMacros` bonus was removed.** It awarded +6 to records carrying fiber and sugar values, which rewards *food type*, not data quality — bread has both, an egg genuinely has neither. It was pushing "Bread, egg" above "Eggs, Grade A, Large" for the query `egg`. Per-record trust belongs in `dataQuality`, where a provider can speak to it honestly.
+
+**Normalization confirmed correct against real responses.** Names, source, source id, brand (`brandName` falling back to `brandOwner`), GTIN normalized to 14 digits, and the four macros all populate as designed. Label servings scale correctly from per-100 g data — real examples observed: `2 Tbsp` → 100 kcal, `1 cup` → 200 kcal, `0.25 cup` → 160 kcal. Foundation and SR Legacy records carry no serving data and correctly fall back to the honest 100 g serving. USDA's ALL-CAPS branded descriptions are title-cased; mixed-case names are left alone.
+
+**Search results after all three fixes:**
+
+- `banana` → Bananas, raw (89 kcal) · Bananas, overripe, raw · Bananas, dehydrated — generic first, branded below. ✅
+- `chicken breast` → three USDA generic chicken-breast records, branded below. ✅
+- `egg` → Eggs, Grade A, Large (white / whole / yolk). ✅
+- `rice` → "Rice crackers" first. ⚠️ **Known limitation, not a logic bug:** USDA's canonical white-rice record is named "Rice, white, long-grain, regular, raw, enriched", so a short prefix match outranks it. Deliberately not tuned around — chasing a perfect #1 for every query against one database's naming conventions is what the "no ML ranking, keep it deterministic" instruction rules out.
+
+**Failure isolation verified live, all four cases:** both providers healthy → 42 results from both · invalid key → USDA `auth/403`, Open Food Facts still returned 17, search did not fail · key unset → USDA silently skipped, not even attempted · key restored → both back. `.env` was never modified; the test overrode the variable in its own process only.
+
+**Not verified: the in-app UI walkthrough for a USDA-sourced food.** The screen-control tooling disconnected mid-session, so the simulator could be screenshotted but not driven. The app boots clean with the key loaded. Everything downstream of the provider layer is provider-independent (grep confirms zero source branching in `src/app`, `src/features`, `src/components`) and was fully verified for Open Food Facts foods in slices 2.6–2.7, so USDA foods traverse the identical path — but that specific walkthrough is the founder's to run.
+
+### QA repair — barcode misidentification + favorite discoverability (2026-08-19)
+
+Physical-device QA on Expo Go found two real product defects. Not a slice; a repair checkpoint.
+
+**Barcode returned an unrelated product.** A Kroger water bottle resolved as "Hillshire Farm Beef Smoked Sausage" — and a *second, different* bottle produced the *same* wrong result. That signature is the clue: fuzzy provider matching would have produced two different wrong answers, so the fault was stale state, not the provider.
+
+**Root cause:** `/fuel/food/[id]` is a single route, and navigating from one food to another updates `params` **without remounting**. Food Detail seeded its resolved food with a `useState` initializer, which runs only on first mount, so `resolved` held whichever food opened the screen first — forever. Worse, the async fallback was guarded by `if (food) return`, and `food` was truthy (the stale one), so it never re-read. Every subsequent food showed the first one. The same defect class was present in `/fuel/entry/[id]`, where a second entry would inherit the first one's quantity and meal.
+
+Fixed by storing the async result **with the id it belongs to** and discarding it when the route param differs, plus an effect that re-seeds portion state when the food identity changes.
+
+**Provider hardening (required regardless).** Open Food Facts' barcode lookup now independently re-normalizes the *returned* product code and rejects anything that isn't an exact GTIN identity match. USDA's fuzzy-search fallback was already strict; the check is now explicit, skips records with no `gtinUpc` rather than treating them as near-misses, and both providers emit a dev-only mismatch diagnostic (provider, requested GTIN, returned GTIN — never a key).
+
+**A second, separate bug found while tracing:** the barcode chain was running **USDA first**, contradicting both the documented design and the founder's stated order. USDA has no barcode endpoint, so every scan spent a fuzzy full-text request that would essentially never match before Open Food Facts did the real work. Barcode order is now explicit (`BARCODE_PROVIDER_ORDER`) rather than inherited from registration order, which only text search is indifferent to.
+
+**Cache audit: cache did not contribute.** Every food-cache key is `vitaId`-scoped (`vita:v1:cache:food:openfoodfacts:<code>`), the query cache is a separate in-memory map keyed by query string, and the two cannot collide. Verified by test: two different barcodes back-to-back return their own products, and re-scanning the first returns the first again.
+
+**Verified against live providers** (6 assertions): the real Kroger Purified Drinking Water barcode `0011110043436` resolves to *Kroger Purified Drinking Water*, its returned GTIN equals the scanned GTIN, and it is not a sausage · a different barcode returns a different product · re-scanning the first returns the first · the UPC-A form resolves to the same `vitaId` as the EAN-13 form · an unknown barcode returns honest not-found rather than a wrong food.
+
+**Favorite controls were present but undiscoverable.** The heart shipped in slice 2.7 on search rows, Recents rows, and the Food Detail header — and does render — but drawn as a bare outline in `surfaces.textTertiary` (45% white on a dark card) it read as decoration, and QA never found it. That is a real product failure, not a misunderstanding. The row heart now sits on a faint circular surface with a border so it reads as a button, and the unfavorited outline moved from tertiary to secondary. The Food Detail header heart stays plain, where position alone makes it a control.
+
+**Still unverified this session:** tap isolation (heart toggles without opening Food Detail) and the cross-surface sync walkthrough. Nested `Pressable` wins the touch by React Native's responder rules, so the behavior should be correct, but the screen-control tooling was disconnected and the simulator could be screenshotted, not driven.
+
+### QA round 2 — barcode instrumentation, favorite surfaces, post-log navigation (2026-08-19)
+
+**Barcode: NOT signed off.** The founder rescanned on device after `779b0ab` and still saw the wrong product. The previous root-cause conclusion was **wrong in scope**: the stale-`useState` bug was real and is fixed, but it was not needed to explain the report. Two bottles of the *same* Kroger product share one UPC, so "two bottles, same wrong result" is exactly what a single bad lookup of a single barcode looks like.
+
+What was ruled out this round, with evidence:
+- **Open Food Facts data is not mislabelled.** Every Hillshire Farm record sits under GS1 prefix `00445003…`; Kroger's is `0011110…`. No Kroger-prefix code maps to Hillshire.
+- **Food Detail cannot substitute a food.** Both resolution paths (`findFood`, `readCachedFoodSync`) are exact `vitaId` lookups, and after the `779b0ab` fix the async path is discarded when the route param differs.
+- **Cache cannot collide.** Keys are `vitaId`-scoped; the query cache is a separate map.
+- **The provider chain is correct**, re-verified live: the real Kroger barcode returns Kroger, a different barcode returns its own product, re-scanning returns the original, UPC-A and EAN-13 share a `vitaId`, unknown returns not-found.
+
+**The gap is that no test ever used the founder's actual bottle.** The standalone suite used a Kroger barcode found by searching Open Food Facts, not the value the camera produced. So a dev-only trace now records the whole chain — `camera.raw`, `camera.type`, `normalized`, `lookup.status`, `provider`, `food.name`, `food.returnedGtin`, `food.vitaId`, `navigate.href`, `detail.routeParam`, `detail.resolvedId`, `detail.renderedName` — to the console and to an on-screen panel on Food Detail (`BarcodeTracePanel`, `__DEV__` only, no credentials). One physical scan will say exactly where Kroger becomes Hillshire. **Remove the panel once signed off.**
+
+**Favorite surfaces added** (same 2.7 repository, no new state): a heart on every **logged food row** in the Food Log, and one in the **Edit Entry header**. Both build their `VitaFood` from the entry's own snapshot via `foodFromEntry()`, so favoriting something already logged costs no provider request and works with the cache expired or offline. Favoriting from Edit Entry acts on the food identity only — serving, quantity, meal, and the eating event are untouched.
+
+**Post-log navigation fixed.** Logging could leave four screens stacked (Fuel → Log Food → Search → Food Detail), and the user pressed Back repeatedly to escape. `Add to Log` now calls `router.dismissAll()`, popping everything above the tab navigator in one step and landing on Fuel with the entry and totals already rendered — guarded by `canDismiss()` with a `replace('/fuel')` fallback for a deep link straight to the screen. No duplicate Fuel root: the tab screen is revealed, never pushed. Save and Delete in Edit Entry use `router.back()`, returning to the Food Log they came from rather than stacking a second copy.
+
+**Not verified this session:** anything requiring taps. The screen-control tooling stayed disconnected, so the simulator could only be screenshotted. The build boots clean with zero bundle errors.
+
+### Slice 2.9 — Fuel Visual Refinement 🟡
+
+The slice recorded on 2026-08-18 as founder direction — *"too basic, too bulky, overusing large numbers, filling space because space exists"* — built against a founder-supplied concept reference. **Presentation and information architecture only.** No provider, search, ranking, dedupe, barcode, logging, editing, favorite, persistence, or theme behavior was changed, and no mock nutrition data was introduced anywhere.
+
+**The structural decision.** The previous screen's problem was not its spacing, it was its *containers*: four features rendered as four full-width cards of equal visual weight, with the day's actual food hidden behind a row labelled "Food Log". Fuel now reads as one vertical narrative — status, action, content, secondary — and the load-bearing change is that **meals are rows in a single panel, not four cards.** An untouched Lunch costs one 56pt row instead of a card with its own border, shadow, and padding, which is what frees the space for the foods a person actually ate.
+
+**New information hierarchy.**
+
+1. **Header** — `Fuel` with the current log date beneath it (`formatLogDateLong`), settings gear unchanged in its permanent top-right slot.
+2. **Summary** (`FuelSummaryCard`) — a calorie ring (eaten) beside the headline that decisions are actually made on (remaining), a progress bar, `N% of 2,000 Calories`, then the three macro bars below a hairline. One card, one statement.
+3. **Primary actions** (`FuelQuickActions`) — a filled **Log Food** card ("Search, scan, or add") beside **Scan Barcode** ("Quick scan a product"). Both open the routes that already existed; the primary reads as primary through fill, not through size.
+4. **Today's Meals** (`TodayMealsPanel`) — all four canonical slots as rows in one panel, meals with entries expanded by default, `+ Add food` per meal, and a compact `View all` to the full Food Log.
+5. **Secondary trackers** (`FuelTrackerCard` ×2) — half-width Hydration and Peptides modules. Their proportion is what says "secondary"; nothing else has to.
+
+**Meal color language** (`features/fuel/mealAccent.ts`) — Breakfast sunrise yellow (`palette.carbs`), Lunch midday orange (`palette.primary`), Dinner sunset red-orange (`palette.fat`), Snacks neutral sage (`palette.sage`) with a plain utensils glyph and no time-of-day signal. **Deliberate deviation from the reference:** the concept shows Snacks in purple, but purple is a locked domain color (Atlas and peptides, Sprint 0.1) and the Peptides module sits directly below — a purple Snacks row would read as a peptide entry. Every value used is an existing brand or macro token; no new hex was invented. Ionicons has no sunrise/sunset glyph, so Breakfast and Dinner use the closest stock equivalents tinted warm, same approximation Home already documents.
+
+**Meal-specific logging.** `+ Add food` on a meal deep-links the *existing* flow with that meal attached — `/fuel/add?meal=Lunch` → Search / Scan / Manual / Recents / Favorites → Food Detail — and Food Detail seeds its meal from the parameter instead of the time of day. Implemented as a forwarded route parameter validated by a new `parseMealSlot()` in the nutrition domain, not as new state: an unrecognized value falls back to the existing default, and the meal picker stays visible and editable. This changes what is *preselected*, never what is possible. The MealSlot architecture is untouched.
+
+**Calories terminology.** `kcal` is gone from user-facing copy: Fuel summary, Food Log, meal subtotals, food rows, logged rows, the Add-to-Log toast, `NutritionSummary`, and the manual-entry field label now read `Calories` or `cal`. Home's meal rows were included — a four-character copy change with no layout or structural effect — because leaving `552 kcal` on Home beside `552 cal` on Fuel would be a visible inconsistency in one app. **Internal naming was not touched:** `NutritionFacts.calories`, `MealSlotSummary.kcal`, and Open Food Facts' `energy-kcal_100g` are unchanged, because this was a copy audit, not a rename.
+
+**Everything preserved and verified present:** shared nutrition domain · USDA · Open Food Facts · search aggregation, normalization, ranking, dedupe · barcode scanning with strict GTIN validation · the dev-only barcode trace panel (**kept — the Kroger issue is not signed off**) · custom and manual foods · Food Detail · portions and quantity · meal assignment · daily logging · edit · delete + Undo · Recents · Favorites and their persistence · favorite-from-logged-row · Home ↔ Fuel synchronization · date awareness · persistent state · provider failure isolation · Light/Dark/System · Expo Go on SDK 54.
+
+**Files.** New: `components/ui/ProgressRing.tsx` (SVG ring on the existing `react-native-svg` dependency), `features/fuel/mealAccent.ts`, and `features/fuel/components/{FuelSummaryCard,FuelQuickActions,TodayMealsPanel,MealFoodRow,FuelTrackerCard}.tsx`. Changed: the Fuel tab route (rewritten), the five logging routes and `FoodRow` (meal forwarding + copy), `food/[id]` (meal preselection + copy), `ScreenHeader` (optional `subtitle`, unset everywhere else so no existing header shifts), `dates.ts` (`formatLogDateLong`), `mealSlots.ts` (`mealSlotIcon` removed — no remaining caller once meals got icon *and* accent together; replaced by `parseMealSlot`), and copy-only edits to `LoggedEntryRow`, `NutritionSummary`, `log.tsx`, `manual.tsx`, and Home's `MealRow`.
+
+**Verification.** `npx tsc --noEmit` and `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` both clean. `npx expo export --platform ios` succeeds (1403 modules). Rendered in Expo Go on the iOS Simulator in **both an empty day and a populated day** — ring, remaining figure, macro fills, meal color progression, expanded Breakfast with two foods, per-meal subtotals, and compact empty rows all confirmed against the reference.
+
+**Not verified this session — same tooling gap as the previous two QA rounds.** The simulator MCP refuses to attach (it reports Xcode "not selected" even though `xcode-select -p` already resolves to `/Applications/Xcode.app/Contents/Developer`), and `osascript` has no assistive access, so the simulator can be screenshotted and deep-linked but **not tapped or scrolled**. Everything below the fold — the Hydration/Peptides row's full extent and its dock clearance — is therefore confirmed only by the portion visible on screen, and every tap-dependent path (meal preselection end to end, favorite toggling from a meal row, edit, delete + Undo, the barcode flow) is reasoned-and-typechecked, not exercised. These need the founder's physical iPhone.
+
+### Slice 2.9b — Fuel polish + barcode QA (2026-08-21)
+
+Founder approved the `dee1ddf` redesign and locked its layout. This is the follow-up polish pass over four areas, plus the still-open barcode defect. **No structural change to the approved Fuel screen.**
+
+#### Calories and macro semantics
+
+`cal eaten` → **`Calories consumed`**, kept alongside `Calories remaining`; compact row values still abbreviate (`105 cal`). The ring label moved from *inside* the ring to directly beneath it — "Calories consumed" is wider than the ring's inner diameter, and shrinking approved copy to fit would have been the wrong trade. That is the only layout change on the locked screen.
+
+Macros now read as progress toward **the user's configured targets**: `Protein Goal · 30 / 160 g`, with Carbs and Fat carrying no verb because their targets are neither floors nor ceilings — labelling them either way would be VITA inventing dietary advice. Nothing warns, reddens, or changes state at 100%. `StatBar` stacks label above value: side by side they shared one ~93pt column on an SE-class screen, which fitted "Protein" but not "Protein Goal". The same labels are used on the Food Log so the two surfaces cannot describe identical numbers differently.
+
+#### Food image loss — root cause found, in the founder's own data
+
+**`parseCustomFoodShape()` in `asyncStorageRepository.ts` rebuilt `VitaFood` field by field and never copied `imageUrl`.** It is the only path by which a stored food comes back, so a field missing from that object literal is a field silently deleted on read. `restaurant` and `dataQuality` were being lost the same way.
+
+Three things compounded it:
+
+1. **The loss became permanent, not just per-read.** `toggleFavorite` writes `favoritesRef.current` — which after a load holds *parsed* favorites. So the next favorite toggle rewrote every favorite in its stripped form, erasing the image from storage for good.
+2. **The stripped copy shadowed an intact one.** `findFood()` checks favorites before the provider cache, so once a food was favorited its image-less definition won over the cached copy that still had the image.
+3. **`FoodEntry` had nowhere to keep an image**, so `foodFromEntry()` — which builds the food for a logged row's heart — could never produce one.
+
+Proof from the simulator's existing QA data, same `vitaId`, before any fix: cached copy `imageUrl = …/front_en.15.200.jpg`, favorited copy `imageUrl = undefined`.
+
+**Fixes.** The read path now preserves `imageUrl` (validated as http(s) — a stored image reference is the one persisted value handed straight to a network-loading view), `restaurant`, and `dataQuality`. `FoodEntry` gained an `imageUrl` snapshot field, denormalized for the same reason `name`/`brand` already are, and carried by `createEntry` → storage → `parseEntry` → `foodFromEntry`. A logged food's picture now comes from its own snapshot with no lookup, no cache read, and no network from a list row. No second image system, no UI-side patch.
+
+**Verified on device:** favorite written with an image → full relaunch → cold load from storage → Favorites and Food Detail both render the real product photograph.
+
+#### Contextual food visuals — architecture, not artwork
+
+`features/fuel/foodVisual.ts` resolves one visual in three tiers: **real provider image → VITA category visual → generic treatment**. `FoodAvatar` renders it, and Fuel's meals, Search, Recents, Favorites, Food Detail, and Edit Entry all call it — no screen classifies for itself. `ListRow` gained a `leading` slot so a row can show a photograph instead of a glyph.
+
+24 categories with conservative, order-sensitive whole-word matching. Order is the design: `bowl` before `burrito` before `chicken` so "Chicken Burrito Bowl" resolves to its form rather than its first ingredient; `salad` before `chicken`; `dessert` before `chips` so a chocolate chip cookie is not a crisp. Ambiguous names return `food` rather than guess — "Big Mac" is a burger to a person and nothing to a keyword matcher, and brand rules would be a list that never ends.
+
+**Artwork is explicitly NOT done.** Ionicons has ~12 food glyphs, so several categories share one and are separated only by accent color; `banana` currently renders an apple. The durable part is the taxonomy — custom VITA artwork replaces the `icon`/`color` pair in `CATEGORY_VISUALS` and nothing else changes. Category is carried on the returned visual even when an image wins, so a caller can tint or label by category regardless of which tier answered.
+
+#### Kroger barcode — root cause identified upstream, NOT fixed
+
+**The previous round's conclusion was wrong.** It recorded "Open Food Facts data is not mislabelled — every Hillshire Farm record sits under GS1 prefix `00445003…`; Kroger's is `0011110…`". That was reasoned from a prefix sample, not verified.
+
+Querying Open Food Facts directly for `brands_tags=hillshire-farm` returns, as its first result:
+
+```
+0011110816405  |  BEEF SMOKED SAUSAGE  |  Hillshire Farm  |  categories: Sausages
+```
+
+`0011110` is **The Kroger Co.'s** GS1 company prefix. The record's front image is a photograph of a Hillshire Farm sausage package, and its nutriments are sausage data (128 kcal/100 g, 2.3 g carbs). So there is an Open Food Facts record filed under a **Kroger-prefix barcode** carrying **Hillshire Farm sausage** name, brand, imagery, and nutrition.
+
+That single record explains the symptom exactly and explains why every VITA-side defence passes: the product endpoint returns precisely the code that was requested, so strict GTIN identity verification *correctly* confirms it. USDA has no record for that GTIN, so cross-checking would not have caught it either (verified: 0 candidates).
+
+**This is upstream data corruption, not a client bug** — and no client logic can distinguish "correct" from "unrelated" when the database itself is wrong, because the client has no ground truth. Claiming a fix would be dishonest.
+
+**Still required:** the founder's actual scanned value. The trace now captures the full chain — `camera.raw`, `camera.type`, `camera.digits`, `normalized`, `gtin.checkDigit`, `off.requested`, `off.returnedCode`, `off.returnedName`, `off.returnedBrand`, `off.identity`, `usda.requested/candidates/identity`, `navigate.href`, `detail.*`, `log.foodRef`, `log.snapshot*`, `edit.*` — and renders on **both** Food Detail and Edit Entry, since the wrong product has now been seen on both. One scan confirms or refutes `00011110816405` in a single screenshot.
+
+The GS1 mod-10 check digit is now recorded (`isValidGtin` existed but had **no caller**) and deliberately **not enforced**: the symbology validates its own check digit in hardware, so a failure would more likely mean our parsing is wrong than the scan is, and blocking the primary flow on an unproven theory is the wrong trade while the cause is still unconfirmed.
+
+**Barcode status: OPEN.** Not fixed, not worked around. Nothing was hardcoded, special-cased, renamed, or text-matched.
+
+### Slice 2.9c — Fuel final visual polish + barcode recovery (2026-08-21)
+
+Founder approved and **locked** the Fuel redesign. Structure untouched; this is detail polish over three device-QA findings.
+
+#### Contextual food visuals were confidently wrong — root cause
+
+The resolver architecture was sound; **the pictures it pointed at were not**. Two mappings did the damage:
+
+- **The generic fallback was itself a specific food.** `food` → `fast-food-outline`, which draws a **burger and a drink**. Any food VITA could not classify — most foods — was therefore drawn as a burger. Five other categories (`burger`, `taco`, `burrito`, `sandwich`, `fries`) shared that same glyph, so they were indistinguishable from each other *and* from "unknown".
+- **`banana` → `nutrition-outline`, which draws an apple.** So did `fruit`, `oatmeal`, and `bread`.
+
+Classification was largely fine — `Banana nut` already resolved to `banana`. Ionicons simply has no banana, taco, or burrito, and its one general food glyph is a burger. **A wrong picture is worse than no picture**, which is what made this worse than the generic fallback it replaced.
+
+#### Fix: a real VITA illustration set
+
+`features/fuel/foodArt.ts` — **14 hand-drawn shapes** on a 24×24 grid, rendered through `react-native-svg` (already a dependency; no new package, no raster assets): banana · apple · egg · burger · pizza · taco · burrito · chips · bottle · coffee · drumstick · bread · bowl · utensils. Outline only, uniform stroke, round joins, single color so one drawing serves Light and Dark. Stroke weight scales with render size so a 20pt row icon and a 34pt hero carry equal optical weight.
+
+Drawn, reviewed as rendered images, and revised: the first taco was indistinguishable from the bowl, the first drumstick read as a rattle, the first burrito as a sticking plaster. All three were redrawn and re-rendered at true list size before shipping.
+
+**The generic is now a fork and knife** — "food, unspecified", which cannot be mistaken for a particular dish. That is the entire requirement for a fallback and exactly what the burger failed.
+
+**Categories with no honest drawing point at the generic rather than borrowing another food's picture**: `fries`, `smoothie`, `dessert`, and `snack` resolve to utensils, because a bag of crisps is not a portion of fries and a protein bar is not a cookie. Shared drawings are used *only* where genuinely correct — a bowl serves oatmeal, pasta, rice, and salad honestly.
+
+#### Classifier tightening
+
+Whole-word matching kept, plus: a tolerated regular plural (`(?:s|es)?`) after "Blueberries" fell through to generic; and a deliberately tiny **branded-term list** checked ahead of the keyword rules, because nothing in "Big Mac" means burger and the founders named it as required behavior. Twelve entries, household names only, documented as an exception list rather than a strategy.
+
+All 40 founder-named cases verified programmatically against the real compiled module: banana / banana nut / banana nut bread · eggs · hamburger / cheeseburger / Big Mac / Whopper · pizza · taco · burrito · Hot Cheetos / Doritos / potato chips · water · coffee · apple / orange / blueberries · chicken · steak · unknown → generic. Provider image beats category in every case; non-http image references are ignored.
+
+#### Calorie ring
+
+The identity returns **inside** the ring: `2,326` with `Calories` beneath it, within the circle. The label only needs to name the unit — the ring is what communicates consumption — and that is what makes it fit where "Calories consumed" did not.
+
+**Over-target is now stated rather than hidden.** Past the target the right-hand figure switches from what is left to what is over — `326 · Calories over` instead of a flat `0 remaining`, which discards the only number still worth reading. Ring, bar, and percentage switch to amber together (one state change, not three competing colors); **amber, not red — information, not a verdict.** Ring and bar cap at 100% so the geometry stays honest while the percentage keeps counting (`116% of 2,000 Calories`). New `over()` and `caloriesOver` in the nutrition domain, alongside the existing floored `remaining()` whose no-guilt rationale is now stated in terms of both.
+
+Macro structure unchanged.
+
+#### Barcode: "Not the right product?"
+
+Shown **only** on a Food Detail reached from the scanner, with origin carried as a route parameter (`?from=scan`) — never inferred from the provider, since an Open Food Facts result arrives from ordinary Search just as often. Opens a native action sheet (`ActionSheetIOS`, `Alert` on Android) offering **Search for food · Scan again · Add manually · Report incorrect product**, each routing into a flow that already exists. Nothing here logs food and nothing duplicates an existing path.
+
+A subtle `Source: Open Food Facts` line sits under the brand on barcode-originated detail only — it is what makes a report actionable, and Open Food Facts requires attribution wherever its data is shown.
+
+**Reporting is honestly incomplete.** There is no backend, so nothing is transmitted and the dialog says so in as many words, then shows the barcode, the displayed identity, and the source so the founder can act on it by hand. Claiming a report had been filed would be worse than not offering the option — the user would stop looking for another way to fix it. **Deferred capability: incorrect-product report submission.**
+
+Exact GTIN lookup is untouched: correct record, or honest not-found. No Kroger special case, no prefix heuristics, no fuzzy replacement, no silent substitution.
+
+#### Trace panel removed
+
+The on-screen debug block is gone from both Food Detail and Edit Entry, and `trace.ts` is now console-only — a debug panel does not belong in founder QA once it has done its job. The `traceBarcode` console log stays: it costs nothing and still tells the whole story when a scan misbehaves. "Not the right product?" is now the user-facing answer to a wrong result.
+
+
+### Slice 2.10 — Restaurant Provider Research (FatSecret) 🔬 research complete, integration deferred
+
+**Founder decision, 2026-08-21: defer FatSecret to late-stage / pre-launch provider selection.** Research is finished and sufficient; implementation does not proceed. **Restaurant coverage is NOT delivered** — no adapter, no Edge Function, no credentials, no attribution UI, no persistence change. `fatsecret` stays out of every persisted-definition allowlist, exactly as slice 2.7 left it.
+
+**What the research established** (full findings, with quotes and sources, in `docs/07-Audit-Log.md`, 2026-08-21):
+
+- Basic is **genuinely free** — self-signup, no credit card, **5,000 calls/day**, US dataset. **Premier Free** (unlimited calls, verification required) may be open to start-ups under $1M revenue and funding.
+- Restaurant coverage exists: `food_brands.get` accepts `brand_type` of `"manufacturer"`, `"restaurant"`, or `"supermarket"`, and `foods.search` returns `food_type` of `Generic` or `Brand` with `brand_name`. Actual per-chain coverage is unproven without a live key.
+- Attribution is required, and reaches beyond the app UI into the **App Store / Google Play listing**.
+
+**Why it is deferred — two blockers.**
+
+1. **Storage policy vs. VITA's snapshot architecture.** The Developer Terms require removing or re-requesting any Content not explicitly storable indefinitely **within 24 hours**. The indefinitely-storable list is identifiers only (`food_id`, `serving_id`, `food_category_id`, and similar). Nutrition values, food names, brand names, serving descriptions and image URLs are not on it. `FoodEntry` stores every one of those permanently and deliberately — that is *why* Fuel and Home render totals with no lookup, no async, and no loading state, and why a logged day stays truthful after a provider revises a food.
+2. **Server-side authentication.** FatSecret binds OAuth 2.0 tokens to an IP allowlist (up to 15 addresses on Basic). Supabase's own documentation states Edge Functions **cannot** provide static egress IPs; the documented workaround is a paid static-IP proxy, which reintroduces the cost the project rule forbids. OAuth 1.0 two-legged signing may be exempt, but that rests on community reports rather than documentation.
+
+**The founders' ruling: VITA's architecture wins.** Offline nutrition history, permanent `FoodLogEntry` snapshots, historical consistency, immediate Fuel/Home rendering, and the existing Favorites and Recents architecture are not weakened to accommodate one external provider. **No compromise workaround was built** — no ID-only favorites, no re-fetching history, no temporary shim. Snapshots are not redesigned during Sprint 2.
+
+**Reconsidered only if** FatSecret confirms in writing that logged nutrition may persist in a user's own diary · or VITA deliberately designs a compliant alternative near launch · or a different provider becomes the preferred restaurant source.
+
+Launch-gated follow-up and the eight unresolved questions to put to FatSecret: `docs/04-Master-Roadmap.md` → **Launch readiness follow-ups**.
+
+
+### Sprint 2 closeout audit — 2026-08-21
+
+Audited the integrated system as it exists at `1f9b172`, not the previous PASS reports.
+
+**Verdict: CONDITIONAL PASS.** Every automated and logic-level check passes; what remains is founder physical-device QA and one known upstream data defect that no client change can close.
+
+**Executed verification** (there is no committed test suite — see the finding below, so this was run against the real compiled modules rather than asserted):
+
+- `npx tsc --noEmit` and `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — both clean.
+- `npx expo export --platform ios` — succeeds.
+- **61 assertions** across GTIN normalization and check digits, nutrition arithmetic (remaining/over/progress/percent/rounding, partial optional nutrients, per-meal summarization), log dates, the `createEntry → foodFromEntry` snapshot round-trip including image persistence, meal-slot parsing and time defaults, display formatting, and the food-visual resolver's three tiers across fourteen representative foods — **all pass**.
+- **6 dedupe/ranking assertions** — same GTIN merges across providers; a branded restaurant item does **not** merge with a generic; a >5% calorie gap keeps same-named foods separate; ranking is deterministic regardless of provider arrival order.
+- **Live provider run** against USDA and Open Food Facts: `big mac` → *Big Mac (McDonalds)* first; `banana` → *Bananas, raw* first; `chipotle chicken bowl` → *Chipotle Chicken Bowl* first. Barcode `0011110043436` → *Kroger Purified Drinking Water* with the returned GTIN matching; an invalid code → honest `not-found`. Aborting mid-flight settles both providers as `aborted` rather than surfacing partial results.
+
+**A ranking "defect" was raised and then withdrawn on evidence.** A synthetic case suggested a generic USDA *Hamburger* could outrank *Big Mac — McDonald's*. Against the live providers it does not — USDA's own branded record wins the query, and the synthetic scenario (a Foundation-quality "Hamburger" returned for `big mac`) does not occur. **No ranking change was made**, per the instruction not to tune ranking without a real deterministic defect.
+
+**Defect found and fixed:** the Favorites screen rendered its empty state before storage hydrated, so a user with saved favorites was briefly told they had none. Recents and Food Log already guard this and Fuel's summary holds an em dash for the same reason; Favorites now shows a spinner while `status === 'loading'`. One-screen fix, matching the existing pattern.
+
+**Clean on inspection:** zero `TODO`/`FIXME`/`HACK` in `src/` · no `vita-fixture` outside a historical comment · no singular `'Snack'` type · no user-facing `kcal` (only the internal `MealSlotSummary.kcal` field, deliberately unrenamed) · every `console.*` guarded by `__DEV__` · no debug/trace panel in the UI · **zero provider-specific branching in any UI layer and zero raw provider fields outside adapters** · no duplicate nutrition arithmetic outside the domain · every UI and Fuel component consumed · no unused dependency added · `.env` untracked and ignored, no secret in any tracked file · no screenshots, exports, or QA seed data tracked.
+
+**Known-stale statuses corrected in this pass:** slices 2.1–2.9 were still marked "pending founder review" after the founders declared them approved; 2.6 still said USDA was blocked on a key that is now configured and returning results.
+
+**Open findings carried forward, not fixed:**
+
+| Finding | Why not fixed here |
+|---|---|
+| **No committed test suite.** Sprint 2 shipped a substantial pure-logic domain — GTIN, nutrition arithmetic, dedupe, ranking, classification — with no `jest`/`vitest` and no test files. The 67 assertions above were run ad-hoc and are not repeatable in CI. | Adding a test framework is a dependency and a slice of its own, not closeout scope. **Recommended as the first task of Sprint 3.** |
+| **Kroger barcode** still resolves to Hillshire Farm sausage. Root cause is an upstream Open Food Facts record filed under Kroger's company prefix. | No client-side rule can detect a database that is wrong about itself. The `Not the right product?` recovery is the shipped answer; the upstream correction needs founder authorization. |
+| `expo@54.0.36` / `expo-constants@18.0.13` are one patch behind the SDK 54 expectation. | Patch drift inside SDK 54, not an SDK upgrade — but it is still a dependency change with regression risk and no demonstrated need, so it is reported rather than applied. |
+| `src/lib/nutrition/index.ts` re-exports ~23 symbols used only inside the domain. | Deliberate domain API surface; trimming is churn with no functional benefit. Observation only. |
+
+**Not verifiable in this environment:** every tap-dependent path. The simulator MCP refuses to attach (it reports Xcode "not selected" although `xcode-select -p` already resolves correctly) and `osascript` has no assistive access, so screens can be rendered, deep-linked, and screenshotted but **not driven**. Add-to-log, edit, delete + Undo, favorite toggling, meal preselection end-to-end, the action sheet, and live camera detection are typechecked and reasoned but not exercised. **This is the whole of the outstanding QA and it needs the founder's iPhone.**
+
+---
+
+## Sprint 3 — Water + Peptides — ⬜ Not started
+
+**Next sprint, per the founder roadmap reorder of 2026-08-21** (Water + Peptides moved ahead of Journey; Journey becomes Sprints 4 and 5). Scope, the ten proposed slices, and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
+
+**Not opened.** No slice is scoped or approved, no branch exists, and no implementation has begun. Sprint 3 opens only after Sprint 2's final physical-device QA is accepted, Sprint 2 is merged into `main`, and a fresh `sprint-3-water-peptides` branch is cut from `main`. Slice-by-slice progress will be tracked here once the sprint is formally opened under the normal workflow.

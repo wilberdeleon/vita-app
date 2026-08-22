@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { VitaMark } from '../shell/VitaMark';
 import { palette, spacing, typography } from '../../theme/tokens';
@@ -7,6 +8,12 @@ import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = {
   title: string;
+  /**
+   * Secondary line beneath the title — currently Fuel's date. Unset
+   * everywhere else, and unset renders exactly as before: the title stays a
+   * single centered-height row, so no existing header shifts.
+   */
+  subtitle?: string;
   /** Official VITA logo lockup (mark + wordmark) instead of a plain title. */
   brand?: boolean;
   /** Show the settings gear on the right (main hub screens). */
@@ -30,16 +37,25 @@ type Props = {
    * flips with theme (founders, 2026-07-19).
    */
   markColor?: string;
+  /**
+   * Optional right-hand control, for screens that need one that isn't the
+   * gear or the close X — currently Food Detail's favorite toggle. Ignored
+   * when `settings` or `close` is set, so the existing slots keep priority
+   * and every current screen renders unchanged.
+   */
+  action?: ReactNode;
 };
 
 export function ScreenHeader({
   title,
+  subtitle,
   brand = false,
   settings = false,
   back = false,
   close = false,
   tone = 'dark',
   markColor,
+  action,
 }: Props) {
   const { surfaces } = useTheme();
   const iconColor = tone === 'light' ? palette.textOnColor : surfaces.text;
@@ -64,9 +80,19 @@ export function ScreenHeader({
           <Text style={[styles.wordmark, { color: wordmarkColor }]}>{title}</Text>
         </View>
       ) : (
-        <Text style={[styles.title, { color: iconColor }, back && styles.centered]} numberOfLines={1}>
-          {title}
-        </Text>
+        <View style={styles.titleBlock}>
+          <Text style={[styles.title, { color: iconColor }, back && styles.centered]} numberOfLines={1}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text
+              style={[styles.subtitle, { color: surfaces.textSecondary }, back && styles.centered]}
+              numberOfLines={1}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
       )}
       {settings ? (
         <Pressable
@@ -90,6 +116,7 @@ export function ScreenHeader({
           <Ionicons name="close" size={24} color={iconColor} />
         </Pressable>
       ) : null}
+      {!settings && !close && action ? <View style={styles.side}>{action}</View> : null}
     </View>
   );
 }
@@ -102,9 +129,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.m,
     minHeight: 44,
   },
+  titleBlock: {
+    flex: 1,
+  },
   title: {
     ...typography.title,
-    flex: 1,
+  },
+  subtitle: {
+    ...typography.caption,
+    marginTop: 2,
   },
   brandRow: {
     flex: 1,

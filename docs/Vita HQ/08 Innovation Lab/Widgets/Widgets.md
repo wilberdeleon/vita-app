@@ -14,6 +14,6 @@
 
 | Idea | Status | Priority | Tier |
 |---|---|---|---|
-| [[Apple Home Screen Widgets]] | 📋 Planned — Sprint 6 | High | Mixed — Free / Atlas |
+| [[Apple Home Screen Widgets]] | 📋 Planned — ⚠️ no scheduled sprint | High | Mixed — Free / Atlas |
 
 **Related:** [[Innovation Lab]] · [[Dashboard]] · [[Tech Stack]]

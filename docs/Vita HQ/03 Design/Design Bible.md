@@ -18,6 +18,20 @@
 
 **Explicitly avoid:** generic fitness aesthetics · gaming aesthetics · the previous space theme.
 
+### Density and restraint (founder direction, 2026-08-18)
+
+The quality bar has not moved — Apple / Oura / WHOOP, as above. What the founders added is a specific critique of how VITA currently *spends* space, prompted by [[Fuel]]:
+
+> Too basic · too bulky · overusing large numbers · filling space simply because space exists.
+
+Calorie and nutrition values are the named example: they grow disproportionately large and dominate whole screens. The corrective principle:
+
+> **Size communicates importance, not availability.** A number is large because it is the one thing the screen is about — never because the card had room left over.
+
+What this asks for across the product: refined density · better hierarchy · more intentional visual storytelling · less bulky presentation · more personality · more interactive health tracking. This is not a licence to copy Oura or WHOOP — it is a standard of intentionality, applied through VITA's own system.
+
+First application: the **Fuel Visual Refinement** slice late in Sprint 2 ([[Roadmap]]). *Direction, not approved specification — recorded ahead of the work.*
+
 > **Status: theme model decided ✅ and implemented app-wide ✅.** Sprint 1 built the architecture (`ThemeProvider`, `useTheme()`, light/dark surface pairs, the Settings → Appearance picker) for Home; the visual consistency pass (2026-08-16) extended it to every remaining screen. Light, Dark, and System all work across the whole app, System following the device appearance live.
 
 ## The implemented system (verified in repo)

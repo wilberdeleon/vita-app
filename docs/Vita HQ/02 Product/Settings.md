@@ -16,7 +16,7 @@ Settings' placement is **permanently locked**: top-right corner icon, present on
 
 ## Target state
 
-**⚠️ Still no sprint — the remaining concerning gap in the roadmap.** The official roadmap issued 2026-07-09 replaced the old sprint structure (which had Settings as Sprint 7) and doesn't name Settings anywhere in the new eight-sprint plan (Sprint 7 is now "Beta" — QA/launch prep, not feature work — see [[Roadmap]]). Settings today is only an empty shell, with no scheduled path to completion — this part of the gap is unresolved and separate from the (now-settled) navigation-placement question above. Target state — profile, notifications, preferences, units, appearance, privacy — is still the intended direction. Flagged prominently on [[Roadmap]] as a gap needing founder attention.
+**Sprint 7 — Settings / Account** ([[Roadmap]]): profile, notifications, preferences, units, appearance, and privacy, replacing today's empty shell. *✅ The long-flagged "Settings has no sprint anywhere" gap was closed by the 2026-08-17 restructure ([[Open Questions]] #11); the 2026-08-21 reorder left Sprint 7 unchanged.* Settings still lands late, which keeps one sequencing question live — the hydration goal preference that [[Water]] needs in **Sprint 3** may have to live in Water first and move to Settings later ([[Open Questions]] #16). Separate from the (now-settled) navigation-placement question above. Target state — profile, notifications, preferences, units, appearance, privacy — is still the intended direction. Flagged prominently on [[Roadmap]] as a gap needing founder attention.
 
 ## Future ideas
 

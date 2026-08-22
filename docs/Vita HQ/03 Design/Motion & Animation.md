@@ -22,6 +22,24 @@ Deliberately minimal until real polish work begins:
 
 "Premium motion" under the [[Design Bible]] direction — the Apple/Oura/WHOOP register: physical, damped, unhurried. Animations, haptics, and transitions become first-class work incrementally, each sprint's own Polish slice — not one deferred terminal sprint. Haptics are entirely unimplemented today.
 
+## Micro-interaction direction (founder direction, 2026-08-18)
+
+The founders want subtle motion, and **restraint is the point: premium micro-interactions, not novelty animation.** VITA does not become a cartoon or a game.
+
+Candidates named so far — none approved, none designed:
+
+- Small food-icon movement on a successful log
+- Smooth macro / progress animation
+- Gentle confirmation transitions
+- Water fill animation ([[Water]])
+- Peptide injection-site selection feedback ([[Peptides]])
+- Card state transitions
+- Progress changes
+
+**Where this work lives.** Sprint 8 — Final Polish & Animations owns the **global** layer: the shared motion system, haptics vocabulary, transition consistency, and app-wide micro-interaction standards. It is **not a holding pen for every feature's visual debt** — feature-specific motion may ship earlier where it genuinely belongs to that feature (Fuel motion inside Sprint 2's refinement slice, for example), and Sprint 8 then reconciles everything into one vocabulary. See [[Roadmap]].
+
+*Note: the standing-rule box above describes the 2026-07-09 roadmap's per-sprint Polish slices. The 2026-08-17 restructure reintroduced a terminal polish sprint (Sprint 8) — so both exist now: per-feature polish where it belongs, plus a global reconciliation pass at the end.*
+
 ## Principles for when that work begins
 
 - Motion confirms, never decorates. If removing an animation loses no meaning, remove it.

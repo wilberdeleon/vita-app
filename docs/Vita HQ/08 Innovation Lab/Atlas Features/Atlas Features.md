@@ -12,11 +12,11 @@
 
 | Idea | Status | Priority | Tier |
 |---|---|---|---|
-| [[Meal Planning]] | 📋 Planned — Sprint 4 | High | Atlas |
-| [[Workout Generation]] | 📋 Planned — Sprint 4 | Medium | Atlas |
-| [[Voice Atlas]] | 📋 Planned — Sprint 6 | Medium | Elite |
+| [[Meal Planning]] | 📋 Planned — **Sprint 6 — Atlas** | High | Atlas |
+| [[Workout Generation]] | 📋 Planned — **Sprint 6 — Atlas** | Medium | Atlas |
+| [[Voice Atlas]] | 📋 Planned — ⚠️ no scheduled sprint | Medium | Elite |
 | [[Advanced Coaching (Proactive Check-Ins)]] | 📝 Defined | High | Atlas |
-| [[Mobile Order Screenshot Import]] | 📋 Planned — Sprint 3 | High | Atlas |
+| [[Mobile Order Screenshot Import]] | 📋 Planned — ⚠️ no scheduled sprint | High | Atlas |
 | [[AI Meal Photo Recognition]] | 📝 Defined | High | Atlas |
 | [[Smart Fridge Scanner]] | 📝 Defined | Medium | Atlas |
 
