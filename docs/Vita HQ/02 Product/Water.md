@@ -10,7 +10,11 @@
 
 **Water became a real feature on 2026-08-22.** Entries persist across restarts, keyed to the local calendar day with automatic rollover; millilitres are the canonical unit with exact US customary conversion (fl oz · cups · mL · L); each entry keeps both the canonical amount and a snapshot of what the user typed, so changing display units never rewrites history; persistence sits behind a `WaterRepository` interface ready for Supabase. [[Fuel]]'s Hydration card reads the same state, so the two cannot disagree.
 
-**No default goal exists.** A goal is unset until the user sets one, and the UI says so rather than showing progress toward a number VITA invented. The first-run goal experience is **slice 3.3**; the progress visualization and [[Dashboard]] wiring are **slice 3.4**.
+**No default goal exists.** A goal is unset until the user sets one, and the UI says so rather than showing progress toward a number VITA invented. **Logging is never gated on the goal** — a user may log for a week and decide their target afterwards.
+
+**Slice 3.3 (2026-08-23) completed the workflow:** set a goal, change it, pick a display unit, quick-add or enter a custom amount, edit a logged drink, delete one with Undo. **A display preference and an entry's unit are separate concepts** (founder decision, 2026-08-22) — logging 500 mL while your preference is fl oz records 500 mL and leaves the preference alone, and changing the preference never rewrites what a past entry says. Today's log shows each drink in the unit it was entered in.
+
+The premium progress visualization, its motion, the 7-day view, and [[Dashboard]] wiring are **slice 3.4**.
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Water architecture", and `docs/06-Slice-Tracker.md` → slice 3.2.
 

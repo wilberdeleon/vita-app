@@ -55,7 +55,9 @@ WaterEntry[]  →  WaterState  →  derived totals  →  Water screen + Fuel
 
 **Every entry stores both representations.** `amountMl` for arithmetic, plus `enteredAmount` + `enteredUnit` as a snapshot of what the user typed — the same principle as `FoodEntry.nutrition`. Changing the display preference must never rewrite what someone recorded.
 
-**The goal is stored as the authored pair**, not as millilitres, so it reads back exactly as set. **There is no default goal**: `null` means not set, and `progress`/`percent`/`remaining` are all honest about it rather than dividing by an invented target. Water owns its own preferences under `vita:v1:water:prefs`; Settings (Sprint 7) will read and write that same key rather than creating a second source.
+**The goal is stored as the authored pair**, not as millilitres, so it reads back exactly as set. **There is no default goal**: `null` means not set, and `progress`/`percent`/`remaining` are all honest about it rather than dividing by an invented target. Logging is never gated on a goal existing. Water owns its own preferences under `vita:v1:water:prefs`; Settings (Sprint 7) will read and write that same key rather than creating a second source.
+
+**A display preference and an entry's unit are different things** (founder decision, 2026-08-22). `WaterPreferences.unit` is how Water renders derived values — totals, goal, remaining. An entry's `enteredUnit` is what the user typed for that drink. Logging one bottle in millilitres does not move the preference, and changing the preference never rewrites a stored entry. `setUnit` is called from exactly one place: the explicit unit control on `/water/goal`. Slice 3.2 briefly conflated the two; slice 3.3 separated them, and provider tests pin the separation.
 
 **Storage keys** use the shared helpers: `vita:v1:water:log:<YYYY-MM-DD>` (one per day, via `createDayKeyedStore`), `vita:v1:water:goal`, `vita:v1:water:prefs`.
 

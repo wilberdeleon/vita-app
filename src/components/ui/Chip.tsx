@@ -26,6 +26,11 @@ export function Chip({ label, selected = false, onPress, color }: Props) {
   return (
     <Pressable
       onPress={onPress}
+      // Selection is signalled by fill color alone, which a screen reader
+      // cannot see. `selected` state makes the same information audible.
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      hitSlop={6}
       style={[
         styles.chip,
         { backgroundColor: surfaces.card, borderColor: surfaces.border },

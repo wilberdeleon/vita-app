@@ -45,7 +45,8 @@ export {
   totalMl,
 } from './model/totals';
 
-export { createWaterEntry, type CreateWaterEntryInput } from './model/entries';
+export { createWaterEntry, waterAmountChanges, type CreateWaterEntryInput } from './model/entries';
+export { createWaterGoal } from './model/goals';
 
 export type { WaterRepository } from './data/WaterRepository';
 export { asyncStorageWaterRepository } from './data/asyncStorageRepository';

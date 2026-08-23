@@ -8,9 +8,17 @@ type Props = {
   progress: number;
   color?: string;
   height?: number;
+  /**
+   * Spoken description of what the bar shows, e.g. "24 of 64 fl oz, 38%".
+   *
+   * Optional and unset everywhere it already existed, so no current bar
+   * changes. Where a caller has no *other* text carrying the same figure,
+   * passing it is what keeps progress from being visual-only.
+   */
+  accessibilityLabel?: string;
 };
 
-export function ProgressBar({ progress, color = palette.primary, height = 8 }: Props) {
+export function ProgressBar({ progress, color = palette.primary, height = 8, accessibilityLabel }: Props) {
   const clamped = Math.max(0, Math.min(1, progress));
   const anim = useRef(new Animated.Value(0)).current;
   const { surfaces } = useTheme();
@@ -25,7 +33,15 @@ export function ProgressBar({ progress, color = palette.primary, height = 8 }: P
   }, [anim, clamped]);
 
   return (
-    <View style={[styles.track, { height, borderRadius: height / 2, backgroundColor: surfaces.track }]}>
+    <View
+      accessible={accessibilityLabel !== undefined}
+      accessibilityRole={accessibilityLabel === undefined ? undefined : 'progressbar'}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityValue={
+        accessibilityLabel === undefined ? undefined : { min: 0, max: 100, now: Math.round(clamped * 100) }
+      }
+      style={[styles.track, { height, borderRadius: height / 2, backgroundColor: surfaces.track }]}
+    >
       <Animated.View
         style={[
           styles.fill,

@@ -30,6 +30,10 @@ export function SegmentedTabs({ options, selectedIndex, onChange, activeColor }:
           <Pressable
             key={option}
             onPress={() => onChange(index)}
+            // Same reasoning as `Chip`: the active segment is distinguished
+            // only by fill, so the selected state has to be announced.
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
             style={[styles.segment, active && { backgroundColor: fill }]}
           >
             <Text
