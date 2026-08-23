@@ -33,6 +33,97 @@ import type { LogDate } from '../../daily/dates';
 export type PeptideClassification = 'approved-medication' | 'research-compound' | 'custom';
 
 /**
+ * What a compound *is*, chemically — kept separate from `classification`,
+ * which is what a regulator says about it.
+ *
+ * The peptide ecosystem routinely groups non-peptides alongside peptides:
+ * MK-677 is an orally active small molecule, NAD+ is a dinucleotide, and
+ * somatropin is a full protein. VITA lists them because people track them —
+ * and states what they actually are rather than calling everything a peptide
+ * because the tab is named Peptides.
+ *
+ * There is deliberately no `peptide-drug` member. That would mix chemistry
+ * with regulatory standing, which `classification` already carries; a compound
+ * can be a peptide *and* an approved medication without the type saying so.
+ */
+export type CompoundType = 'peptide' | 'protein' | 'small-molecule' | 'blend' | 'other';
+
+/**
+ * How mature the evidence is — **not a quality score**.
+ *
+ * A Phase 3 investigational drug, a compound with a handful of small human
+ * studies, and a vendor-named blend with no blend-level research are not
+ * evidentially the same thing, and a UI that renders them identically is
+ * quietly misleading. Nothing here ranks compounds as better or worse, and
+ * nothing here implies anything about whether a compound is a good idea.
+ */
+export type EvidenceLevel =
+  | 'approved-use'
+  | 'human-clinical'
+  | 'early-human'
+  | 'preclinical'
+  | 'limited';
+
+/** One component of a blend, referring to another definition by id. */
+export type BlendComponent = {
+  definitionId: string;
+  /**
+   * Present only where a formulation genuinely has a standardized amount.
+   * Vendor-named blends usually do not — see the note in `data/definitions`.
+   */
+  amount?: number;
+  unit?: MassUnit;
+};
+
+/** Where a piece of research content came from. */
+export type ResearchReference = {
+  label: string;
+  /**
+   * A pointer into an authoritative database, not a specific citation.
+   *
+   * These are deliberately search URLs — `clinicaltrials.gov/search?…`,
+   * `pubmed.ncbi.nlm.nih.gov/?term=…` — rather than DOIs or PMIDs. A
+   * hand-written PMID that turns out to be the wrong paper is worse than no
+   * citation at all, and a search pointer is verifiable by anyone who taps it.
+   */
+  url?: string;
+  sourceType: 'study' | 'clinical-trial' | 'regulatory' | 'manufacturer' | 'reference';
+};
+
+/**
+ * Factual reference material about a compound.
+ *
+ * Kept out of `PeptideDefinition`'s identity fields and entirely out of
+ * `PeptideSetup`: identity, research content, and the user's own configuration
+ * are three different things with three different lifetimes.
+ *
+ * **Everything here is informational.** It describes what a compound is and
+ * what has been studied — never what anyone should take, how much, or why.
+ * A content test forbids recommendation phrasing outright.
+ *
+ * Optional in full: a definition with no reviewed summary shows its identity
+ * and status and says plainly that no summary exists, which is more honest
+ * than filling the space.
+ */
+export type PeptideResearchInfo = {
+  /** A short plain-English paragraph. What it is, what it targets, what was studied. */
+  summary?: string;
+  /** Research contexts — "obesity", "type 2 diabetes". Deliberately *studied for*, not *used for*. */
+  studiedFor?: string[];
+  /** Receptors, pathways, or targets where established. */
+  targets?: string[];
+  /** Plain-language regulatory and development status. */
+  researchStatus?: string;
+  evidenceLevel?: EvidenceLevel;
+  references?: ResearchReference[];
+  /**
+   * For blends: states that research context comes from the components rather
+   * than from the combination, which is usually unstudied as a formulation.
+   */
+  blendCaveat?: boolean;
+};
+
+/**
  * What the compound is. Never how much of it to take, when, or why.
  *
  * A definition is shared and immutable from the user's side for catalog
@@ -44,11 +135,29 @@ export type PeptideDefinition = {
   name: string;
   classification: PeptideClassification;
   /**
-   * Broad compound class, e.g. "GLP-1 receptor agonist". A standard
-   * nomenclature label for disambiguation — not a benefit, an effect, or a
-   * reason to take something.
+   * What it is chemically. Defaults to `'peptide'` for anything that omits it,
+   * which is every custom entry the user creates.
+   */
+  compoundType?: CompoundType;
+  /**
+   * Short, human-readable biological class — "Dual GIP / GLP-1 agonist",
+   * "Copper peptide", "Mitochondrial peptide". Factual and descriptive, never
+   * sales language: no "fat burner", no "muscle builder", no "best for".
    */
   category?: string;
+  /**
+   * Other names the same compound is genuinely known by, including brand names
+   * and development codes. Searchable.
+   *
+   * Only ever for **one** molecule. Where two commonly conflated names are
+   * actually different compounds — TB-500 and Thymosin Beta-4, AOD-9604 and
+   * HGH Fragment 176-191 — they stay separate definitions and the difference
+   * is explained rather than aliased away.
+   */
+  aliases?: string[];
+  /** Present when `compoundType` is `'blend'`. At least two components. */
+  components?: BlendComponent[];
+  research?: PeptideResearchInfo;
   origin: 'catalog' | 'user';
   /** Bumped if a built-in entry's metadata changes; absent on custom ones. */
   catalogVersion?: number;

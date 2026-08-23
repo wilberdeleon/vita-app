@@ -41,7 +41,11 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Partial progress on [[Open Questions]] #17.** Engineering shipped the *container* — classification as a typed field, a conservative sourcing rule, and a place for educational text that is deliberately empty. **The founders still owe (a) whether the 18-entry list and its class labels are approved, (b) whether any educational content ships at all, and (c) the exact disclaimer copy and placement** — the last of which slice 3.9 needs.
 
-**Next: slice 3.6 — Dose / Unit Calculator.**
+**Slice 3.5A built (2026-08-23) — expanded library + research detail pages.** Founder review of 3.5 asked for a substantially bigger catalog and real information in the app. The catalog goes **18 → 71 entries**; a new *compound type* field lets VITA list peptide-adjacent compounds (MK-677, NAD+, 5-Amino-1MQ) **without calling them peptides**; aliases make brand and code names searchable; and **blends are first-class** — GLOW, KLOW, BPC-157 + TB-500, Semax + Selank, CagriSema — with **no vendor blend asserting amounts**, because formulations vary and the user's own setup owns what's in their vial. **"CLOW" was researched and deliberately not added** — no established meaning could be verified. New **research detail pages** carry About, *Studied for*, Targets, an evidence level, plain status, and sources; regulatory status is one line, not the whole page. Sources are **pointers into PubMed / ClinicalTrials.gov / Drugs@FDA**, never hand-written citations. Recommendation language is blocked mechanically by a content test. 405 tests.
+
+**⚠️ [[Open Questions]] #17 (b) and (c) are now the live blockers.** All 71 entries and every research summary are **engineering-authored and have not had medical or legal review**, and the disclaimer copy slice 3.9 needs is still unwritten. The founders owe: approval of the catalog and its research content, and the final disclaimer wording.
+
+**Next: slice 3.6 — Dose / Unit Calculator.** Terminology recorded: the user-supplied field is **"Amount to convert"**, never a recommended dose.
 
 ## Sprint 2 — Fuel — ✅ Complete (started 2026-08-17 · audited 2026-08-21 · merged to `main` 2026-08-21)
 

@@ -739,7 +739,8 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.2 | Water Domain + Persistence | Hydration model, unit normalization, repository, provider; water that actually saves | ✅ Built — pending founder review |
 | 3.3 | Water Goal + Logging Experience | User-set goal, entry-local units, today's editable log, delete + Undo | ✅ Built — pending founder review |
 | 3.4 | Water Visual Refinement + Fuel/Home Integration | Water-level panel, 7-day volume strip, Home water tile and goal pillar on real state | ✅ Built — pending founder review |
-| 3.5 | Peptide Definitions, Catalog + User Setup | Definition/Setup models, 18-entry catalog, Custom, setup lifecycle | ✅ Built — pending founder review |
+| 3.5 | Peptide Definitions, Catalog + User Setup | Definition/Setup models, catalog, Custom, setup lifecycle | ✅ Approved |
+| 3.5A | Expanded Peptide Library + Research Details | 71-entry catalog, aliases, blends, compound types, research reference pages | ✅ Built — pending founder review |
 | 3.6 | Dose / Unit Calculator | Pure bidirectional syringe-units ⇄ mass conversion, fully tested | ⬜ Planned |
 | 3.7 | Peptide Logging + History | Log entry with snapshot fields, history by date, edit/delete | ⬜ Planned |
 | 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ⬜ Planned |
@@ -749,6 +750,58 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.5A — Expanded Peptide Library + Research Detail Refinement 🟡
+
+**Objective:** a founder-directed refinement of 3.5, before the calculator. Substantially expand the catalog, support blends properly, make categories human-readable, add factual research-detail pages, and fix setup and schedule wording.
+
+**Catalog: 18 → 71 entries**, assembled from six grouped definition files. The founder direction replaced the "12–20" cap: if a compound is commonly encountered in this ecosystem and its identity can be verified, VITA should be able to represent it — being investigational is a reason to *label* something accurately, not to leave it out.
+
+**Compound type, separate from classification.** `CompoundType` (`peptide` · `protein` · `small-molecule` · `blend` · `other`) states what something **is chemically**; `classification` states what a regulator says. MK-677, 5-Amino-1MQ and Tesofensine are typed `small-molecule`; NAD+, Dihexa and Cerebrolysin are `other`; somatropin, hCG, dulaglutide and the IGF analogs are `protein`. **VITA lists them because people track them, and does not call them peptides because the tab is named Peptides.** The `peptide-drug` member from the founder's sketch was deliberately dropped — it would mix chemistry with regulatory standing, which `classification` already carries.
+
+**Three previously-omitted compounds are now included.** Slice 3.5 left out Sermorelin, Bremelanotide/PT-141 and Thymosin Alpha-1 because one molecule carried both an approved-product name and a research-chemical name and there was no field to hold the nuance. `researchStatus` is that field: Sermorelin is `research-compound` with "previously FDA-approved as Geref and withdrawn from the US market in 2008"; Bremelanotide is `approved-medication` with "material sold as PT-141 by research suppliers is not the approved product"; Melanotan I is likewise approved as afamelanotide (Scenesse) with the same distinction stated. A test asserts each still carries its nuance.
+
+**Aliases.** Brand names (Ozempic, Mounjaro, Vyleesi, Scenesse), development codes (LY3437943, MK-6024, BI 456906) and ecosystem synonyms (Mod GRF 1-29, Elamipretide, Epithalon, Ibutamoren). Searchable and displayed, because seeing "Ozempic" under "Semaglutide" is how someone confirms they found the right entry. Tests assert an alias never shadows another entry's primary name, is never shared between two entries, and never repeats its own.
+
+**Compounds that are commonly conflated stay separate.** TB-500 and Thymosin Beta-4, and AOD-9604 and HGH Fragment 176-191, are distinct definitions whose summaries say "not the same molecule". Aliasing them together would erase a real chemical difference — the opposite of what a reference library is for.
+
+**Blends are first-class.** Five: **GLOW** (GHK-Cu / BPC-157 / TB-500), **KLOW** (the same plus KPV), **BPC-157 + TB-500**, **Semax + Selank**, and **CagriSema**. Each carries a resolvable component list. **No vendor blend asserts amounts** — a test enforces `amount` and `unit` are undefined on all of them, because two suppliers selling "GLOW" may put quite different amounts in the vial and stating one ratio as the definition would invent a standard that does not exist. The detail page says so, and points the user at their own setup: *"Your own setup records what's in your vial."*
+
+**Blend evidence is handled honestly.** `blendCaveat` renders "Research context here comes from the individual components. The combination itself may not have been studied as a single formulation." CagriSema deliberately omits it — a manufacturer combination evaluated as one formulation — and a test asserts the caveat is present on the vendor blends and absent there, so the flag keeps meaning something.
+
+**"CLOW" was researched and deliberately not added.** GLOW and KLOW have transparent, self-consistent naming (G for GHK-Cu; K for KPV added to the same base) and no comparable established meaning for CLOW could be verified. It is most plausibly a variant spelling or mishearing of KLOW. Inventing a component list to fit a name is exactly what the blend rules forbid, and Custom already covers vendor-specific blends. A test asserts no CLOW entry exists.
+
+**Human-readable categories.** Retatrutide now reads **"Triple agonist · GIP / GLP-1 / glucagon"** rather than "Investigational incretin agonist" — its regulatory standing is already carried by classification. Others: "Dual GIP / GLP-1 agonist", "GHRH analog", "Growth hormone secretagogue", "Copper peptide", "Mitochondrial peptide", "Melanocortin agonist", "Thymosin beta-4 fragment". **Both CJC-1295 variants were corrected from "Growth hormone secretagogue" to "GHRH analog"** — they act at the GHRH receptor, not the ghrelin receptor. A test pins that correction and confirms the genuine secretagogues still say so.
+
+**Research detail pages** at `/peptides/catalog/[id]`. Hierarchy: name → classification chip and "Not FDA-approved" line for research compounds → category → Also known as → Components (for blends, each tappable through to its own page) → About → **Studied for** → Targets → Research status (evidence level plus plain-language status) → Sources → Track this peptide. **Regulatory status is one line, not the whole page** — the user's questions are what is this, what does it target, what has been studied, and how solid is the evidence.
+
+**"Studied for", never "used for".** The distinction is the posture of the whole feature: the app reports what research has examined, not what people do with a compound or should.
+
+**Evidence levels** — `approved-use` · `human-clinical` · `early-human` · `preclinical` · `limited` — described as facts about the *literature*, never verdicts on the compound. Tests assert no label contains "good", "safe", "effective", "recommended" or "risky"; that `approved-use` is reserved for approved medications; and that a caveated blend can never claim more than `limited`.
+
+**Sources are pointers, not citations.** Every reference is a search URL into PubMed, ClinicalTrials.gov or Drugs@FDA. **A hand-written PMID or DOI naming the wrong paper is worse than no citation and would be undetectable from inside the app**, so none were written. A test restricts reference URLs to those three hosts and asserts none points at a vendor or storefront.
+
+**Recommendation language is prevented mechanically.** `research.test.ts` fails the build on 23 forbidden phrases (recommended/starting/typical/standard/ideal/safest/optimal dose, "you should take", "best for", "stack with", "protocol", "cycle length"), on sales language, and — via regex over every string — on **any concrete dosing amount** (`\d+ ?(mg|mcg|iu|ml)`). A companion test asserts the amount rule did not accidentally ban describing what a molecule *is*, by confirming composition language ("amino-acid", "residues") still appears.
+
+**⚠️ Content review is still owed.** All 71 entries and every summary are **engineering-authored and have not been through medical or legal review**. The content is written conservatively, sourced by pointer, and mechanically guarded — but Open Question #17 (b) and (c) remain open, and this is flagged in the code itself.
+
+**Setup wording.** Reconstitution now reads **"Bacteriostatic water / reconstitution (mL)"** on screen while the model stays the generic `reconstitutionMl` — familiar language without assuming bacteriostatic water is the only possible diluent. Everything the founder reviewed and liked is unchanged: vial amount, reconstitution, syringe, preferred unit, schedule, start date, notes.
+
+**"Every N days" → "Every X days".** Programmer language that had leaked onto a screen. The selected state now reads "Repeat every [3] days"; the model still says `{ kind: 'everyNDays', n: 3 }`, because internal code does not have to mirror the copy. "Days" also became "Selected days".
+
+**Calculator preparation, without the calculator.** The setup inputs the arithmetic needs — vial amount (canonical mcg + authored pair), `reconstitutionMl`, and `syringe.unitsPerMl` — are clean and labelled, with the copy still explaining that syringe choice is graduation density and not capacity. **Recorded for 3.6: the user-supplied field is "Amount to convert", never "recommended dose"** — VITA returns the mathematical equivalent of a number the user supplied. No `dose.ts`, no conversion, no calculator route exists.
+
+**Catalog discovery.** Search matches **name, aliases, and category** — "PT-141", "Ozempic", "Mod GRF 1-29" and "GLP-1" all find what they should. Filters are **All · Approved · Research · Blends**: regulatory and chemical, deliberately not goal-based, because "weight loss" or "muscle" as a primary taxonomy would turn browsing into a recommendation. Local and synchronous; no network, no dependency.
+
+**Tests: 88 new, 405 total across 20 suites, all passing, zero warnings.** New `catalogIntegrity` (25) — compound types, alias collisions, alias searchability, conflated-compound separation, blend component resolution, no self- or blend-referencing components, no duplicate components, the no-amounts rule, filter behaviour, and group coverage. New `research` (19) — the content guardrails above. `catalog` (23) updated for the expanded library. `SetupForm` updated for the new wording.
+
+**Validation.** `npm test` 405/405 · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo export --platform ios` succeeds · `npx expo install --check` reports only the pre-existing Sprint 2 patch drift · **zero changes** under `src/lib/nutrition/`, `src/lib/water/`, `src/features/water/`, `src/app/(vita)/(tabs)/`, `src/features/dashboard/`, `src/features/fuel/`, or `supabase/`.
+
+**Device QA** by deep link and seeded storage: the 71-entry catalog with filters and alias lines · **Retatrutide** rendering exactly the founder's specified presentation · **GLOW** with tappable components, the amounts-vary note and the blend caveat · **Semaglutide** as an approved medication with brand-name aliases and no research-compound status line · **Pentadeca Arginate** as the no-summary case, stating plainly that no reviewed summary exists rather than filling the space · Light and Dark.
+
+**Not verified:** the tap path — searching, filtering, opening a detail page by touch, or tapping a source link.
+
+**Peptides is still not feature-complete.** 3.6 (calculator), 3.7 (logging and history), 3.8 (injection sites) and 3.9 (polish, safety copy, Fuel integration) all remain.
 
 ### Slice 3.5 — Peptide Definitions, Catalog + User Setup 🟡
 

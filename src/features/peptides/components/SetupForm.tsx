@@ -22,7 +22,12 @@ import { useTheme } from '../../../theme/ThemeProvider';
 type ScheduleKind = PeptideSchedule['kind'];
 
 const SCHEDULE_KINDS: readonly ScheduleKind[] = ['daily', 'daysOfWeek', 'everyNDays', 'asNeeded'];
-const SCHEDULE_LABELS = ['Daily', 'Days', 'Every N', 'As needed'];
+/**
+ * User-facing wording. The model still says `everyNDays` — internal code does
+ * not have to mirror the copy, and "Every N" is programmer language that
+ * leaked onto a screen.
+ */
+const SCHEDULE_LABELS = ['Daily', 'Selected days', 'Every X days', 'As needed'];
 
 /**
  * Common insulin-syringe graduation densities.
@@ -220,8 +225,13 @@ export function SetupForm({ initial, onChange }: Props) {
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
 
+      {/*
+        * Familiar language on screen, generic name in the model. Bacteriostatic
+        * water is what most people actually add, but `reconstitutionMl` does
+        * not assume it is the only possible diluent.
+        */}
       <TextField
-        label="Bacteriostatic water (mL)"
+        label="Bacteriostatic water / reconstitution (mL)"
         placeholder="e.g. 1"
         keyboardType="decimal-pad"
         value={reconstitution}
@@ -229,7 +239,7 @@ export function SetupForm({ initial, onChange }: Props) {
           setReconstitution(text);
           emit({ reconstitution: text });
         }}
-        accessibilityLabel="Bacteriostatic water in millilitres, optional"
+        accessibilityLabel="Bacteriostatic water or reconstitution volume in millilitres, optional"
       />
       {reconInvalid ? (
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
@@ -304,16 +314,19 @@ export function SetupForm({ initial, onChange }: Props) {
       ) : null}
 
       {scheduleKind === 'everyNDays' ? (
-        <Stepper
-          value={everyN}
-          min={2}
-          max={90}
-          suffix="days"
-          onChange={(next) => {
-            setEveryN(next);
-            emit({ everyN: next });
-          }}
-        />
+        <>
+          <Text style={[styles.note, { color: surfaces.textSecondary }]}>Repeat every</Text>
+          <Stepper
+            value={everyN}
+            min={2}
+            max={90}
+            suffix="days"
+            onChange={(next) => {
+              setEveryN(next);
+              emit({ everyN: next });
+            }}
+          />
+        </>
       ) : null}
 
       <SectionHeader title="Start date" />

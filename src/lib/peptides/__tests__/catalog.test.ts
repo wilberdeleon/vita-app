@@ -11,40 +11,28 @@
 import { CATALOG_VERSION, PEPTIDE_CATALOG, findCatalogDefinition, searchCatalog } from '../data/catalog';
 
 /** Everything a catalog entry is allowed to carry. Nothing else may appear. */
-const ALLOWED_FIELDS = ['id', 'name', 'classification', 'category', 'origin', 'catalogVersion'];
-
-/** Words that would turn an identity list into a recommendation list. */
-const FORBIDDEN_SUBSTRINGS = [
-  'dose',
-  'dosage',
-  'mg',
-  'mcg',
-  'recommend',
-  'typical',
-  'standard',
-  'protocol',
-  'cycle',
-  'popular',
-  'best',
-  'safest',
-  'beginner',
-  'fat loss',
-  'weight loss',
-  'muscle',
-  'anti-aging',
-  'cognitive',
-  'benefit',
-  'effect',
-  'helps',
-  'improves',
-  'increases',
-  'boosts',
+const ALLOWED_FIELDS = [
+  'id',
+  'name',
+  'classification',
+  'compoundType',
+  'category',
+  'aliases',
+  'components',
+  'research',
+  'origin',
+  'catalogVersion',
 ];
 
 describe('catalog scope', () => {
-  it('is small and deliberately modest — 12 to 20 entries', () => {
-    expect(PEPTIDE_CATALOG.length).toBeGreaterThanOrEqual(12);
-    expect(PEPTIDE_CATALOG.length).toBeLessThanOrEqual(20);
+  /**
+   * Expanded in slice 3.5A. The floor exists so the library cannot quietly
+   * shrink back to a token list; there is no ceiling, because the founder
+   * direction is coverage — if a compound is commonly encountered and its
+   * identity can be verified, VITA should be able to represent it.
+   */
+  it('is a substantial library, not a token list', () => {
+    expect(PEPTIDE_CATALOG.length).toBeGreaterThanOrEqual(60);
   });
 
   it('has a version stamped on every entry', () => {
@@ -107,16 +95,37 @@ describe('classification', () => {
   });
 
   /**
-   * The compounds deliberately omitted because their US status could not be
-   * stated with confidence — a withdrawn approval, one molecule sold under
-   * both an approved name and as a research chemical, and a compound approved
-   * elsewhere but not in the US. Each can still be added via Custom.
+   * Three compounds were left out of the slice 3.5 catalog because one
+   * molecule carried both an approved-product name and a research-chemical
+   * name, and there was no field to hold the nuance. Slice 3.5A added
+   * `researchStatus`, so they are now included **with the nuance stated in
+   * words** rather than flattened into a bucket. This test is what stops the
+   * nuance being dropped later.
    */
-  it('omits the compounds whose status was uncertain', () => {
-    const names = PEPTIDE_CATALOG.map((e) => e.name.toLowerCase());
-    for (const omitted of ['sermorelin', 'bremelanotide', 'pt-141', 'thymosin alpha-1']) {
-      expect(names).not.toContain(omitted);
+  it('carries the previously-omitted compounds with their status spelled out', () => {
+    const nuanced = [
+      { name: 'Sermorelin', mustMention: 'withdrawn' },
+      { name: 'Bremelanotide', mustMention: 'Vyleesi' },
+      { name: 'Melanotan I', mustMention: 'Scenesse' },
+      { name: 'Thymosin Alpha-1', mustMention: 'outside the United States' },
+    ];
+
+    for (const { name, mustMention } of nuanced) {
+      const entry = PEPTIDE_CATALOG.find((e) => e.name === name);
+      expect(entry).toBeDefined();
+      expect(entry?.research?.researchStatus).toContain(mustMention);
     }
+  });
+
+  /**
+   * Raised in founder review. GLOW and KLOW have transparent naming; no
+   * comparable established meaning for "CLOW" could be verified, and inventing
+   * a component list to fit a name is exactly what the blend rules forbid.
+   */
+  it('does not invent a CLOW blend', () => {
+    const names = PEPTIDE_CATALOG.map((e) => e.name.toLowerCase());
+    expect(names).not.toContain('clow');
+    expect(JSON.stringify(PEPTIDE_CATALOG).toLowerCase()).not.toContain('"clow"');
   });
 });
 
@@ -129,10 +138,29 @@ describe('content restrictions', () => {
     }
   });
 
-  it('has no dosing, effect, or recommendation language anywhere', () => {
-    const serialized = JSON.stringify(PEPTIDE_CATALOG).toLowerCase();
-    for (const word of FORBIDDEN_SUBSTRINGS) {
-      expect(serialized).not.toContain(word);
+  /**
+   * Categories are biological class labels — "Dual GIP / GLP-1 agonist",
+   * "Copper peptide". Sales language would turn browsing into a
+   * recommendation, which is exactly what the catalog must not be.
+   */
+  it('has no sales or goal language in any category', () => {
+    const categories = PEPTIDE_CATALOG.map((entry) => entry.category ?? '').join(' ').toLowerCase();
+    for (const word of [
+      'fat burner',
+      'fat loss',
+      'weight loss',
+      'muscle builder',
+      'anti-aging',
+      'anti aging',
+      'best',
+      'popular',
+      'safest',
+      'beginner',
+      'recommended',
+      'miracle',
+      'stack',
+    ]) {
+      expect(categories).not.toContain(word);
     }
   });
 
@@ -171,13 +199,15 @@ describe('search', () => {
   });
 
   it('is case-insensitive', () => {
-    expect(searchCatalog('SEMAGLUTIDE').map((e) => e.id)).toEqual(['catalog:semaglutide']);
-    expect(searchCatalog('semaglutide').map((e) => e.id)).toEqual(['catalog:semaglutide']);
+    const upper = searchCatalog('SEMAGLUTIDE').map((e) => e.id);
+    const lower = searchCatalog('semaglutide').map((e) => e.id);
+    expect(upper).toEqual(lower);
+    expect(upper).toContain('catalog:semaglutide');
   });
 
   it('matches a substring anywhere in the name', () => {
-    expect(searchCatalog('glutide').length).toBeGreaterThanOrEqual(3);
-    expect(searchCatalog('157').map((e) => e.id)).toEqual(['catalog:bpc-157']);
+    expect(searchCatalog('glutide').length).toBeGreaterThanOrEqual(4);
+    expect(searchCatalog('157').map((e) => e.id)).toContain('catalog:bpc-157');
   });
 
   it('finds both CJC variants and keeps them distinguishable', () => {
@@ -191,6 +221,7 @@ describe('search', () => {
   });
 
   it('ignores surrounding whitespace', () => {
-    expect(searchCatalog('  bpc  ').map((e) => e.id)).toEqual(['catalog:bpc-157']);
+    expect(searchCatalog('  bpc  ').map((e) => e.id)).toEqual(searchCatalog('bpc').map((e) => e.id));
+    expect(searchCatalog('  bpc  ').map((e) => e.id)).toContain('catalog:bpc-157');
   });
 });

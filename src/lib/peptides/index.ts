@@ -10,11 +10,16 @@ export {
   DEFAULT_DOSE_UNIT,
   DEFAULT_UNITS_PER_ML,
   MASS_UNITS,
+  type BlendComponent,
+  type CompoundType,
+  type EvidenceLevel,
   type MassUnit,
   type PeptideClassification,
   type PeptideDefinition,
+  type PeptideResearchInfo,
   type PeptideSchedule,
   type PeptideSetup,
+  type ResearchReference,
 } from './model/types';
 
 export {
@@ -47,7 +52,16 @@ export {
   type VialInput,
 } from './model/setups';
 
-export { CATALOG_VERSION, PEPTIDE_CATALOG, findCatalogDefinition, searchCatalog } from './data/catalog';
+export {
+  CATALOG_VERSION,
+  PEPTIDE_CATALOG,
+  findCatalogDefinition,
+  resolveBlendComponents,
+  searchCatalog,
+  type CatalogFilter,
+  type ResolvedComponent,
+} from './data/catalog';
+export { EVIDENCE_LABELS, classificationLabel, classificationSpoken, evidenceLabel } from './model/labels';
 export { PEPTIDE_DOMAIN, PeptideKeys } from './data/keys';
 export type { PeptideRepository } from './data/PeptideRepository';
 export { asyncStoragePeptideRepository } from './data/asyncStorageRepository';

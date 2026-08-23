@@ -95,7 +95,9 @@ describe('schedule', () => {
     const tree = await render();
     const rendered = texts(tree);
 
-    for (const option of ['Daily', 'Days', 'Every N', 'As needed']) {
+    // User-facing wording since slice 3.5A: "Days" and "Every N" were
+    // programmer language that had leaked onto the screen.
+    for (const option of ['Daily', 'Selected days', 'Every X days', 'As needed']) {
       expect(rendered).toContain(option);
     }
     expect(rendered.join(' ').toLowerCase()).not.toContain('due');
@@ -121,7 +123,7 @@ describe('schedule', () => {
     expect(texts(tree)).not.toContain('Mon');
 
     await act(async () => {
-      control(tree, 'Days').props.onPress();
+      control(tree, 'Selected days').props.onPress();
     });
 
     expect(texts(tree)).toContain('Mon');
@@ -133,7 +135,7 @@ describe('schedule', () => {
   it('emits chosen weekdays in week order regardless of tap order', async () => {
     const tree = await render();
     await act(async () => {
-      control(tree, 'Days').props.onPress();
+      control(tree, 'Selected days').props.onPress();
     });
     await act(async () => {
       control(tree, 'Friday').props.onPress();
@@ -145,10 +147,10 @@ describe('schedule', () => {
     expect(latest?.value.schedule).toEqual({ kind: 'daysOfWeek', days: [1, 5] });
   });
 
-  it('treats "Days" with nothing chosen as no schedule rather than an empty set', async () => {
+  it('treats "Selected days" with nothing chosen as no schedule rather than an empty set', async () => {
     const tree = await render();
     await act(async () => {
-      control(tree, 'Days').props.onPress();
+      control(tree, 'Selected days').props.onPress();
     });
     expect(latest?.value.schedule).toBeUndefined();
   });
@@ -246,7 +248,9 @@ describe('vial', () => {
     const tree = await render(setup);
 
     expect(field(tree, 'Vial amount in mg, optional').props.value).toBe('5');
-    expect(field(tree, 'Bacteriostatic water in millilitres, optional').props.value).toBe('2');
+    expect(
+      field(tree, 'Bacteriostatic water or reconstitution volume in millilitres, optional').props.value,
+    ).toBe('2');
   });
 });
 

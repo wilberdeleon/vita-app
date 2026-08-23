@@ -3,94 +3,152 @@
  *
  * ── What this list is ───────────────────────────────────────────────────
  *
- * A way to stop retyping names and to give every setup a structured identity.
- * It is **not** a recommendation list, a formulary, or a suggestion of what
- * anyone should take. Nothing here is ordered by popularity, effectiveness,
- * or suitability, and nothing is tagged as being for a goal — no "fat loss",
- * no "muscle", no "beginner", no "safest". Entries are alphabetical, full
- * stop.
+ * A structured tracking and reference library. It exists so people stop
+ * retyping names and so every setup has a stable identity — **not** to
+ * recommend anything. Nothing is ordered by popularity, effectiveness, or
+ * suitability, nothing is tagged with a goal ("fat loss", "muscle"), and
+ * inclusion is not endorsement.
  *
- * ── What an entry may contain ───────────────────────────────────────────
+ * Expanded substantially in slice 3.5A from the initial 18 entries, on founder
+ * direction: if a compound is commonly encountered in this ecosystem and its
+ * identity can be verified, VITA should be able to represent it. Being
+ * investigational is not a reason to leave something out — it is a reason to
+ * label it accurately.
  *
- * A name, a classification, and a broad compound-class label. That is all.
- * No effects, no benefits, no mechanism essays, no protocols, no dosing.
- * `category` is standard nomenclature used to tell similar entries apart
- * (the two CJC-1295 variants, for instance) — it describes what a compound
- * *is*, never what it does for someone.
- *
- * ── How classification was decided ──────────────────────────────────────
- *
- * One rule, applied conservatively:
+ * ── Classification, and what it is not ──────────────────────────────────
  *
  *   `approved-medication`  the active ingredient has an FDA-approved product
  *                          in the United States.
- *   `research-compound`    everything else here — including compounds in
- *                          active clinical trials and compounds approved in
- *                          other countries but not the US.
- *   `custom`               never used by a built-in entry; reserved for
- *                          definitions the user creates.
+ *   `research-compound`    everything else, including compounds in late-stage
+ *                          trials and compounds approved outside the US.
+ *   `custom`               never used by a built-in entry.
  *
- * **Where US status could not be stated with confidence, the compound was
- * left out rather than guessed at.** Deliberately omitted on those grounds:
- * Sermorelin (a withdrawn approval, now supplied through compounding),
- * Bremelanotide / PT-141 (an approved product and a widely sold research
- * chemical under two names for one molecule), and Thymosin Alpha-1 (approved
- * in some countries, not the US). Omission is not a judgement about a
- * compound — it means this file will not assert a status it cannot support.
+ * Classification is one broad regulatory bucket. The actual development stage,
+ * foreign approvals, withdrawn approvals, and compounding status live in
+ * `research.researchStatus`, so nothing has to be flattened into the bucket to
+ * be said. Sermorelin (a withdrawn US approval) and Semax (registered in
+ * Russia) are both `research-compound` with the nuance stated in words.
  *
- * A user can always add any of them through **Custom**, which carries no
- * regulatory claim at all.
+ * `compoundType` is separate again and describes **chemistry**: MK-677 and
+ * 5-Amino-1MQ are small molecules, NAD+ is a dinucleotide, somatropin and hCG
+ * are proteins. VITA lists them because people track them, and says what they
+ * actually are rather than calling everything a peptide.
  *
- * Educational descriptions remain out of scope until the founders resolve
- * Open Question #17 (sourcing and medical-content review). The model has a
- * place for them; this file deliberately does not fill it.
+ * ── Content ────────────────────────────────────────────────────────────
+ *
+ * Research summaries describe what a compound is and what has been studied.
+ * They never say what to take, how much, or why; a content test fails the
+ * build on recommendation phrasing. Entries where a reviewed summary could not
+ * be written honestly carry identity and status only, and the detail screen
+ * says so plainly rather than filling the space.
+ *
+ * ⚠️ Content is engineering-authored and has **not** been through medical or
+ * legal review — that is still owed under Open Question #17.
  */
 
-import type { PeptideDefinition } from '../model/types';
+import type { MassUnit, PeptideDefinition } from '../model/types';
+import { BLEND_DEFINITIONS } from './definitions/blends';
+import { ENDOCRINE_DEFINITIONS } from './definitions/endocrine';
+import { GROWTH_HORMONE_DEFINITIONS } from './definitions/growthHormone';
+import { INCRETIN_DEFINITIONS } from './definitions/incretin';
+import { MITOCHONDRIAL_DEFINITIONS, NEURO_DEFINITIONS } from './definitions/neuroMitochondrial';
+import { RECOVERY_DEFINITIONS } from './definitions/recovery';
 
 /** Bumped when a built-in entry's metadata changes. Stored on setups for provenance. */
-export const CATALOG_VERSION = 1;
-
-type CatalogSeed = Pick<PeptideDefinition, 'id' | 'name' | 'classification' | 'category'>;
-
-const SEEDS: readonly CatalogSeed[] = [
-  { id: 'catalog:aod-9604', name: 'AOD-9604', classification: 'research-compound', category: 'Growth hormone fragment' },
-  { id: 'catalog:bpc-157', name: 'BPC-157', classification: 'research-compound', category: 'Research peptide' },
-  { id: 'catalog:cjc-1295-dac', name: 'CJC-1295 with DAC', classification: 'research-compound', category: 'Growth hormone secretagogue' },
-  { id: 'catalog:cjc-1295-no-dac', name: 'CJC-1295 without DAC', classification: 'research-compound', category: 'Growth hormone secretagogue' },
-  { id: 'catalog:dulaglutide', name: 'Dulaglutide', classification: 'approved-medication', category: 'GLP-1 receptor agonist' },
-  { id: 'catalog:ghrp-2', name: 'GHRP-2', classification: 'research-compound', category: 'Growth hormone secretagogue' },
-  { id: 'catalog:ghrp-6', name: 'GHRP-6', classification: 'research-compound', category: 'Growth hormone secretagogue' },
-  { id: 'catalog:ipamorelin', name: 'Ipamorelin', classification: 'research-compound', category: 'Growth hormone secretagogue' },
-  { id: 'catalog:liraglutide', name: 'Liraglutide', classification: 'approved-medication', category: 'GLP-1 receptor agonist' },
-  { id: 'catalog:melanotan-ii', name: 'Melanotan II', classification: 'research-compound', category: 'Research peptide' },
-  { id: 'catalog:retatrutide', name: 'Retatrutide', classification: 'research-compound', category: 'Investigational incretin agonist' },
-  { id: 'catalog:selank', name: 'Selank', classification: 'research-compound', category: 'Research peptide' },
-  { id: 'catalog:semaglutide', name: 'Semaglutide', classification: 'approved-medication', category: 'GLP-1 receptor agonist' },
-  { id: 'catalog:semax', name: 'Semax', classification: 'research-compound', category: 'Research peptide' },
-  { id: 'catalog:somatropin', name: 'Somatropin', classification: 'approved-medication', category: 'Growth hormone' },
-  { id: 'catalog:tb-500', name: 'TB-500', classification: 'research-compound', category: 'Research peptide' },
-  { id: 'catalog:tesamorelin', name: 'Tesamorelin', classification: 'approved-medication', category: 'GHRH analog' },
-  { id: 'catalog:tirzepatide', name: 'Tirzepatide', classification: 'approved-medication', category: 'GIP and GLP-1 receptor agonist' },
-];
+export const CATALOG_VERSION = 2;
 
 /** Alphabetical by name — the only ordering, and deliberately not a ranking. */
-export const PEPTIDE_CATALOG: readonly PeptideDefinition[] = SEEDS.map((seed) => ({
-  ...seed,
-  origin: 'catalog' as const,
-  catalogVersion: CATALOG_VERSION,
-})).sort((a, b) => a.name.localeCompare(b.name));
+export const PEPTIDE_CATALOG: readonly PeptideDefinition[] = [
+  ...INCRETIN_DEFINITIONS,
+  ...GROWTH_HORMONE_DEFINITIONS,
+  ...RECOVERY_DEFINITIONS,
+  ...MITOCHONDRIAL_DEFINITIONS,
+  ...NEURO_DEFINITIONS,
+  ...ENDOCRINE_DEFINITIONS,
+  ...BLEND_DEFINITIONS,
+]
+  .map((seed) => ({
+    compoundType: 'peptide' as const,
+    ...seed,
+    origin: 'catalog' as const,
+    catalogVersion: CATALOG_VERSION,
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 export function findCatalogDefinition(id: string): PeptideDefinition | undefined {
   return PEPTIDE_CATALOG.find((definition) => definition.id === id);
 }
 
+/** The filters the catalog screen offers. Regulatory and chemical, never goal-based. */
+export type CatalogFilter = 'all' | 'approved' | 'research' | 'blend';
+
+function matchesFilter(definition: PeptideDefinition, filter: CatalogFilter): boolean {
+  switch (filter) {
+    case 'all':
+      return true;
+    case 'approved':
+      return definition.classification === 'approved-medication';
+    case 'research':
+      return definition.classification === 'research-compound';
+    case 'blend':
+      return definition.compoundType === 'blend';
+  }
+}
+
 /**
- * Case-insensitive name match. Local, synchronous, and substring-based —
- * a list this size does not need ranking, indexing, or a network call.
+ * Local, synchronous search across name, aliases, and category.
+ *
+ * Aliases matter more than they look: someone who knows a compound as "PT-141",
+ * "Mod GRF 1-29", "Elamipretide", or "Ozempic" will type that, and a
+ * name-only search would tell them VITA does not have it when it does.
+ *
+ * Substring matching with no ranking — a list of this size does not need an
+ * index, and a relevance score would be one more thing to get subtly wrong.
  */
-export function searchCatalog(query: string): readonly PeptideDefinition[] {
+export function searchCatalog(
+  query: string,
+  filter: CatalogFilter = 'all',
+): readonly PeptideDefinition[] {
   const trimmed = query.trim().toLowerCase();
-  if (trimmed.length === 0) return PEPTIDE_CATALOG;
-  return PEPTIDE_CATALOG.filter((definition) => definition.name.toLowerCase().includes(trimmed));
+  const filtered = PEPTIDE_CATALOG.filter((definition) => matchesFilter(definition, filter));
+  if (trimmed.length === 0) return filtered;
+
+  return filtered.filter((definition) => {
+    if (definition.name.toLowerCase().includes(trimmed)) return true;
+    if (definition.category?.toLowerCase().includes(trimmed)) return true;
+    return (definition.aliases ?? []).some((alias) => alias.toLowerCase().includes(trimmed));
+  });
+}
+
+/** A blend component, resolved to the definition it names. */
+export type ResolvedComponent = {
+  definition: PeptideDefinition;
+  amount?: number;
+  unit?: MassUnit;
+};
+
+/**
+ * Resolves a blend's components, skipping any that no longer exist.
+ *
+ * Skipping rather than rendering a blank row: a component that cannot be
+ * resolved is a data problem, and showing an empty line would look like the
+ * blend contains something unnamed.
+ */
+export function resolveBlendComponents(
+  definition: PeptideDefinition,
+  findDefinition: (id: string) => PeptideDefinition | undefined = findCatalogDefinition,
+): ResolvedComponent[] {
+  const resolved: ResolvedComponent[] = [];
+
+  for (const component of definition.components ?? []) {
+    const found = findDefinition(component.definitionId);
+    if (!found) continue;
+    resolved.push({
+      definition: found,
+      ...(component.amount !== undefined ? { amount: component.amount } : {}),
+      ...(component.unit !== undefined ? { unit: component.unit } : {}),
+    });
+  }
+
+  return resolved;
 }

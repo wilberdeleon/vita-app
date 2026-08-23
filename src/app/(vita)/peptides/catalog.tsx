@@ -2,42 +2,62 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Card, EmptyState, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
+import { Card, Chip, EmptyState, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
 import { ClassificationChip } from '../../../features/peptides/components/ClassificationChip';
-import { searchCatalog, usePeptideContext, type PeptideDefinition } from '../../../lib/peptides';
+import {
+  classificationSpoken,
+  searchCatalog,
+  usePeptideContext,
+  type CatalogFilter,
+  type PeptideDefinition,
+} from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
 /**
- * Choosing what to track.
+ * Choosing what to track, from a library rather than a short list.
  *
- * The catalog exists to stop people retyping names and to give every setup a
- * structured identity — **not** to suggest what anyone should take. Entries are
- * alphabetical, with no ranking, no popularity, and no goal tags.
+ * The catalog grew substantially in slice 3.5A, so scrolling alone is no
+ * longer discovery. Search matches **names, aliases, and categories** — someone
+ * who knows a compound as "PT-141", "Ozempic", or "Mod GRF 1-29" will type
+ * that, and a name-only search would tell them VITA doesn't have it when it
+ * does. Typing "GLP-1" finds the whole class.
  *
- * Search is local, synchronous, and substring-based. Eighteen entries need no
- * index, no ranking, and certainly no network call.
+ * Filters are regulatory and chemical — Approved, Research, Blend — and
+ * deliberately **not** goal-based. "Weight loss" or "muscle" as a primary
+ * taxonomy would turn browsing into a recommendation; the detail pages carry
+ * what each compound has been studied for without the catalog sorting people
+ * toward an outcome.
  *
- * Replaces the Sprint 0 `examples.tsx`, whose rows called `router.back()`
- * without selecting anything.
+ * A row opens the compound's reference page rather than jumping straight into
+ * a setup: with a library this size, knowing what something *is* comes before
+ * deciding to track it.
  */
+const FILTERS: { value: CatalogFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'research', label: 'Research' },
+  { value: 'blend', label: 'Blends' },
+];
+
 export default function PeptideCatalog() {
   const { customDefinitions } = usePeptideContext();
   const { surfaces } = useTheme();
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<CatalogFilter>('all');
 
-  const catalogResults = useMemo(() => searchCatalog(query), [query]);
+  const catalogResults = useMemo(() => searchCatalog(query, filter), [query, filter]);
 
   const customResults = useMemo(() => {
+    // Custom entries are neither approved nor research, so the regulatory
+    // filters exclude them rather than mislabelling them.
+    if (filter === 'approved' || filter === 'research') return [];
     const trimmed = query.trim().toLowerCase();
     const sorted = [...customDefinitions].sort((a, b) => a.name.localeCompare(b.name));
-    if (trimmed.length === 0) return sorted;
-    return sorted.filter((definition) => definition.name.toLowerCase().includes(trimmed));
-  }, [customDefinitions, query]);
-
-  const select = (definition: PeptideDefinition) => {
-    router.push(`/peptides/setup/new?definitionId=${encodeURIComponent(definition.id)}`);
-  };
+    const byBlend = filter === 'blend' ? sorted.filter((d) => d.compoundType === 'blend') : sorted;
+    if (trimmed.length === 0) return byBlend;
+    return byBlend.filter((definition) => definition.name.toLowerCase().includes(trimmed));
+  }, [customDefinitions, query, filter]);
 
   const nothingFound = catalogResults.length === 0 && customResults.length === 0;
 
@@ -46,13 +66,26 @@ export default function PeptideCatalog() {
       <ScreenHeader title="Select Peptide" back />
 
       <TextField
-        placeholder="Search peptides"
+        placeholder="Search name, alias, or class"
         value={query}
         onChangeText={setQuery}
         autoCapitalize="none"
         autoCorrect={false}
-        accessibilityLabel="Search peptides by name"
+        accessibilityLabel="Search peptides by name, alias, or class"
       />
+
+      <View style={styles.filters}>
+        {FILTERS.map((option) => (
+          <Chip
+            key={option.value}
+            label={option.label}
+            selected={filter === option.value}
+            color={palette.peptide}
+            accessibilityLabel={`Filter: ${option.label}`}
+            onPress={() => setFilter(option.value)}
+          />
+        ))}
+      </View>
 
       <Card style={styles.panel}>
         <Pressable
@@ -75,13 +108,15 @@ export default function PeptideCatalog() {
       {customResults.length > 0 ? (
         <>
           <SectionHeader title="Your peptides" />
-          <DefinitionPanel definitions={customResults} onSelect={select} />
+          <DefinitionPanel definitions={customResults} />
         </>
       ) : null}
 
-      <SectionHeader title="Catalog" />
       {catalogResults.length > 0 ? (
-        <DefinitionPanel definitions={catalogResults} onSelect={select} />
+        <>
+          <SectionHeader title={`Catalog · ${catalogResults.length}`} />
+          <DefinitionPanel definitions={catalogResults} />
+        </>
       ) : null}
 
       {nothingFound ? (
@@ -95,60 +130,63 @@ export default function PeptideCatalog() {
   );
 }
 
-function DefinitionPanel({
-  definitions,
-  onSelect,
-}: {
-  definitions: readonly PeptideDefinition[];
-  onSelect: (definition: PeptideDefinition) => void;
-}) {
+function DefinitionPanel({ definitions }: { definitions: readonly PeptideDefinition[] }) {
   const { surfaces } = useTheme();
 
   return (
     <Card style={styles.panel}>
-      {definitions.map((definition, index) => (
-        <View
-          key={definition.id}
-          style={[index > 0 && styles.divided, index > 0 && { borderTopColor: surfaces.border }]}
-        >
-          <Pressable
-            onPress={() => onSelect(definition)}
-            accessibilityRole="button"
-            accessibilityLabel={[
-              definition.name,
-              definition.classification === 'approved-medication'
-                ? 'approved medication'
-                : definition.classification === 'research-compound'
-                  ? 'research compound'
-                  : 'custom entry',
-              definition.category,
-            ]
-              .filter(Boolean)
-              .join('. ')}
-            style={styles.row}
+      {definitions.map((definition, index) => {
+        // Aliases are shown, not just searched: seeing "Ozempic" under
+        // "Semaglutide" is how someone confirms they found the right entry.
+        const aliasLine = definition.aliases?.slice(0, 3).join(' · ');
+        const detail = [definition.category, aliasLine].filter(Boolean).join(' · ');
+
+        return (
+          <View
+            key={definition.id}
+            style={[index > 0 && styles.divided, index > 0 && { borderTopColor: surfaces.border }]}
           >
-            <View style={styles.body}>
-              <View style={styles.titleRow}>
-                <Text style={[styles.name, { color: surfaces.text }]} numberOfLines={1}>
-                  {definition.name}
-                </Text>
-                <ClassificationChip classification={definition.classification} />
+            <Pressable
+              onPress={() => router.push(`/peptides/catalog/${encodeURIComponent(definition.id)}`)}
+              accessibilityRole="button"
+              accessibilityLabel={[
+                definition.name,
+                classificationSpoken(definition.classification),
+                detail,
+                'View details',
+              ]
+                .filter(Boolean)
+                .join('. ')}
+              style={styles.row}
+            >
+              <View style={styles.body}>
+                <View style={styles.titleRow}>
+                  <Text style={[styles.name, { color: surfaces.text }]} numberOfLines={1}>
+                    {definition.name}
+                  </Text>
+                  <ClassificationChip classification={definition.classification} />
+                </View>
+                {detail ? (
+                  <Text style={[styles.detail, { color: surfaces.textTertiary }]} numberOfLines={1}>
+                    {detail}
+                  </Text>
+                ) : null}
               </View>
-              {definition.category ? (
-                <Text style={[styles.detail, { color: surfaces.textTertiary }]} numberOfLines={1}>
-                  {definition.category}
-                </Text>
-              ) : null}
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
-          </Pressable>
-        </View>
-      ))}
+              <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
+            </Pressable>
+          </View>
+        );
+      })}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  filters: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.s,
+  },
   panel: {
     paddingVertical: spacing.xs,
   },

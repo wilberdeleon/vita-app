@@ -59,7 +59,23 @@ A definition carries a name, a classification, and a broad compound-class label 
 
 **Micrograms are canonical** for mass (an exact power of ten), with the authored `{amount, unit}` pair stored alongside — the same snapshot principle as `FoodEntry.nutrition` and `WaterEntry.enteredAmount`. **Syringes are modelled as `unitsPerMl`, never capacity**: a 0.5 mL syringe marked to 50 units is still U-100, and modelling capacity corrupts every calculation slice 3.6 builds on it.
 
-**Classification is a typed field, asserted only by the compiled catalog.** The repository refuses to read back a stored custom definition claiming any classification other than `custom`, so a hand-edited store cannot relabel a research compound as approved. The catalog itself is compiled code and is deliberately not persisted. See `data/catalog.ts` for the classification rule and the deliberate omissions.
+**Classification is a typed field, asserted only by the compiled catalog.** The repository refuses to read back a stored custom definition claiming any classification other than `custom`, so a hand-edited store cannot relabel a research compound as approved. The catalog itself is compiled code and is deliberately not persisted. See `data/catalog.ts` for the classification rule.
+
+**Three orthogonal fields, deliberately not collapsed (slice 3.5A):**
+
+| Field | Answers |
+|---|---|
+| `compoundType` | What is it chemically? `peptide` · `protein` · `small-molecule` · `blend` · `other` |
+| `classification` | What does a US regulator say? `approved-medication` · `research-compound` · `custom` |
+| `research.researchStatus` | The actual detail — foreign approvals, withdrawn approvals, trial stage, compounding status |
+
+Collapsing any two would force a lie somewhere: Sermorelin is a withdrawn US approval, Semax is registered in Russia, MK-677 is not a peptide at all. Each is representable only because the three are separate.
+
+**Blends** carry a `components` list of definition ids. **Vendor-named blends never assert component amounts** — formulations vary between suppliers, and the user's own setup owns what is in their vial. `research.blendCaveat` marks blends whose evidence comes from the components rather than the combination.
+
+**Research content** lives in `research?: PeptideResearchInfo` on the definition — never in `PeptideSetup`. Identity, reference material, and the user's configuration are three things with three lifetimes. References are **search pointers into PubMed, ClinicalTrials.gov and Drugs@FDA**, not specific citations: a hand-written PMID naming the wrong paper is worse than no citation and undetectable from inside the app. A content test fails the build on recommendation phrasing and on any concrete dosing amount in editorial prose.
+
+⚠️ **Research content is engineering-authored and has not had medical or legal review** (Open Question #17).
 
 **Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.
 

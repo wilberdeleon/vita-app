@@ -14,6 +14,12 @@
 
 **Entries carry a name, a classification, and a broad compound-class label. Nothing else** — no effects, benefits, mechanisms, protocols, or dosing. **There is no "typical dose" field of any kind**, and schedule labels can never read "due".
 
+**Slice 3.5A (2026-08-23) expanded the library and added research reference pages.** The catalog went from 18 to **71 entries**. A *compound type* field means VITA can list what people actually track — MK-677, NAD+, 5-Amino-1MQ — **while saying honestly that they are not peptides**. Aliases make brand names and development codes searchable. **Blends are first-class** (GLOW, KLOW, BPC-157 + TB-500, Semax + Selank, CagriSema) with resolvable components and **no asserted amounts**, because vendor formulations vary — the user's own setup owns what's in their vial. *"CLOW" was researched and deliberately not added: no established meaning could be verified.*
+
+Each entry now has a **factual reference page** — About, *Studied for* (never "used for"), Targets, an evidence level, plain-language research status, and sources. Regulatory status is one line among those, not the whole page. Sources are pointers into PubMed, ClinicalTrials.gov and Drugs@FDA rather than hand-written citations.
+
+**⚠️ The research content is engineering-authored and has not had medical or legal review.** See [[Open Questions]] #17.
+
 **Not feature-complete.** Slice 3.6 (dose calculator), 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slice 3.5.

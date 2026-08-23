@@ -71,6 +71,8 @@ export function scheduleLabel(schedule: PeptideSchedule | undefined): string | n
     case 'asNeeded':
       return 'As needed';
     case 'everyNDays':
+      // "Every 3 days" reads naturally; the model's `everyNDays` name does not
+      // need to match the copy.
       return `Every ${schedule.n} days`;
     case 'daysOfWeek':
       return sortedDays(schedule.days).map(weekdayShort).join(', ');

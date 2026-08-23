@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import type { PeptideClassification } from '../../../lib/peptides';
+import { classificationLabel, classificationSpoken, type PeptideClassification } from '../../../lib/peptides';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -17,19 +17,6 @@ type Props = {
  * label is spelled out rather than encoded in colour alone, so it survives
  * greyscale and a screen reader.
  */
-const LABELS: Record<PeptideClassification, string> = {
-  'approved-medication': 'Approved',
-  'research-compound': 'Research',
-  custom: 'Custom',
-};
-
-/** Spoken form — "Approved" alone is ambiguous out of context. */
-const ACCESSIBLE_LABELS: Record<PeptideClassification, string> = {
-  'approved-medication': 'Approved medication',
-  'research-compound': 'Research compound',
-  custom: 'Custom entry',
-};
-
 export function ClassificationChip({ classification }: Props) {
   const { surfaces } = useTheme();
 
@@ -45,9 +32,9 @@ export function ClassificationChip({ classification }: Props) {
       style={[styles.chip, { borderColor: tint }]}
       accessible
       accessibilityRole="text"
-      accessibilityLabel={ACCESSIBLE_LABELS[classification]}
+      accessibilityLabel={classificationSpoken(classification)}
     >
-      <Text style={[styles.label, { color: tint }]}>{LABELS[classification]}</Text>
+      <Text style={[styles.label, { color: tint }]}>{classificationLabel(classification)}</Text>
     </View>
   );
 }
