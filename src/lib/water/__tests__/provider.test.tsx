@@ -25,7 +25,7 @@ import type { WaterEntry, WaterGoal, WaterPreferences } from '../model/types';
 import { toMl } from '../model/units';
 import { WaterProvider, useWater, type WaterContextValue } from '../state/WaterProvider';
 import { useWaterToday, type WaterToday } from '../state/useWaterToday';
-import { todayLogDate } from '../../daily/dates';
+import { shiftLogDate, todayLogDate } from '../../daily/dates';
 
 /** An in-memory repository — the injectable seam the provider was built with. */
 function fakeRepository(seed: {
@@ -56,8 +56,15 @@ function fakeRepository(seed: {
     async savePreferences(next) {
       preferences = next;
     },
-    async getRecentDays() {
-      return [];
+    async getRecentDays(maxDays: number) {
+      // Mirrors the real implementation's contract: written days only, newest
+      // first, capped — so the provider is exercised against realistic input
+      // rather than an empty stub.
+      return Object.keys(days)
+        .filter((logDate) => days[logDate].length > 0)
+        .sort((a, b) => b.localeCompare(a))
+        .slice(0, Math.max(0, maxDays))
+        .map((logDate) => ({ logDate, entries: [...days[logDate]] }));
     },
   };
 
@@ -81,17 +88,32 @@ function Probe() {
   return null;
 }
 
+/**
+ * The mounted tree, torn down in `afterEach`.
+ *
+ * Unmounting inside `act` matters: React flushes the provider's cleanup as a
+ * state update, and doing it bare produces an "update was not wrapped in
+ * act" warning per test — noise that trains people to stop reading test
+ * output.
+ */
+let mounted: ReactTestRenderer | null = null;
+
 async function mount(repository: WaterRepository): Promise<ReactTestRenderer> {
-  let tree!: ReactTestRenderer;
   await act(async () => {
-    tree = create(
+    mounted = create(
       <WaterProvider repository={repository}>
         <Probe />
       </WaterProvider>,
     );
   });
-  return tree;
+  return mounted!;
 }
+
+afterEach(async () => {
+  const tree = mounted;
+  mounted = null;
+  if (tree) await act(async () => tree.unmount());
+});
 
 const TODAY = todayLogDate();
 
@@ -106,7 +128,7 @@ describe('preferred unit is independent of the unit an entry is logged in', () =
    */
   it('logging 500 mL while the preference is fl oz leaves the preference alone', async () => {
     const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     expect(water.preferences.unit).toBe('floz');
 
@@ -128,12 +150,11 @@ describe('preferred unit is independent of the unit an entry is logged in', () =
     expect(today.totalMl).toBeCloseTo(500, 9);
     expect(today.totalLabel).toBe('16.9 fl oz');
 
-    tree.unmount();
   });
 
   it('holds across several entries logged in different units', async () => {
     const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(16, 'floz'));
@@ -150,12 +171,11 @@ describe('preferred unit is independent of the unit an entry is logged in', () =
     // 16 fl oz + 8 fl oz + 500 mL
     expect(today.totalMl).toBeCloseTo(toMl(16, 'floz') + toMl(1, 'cup') + 500, 9);
 
-    tree.unmount();
   });
 
   it('changes only when setUnit is called explicitly', async () => {
     const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(500, 'ml'));
@@ -166,12 +186,11 @@ describe('preferred unit is independent of the unit an entry is logged in', () =
     expect(stored.preferences()).toEqual({ unit: 'ml' });
     expect(today.totalLabel).toBe('500 mL');
 
-    tree.unmount();
   });
 
   it('never rewrites what a historical entry says, even after the preference changes', async () => {
     const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(1, 'cup'));
@@ -182,22 +201,20 @@ describe('preferred unit is independent of the unit an entry is logged in', () =
     expect(entry.enteredAmount).toBe(1);
     expect(entry.enteredUnit).toBe('cup');
 
-    tree.unmount();
   });
 
   it('falls back to fl oz when no preference has been saved', async () => {
     const { repository } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     expect(water.preferences.unit).toBe('floz');
-    tree.unmount();
   });
 });
 
 describe('goal', () => {
   it('starts unset, and that is a valid state', async () => {
     const { repository } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     expect(water.goal).toBeNull();
     expect(today.hasGoal).toBe(false);
@@ -206,12 +223,11 @@ describe('goal', () => {
     expect(today.remainingMl).toBeNull();
     expect(today.progress).toBe(0);
 
-    tree.unmount();
   });
 
   it('logging works with no goal set — the goal is never a gate', async () => {
     const { repository, stored } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(16, 'floz'));
@@ -222,12 +238,11 @@ describe('goal', () => {
     expect(today.hasGoal).toBe(false);
     expect(today.totalLabel).toBe('16 fl oz');
 
-    tree.unmount();
   });
 
   it('saves the authored pair exactly and derives the canonical goal', async () => {
     const { repository, stored } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.setGoal(createWaterGoal(8, 'cup'));
@@ -238,12 +253,11 @@ describe('goal', () => {
     expect(stored.goal()).toEqual({ amount: 8, unit: 'cup' });
     expect(today.goalMl).toBeCloseTo(toMl(8, 'cup'), 9);
 
-    tree.unmount();
   });
 
   it('can be edited, replacing the previous goal rather than accumulating', async () => {
     const { repository, stored } = fakeRepository({ goal: { amount: 64, unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     expect(water.goal).toEqual({ amount: 64, unit: 'floz' });
 
@@ -255,12 +269,11 @@ describe('goal', () => {
     expect(stored.goal()).toEqual({ amount: 2, unit: 'l' });
     expect(today.goalMl).toBe(2000);
 
-    tree.unmount();
   });
 
   it('drives progress once set', async () => {
     const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.setGoal(createWaterGoal(64, 'floz'));
@@ -274,12 +287,11 @@ describe('goal', () => {
     expect(today.percent).toBe(38);
     expect(today.isGoalMet).toBe(false);
 
-    tree.unmount();
   });
 
   it('reports an over-goal day honestly rather than capping the number', async () => {
     const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.setGoal(createWaterGoal(16, 'floz'));
@@ -292,14 +304,13 @@ describe('goal', () => {
     expect(today.overLabel).toBe('8 fl oz');
     expect(today.isGoalMet).toBe(true);
 
-    tree.unmount();
   });
 });
 
 describe('entries', () => {
   it('adds and persists', async () => {
     const { repository, stored } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(16, 'floz'));
@@ -307,12 +318,11 @@ describe('entries', () => {
 
     expect(water.entries).toHaveLength(1);
     expect(stored.day(TODAY)).toHaveLength(1);
-    tree.unmount();
   });
 
   it('updates in place — same id, recomputed canonical amount, no duplicate', async () => {
     const { repository, stored } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(16, 'floz'));
@@ -337,12 +347,11 @@ describe('entries', () => {
     expect(updated.enteredUnit).toBe('ml');
     expect(stored.day(TODAY)).toHaveLength(1);
 
-    tree.unmount();
   });
 
   it('an edit changes the day total', async () => {
     const { repository } = fakeRepository({ preferences: { unit: 'ml' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(250, 'ml'));
@@ -359,12 +368,11 @@ describe('entries', () => {
     expect(today.totalMl).toBe(750);
     expect(today.totalLabel).toBe('750 mL');
 
-    tree.unmount();
   });
 
   it('keeps an edited entry in its original position', async () => {
     const { repository } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(1, 'cup'));
@@ -380,14 +388,13 @@ describe('entries', () => {
     expect(water.entries[1].id).toBe(middleId);
     expect(water.entries.map((e) => e.enteredAmount)).toEqual([1, 4, 3]);
 
-    tree.unmount();
   });
 });
 
 describe('delete and undo', () => {
   it('removes, updates the total, then restores the exact entry to its position', async () => {
     const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(8, 'floz'));
@@ -420,12 +427,11 @@ describe('delete and undo', () => {
     ]);
     expect(today.totalLabel).toBe('48 fl oz');
 
-    tree.unmount();
   });
 
   it('restores a first entry to the front, not the back', async () => {
     const { repository } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(1, 'cup'));
@@ -439,12 +445,11 @@ describe('delete and undo', () => {
     });
 
     expect(water.entries.map((e) => e.enteredAmount)).toEqual([1, 2]);
-    tree.unmount();
   });
 
   it('emptying the day leaves an honest empty state', async () => {
     const { repository, stored } = fakeRepository();
-    const tree = await mount(repository);
+    await mount(repository);
 
     await act(async () => {
       await water.addEntry(entryOf(1, 'cup'));
@@ -457,7 +462,6 @@ describe('delete and undo', () => {
     expect(today.totalMl).toBe(0);
     expect(stored.day(TODAY)).toHaveLength(0);
 
-    tree.unmount();
   });
 });
 
@@ -469,14 +473,13 @@ describe('loading and failure', () => {
       goal: { amount: 64, unit: 'floz' },
       preferences: { unit: 'floz' },
     });
-    const tree = await mount(repository);
+    await mount(repository);
 
     expect(today.isLoading).toBe(false);
     expect(water.entries).toEqual([existing]);
     expect(today.totalLabel).toBe('16 fl oz');
     expect(water.goal).toEqual({ amount: 64, unit: 'floz' });
 
-    tree.unmount();
   });
 
   it('surfaces a load failure instead of showing a silently empty day', async () => {
@@ -487,12 +490,11 @@ describe('loading and failure', () => {
         throw new Error('storage unavailable');
       },
     };
-    const tree = await mount(failing);
+    await mount(failing);
 
     expect(today.error).toBe("We couldn't load your water log.");
     expect(today.isLoading).toBe(false);
 
-    tree.unmount();
   });
 
   it('keeps the optimistic value on a save failure and says it may not persist', async () => {
@@ -503,7 +505,7 @@ describe('loading and failure', () => {
         throw new Error('disk full');
       },
     };
-    const tree = await mount(failing);
+    await mount(failing);
 
     await act(async () => {
       await water.addEntry(entryOf(16, 'floz'));
@@ -514,6 +516,136 @@ describe('loading and failure', () => {
     expect(water.entries).toHaveLength(1);
     expect(today.error).toBe("We couldn't save that. Your water log may not persist.");
 
-    tree.unmount();
+  });
+});
+
+/**
+ * What Home reads.
+ *
+ * Home derives its Water tile and its Water goal pillar from exactly these
+ * three fields — `totalLabel`, `progress`, and `isGoalMet`. Asserting them
+ * here covers the integration at the read-model level without standing up a
+ * component-testing stack for the Dashboard.
+ */
+describe('the values Home consumes', () => {
+  it('an empty day reads as zero in the preferred unit, not as a blank', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    await mount(repository);
+
+    expect(today.totalLabel).toBe('0 fl oz');
+    expect(today.progress).toBe(0);
+    expect(today.isGoalMet).toBe(false);
+
+  });
+
+  it('a logged day reads in the user’s preferred unit', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'l' } });
+    await mount(repository);
+
+    await act(async () => {
+      await water.addEntry(entryOf(500, 'ml'));
+      await water.addEntry(entryOf(750, 'ml'));
+    });
+
+    expect(today.totalLabel).toBe('1.25 L');
+  });
+
+  /**
+   * The old fixture marked Water complete for every user forever. Without a
+   * goal there is nothing to complete — and equally, nothing the user has
+   * failed. `isGoalMet` is false, so Home shows the pillar incomplete without
+   * inventing a target.
+   */
+  it('is never complete when no goal has been set, however much is logged', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    await mount(repository);
+
+    await act(async () => {
+      await water.addEntry(entryOf(200, 'floz'));
+    });
+
+    expect(today.hasGoal).toBe(false);
+    expect(today.isGoalMet).toBe(false);
+    // And no progress is fabricated for the tile's accent bar.
+    expect(today.progress).toBe(0);
+
+  });
+
+  it('is incomplete while the goal is unmet', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    await mount(repository);
+
+    await act(async () => {
+      await water.setGoal(createWaterGoal(64, 'floz'));
+      await water.addEntry(entryOf(63, 'floz'));
+    });
+
+    expect(today.isGoalMet).toBe(false);
+    expect(today.progress).toBeCloseTo(63 / 64, 6);
+
+  });
+
+  it('is complete at exactly the goal', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    await mount(repository);
+
+    await act(async () => {
+      await water.setGoal(createWaterGoal(64, 'floz'));
+      await water.addEntry(entryOf(64, 'floz'));
+    });
+
+    expect(today.isGoalMet).toBe(true);
+    expect(today.progress).toBe(1);
+
+  });
+
+  it('is complete past the goal, with the bar clamped', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    await mount(repository);
+
+    await act(async () => {
+      await water.setGoal(createWaterGoal(64, 'floz'));
+      await water.addEntry(entryOf(100, 'floz'));
+    });
+
+    expect(today.isGoalMet).toBe(true);
+    expect(today.progress).toBe(1);
+    expect(today.percent).toBe(156);
+
+  });
+
+  it('counts the goal as met across mixed authored units', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    await mount(repository);
+
+    await act(async () => {
+      await water.setGoal(createWaterGoal(1, 'l'));
+      await water.addEntry(entryOf(500, 'ml'));
+      await water.addEntry(entryOf(17, 'floz')); // ~502.75 mL, tipping past 1 L
+    });
+
+    expect(today.isGoalMet).toBe(true);
+  });
+});
+
+describe('the recent-days window Home and Water share', () => {
+  it('loads previous days and excludes today from history', async () => {
+    const yesterday = shiftLogDate(TODAY, -1);
+    const { repository } = fakeRepository({
+      entries: {
+        [TODAY]: [createWaterEntry({ amount: 8, unit: 'floz', logDate: TODAY })],
+        [yesterday]: [createWaterEntry({ amount: 16, unit: 'floz', logDate: yesterday })],
+      },
+    });
+    await mount(repository);
+
+    // Today is derived live from `entries`, so carrying it in history too
+    // would be a second copy that can disagree with the first.
+    expect(water.history.some((day) => day.logDate === TODAY)).toBe(false);
+    expect(water.history.find((day) => day.logDate === yesterday)?.totalMl).toBeCloseTo(
+      toMl(16, 'floz'),
+      9,
+    );
+
   });
 });

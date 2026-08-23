@@ -25,6 +25,7 @@ import { todayLogDate, type LogDate } from '../../daily/dates';
 import { useDayRollover } from '../../daily/useDayRollover';
 import { asyncStorageWaterRepository } from '../data/asyncStorageRepository';
 import type { WaterRepository } from '../data/WaterRepository';
+import { totalMl } from '../model/totals';
 import {
   DEFAULT_WATER_PREFERENCES,
   type VolumeUnit,
@@ -32,6 +33,7 @@ import {
   type WaterGoal,
   type WaterPreferences,
 } from '../model/types';
+import { WEEK_DAYS, type StoredDayTotal } from '../model/week';
 
 type Status = 'loading' | 'ready';
 
@@ -42,6 +44,15 @@ type WaterState = {
   /** `null` until the user sets one. Never defaulted to a made-up amount. */
   goal: WaterGoal | null;
   preferences: WaterPreferences;
+  /**
+   * Daily totals for the days *before* `logDate`, for the recent-days strip.
+   *
+   * Excludes the current day on purpose: today's total is derived live from
+   * `entries`, so a logged drink shows up immediately instead of waiting for
+   * a storage re-read. Loaded once per day change rather than after every
+   * write, because past days cannot change while the user is looking at today.
+   */
+  history: StoredDayTotal[];
   /** Set when persistence failed, so the UI can say so instead of showing a silently empty day. */
   error: string | null;
 };
@@ -54,6 +65,7 @@ type Action =
       entries: WaterEntry[];
       goal: WaterGoal | null;
       preferences: WaterPreferences;
+      history: StoredDayTotal[];
     }
   | { type: 'loadFailed'; message: string }
   | { type: 'setEntries'; entries: WaterEntry[] }
@@ -66,7 +78,7 @@ function reducer(state: WaterState, action: Action): WaterState {
     case 'loadStarted':
       // Entries are cleared alongside the date change so a stale day's
       // entries can never be written under the new day's key mid-flight.
-      return { ...state, status: 'loading', logDate: action.logDate, entries: [], error: null };
+      return { ...state, status: 'loading', logDate: action.logDate, entries: [], history: [], error: null };
     case 'loadFinished':
       return {
         status: 'ready',
@@ -74,6 +86,7 @@ function reducer(state: WaterState, action: Action): WaterState {
         entries: action.entries,
         goal: action.goal,
         preferences: action.preferences,
+        history: action.history,
         error: null,
       };
     case 'loadFailed':
@@ -114,6 +127,7 @@ export function WaterProvider({ children, repository = asyncStorageWaterReposito
     entries: [],
     goal: null,
     preferences: DEFAULT_WATER_PREFERENCES,
+    history: [],
     error: null,
   });
 
@@ -134,18 +148,24 @@ export function WaterProvider({ children, repository = asyncStorageWaterReposito
       logDateRef.current = logDate;
       dispatch({ type: 'loadStarted', logDate });
       try {
-        const [entries, goal, preferences] = await Promise.all([
+        const [entries, goal, preferences, recentDays] = await Promise.all([
           repository.getEntries(logDate),
           repository.getGoal(),
           repository.getPreferences(),
+          // One extra day, because the window ending today includes today —
+          // which is dropped below in favour of the live entry array.
+          repository.getRecentDays(WEEK_DAYS + 1),
         ]);
         // A slower load for a date the user has already navigated away from
         // must not overwrite the newer one.
         if (logDateRef.current !== logDate) return;
         const resolved = preferences ?? DEFAULT_WATER_PREFERENCES;
+        const history = recentDays
+          .filter((day) => day.logDate !== logDate)
+          .map((day) => ({ logDate: day.logDate, totalMl: totalMl(day.entries) }));
         entriesRef.current = entries;
         preferencesRef.current = resolved;
-        dispatch({ type: 'loadFinished', logDate, entries, goal, preferences: resolved });
+        dispatch({ type: 'loadFinished', logDate, entries, goal, preferences: resolved, history });
       } catch {
         if (logDateRef.current !== logDate) return;
         entriesRef.current = [];

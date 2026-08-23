@@ -15,8 +15,12 @@ import {
   fromLogDate,
   isToday,
   isValidLogDate,
+  logDateRange,
+  shiftLogDate,
   toLogDate,
   todayLogDate,
+  weekdayInitial,
+  weekdayName,
 } from '../dates';
 
 describe('toLogDate', () => {
@@ -249,5 +253,78 @@ describe('formatLogDateLong', () => {
       const logDate = `2026-08-${16 + index}`;
       expect(formatLogDateLong(logDate)).toContain(weekday);
     });
+  });
+});
+
+describe('shiftLogDate', () => {
+  it('moves forward and back by whole days', () => {
+    expect(shiftLogDate('2026-08-22', 1)).toBe('2026-08-23');
+    expect(shiftLogDate('2026-08-22', -1)).toBe('2026-08-21');
+    expect(shiftLogDate('2026-08-22', 0)).toBe('2026-08-22');
+  });
+
+  /**
+   * The cases a "subtract one from the day number" shortcut gets wrong. Going
+   * through `Date` normalizes all of them.
+   */
+  it('crosses month, year, and leap boundaries', () => {
+    expect(shiftLogDate('2026-03-01', -1)).toBe('2026-02-28');
+    expect(shiftLogDate('2024-03-01', -1)).toBe('2024-02-29');
+    expect(shiftLogDate('2026-01-01', -1)).toBe('2025-12-31');
+    expect(shiftLogDate('2025-12-31', 1)).toBe('2026-01-01');
+    expect(shiftLogDate('2026-01-31', 1)).toBe('2026-02-01');
+  });
+
+  it('always produces a valid log date, over a long span in both directions', () => {
+    for (let offset = -400; offset <= 400; offset += 37) {
+      expect(isValidLogDate(shiftLogDate('2026-08-22', offset))).toBe(true);
+    }
+  });
+
+  it('is reversible', () => {
+    for (const days of [1, 7, 30, 365]) {
+      expect(shiftLogDate(shiftLogDate('2026-08-22', days), -days)).toBe('2026-08-22');
+    }
+  });
+});
+
+describe('logDateRange', () => {
+  it('returns consecutive days ending at the given date, oldest first', () => {
+    expect(logDateRange('2026-08-22', 3)).toEqual(['2026-08-20', '2026-08-21', '2026-08-22']);
+  });
+
+  it('returns just the date itself for a window of one', () => {
+    expect(logDateRange('2026-08-22', 1)).toEqual(['2026-08-22']);
+  });
+
+  it('returns nothing for a non-positive window', () => {
+    expect(logDateRange('2026-08-22', 0)).toEqual([]);
+    expect(logDateRange('2026-08-22', -3)).toEqual([]);
+  });
+
+  it('never repeats or skips a day', () => {
+    const range = logDateRange('2026-03-03', 14);
+    expect(new Set(range).size).toBe(14);
+    for (let i = 1; i < range.length; i += 1) {
+      expect(shiftLogDate(range[i - 1], 1)).toBe(range[i]);
+    }
+  });
+});
+
+describe('weekday helpers', () => {
+  it('names the weekday', () => {
+    expect(weekdayName('2026-08-22')).toBe('Saturday');
+    expect(weekdayName('2026-08-17')).toBe('Monday');
+  });
+
+  it('gives the initial, which is deliberately ambiguous', () => {
+    expect(weekdayInitial('2026-08-22')).toBe('S'); // Saturday
+    expect(weekdayInitial('2026-08-16')).toBe('S'); // Sunday — same letter
+    expect(weekdayInitial('2026-08-18')).toBe('T'); // Tuesday
+    expect(weekdayInitial('2026-08-20')).toBe('T'); // Thursday — same letter
+  });
+
+  it('agrees with the long format for the same date', () => {
+    expect(formatLogDateLong('2026-08-22').startsWith(weekdayName('2026-08-22'))).toBe(true);
   });
 });

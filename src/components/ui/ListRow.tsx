@@ -10,7 +10,7 @@ type Props = {
   iconColor?: string;
   title: string;
   subtitle?: string;
-  /** Trailing text, e.g. "300 cal" or "5 / 8 cups". */
+  /** Trailing text, e.g. "300 cal" or "24 fl oz". */
   value?: string;
   chevron?: boolean;
   onPress?: () => void;

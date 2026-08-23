@@ -99,3 +99,43 @@ export function formatLogDateLong(logDate: LogDate): string {
   const date = fromLogDate(logDate);
   return `${WEEKDAYS[date.getDay()]}, ${MONTHS[date.getMonth()]} ${date.getDate()}`;
 }
+
+/**
+ * The same calendar day shifted by whole days, staying in local time.
+ *
+ * Goes through `Date` rather than arithmetic on the string because month
+ * lengths, year boundaries, and leap days are exactly the cases a "subtract
+ * one from the day number" shortcut gets wrong. `new Date(y, m, d - 1)`
+ * normalizes all of them.
+ */
+export function shiftLogDate(logDate: LogDate, days: number): LogDate {
+  const date = fromLogDate(logDate);
+  return toLogDate(new Date(date.getFullYear(), date.getMonth(), date.getDate() + days));
+}
+
+/** The `count` consecutive days ending at `logDate`, oldest first. */
+export function logDateRange(logDate: LogDate, count: number): LogDate[] {
+  if (count <= 0) return [];
+  const dates: LogDate[] = [];
+  for (let offset = count - 1; offset >= 0; offset -= 1) {
+    dates.push(shiftLogDate(logDate, -offset));
+  }
+  return dates;
+}
+
+/** Full weekday name, e.g. "Saturday" — the accessible form. */
+export function weekdayName(logDate: LogDate): string {
+  return WEEKDAYS[fromLogDate(logDate).getDay()];
+}
+
+/**
+ * Single-letter weekday, e.g. "S".
+ *
+ * Ambiguous on its own — Tuesday and Thursday both start with T — which is
+ * why every caller must also expose `weekdayName` to assistive technology.
+ * Visually the position in a fixed seven-day run disambiguates it, and the
+ * single letter is what keeps seven columns legible on a phone.
+ */
+export function weekdayInitial(logDate: LogDate): string {
+  return weekdayName(logDate).charAt(0);
+}

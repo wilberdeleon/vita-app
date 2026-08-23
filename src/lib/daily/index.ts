@@ -18,8 +18,12 @@ export {
   fromLogDate,
   isToday,
   isValidLogDate,
+  logDateRange,
+  shiftLogDate,
   toLogDate,
   todayLogDate,
+  weekdayInitial,
+  weekdayName,
   type LogDate,
 } from './dates';
 

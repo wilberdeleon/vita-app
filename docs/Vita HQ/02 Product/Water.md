@@ -14,7 +14,13 @@
 
 **Slice 3.3 (2026-08-23) completed the workflow:** set a goal, change it, pick a display unit, quick-add or enter a custom amount, edit a logged drink, delete one with Undo. **A display preference and an entry's unit are separate concepts** (founder decision, 2026-08-22) — logging 500 mL while your preference is fl oz records 500 mL and leaves the preference alone, and changing the preference never rewrites what a past entry says. Today's log shows each drink in the unit it was entered in.
 
-The premium progress visualization, its motion, the 7-day view, and [[Dashboard]] wiring are **slice 3.4**.
+**Slice 3.4 (2026-08-23) finished the Water experience for this sprint.** Today's hydration is shown as a **water level** — the summary panel fills from the bottom as the day progresses, an abstract surface rather than a drawn container, because a bottle or eight cups imply a fixed capacity when the user's goal is whatever they set. One number, one line of context, one restrained goal control. Motion is a short ease on the fill, and **Reduced Motion lands on the value directly**.
+
+A compact **seven-day strip** gives light context. It shows **daily volume, not goal attainment** — VITA stores one *current* goal and does not snapshot what it was on any past day, so marking a past day met or missed would be inventing history it never recorded. No averages, streaks, trends, or interpretation.
+
+**[[Dashboard|Home]] now reads the same state**: the Health Metrics Water tile shows the day's real total in the user's unit and opens Water when tapped, and the Water goal pillar completes only when a real goal is actually reached. **No Water fixture data remains anywhere in VITA** — the `5 / 8` Home displayed to every user forever is gone, along with the whole Sprint 0 mock layer.
+
+[[Water]], [[Fuel]], and [[Dashboard]] now read one source of truth. Water is **feature-complete for Sprint 3**, pending the sprint audit in slice 3.10 — which is a statement about this sprint's scope, not a promise that Water never gets refined again.
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Water architecture", and `docs/06-Slice-Tracker.md` → slice 3.2.
 
@@ -24,7 +30,7 @@ Built in Slice 0.6 under `src/app/(vita)/water/`:
 
 - **Summary** (`index.tsx`) — daily hydration log and progress
 - **Add** (`add.tsx`) — quick logging in cups or ounces. *Neither screen saved anything: the unit toggle performed no conversion, and the Add button discarded what the user entered. `CupsRow` and the whole `src/features/water/` fixture layer were deleted in slice 3.2.*
-- **Reached from [[Fuel]]'s Hydration card — the only entry point in the app today.** Not in the dock. *Corrected 2026-08-21:* this page previously said Water was reached from the Dashboard quick stats. It is not — Home's water tile is a read-only metric with no press handler (`QuickStatsRow`/`MetricTile` carry no `onPress`). Home currently *displays* a hydration figure from a fixture and does not navigate anywhere. Wiring Home's water tile and water goal pillar to real hydration state is **Sprint 3 slice 3.4**
+- **Reached from [[Fuel]]'s Hydration card — the only entry point in the app today.** Not in the dock. *Corrected 2026-08-21:* this page previously said Water was reached from the Dashboard quick stats. It is not — Home's water tile is a read-only metric with no press handler (`QuickStatsRow`/`MetricTile` carry no `onPress`). Home currently *displays* a hydration figure from a fixture and does not navigate anywhere. *Closed in slice 3.4 (2026-08-23):* Home's Water tile and goal pillar now read real hydration state, and the tile **does** open Water — so the original claim is true again, for the first time, by implementation rather than by documentation
 - Domain color: **blue `#2F80ED`** ([[Color System]])
 
 ## Target state

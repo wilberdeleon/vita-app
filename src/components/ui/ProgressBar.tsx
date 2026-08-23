@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { palette, radii } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useReducedMotion } from '../../theme/useReducedMotion';
 
 type Props = {
   /** 0..1 */
@@ -22,15 +23,23 @@ export function ProgressBar({ progress, color = palette.primary, height = 8, acc
   const clamped = Math.max(0, Math.min(1, progress));
   const anim = useRef(new Animated.Value(0)).current;
   const { surfaces } = useTheme();
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // Reduced motion lands on the value directly. The bar communicates a
+    // number, and that number must never be something the user has to wait
+    // through an animation to learn.
+    if (reducedMotion) {
+      anim.setValue(clamped);
+      return;
+    }
     Animated.timing(anim, {
       toValue: clamped,
       duration: 650,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false, // animates width
     }).start();
-  }, [anim, clamped]);
+  }, [anim, clamped, reducedMotion]);
 
   return (
     <View

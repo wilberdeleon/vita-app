@@ -65,6 +65,10 @@ WaterEntry[]  →  WaterState  →  derived totals  →  Water screen + Fuel
 
 `WaterRepository` is the Supabase swap point, with the same all-async shape as `FoodLogRepository`. `WaterProvider` mirrors `NutritionProvider`'s pattern (Context + reducer + shadow refs + optimistic commit + shared day rollover) **without** a generic `TrackerProvider<T>` — the providers look alike because the pattern is right, not because the domains are the same.
 
+**Recent days (slice 3.4).** The provider loads daily totals for the days *before* the current one and exposes them as `history`; today's total is always derived live from `entries`, so a logged drink moves the strip immediately and there is no second copy of today that can disagree with the first. History is loaded once per day change rather than after every write, because past days cannot change while the user is looking at today. `buildWaterWeek` is pure and carries **volume only** — VITA stores one current goal as a preference and never snapshots what it was on a past day, so any historical goal-attainment figure would be an invention. A test asserts the model exposes no goal field at all.
+
+**One source of truth, one direction (slice 3.4).** The Water screen, Fuel's Hydration card, and Home's Water tile and goal pillar all read `useWaterToday()`. No Water fixture data exists anywhere in the app. The dependency runs Water domain → screens; nothing in `src/lib/water` knows Fuel or Home exists.
+
 ## Nutrition architecture (Sprint 2)
 
 `src/lib/nutrition/` is the single source of truth for food entries, daily totals, and nutrition targets. It lives in `src/lib/` rather than `features/fuel/` because **both** Fuel and Dashboard consume nutrition, and features never import each other (rule 1 above) — the same promotion `src/lib/journeyStages.ts` received.
