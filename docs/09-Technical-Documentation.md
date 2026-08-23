@@ -21,7 +21,7 @@ Single source of truth for implementation details: stack, architecture rules, an
 - `src/components/ui/` — Design System primitives only, no business logic
 - `src/components/shell/` — floating dock, headers, app frame
 - `src/theme/` — design tokens and theme system
-- `src/lib/` — cross-cutting domain and infrastructure shared by more than one feature (Supabase client, `journeyStages`, `daily/`, `nutrition/`, `water/`)
+- `src/lib/` — cross-cutting domain and infrastructure shared by more than one feature (Supabase client, `journeyStages`, `daily/`, `nutrition/`, `water/`, `peptides/`)
 - `supabase/` — migrations and edge functions
 - `assets/` — icon, splash, fonts, images
 
@@ -42,6 +42,30 @@ All of it was written for nutrition in Sprint 2 and promoted unchanged when Wate
 **It is deliberately narrow — there is no shared "entry" type.** A glass of water and a peptide administration have genuinely different shapes, and hiding that behind a type parameter would make both harder to read. Shared infrastructure ends where the domains begin.
 
 **`NutritionRepository` is not built on `dayStore`,** and that is on purpose. It is merged, approved, and holds real user data; rewriting its storage layer to prove a new abstraction would be regression risk with no user-visible gain. Only `NAMESPACE` moved out of `nutrition/data/keys.ts` — every key string it produces is unchanged and is pinned by test, because those keys name data already on users' devices.
+
+## Peptides architecture (Sprint 3 slice 3.5)
+
+`src/lib/peptides/` holds the first two layers of the three-part model:
+
+| Concern | Type | Built |
+|---|---|---|
+| Peptide Definition | `PeptideDefinition` | slice 3.5 |
+| User Peptide Setup | `PeptideSetup` | slice 3.5 |
+| Peptide Log Entry | — | slice 3.7 |
+
+A definition carries a name, a classification, and a broad compound-class label — **no dosing, schedule, vial, or history fields**. A setup carries this user's configuration and requires only a `definitionId`; everything else is optional, because a GLP-1 pen user reconstitutes nothing.
+
+**There is no `typicalDose` or equivalent field**, by founder decision. VITA has no basis for knowing an appropriate amount, and a field named that would imply it did. A provider test asserts a serialized setup contains no such word.
+
+**Micrograms are canonical** for mass (an exact power of ten), with the authored `{amount, unit}` pair stored alongside — the same snapshot principle as `FoodEntry.nutrition` and `WaterEntry.enteredAmount`. **Syringes are modelled as `unitsPerMl`, never capacity**: a 0.5 mL syringe marked to 50 units is still U-100, and modelling capacity corrupts every calculation slice 3.6 builds on it.
+
+**Classification is a typed field, asserted only by the compiled catalog.** The repository refuses to read back a stored custom definition claiming any classification other than `custom`, so a hand-edited store cannot relabel a research compound as approved. The catalog itself is compiled code and is deliberately not persisted. See `data/catalog.ts` for the classification rule and the deliberate omissions.
+
+**Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.
+
+**Orphaned setups** — a setup whose definition no longer resolves — are omitted from the lists, counted, and left untouched in storage. Re-pointing one at another definition is the only genuinely destructive option and is never done.
+
+**Schedules are display and organization only.** No notifications, no adherence scoring, and a language rule enforced by test: labels read *Scheduled today*, never *Due today*, and never describe a day as missed.
 
 ## Water architecture (Sprint 3 slice 3.2)
 
@@ -242,6 +266,8 @@ Two constraints that do carry over regardless of implementation:
 - Persistence should sit behind a repository interface like `FoodLogRepository`, so Supabase later arrives as a second implementation without touching screens.
 
 ### Peptides (Sprint 3)
+
+**Built in slice 3.5 (definitions and setups) — see "Peptides architecture" above for what shipped.** Log entries, the calculator, and injection sites remain slices 3.7, 3.6, and 3.8. The constraints below were the direction.
 
 **Three separate concerns, not one record** — mirroring the Food Definition ≠ Food Entry separation already established in `src/lib/nutrition`:
 

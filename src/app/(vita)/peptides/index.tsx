@@ -1,91 +1,94 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, Card, ProgressBar, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
-import { getPeptideToday } from '../../../features/peptides/api';
+import { StyleSheet, Text } from 'react-native';
+import { Button, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
+import { PeptideRowPanel } from '../../../features/peptides/components/PeptideRowPanel';
+import { usePeptides } from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
-export default function PeptideLog() {
-  const today = getPeptideToday();
-  const progress = today.logged / today.goal;
+/**
+ * Peptides — the user's own setups.
+ *
+ * Replaces the Sprint 0 placeholder wholesale. Gone with it: the `1 / 3
+ * logged` counter, the "goal", and the Morning/Midday/Evening slots — none of
+ * which were real. A peptide schedule is per-setup and often weekly, and VITA
+ * never had a "daily peptide goal" to be at 1 of 3 of.
+ *
+ * There is no dose and no count on this screen because nothing has been
+ * administered — administration logging arrives in slice 3.7.
+ */
+export default function Peptides() {
+  const peptides = usePeptides();
   const { surfaces } = useTheme();
 
   return (
     <Screen>
-      <ScreenHeader title="Peptide Log" back />
+      <ScreenHeader title="Peptides" back />
 
-      <Card>
-        <Text style={[styles.count, { color: surfaces.text }]}>
-          {today.logged} / {today.goal} logged
-        </Text>
-        <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
-          Track your peptides and stay consistent.
-        </Text>
-      </Card>
+      {peptides.error ? (
+        <Text style={[styles.error, { color: palette.fat }]}>{peptides.error}</Text>
+      ) : null}
 
-      <SectionHeader title="Today's Goal" />
-      <Card style={styles.goalCard}>
-        <View style={styles.goalRow}>
-          <Text style={[styles.goalLabel, { color: surfaces.text }]}>
-            {today.logged} / {today.goal}
-          </Text>
-          <Text style={[styles.percent, { color: surfaces.textSecondary }]}>{Math.round(progress * 100)}%</Text>
-        </View>
-        <ProgressBar progress={progress} color={palette.peptide} />
-      </Card>
+      {peptides.isEmpty && !peptides.isLoading ? (
+        <EmptyState
+          icon="flask-outline"
+          title="No peptides added yet"
+          body="Add one to track your own setup."
+        />
+      ) : (
+        <>
+          {peptides.active.length > 0 ? (
+            <>
+              <SectionHeader title="Active" />
+              <PeptideRowPanel setups={peptides.active} />
+            </>
+          ) : null}
 
-      <SectionHeader title="Today" />
-      {today.slots.map((slot) => (
-        <Card key={slot.id} style={styles.slotRow}>
-          <Ionicons
-            name={slot.logged > 0 ? 'checkmark-circle' : 'ellipse-outline'}
-            size={22}
-            color={slot.logged > 0 ? palette.peptide : surfaces.textTertiary}
-          />
-          <Text style={[styles.slotLabel, { color: surfaces.text }]}>{slot.label}</Text>
-          <Text style={[styles.slotValue, { color: surfaces.textTertiary }]}>{slot.logged} logged</Text>
-        </Card>
-      ))}
+          {/* Everything is deactivated — a real state, and not the same as
+              having nothing set up. */}
+          {peptides.active.length === 0 && !peptides.isLoading && !peptides.isEmpty ? (
+            <EmptyState
+              icon="flask-outline"
+              title="Nothing active right now"
+              body="Your inactive setups are below, ready when you are."
+            />
+          ) : null}
+        </>
+      )}
 
-      <Button label="+ Add Peptide" color={palette.peptide} onPress={() => router.push('/peptides/add')} />
+      <Button
+        label="Add Peptide"
+        icon="add"
+        color={palette.peptide}
+        onPress={() => router.push('/peptides/catalog')}
+      />
+
+      {peptides.inactive.length > 0 ? (
+        <>
+          <SectionHeader title="Inactive" />
+          <PeptideRowPanel setups={peptides.inactive} />
+        </>
+      ) : null}
+
+      {/*
+        * Enough framing to remove ambiguity about what this feature is, and no
+        * more. The full safety-copy pass is slice 3.9; a warning on every row
+        * would be both alarmist and, by repetition, invisible.
+        */}
+      <Text style={[styles.footer, { color: surfaces.textTertiary }]}>
+        Peptides is for tracking what you choose to record. VITA doesn't provide dosing or treatment
+        recommendations.
+      </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  count: {
-    ...typography.heading,
-    marginBottom: spacing.xs,
-  },
-  hint: {
+  error: {
     ...typography.caption,
   },
-  goalCard: {
-    gap: spacing.m,
-  },
-  goalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  goalLabel: {
-    ...typography.heading,
-  },
-  percent: {
-    ...typography.captionMedium,
-  },
-  slotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.m,
-    paddingVertical: spacing.m,
-  },
-  slotLabel: {
-    ...typography.bodyMedium,
-    flex: 1,
-  },
-  slotValue: {
+  footer: {
     ...typography.caption,
+    marginTop: spacing.s,
   },
 });

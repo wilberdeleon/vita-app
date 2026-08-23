@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ToastProvider } from '../components/ui';
 import { AuthProvider } from '../features/auth/AuthProvider';
 import { NutritionProvider } from '../lib/nutrition';
+import { PeptideProvider } from '../lib/peptides';
 import { WaterProvider } from '../lib/water';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
@@ -34,9 +35,11 @@ export default function RootLayout() {
     <ThemeProvider>
       <NutritionProvider>
         <WaterProvider>
-          <ToastProvider>
-            <RootStack />
-          </ToastProvider>
+          <PeptideProvider>
+            <ToastProvider>
+              <RootStack />
+            </ToastProvider>
+          </PeptideProvider>
         </WaterProvider>
       </NutritionProvider>
     </ThemeProvider>

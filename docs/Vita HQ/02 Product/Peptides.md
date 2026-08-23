@@ -6,12 +6,24 @@
 
 ---
 
-## Current state (verified in repo, Sprint 0 — mock data)
+## Current state (verified in repo, Sprint 3 slice 3.5 — real setups)
+
+**Peptides became a real feature on 2026-08-23.** The first two layers of the three-part model are built and persisted: **Peptide Definition** (what the compound is) and **User Peptide Setup** (how this user tracks it). A user can browse or search an **18-entry built-in catalog**, add a **Custom** entry, configure a setup, edit it, deactivate it, and reactivate it — all surviving a restart.
+
+**Classification is conservative.** `approved-medication` is used only where the active ingredient has an FDA-approved product in the United States; everything else is `research-compound`. **Where US status could not be stated with confidence, the compound was omitted rather than guessed at** — Sermorelin, Bremelanotide/PT-141, and Thymosin Alpha-1 — each still addable through Custom, which carries no regulatory claim. Research is labelled factually, **not styled as a warning**, and the distinction is spelled out as a word rather than encoded in colour.
+
+**Entries carry a name, a classification, and a broad compound-class label. Nothing else** — no effects, benefits, mechanisms, protocols, or dosing. **There is no "typical dose" field of any kind**, and schedule labels can never read "due".
+
+**Not feature-complete.** Slice 3.6 (dose calculator), 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
+
+Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slice 3.5.
+
+## What it was before (Sprint 0 — mock data, superseded)
 
 Built in Slice 0.7 under `src/app/(vita)/peptides/`:
 
 - **Summary** (`index.tsx`) — log overview
-- **Add** (`add.tsx`) — dose logging
+- **Add** (`add.tsx`) — dose logging. *Nothing saved: the fields were unbound and the button called `router.back()`. All three screens and the fixture layer were replaced in slice 3.5.*
 - **Examples** (`examples.tsx`) — reference examples
 - Feature module `src/features/peptides/` (types, mock, api boundary)
 - Domain color: **purple `#7C3AED`** — shared with Atlas per the approved UI reference
