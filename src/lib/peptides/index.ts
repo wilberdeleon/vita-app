@@ -75,6 +75,7 @@ export {
   classificationLabel,
   classificationSpoken,
   evidenceLabel,
+  formatEvidenceContext,
   researchAreaLabel,
 } from './model/labels';
 export { formatLabel, formatLabels } from './model/format';

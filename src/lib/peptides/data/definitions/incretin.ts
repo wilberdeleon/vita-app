@@ -27,18 +27,18 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
         {
           title: 'Weight & Appetite',
           summary:
-            'Clinical trials have reported meaningful weight reduction, with effects on appetite and how full people feel after eating.',
+            'Reduces appetite and makes people feel full sooner and for longer, which is how it produces the weight reduction measured in its trials.',
           evidenceLevel: 'approved-use',
         },
         {
           title: 'Blood Sugar',
-          summary: 'Approved for type 2 diabetes, where trials measured improvements in A1C and glucose control.',
+          summary: 'Lowers blood sugar in type 2 diabetes by prompting insulin release when glucose is high, measured in trials as improved A1C.',
           evidenceLevel: 'approved-use',
         },
         {
           title: 'Cardiovascular Risk',
           summary:
-            'Outcome trials have examined cardiovascular events in people with type 2 diabetes and in people with obesity and existing heart disease.',
+            'Studied for reducing heart attacks and strokes in people with type 2 diabetes, and in people with obesity and existing heart disease.',
           evidenceLevel: 'approved-use',
         },
       ],
@@ -81,17 +81,17 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
         {
           title: 'Weight & Appetite',
           summary:
-            'Trials have reported larger average weight reduction than single-pathway GLP-1 medicines in head-to-head comparisons.',
+            'Reduces appetite and increases fullness, producing larger average weight reduction than single-pathway GLP-1 medicines in head-to-head trials.',
           evidenceLevel: 'approved-use',
         },
         {
           title: 'Blood Sugar',
-          summary: 'Approved for type 2 diabetes, with trials measuring A1C and glucose control.',
+          summary: 'Lowers blood sugar in type 2 diabetes, measured in trials as improved A1C and glucose control.',
           evidenceLevel: 'approved-use',
         },
         {
           title: 'Sleep Apnoea',
-          summary: 'Also studied and approved for moderate-to-severe obstructive sleep apnoea in adults with obesity.',
+          summary: 'Approved for moderate-to-severe obstructive sleep apnoea in adults with obesity, where trials measured fewer breathing interruptions during sleep.',
           evidenceLevel: 'approved-use',
         },
       ],
@@ -134,7 +134,21 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Victoza', 'Saxenda'],
     research: {
       overview:
-        'A once-daily GLP-1 receptor agonist and one of the earlier compounds in this class to reach wide clinical use.',
+        'Liraglutide is an approved daily injection for type 2 diabetes and weight management, sold as Victoza and Saxenda. It was one of the first GLP-1 medicines to reach wide use, working the same way as semaglutide but needing a daily rather than weekly dose.',
+      claims: [
+        {
+          title: 'Weight & Appetite',
+          summary:
+            'Reduces appetite and increases fullness after eating, which is the basis of its approval for weight management.',
+          evidenceLevel: 'approved-use',
+        },
+        {
+          title: 'Blood Sugar',
+          summary:
+            'Lowers blood sugar in type 2 diabetes by prompting insulin release when glucose is high.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
       studiedFor: ['type 2 diabetes', 'obesity & weight management'],
       targets: ['GLP-1 receptor'],
       researchStatus: 'FDA-approved.',
@@ -151,7 +165,21 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Trulicity'],
     research: {
       overview:
-        'A once-weekly GLP-1 receptor agonist built as a fusion protein, which is why it is classed here as a protein rather than a short peptide.',
+        'Dulaglutide is an approved once-weekly injection for type 2 diabetes, sold as Trulicity. It lowers blood sugar and has also been shown to reduce cardiovascular risk. It is built as a larger fusion protein rather than a short peptide, which is what gives it its weekly dosing.',
+      claims: [
+        {
+          title: 'Blood Sugar',
+          summary:
+            'Lowers blood sugar in type 2 diabetes, taken once a week rather than daily.',
+          evidenceLevel: 'approved-use',
+        },
+        {
+          title: 'Heart Health',
+          summary:
+            'Studied for reducing heart attacks and strokes in people with type 2 diabetes and cardiovascular risk factors.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
       studiedFor: ['type 2 diabetes', 'cardiovascular risk reduction'],
       targets: ['GLP-1 receptor'],
       researchStatus: 'FDA-approved.',
@@ -168,7 +196,15 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Byetta', 'Bydureon'],
     research: {
       overview:
-        'A GLP-1 receptor agonist derived from exendin-4, originally identified in Gila monster venom. One of the first incretin-based medicines approved.',
+        'Exenatide is an approved medicine for type 2 diabetes and the first of the GLP-1 drugs to reach the market. Its origin is genuinely unusual: it is based on a compound found in Gila monster venom, which happens to closely resemble a human gut hormone.',
+      claims: [
+        {
+          title: 'Blood Sugar',
+          summary:
+            'Lowers blood sugar in type 2 diabetes by boosting the insulin response to a meal and slowing digestion.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
       studiedFor: ['type 2 diabetes'],
       targets: ['GLP-1 receptor'],
       researchStatus: 'FDA-approved.',
@@ -184,7 +220,16 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'GLP-1 receptor agonist',
     aliases: ['Adlyxin'],
     research: {
-      overview: 'A short-acting GLP-1 receptor agonist.',
+      overview:
+        'Lixisenatide is an approved short-acting GLP-1 medicine for type 2 diabetes. Its shorter duration means it acts mainly on the blood-sugar rise that follows a meal, rather than across the whole day.',
+      claims: [
+        {
+          title: 'Blood Sugar',
+          summary:
+            'Blunts the rise in blood sugar after eating, by slowing how quickly the stomach empties and supporting the mealtime insulin response.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
       studiedFor: ['type 2 diabetes'],
       targets: ['GLP-1 receptor'],
       researchStatus: 'FDA-approved.',
@@ -201,7 +246,21 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Symlin'],
     research: {
       overview:
-        'A synthetic analog of amylin, a hormone co-secreted with insulin. It acts on amylin receptors and has been studied alongside insulin therapy.',
+        'Pramlintide is an approved medicine used alongside insulin in type 1 and type 2 diabetes. It copies amylin, a hormone the pancreas normally releases together with insulin, which people with diabetes are often short of. It slows digestion and reduces appetite.',
+      claims: [
+        {
+          title: 'Blood Sugar',
+          summary:
+            'Steadies blood sugar after meals when used with insulin, by slowing how quickly food leaves the stomach.',
+          evidenceLevel: 'approved-use',
+        },
+        {
+          title: 'Appetite & Fullness',
+          summary:
+            'Increases the sense of having eaten enough, which is why it has also been studied in weight management.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
       studiedFor: ['type 1 and type 2 diabetes'],
       targets: ['Amylin receptor'],
       researchStatus: 'FDA-approved.',
@@ -218,24 +277,24 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['LY3437943'],
     research: {
       overview:
-        'Retatrutide is an investigational obesity and diabetes drug being developed by Eli Lilly. It is designed to act on three of the body\u2019s appetite and blood-sugar hormone systems at once, rather than the one or two that current GLP-1 medicines target. It has been through large late-stage human trials but is not approved anywhere yet.',
+        'Retatrutide is an investigational obesity and diabetes drug being developed by Eli Lilly. It is designed to act on three of the body’s appetite and blood-sugar hormone systems at once, rather than the one or two that current GLP-1 medicines target. It has been through large late-stage human trials but is not approved anywhere yet.',
       claims: [
         {
           title: 'Weight & Appetite',
           summary:
-            'Phase 3 trials have reported substantial average weight reduction over roughly 18 months, alongside effects on appetite and fullness.',
+            'Studied for major weight reduction — Phase 3 trials reported large average losses over roughly 18 months — driven by reduced appetite and feeling full sooner.',
           evidenceLevel: 'human-clinical',
         },
         {
           title: 'Blood Sugar',
           summary:
-            'Trials in people with type 2 diabetes have also measured improvements in A1C and glucose control.',
+            'Studied for better blood-sugar control in people with type 2 diabetes, measured as lower A1C and steadier glucose levels.',
           evidenceLevel: 'human-clinical',
         },
         {
-          title: 'Cardiometabolic Outcomes',
+          title: 'Heart & Related Conditions',
           summary:
-            'Studies have included people with established cardiovascular disease and other obesity-related conditions, examining outcomes beyond weight alone.',
+            'Trials have included people with existing heart disease, sleep apnoea, fatty liver disease and knee osteoarthritis pain, looking at whether the benefits reach beyond weight itself.',
           evidenceLevel: 'human-clinical',
         },
       ],
@@ -296,7 +355,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
         {
           title: 'Weight & Appetite',
           summary:
-            'Human trials have investigated weight reduction and effects on fullness, both on its own and in a fixed combination with semaglutide.',
+            'Studied for reducing appetite and body weight by making meals feel satisfying sooner — both on its own and in a fixed combination with semaglutide.',
           evidenceLevel: 'human-clinical',
         },
       ],
@@ -331,7 +390,22 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Dual GLP-1 / glucagon agonist',
     aliases: ['IBI362', 'LY3305677'],
     research: {
-      overview: 'An investigational dual GLP-1 and glucagon receptor agonist studied in metabolic conditions.',
+      overview:
+        'Mazdutide is an investigational weight and diabetes drug that acts on two hormone systems — GLP-1 for appetite and blood sugar, and glucagon for how much energy the body burns. It has been studied most extensively in China.',
+      claims: [
+        {
+          title: 'Weight & Appetite',
+          summary:
+            'Studied for reducing appetite and body weight, with the glucagon side intended to raise energy expenditure alongside.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Blood Sugar',
+          summary:
+            'Studied for improving blood-sugar control in type 2 diabetes.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['obesity & weight management', 'type 2 diabetes'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -347,7 +421,22 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Dual GLP-1 / glucagon agonist',
     aliases: ['BI 456906'],
     research: {
-      overview: 'An investigational dual GLP-1 and glucagon receptor agonist evaluated in clinical trials.',
+      overview:
+        'Survodutide is an investigational weight-management and liver drug acting on two hormone systems at once — GLP-1 for appetite and blood sugar, and glucagon for energy burn and liver fat. It is furthest along in trials for fatty liver disease.',
+      claims: [
+        {
+          title: 'Weight & Appetite',
+          summary:
+            'Studied for reducing appetite and body weight, combining appetite signalling with increased energy expenditure.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Liver Fat',
+          summary:
+            'Studied for reducing fat and inflammation in the liver in people with fatty liver disease.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['obesity & weight management', 'metabolic dysfunction-associated steatohepatitis'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -363,7 +452,22 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Dual GLP-1 / glucagon agonist',
     aliases: ['ALT-801'],
     research: {
-      overview: 'An investigational dual GLP-1 and glucagon receptor agonist evaluated in clinical trials.',
+      overview:
+        'Pemvidutide is an investigational dual GLP-1 and glucagon drug studied for weight loss and fatty liver disease. Its stated design goal is to reduce liver fat and body weight while preserving more lean muscle than appetite suppression alone tends to.',
+      claims: [
+        {
+          title: 'Weight & Body Composition',
+          summary:
+            'Studied for weight reduction with attention to preserving lean muscle rather than losing weight from all tissue equally.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Liver Fat',
+          summary:
+            'Studied for reducing liver fat in people with fatty liver disease.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['obesity & weight management', 'metabolic dysfunction-associated steatohepatitis'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -379,7 +483,16 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Dual GLP-1 / glucagon agonist',
     aliases: ['MK-6024', 'HM12525A'],
     research: {
-      overview: 'An investigational dual GLP-1 and glucagon receptor agonist studied in liver and metabolic conditions.',
+      overview:
+        'Efinopegdutide is an investigational dual GLP-1 and glucagon drug studied primarily for fatty liver disease rather than weight alone — the glucagon side is thought to push the liver to burn its own stored fat.',
+      claims: [
+        {
+          title: 'Liver Fat',
+          summary:
+            'Studied for reducing fat stored in the liver, the main focus of its trial programme.',
+          evidenceLevel: 'early-human',
+        },
+      ],
       studiedFor: ['metabolic dysfunction-associated steatohepatitis', 'obesity & weight management'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -395,7 +508,15 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Monoamine reuptake inhibitor',
     research: {
       overview:
-        'A small molecule, not a peptide, though it is commonly tracked alongside metabolic peptides. It inhibits reuptake of noradrenaline, dopamine and serotonin and has been studied for weight management.',
+        'Tesofensine is a weight-loss compound that works through brain chemistry rather than gut hormones — it raises levels of three neurotransmitters that influence appetite and alertness. It is a small molecule, not a peptide, though it is commonly tracked alongside them. Originally developed for Parkinson’s disease, where the weight loss was an unexpected side effect.',
+      claims: [
+        {
+          title: 'Appetite & Weight',
+          summary:
+            'Studied for reducing appetite and body weight through brain signalling rather than through the gut-hormone route the GLP-1 drugs use.',
+          evidenceLevel: 'early-human',
+        },
+      ],
       studiedFor: ['obesity & weight management'],
       targets: ['Noradrenaline transporter', 'Dopamine transporter', 'Serotonin transporter'],
       researchStatus: 'Investigational; not FDA-approved.',

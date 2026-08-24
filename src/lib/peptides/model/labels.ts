@@ -49,6 +49,34 @@ export function evidenceLabel(level: EvidenceLevel): string {
 }
 
 /**
+ * The compact form, for the quiet line under a single research claim.
+ *
+ * `EVIDENCE_LABELS` above is a full sentence fragment because it stands alone
+ * as a page-level statement. Repeating "Mainly Preclinical Research" under
+ * every claim would make the qualifier louder than the claim it qualifies —
+ * which is exactly the imbalance slice 3.5D was opened to fix. These are the
+ * same five levels said in two or three words.
+ */
+const EVIDENCE_CHIP_LABELS: Record<EvidenceLevel, string> = {
+  'approved-use': 'Approved use',
+  'human-clinical': 'Human clinical',
+  'early-human': 'Early human',
+  preclinical: 'Primarily preclinical',
+  limited: 'Limited',
+};
+
+/**
+ * Renders as `Evidence · Primarily preclinical`.
+ *
+ * One helper rather than a hand-written caveat sentence per claim: the whole
+ * point is that evidence maturity is a *field*, shown consistently, instead of
+ * prose each author re-invents and each reader has to re-parse.
+ */
+export function formatEvidenceContext(level: EvidenceLevel): string {
+  return `Evidence · ${EVIDENCE_CHIP_LABELS[level]}`;
+}
+
+/**
  * Human-readable research-area names.
  *
  * Neutral and descriptive. None of them is phrased as a purpose or an outcome

@@ -59,7 +59,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     ],
     research: {
       overview:
-        'GLOW is a vendor and community name for a mix of three research compounds sold together — GHK-Cu, BPC-157 and TB-500. It is usually discussed for skin and recovery, reflecting what its components are individually researched for. The name identifies which compounds are present, not how much of each.',
+        'GLOW combines three compounds commonly researched around skin quality, collagen and tissue repair — GHK-Cu for skin and collagen, BPC-157 and TB-500 for healing and recovery. That overlap is why they are sold together, usually for skin appearance and recovery at the same time. Evidence for the named blend itself is limited; the research concerns its individual components. The name says which compounds are present, not how much of each.',
       developmentStatus: {
         stage: 'not-in-clinical-development',
         label: 'Not in Clinical Development',
@@ -86,7 +86,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     ],
     research: {
       overview:
-        'KLOW is the GLOW combination with KPV added — the K in the name. KPV is researched for inflammation, which is what the fourth component adds to the mix. As with GLOW, the name says which compounds are present, not the amounts.',
+        'KLOW is the GLOW combination with KPV added — the K in the name. KPV is researched for calming inflammation, particularly in the gut and skin, which is what the fourth component is meant to add to a mix otherwise aimed at repair and skin quality. Evidence for the named blend itself is limited; the research concerns its individual components.',
       developmentStatus: {
         stage: 'not-in-clinical-development',
         label: 'Not in Clinical Development',
@@ -108,7 +108,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     components: [{ definitionId: 'catalog:bpc-157' }, { definitionId: 'catalog:tb-500' }],
     research: {
       overview:
-        'The most commonly encountered two-component recovery blend, sold under a range of vendor names. Both components are researched for tissue repair, which is why they are so often paired.',
+        'The most commonly encountered recovery pairing, sold under a range of vendor names. Both components are researched for repairing injured tissue but by different routes — BPC-157 is associated with gut and tendon healing, TB-500 with helping repair cells reach the damage. That difference is the stated reason for combining them. Evidence for the pairing itself is limited; the research concerns each component separately.',
       developmentStatus: {
         stage: 'not-in-clinical-development',
         label: 'Not in Clinical Development',
@@ -132,7 +132,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     ],
     research: {
       overview:
-        'The most commonly encountered growth-hormone research pairing. The two components work through different routes — one signals the pituitary directly, the other acts on the ghrelin receptor — which is why they are combined rather than doubled up. This is the DAC-free variant; the DAC form lasts far longer in the body and is a different compound.',
+        'The most commonly encountered growth-hormone pairing, tracked for recovery, sleep and body composition. The two components reach the same result by different routes — one tells the pituitary to release growth hormone, the other acts on the ghrelin receptor to trigger the same pulse — which is the stated reason for combining them rather than doubling either. This is the DAC-free variant; the DAC form lasts far longer and is a different compound. Evidence for the pairing itself is limited.',
       developmentStatus: {
         stage: 'not-in-clinical-development',
         label: 'Not in Clinical Development',
@@ -153,7 +153,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     components: [{ definitionId: 'catalog:semax' }, { definitionId: 'catalog:selank' }],
     research: {
       overview:
-        'A combination of Semax and Selank, two research peptides developed in Russia and often used together — one studied for focus and cognition, the other for anxiety. Each has its own research literature; the pairing does not.',
+        'Semax and Selank are Russian research peptides commonly tracked together for sharper thinking without the edge that can come with it. They cover complementary ground — Semax for focus, memory and mental stamina, Selank for anxiety and stress — which is the stated reason for pairing them. Each has its own research literature; the pairing does not.',
       developmentStatus: {
         stage: 'not-in-clinical-development',
         label: 'Not in Clinical Development',
@@ -178,12 +178,12 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     components: [{ definitionId: 'catalog:cagrilintide' }, { definitionId: 'catalog:semaglutide' }],
     research: {
       overview:
-        'CagriSema is a manufacturer-developed combination of cagrilintide and semaglutide in one injection. Unlike the vendor blends in this group it is a defined investigational product that has been tested as a single formulation in clinical trials, which is why it is the one blend here with real trial evidence behind the combination itself.',
+        'CagriSema is an investigational weight-management drug combining cagrilintide and semaglutide in one injection, studied for larger weight reduction than either produces alone. The two act on different appetite signals — amylin and GLP-1 — which is the stated reason for pairing them. Unlike the vendor blends in this group it is a defined product tested as a single formulation in clinical trials, which is why it is the one blend here with trial evidence behind the combination itself.',
       claims: [
         {
           title: 'Weight & Appetite',
           summary:
-            'Late-stage trials have evaluated weight reduction from the combination itself, not only from its components separately.',
+            'Studied for weight reduction from the two-compound combination itself, pairing amylin’s fullness signal with GLP-1’s rather than relying on either alone.',
           evidenceLevel: 'human-clinical',
         },
       ],

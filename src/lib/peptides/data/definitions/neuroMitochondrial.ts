@@ -21,24 +21,24 @@ export const MITOCHONDRIAL_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Mitochondrial ORF of the 12S rRNA type-c'],
     research: {
       overview:
-        'MOTS-c is a small peptide encoded inside mitochondria — the parts of the cell that produce energy. It is researched for how the body uses energy, and is often discussed in connection with exercise and metabolism. Its research is almost entirely in animals and cells.',
+        'MOTS-c is a small peptide encoded inside mitochondria — the parts of your cells that turn food into usable energy. It is researched for metabolism, exercise capacity and how efficiently the body burns fuel rather than stores it, and it appears often in longevity work because mitochondrial function declines with age.',
       claims: [
         {
           title: 'Metabolism & Energy Use',
           summary:
-            'Animal research has suggested effects on how the body handles glucose and uses energy. This is the main reason it is tracked.',
+            'Researched for improving how the body handles blood sugar and for shifting cells toward burning energy instead of storing it. This is the main reason it is tracked.',
           evidenceLevel: 'preclinical',
         },
         {
           title: 'Exercise Capacity',
           summary:
-            'Studied in exercise-physiology models, where its levels appear to change with physical activity.',
+            'Studied for physical performance and endurance — the body’s own MOTS-c levels rise with exercise, which is what drew researchers to it.',
           evidenceLevel: 'preclinical',
         },
         {
           title: 'Ageing',
           summary:
-            'Commonly discussed in longevity contexts because mitochondrial function declines with age, although direct human evidence is limited.',
+            'Commonly tracked in longevity contexts, on the reasoning that supporting mitochondrial function may counter some of the metabolic decline that comes with age.',
           evidenceLevel: 'limited',
         },
       ],
@@ -47,7 +47,7 @@ export const MITOCHONDRIAL_DEFINITIONS: readonly CatalogSeed[] = [
           target: 'AMPK pathway',
           title: 'AMPK energy sensing',
           explanation:
-            'AMPK is the cell\u2019s low-energy sensor: when fuel runs short it switches cells toward producing energy rather than storing it. MOTS-c research has focused on this pathway.',
+            'AMPK is the cell’s fuel gauge. When energy runs low it flips cells from storing fuel to burning it — the same switch that exercise and fasting activate. MOTS-c research has focused on this pathway.',
         },
       ],
       developmentStatus: {
@@ -71,7 +71,35 @@ export const MITOCHONDRIAL_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Elamipretide', 'MTP-131', 'Bendavia'],
     research: {
       overview:
-        'A mitochondria-targeted tetrapeptide that associates with cardiolipin in the inner mitochondrial membrane. Evaluated in clinical trials for mitochondrial and cardiac conditions.',
+        'SS-31, also called elamipretide, is designed to go straight into the mitochondria — the parts of cells that generate energy — and repair the membrane structure they need to work efficiently. It is tracked for cellular energy, muscle fatigue and age-related decline. Unlike most compounds here it has a genuine late-stage clinical programme, in rare inherited mitochondrial diseases.',
+      claims: [
+        {
+          title: 'Cellular Energy',
+          summary:
+            'Researched for restoring efficient energy production in mitochondria that have stopped working properly, the core of its clinical programme.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Muscle Fatigue & Strength',
+          summary:
+            'Studied in people with inherited mitochondrial disease for improvements in muscle fatigue, strength and walking distance.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Heart & Kidney Function',
+          summary:
+            'Also studied for protecting heart and kidney tissue, both of which depend heavily on mitochondrial energy.',
+          evidenceLevel: 'early-human',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'Cardiolipin',
+          title: 'Repairing the energy machinery',
+          explanation:
+            'Mitochondria generate energy across an inner membrane held together by a fat called cardiolipin. When that structure degrades — through disease or age — energy production leaks and falters. SS-31 binds cardiolipin and helps restore the membrane’s shape so the machinery works again.',
+        },
+      ],
       studiedFor: ['primary mitochondrial myopathy', 'Barth syndrome', 'cardiac and renal conditions'],
       targets: ['Cardiolipin'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -95,7 +123,35 @@ export const MITOCHONDRIAL_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Mitochondrial peptide',
     research: {
       overview:
-        'A mitochondria-derived peptide identified in research on neuronal survival, studied in cell and animal models of metabolic and neurodegenerative conditions.',
+        'Humanin is a peptide the mitochondria themselves produce, discovered in brain tissue that had survived Alzheimer’s disease when surrounding tissue had not. It appears to act as a cellular survival signal, and levels fall with age — which is why it is tracked in longevity, brain-protection and metabolic research.',
+      claims: [
+        {
+          title: 'Cell Protection',
+          summary:
+            'Researched for keeping cells alive under stress, the effect that led to its discovery in brain tissue that resisted degeneration.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Metabolism & Insulin',
+          summary:
+            'Studied for improving how the body responds to insulin and handles blood sugar.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Ageing',
+          summary:
+            'Tracked in longevity research because natural humanin levels decline with age, and higher levels have been observed in people who live unusually long.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'Mitochondrial signalling',
+          title: 'A survival signal from the mitochondria',
+          explanation:
+            'Mitochondria are not only power plants — they also send chemical messages to the rest of the cell. Humanin is one of those messages, and research has focused on how it tells a stressed cell to repair itself rather than shut down.',
+        },
+      ],
       studiedFor: ['neuronal survival in laboratory models', 'metabolic signalling'],
       researchStatus: 'Not FDA-approved. A research compound.',
       evidenceLevel: 'preclinical',
@@ -118,19 +174,19 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
         {
           title: 'Cognition & Focus',
           summary:
-            'Early human research has explored effects on attention, memory and mental fatigue. Most of this work comes from Russian-language literature.',
+            'Researched for sharper attention, better memory and less mental fatigue — the effects it is most commonly tracked for. Most of this work comes from Russian-language literature.',
           evidenceLevel: 'early-human',
         },
         {
           title: 'Stroke Recovery',
           summary:
-            'Studied clinically in Russia for recovery after ischaemic stroke, which is the basis of its registration there.',
+            'Studied clinically for recovering movement and thinking after an ischaemic stroke, which is the basis of its registration in Russia.',
           evidenceLevel: 'early-human',
         },
         {
           title: 'Neuroprotection',
           summary:
-            'Laboratory research has examined protective effects on nerve cells, including changes in BDNF, a protein involved in neuron growth and survival.',
+            'Researched for protecting nerve cells from damage and supporting their survival, including under low-oxygen conditions.',
           evidenceLevel: 'preclinical',
         },
       ],
@@ -139,7 +195,7 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
           target: 'BDNF signalling',
           title: 'Supporting neuron growth',
           explanation:
-            'BDNF is a protein that supports the growth and survival of neurons. Research on Semax has focused on whether it increases BDNF activity in the brain.',
+            'BDNF is a protein that helps brain cells grow, survive and form new connections — a large part of what learning and recovery physically consist of. Research on Semax has focused on whether it raises BDNF activity.',
         },
       ],
       developmentStatus: {
@@ -165,7 +221,16 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['NA-Semax-Amidate', 'NASA'],
     research: {
       overview:
-        'A chemically modified Semax with an acetyl group at the N-terminus and an amide at the C-terminus. Kept separate from Semax because the modifications change the molecule.',
+        'N-Acetyl Semax Amidate is a modified Semax, chemically capped at both ends so it survives longer in the body. It is tracked for the same reasons as Semax — focus, memory and mental stamina — and is often preferred for that longer duration. Kept separate here because the modifications make it a different molecule.',
+      claims: [
+        {
+          title: 'Focus & Memory',
+          summary:
+            'Tracked for the same attention and memory effects as Semax, with the chemical modifications intended to make them last longer.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      studiedFor: ['cognitive function in research settings'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
       evidenceLevel: 'limited',
       references: [pubmed('N-acetyl semax amidate')],
@@ -179,18 +244,18 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Tuftsin analog',
     research: {
       overview:
-        'Selank is a research peptide developed in Russia, where it is registered as a medicine for anxiety. It is studied for calming effects without the sedation associated with common anti-anxiety drugs. It is not approved in the United States.',
+        'Selank is a research peptide developed in Russia, where it is registered as a medicine for anxiety. It is tracked for reducing anxiety and stress without the drowsiness and dependence associated with common anti-anxiety drugs. It is not approved in the United States.',
       claims: [
         {
           title: 'Anxiety & Stress',
           summary:
-            'Early human research in Russia has explored anxiolytic effects, which is the basis of its registration there.',
+            'Researched for reducing anxiety and the physical symptoms of stress without sedation — the basis of its registration as a medicine in Russia.',
           evidenceLevel: 'early-human',
         },
         {
           title: 'Focus & Mood',
           summary:
-            'Commonly discussed alongside Semax for mental clarity and mood, although direct human evidence outside Russian literature is limited.',
+            'Commonly tracked alongside Semax for steadier mood and clearer thinking, particularly under stress.',
           evidenceLevel: 'limited',
         },
       ],
@@ -214,7 +279,17 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Tuftsin analog',
     aliases: ['NA-Selank-Amidate'],
     research: {
-      overview: 'A chemically modified Selank, acetylated at the N-terminus and amidated at the C-terminus.',
+      overview:
+        'N-Acetyl Selank Amidate is a modified Selank, chemically capped at both ends so it lasts longer in the body. It is tracked for the same anxiety and stress effects as Selank. Kept separate here because the modifications make it a different molecule.',
+      claims: [
+        {
+          title: 'Anxiety & Stress',
+          summary:
+            'Tracked for the same calming effects as Selank, with the chemical modifications intended to extend how long they last.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      studiedFor: ['anxiety in research settings'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
       evidenceLevel: 'limited',
       references: [pubmed('N-acetyl selank amidate')],
@@ -229,7 +304,21 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Epithalon', 'Epithalamin', 'AEDG'],
     research: {
       overview:
-        'A synthetic tetrapeptide (Ala-Glu-Asp-Gly) developed from research on pineal extracts. Studied in ageing research, including work on telomerase activity in cell models.',
+        'Epitalon is a four-amino-acid peptide from Russian ageing research, developed from extracts of the pineal gland — the gland that governs sleep and daily rhythm. It is tracked almost entirely for longevity, on the basis of laboratory work suggesting it can lengthen telomeres, the protective caps on chromosomes that shorten as cells divide.',
+      claims: [
+        {
+          title: 'Ageing & Telomeres',
+          summary:
+            'Researched for lengthening telomeres, the chromosome caps that shorten as cells age. This is the reason it is tracked in longevity contexts.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Sleep & Daily Rhythm',
+          summary:
+            'Also studied for restoring normal melatonin patterns and sleep rhythm, reflecting its pineal-gland origin.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['ageing biology in animal and cell models'],
       researchStatus: 'Not FDA-approved. A research compound.',
       evidenceLevel: 'preclinical',
@@ -244,7 +333,16 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Peptide bioregulator',
     aliases: ['EDR peptide'],
     research: {
-      overview: 'A synthetic tripeptide (Glu-Asp-Arg) from the peptide bioregulator research literature.',
+      overview:
+        'Pinealon is a three-amino-acid peptide from the same Russian bioregulator research tradition as Epitalon, studied for protecting brain cells and supporting memory in ageing animals. Research is confined to that literature and has not been widely replicated elsewhere.',
+      claims: [
+        {
+          title: 'Brain Cell Protection',
+          summary:
+            'Researched for protecting neurons from oxidative damage and supporting memory in ageing animal models.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['neuronal function in animal models'],
       researchStatus: 'Not FDA-approved. A research compound.',
       evidenceLevel: 'preclinical',
@@ -260,12 +358,12 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Delta sleep-inducing peptide'],
     research: {
       overview:
-        'DSIP — delta sleep-inducing peptide — was identified decades ago in research on sleep. Despite the name and a long research history, how it works is still poorly understood, and evidence that it reliably improves sleep in people is thin.',
+        'DSIP — delta sleep-inducing peptide — was found decades ago in research on sleep, and is tracked for falling asleep more easily and getting deeper, less broken sleep. Despite the name and a long history, how it actually works is still not well understood.',
       claims: [
         {
           title: 'Sleep',
           summary:
-            'Commonly claimed for improving sleep quality. Research dates back decades but direct human evidence remains limited and inconsistent.',
+            'Commonly tracked for deeper, more restorative sleep and for falling asleep faster. Findings across studies have been inconsistent, which is unusual enough to be worth knowing here.',
           evidenceLevel: 'limited',
         },
       ],
@@ -289,7 +387,15 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['N-hexanoic-Tyr-Ile-(6) aminohexanoic amide', 'PNB-0408'],
     research: {
       overview:
-        'A peptidomimetic derived from angiotensin IV — a peptide-derived molecule rather than a peptide proper, which is why it is typed as "other". Studied in preclinical work on hepatocyte growth factor signalling.',
+        'Dihexa is a research compound studied for forming new connections between brain cells — the physical basis of learning and memory. Animal work in models of Alzheimer’s disease drew attention to it. It is derived from a peptide rather than being one, which is why it is typed as "other".',
+      claims: [
+        {
+          title: 'Memory & Brain Connections',
+          summary:
+            'Researched for building new synapses between neurons, studied in animal models of memory loss and Alzheimer’s disease.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['cognition in animal models'],
       targets: ['HGF / c-Met signalling'],
       researchStatus: 'Not FDA-approved. A research compound.',
@@ -305,7 +411,21 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Peptide preparation',
     research: {
       overview:
-        'A preparation of low-molecular-weight peptides and amino acids derived from porcine brain tissue — a mixture rather than a single defined peptide.',
+        'Cerebrolysin is a mixture of small peptides derived from pig brain tissue, not a single defined compound. It is an approved medicine in a number of countries — though not the United States — and is used there for stroke recovery, dementia and traumatic brain injury.',
+      claims: [
+        {
+          title: 'Stroke & Brain Injury Recovery',
+          summary:
+            'Used and studied for recovering movement and thinking after a stroke or head injury, its main approved use outside the United States.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Memory & Dementia',
+          summary:
+            'Studied for slowing cognitive decline in dementia, with trial results that have been mixed.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['stroke recovery', 'dementia', 'traumatic brain injury'],
       researchStatus:
         'Approved in a number of countries outside the United States. Not FDA-approved.',

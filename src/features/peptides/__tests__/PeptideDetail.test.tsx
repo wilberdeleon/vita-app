@@ -137,9 +137,10 @@ describe('an approved medication', () => {
 
 describe('a sparse compound', () => {
   it('renders no empty research headings', async () => {
-    // N-Acetyl Selank Amidate has an overview and nothing else — the page
-    // should simply be short.
-    const tree = await renderDetail('catalog:na-selank-amidate');
+    // IGF-1 DES is a laboratory reagent with no meaningful claim literature.
+    // Slice 3.5D gave it a readable overview and deliberately stopped there —
+    // padding it with confident filler would be worse than the gap.
+    const tree = await renderDetail('catalog:igf-1-des');
 
     expect(hasHeading(tree, 'Research claims')).toBe(false);
     expect(hasHeading(tree, 'How it works')).toBe(false);

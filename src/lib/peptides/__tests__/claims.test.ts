@@ -52,25 +52,71 @@ describe('shape', () => {
   });
 });
 
-describe('evidence qualification', () => {
+describe('evidence qualification is a field, not a sentence', () => {
   /**
-   * A weakly supported claim must say so in words, not only in a badge someone
-   * may not read. "Commonly claimed… although direct human evidence is
-   * limited" is more useful than either silence or false confidence.
+   * Slice 3.5D inverted the rule that used to live here.
+   *
+   * The earlier version *required* every limited or preclinical claim to
+   * restate its own weakness in prose. That produced the thing the founder
+   * rejected — "Animal research has examined whether it affects fat
+   * accumulation. There is no meaningful human evidence." — where the
+   * limitation is the sentence and the claim never actually gets made.
+   *
+   * The qualifier is now a rendered field (`formatEvidenceContext`), shown
+   * under every claim. So the tests below check the opposite property: that
+   * the prose leads with the claim and does not turn back into a disclaimer.
    */
-  it('qualifies every limited-evidence claim in its own text', () => {
+
+  /** Defensive openers — a claim must not begin by explaining what it isn't. */
+  const DEFENSIVE_OPENERS = [
+    'there is no',
+    'there are no',
+    'no meaningful',
+    'little evidence',
+    'evidence is limited',
+    'has not been proven',
+    'more research is needed',
+    'unproven',
+  ];
+
+  it('never opens a claim with what the evidence lacks', () => {
     for (const claim of ALL_CLAIMS) {
-      if (claim.evidenceLevel !== 'limited') continue;
-      const text = (claim.summary ?? '').toLowerCase();
-      expect(text).toMatch(/limited|commonly claimed|commonly discussed|inconsistent|thin/);
+      const opening = (claim.summary ?? '').toLowerCase().slice(0, 60);
+      for (const phrase of DEFENSIVE_OPENERS) {
+        expect(opening).not.toContain(phrase);
+      }
     }
   });
 
-  it('attributes preclinical claims to animal or laboratory work', () => {
+  it('states an effect rather than only describing the research activity', () => {
+    /**
+     * "Studied in exercise-physiology models" tells a reader nothing about
+     * what the compound is thought to do. Every claim has to contain at least
+     * one word from the vocabulary the founder approved for plain description.
+     */
+    /**
+     * The vocabulary the founder approved for describing effects plainly, plus
+     * the words the catalog actually needs (hormones, fertility, tissue). This
+     * is an allow-list on purpose: it is easy to widen when a real claim needs
+     * a word it lacks, and it fails loudly when a claim says nothing at all.
+     */
+    const EFFECT_WORDS = [
+      'appetite', 'full', 'weight', 'fat', 'lean', 'body composition',
+      'blood sugar', 'glucose', 'a1c', 'insulin', 'energy', 'metabolism', 'metabolic',
+      'cognit', 'memory', 'focus', 'attention', 'mood', 'anxiety', 'stress', 'sleep',
+      'pigment', 'tan', 'arousal', 'desire', 'libido', 'bonding', 'trust',
+      'repair', 'heal', 'recover', 'inflammat', 'skin', 'collagen', 'hair',
+      'wound', 'tendon', 'joint', 'tissue', 'gut', 'barrier',
+      'mitochondri', 'immune', 'antioxidant', 'liver', 'protect', 'nerve', 'neuron',
+      'stroke', 'breathing', 'heart', 'kidney', 'ageing', 'aging', 'longevity', 'telomere',
+      'growth hormone', 'igf-1', 'muscle', 'endurance', 'performance',
+      'testosterone', 'oestrogen', 'estrogen', 'hormone',
+      'fertility', 'ovulation', 'puberty', 'labour', 'contraction', 'bacteria', 'infection',
+      'symptom', 'pain', 'digest', 'airway', 'breath',
+    ];
+    const EFFECT_VOCABULARY = new RegExp(EFFECT_WORDS.join('|'));
     for (const claim of ALL_CLAIMS) {
-      if (claim.evidenceLevel !== 'preclinical') continue;
-      const text = (claim.summary ?? '').toLowerCase();
-      expect(text).toMatch(/animal|laboratory|preclinical|cell|model/);
+      expect(`${claim.title} ${claim.summary ?? ''}`.toLowerCase()).toMatch(EFFECT_VOCABULARY);
     }
   });
 
@@ -80,6 +126,29 @@ describe('evidence qualification', () => {
         if (claim.evidenceLevel !== 'approved-use') continue;
         expect(entry.classification).toBe('approved-medication');
       }
+    }
+  });
+
+  it('does not repeat the same limitation across a single page', () => {
+    /**
+     * The page already carries the qualifier under each claim, in Research
+     * status, and in Development status. Saying it a fourth time in prose is
+     * the repetitive CYA copy 3.5D was opened to remove.
+     */
+    const LIMITATION = /direct human evidence is limited|no meaningful human evidence|more research is needed|has not been proven/g;
+    for (const entry of PEPTIDE_CATALOG) {
+      const research = entry.research;
+      if (!research) continue;
+      const prose = [
+        research.overview ?? '',
+        ...(research.claims ?? []).map((claim) => claim.summary ?? ''),
+        ...(research.mechanisms ?? []).map((item) => item.explanation),
+        research.researchStatus ?? '',
+        research.developmentStatus?.summary ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      expect((prose.match(LIMITATION) ?? []).length).toBeLessThanOrEqual(1);
     }
   });
 });
@@ -197,6 +266,39 @@ describe('content identity — no cross-contamination', () => {
     expect(text).not.toContain('triple agonist');
   });
 
+  it('Tirzepatide is a dual agonist, never described as Retatrutide', () => {
+    const text = textOf('catalog:tirzepatide');
+    expect(text).toContain('glp-1');
+    expect(text).toContain('gip');
+    expect(text).not.toContain('retatrutide');
+    expect(text).not.toContain('triple agonist');
+    expect(text).not.toContain('glucagon receptor');
+  });
+
+  it('GHK-Cu is a skin and repair compound, with no pigmentation content', () => {
+    // GHK-Cu and the melanotans both touch "skin" and are easy to blur.
+    const text = textOf('catalog:ghk-cu');
+    expect(text).toMatch(/collagen|wound/);
+    for (const wrong of ['melanotan', 'melanin', 'melanocortin', 'tanning', 'sunless']) {
+      expect(text).not.toContain(wrong);
+    }
+  });
+
+  it('5-Amino-1MQ is never called a peptide', () => {
+    const entry = findCatalogDefinition('catalog:5-amino-1mq');
+    expect(entry?.compoundType).toBe('small-molecule');
+    // The overview must say what it is, since the section it sits in implies otherwise.
+    expect((entry?.research?.overview ?? '').toLowerCase()).toContain('not a peptide');
+  });
+
+  it('Glutathione explains itself without leaning on jargon alone', () => {
+    const text = textOf('catalog:glutathione');
+    expect(text).toContain('antioxidant');
+    expect(text).toMatch(/liver/);
+    // "oxidative stress" may appear, but never as the only explanation.
+    expect(text).toMatch(/reactive molecules|free radical|damage/);
+  });
+
   it('GLOW remains a blend of its three named components', () => {
     const glow = findCatalogDefinition('catalog:blend-glow');
     expect(glow?.compoundType).toBe('blend');
@@ -212,14 +314,17 @@ describe('content identity — no cross-contamination', () => {
      * A blunt sweep for the class of error the founder flagged: an overview
      * that names some other catalog entry it has nothing to do with.
      *
-     * Three relationships are legitimate and skipped — the entry itself, a
-     * blend naming its own components, and a derivative whose *name* already
+     * Four relationships are legitimate and skipped — the entry itself, a
+     * blend naming its own components, a derivative whose *name* already
      * contains the parent's (N-Acetyl Selank Amidate is a modified Selank, so
-     * saying so is the description, not contamination). Anything left has to
-     * be an overview that explicitly distinguishes the two compounds.
+     * saying so is the description, not contamination), and one that declares
+     * the relationship in its own aliases (Pentadeca Arginate is sold as
+     * "BPC-157 arginate"). Anything left has to be an overview that explicitly
+     * distinguishes the two compounds.
      */
     const names = PEPTIDE_CATALOG.map((entry) => ({ id: entry.id, name: entry.name.toLowerCase() }));
-    const DISTINGUISHING = /unlike|distinct from|not the same|separately|different compound|rather than|frequently sold|combination|combined|listed here/;
+    const DISTINGUISHING =
+      /unlike|distinct from|not the same|separately|different compound|rather than|frequently sold|combination|combined|listed here|tradition as/;
 
     for (const entry of PEPTIDE_CATALOG) {
       const overview = (entry.research?.overview ?? '').toLowerCase();
@@ -228,12 +333,12 @@ describe('content identity — no cross-contamination', () => {
         entry.id,
         ...(entry.components ?? []).map((component) => component.definitionId),
       ]);
-      const ownName = entry.name.toLowerCase();
+      const ownName = [entry.name, ...(entry.aliases ?? [])].join(' ').toLowerCase();
 
       for (const other of names) {
         if (relatedIds.has(other.id)) continue;
         if (other.name.length < 6) continue; // short names appear inside words
-        if (ownName.includes(other.name)) continue; // a named derivative of it
+        if (ownName.includes(other.name)) continue; // a declared derivative of it
         if (overview.includes(other.name) && !DISTINGUISHING.test(overview)) {
           throw new Error(`${entry.id} overview mentions unrelated compound "${other.name}"`);
         }

@@ -97,6 +97,27 @@ Three rules are enforced by test rather than convention:
 
 **Content identity is asserted, not reviewed by eye.** Cross-compound contamination (Semax described with Semaglutide's content) is invisible to anyone who does not already know both compounds. `__tests__/claims.test.ts` pins the major identity distinctions and adds a general sweep: no overview may name an unrelated catalog compound, excluding only itself, a blend's own components, and a derivative whose name already contains the parent's. Anything else must explicitly distinguish the two.
 
+**Consumer-language normalization (slice 3.5D).** The content layer has an information order, and it is enforced rather than assumed: **what it is → what it is claimed to do → how it works → what it was studied for → what it targets → how mature the evidence is → sources.** Limitations never lead.
+
+`formatEvidenceContext(level)` in `model/labels.ts` renders the compact form (`Evidence · Primarily preclinical`) shown under each claim. It exists so evidence maturity is a **field**, written once, instead of a caveat sentence each author re-invents inside the prose. `EVIDENCE_LABELS` keeps the longer page-level phrasing; the two are deliberately different registers.
+
+The guardrails in `__tests__/claims.test.ts` were **inverted** in 3.5D. The earlier pair required every `limited` or `preclinical` claim to restate its weakness in prose, which produced defensive copy where the limitation *was* the claim. They now assert the opposite — a claim may not open with what the evidence lacks, and must contain effect vocabulary rather than only describing research activity. Prohibitions on recommendation, guarantee, dosing and hype language are unchanged: **the tests exist to prevent recommendations, not to prevent VITA explaining a compound.**
+
+`__tests__/consumerContent.test.ts` is the systematic floor:
+
+| Check | Why |
+|---|---|
+| Every entry has an overview, 120–560 characters | Pentadeca Arginate shipped with none; the cap keeps 3.5D from licensing essays |
+| The overview must say why the compound is **tracked, researched or used** | A page that lists only chemistry answers nothing |
+| Claim titles are not generic, and never a receptor or enzyme name | The technical name belongs in How It Works and Targets — the layers built for it |
+| Mechanisms explain their own acronyms | "Inhibits NNMT" is the sentence the founder rejected by name |
+| A compound with mechanisms must also have a plain claim | Prevents jargon from becoming the only description |
+| Repeated limitation formulas capped at one per page | The page states evidence maturity in three structured places already |
+
+These are floors, not style rules — loose enough that ordinary copy editing does not break the build, strict enough that the failure mode cannot come back. The audit found nine real content gaps on its first run.
+
+**Layering is the design.** Claims are plain language; How It Works keeps the scientific terms *and* explains them; Targets keeps receptor and enzyme names verbatim. Technically interested readers lose nothing, and no single section has to compromise its register.
+
 ⚠️ **Research content is engineering-authored and has not had medical or legal review** (Open Question #17).
 
 **Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.

@@ -22,7 +22,23 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Afamelanotide', 'Scenesse', 'MT-1'],
     research: {
       overview:
-        'A synthetic analog of alpha-melanocyte-stimulating hormone acting at melanocortin receptors, principally MC1R. Approved as afamelanotide (Scenesse) as an implant.',
+        'Melanotan I darkens the skin by prompting it to produce melanin, the same pigment that sunlight triggers. Unlike Melanotan II it reached genuine approval — as afamelanotide, an implant given to people with a rare condition that makes sunlight painfully damaging, where extra pigment is protective. Material sold online as "Melanotan I" is not that approved product.',
+      claims: [
+        {
+          title: 'Pigmentation & Sun Protection',
+          summary:
+            'Increases skin pigmentation, approved to protect people with erythropoietic protoporphyria from painful reactions to light.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'MC1 receptor',
+          title: 'Producing pigment without sun',
+          explanation:
+            'MC1R is the switch that tells skin cells to make melanin. Sunlight normally flips it; this compound flips it directly, producing pigment without the ultraviolet exposure that causes the damage.',
+        },
+      ],
       studiedFor: ['erythropoietic protoporphyria', 'photoprotection'],
       targets: ['MC1 receptor'],
       researchStatus:
@@ -40,18 +56,18 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['MT-2', 'MT-II'],
     research: {
       overview:
-        'Melanotan II is a research compound that acts on the body\u2019s pigmentation and appetite signalling systems. It is most commonly discussed for skin tanning without sun exposure. Unlike Melanotan I it has never been approved anywhere, and several regulators have issued safety warnings about products sold under this name.',
+        'Melanotan II is a research compound that acts on the body’s pigmentation and appetite signalling systems. It is most commonly discussed for skin tanning without sun exposure. Unlike Melanotan I it has never been approved anywhere, and several regulators have issued safety warnings about products sold under this name.',
       claims: [
         {
           title: 'Pigmentation',
           summary:
-            'Commonly claimed and researched for skin darkening through melanin production. Early human research explored this; it was never developed into an approved product.',
+            'Researched for tanning the skin without sun exposure, by prompting the skin to produce more melanin. This is the effect it is overwhelmingly tracked for.',
           evidenceLevel: 'early-human',
         },
         {
           title: 'Appetite & Sexual Arousal',
           summary:
-            'Also commonly discussed for appetite and arousal effects, reflecting its action at several melanocortin receptors, although direct human evidence is limited.',
+            'Also tracked for reduced appetite and increased sexual arousal — it acts on several melanocortin receptors, not only the pigmentation one.',
           evidenceLevel: 'limited',
         },
       ],
@@ -97,7 +113,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
         {
           title: 'Sexual Arousal',
           summary:
-            'Clinical trials supporting approval measured improvements in sexual desire and related distress in premenopausal women.',
+            'Increases sexual desire and reduces the distress caused by its absence. Trials in premenopausal women measured both, and are the basis of its approval.',
           evidenceLevel: 'approved-use',
         },
       ],
@@ -106,7 +122,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
           target: 'MC4 receptor',
           title: 'Melanocortin arousal pathway',
           explanation:
-            'Acts on melanocortin receptors in the brain that take part in sexual arousal signalling, rather than acting on blood vessels.',
+            'Works on arousal pathways in the brain rather than on blood flow — which is what separates it from erectile-dysfunction drugs, and why it is taken before anticipated activity rather than daily.',
         },
       ],
       developmentStatus: {
@@ -131,7 +147,21 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['KP-10', 'Metastin (45-54)'],
     research: {
       overview:
-        'A 10-amino-acid fragment of kisspeptin acting at the KISS1 receptor, upstream of GnRH release. Studied in reproductive endocrinology research.',
+        'Kisspeptin-10 sits at the very top of the chain that controls reproductive hormones — it is the signal that starts puberty, and without it that cascade never begins. It is studied in fertility research and, more recently, for effects on sexual desire and attraction.',
+      claims: [
+        {
+          title: 'Reproductive Hormones',
+          summary:
+            'Triggers the hormone cascade that drives testosterone and oestrogen production, studied in fertility and delayed-puberty research.',
+          evidenceLevel: 'early-human',
+        },
+        {
+          title: 'Desire & Attraction',
+          summary:
+            'Studied in human brain-imaging research for effects on sexual and emotional response.',
+          evidenceLevel: 'early-human',
+        },
+      ],
       studiedFor: ['reproductive hormone signalling in clinical research'],
       targets: ['KISS1 receptor'],
       researchStatus: 'Not FDA-approved. A research compound.',
@@ -148,7 +178,15 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['GnRH', 'LHRH', 'Factrel'],
     research: {
       overview:
-        'Synthetic gonadotropin-releasing hormone, the decapeptide that stimulates LH and FSH release from the pituitary.',
+        'Gonadorelin is a synthetic copy of the body’s own signal telling the pituitary to release the hormones that drive the testes and ovaries. It is commonly tracked alongside testosterone therapy, on the reasoning that keeping that natural signal going may preserve function that external testosterone would otherwise shut down.',
+      claims: [
+        {
+          title: 'Reproductive Hormones',
+          summary:
+            'Prompts the pituitary to release LH and FSH, the hormones that drive natural testosterone and oestrogen production.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['diagnostic assessment of pituitary function', 'reproductive endocrinology'],
       targets: ['GnRH receptor'],
       researchStatus:
@@ -166,7 +204,15 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Trelstar', 'Decapeptyl'],
     research: {
       overview:
-        'A long-acting GnRH agonist. Sustained receptor stimulation ultimately suppresses gonadotropin release, which is the basis of its clinical use.',
+        'Triptorelin is approved for prostate cancer, endometriosis and for halting puberty that starts far too early. It works by a deliberate paradox: it overstimulates the reproductive-hormone switch until the body stops responding to it, shutting hormone production down rather than driving it up.',
+      claims: [
+        {
+          title: 'Hormone Suppression',
+          summary:
+            'Approved for shutting down testosterone or oestrogen production where that is the goal of treatment — prostate cancer, endometriosis and precocious puberty.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
       studiedFor: ['prostate cancer', 'endometriosis', 'central precocious puberty'],
       targets: ['GnRH receptor'],
       researchStatus: 'FDA-approved.',
@@ -183,7 +229,21 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['hCG', 'Chorionic gonadotropin', 'Pregnyl', 'Ovidrel'],
     research: {
       overview:
-        'A glycoprotein hormone that acts at the LH receptor. A full glycoprotein rather than a peptide, despite being commonly grouped with them.',
+        'hCG is the hormone of pregnancy — the one home pregnancy tests detect. Because it closely mimics the pituitary signal that drives the testes and ovaries, it is used as an approved fertility medicine and is commonly tracked alongside testosterone therapy. The FDA requires labelling stating it does not work for weight loss.',
+      claims: [
+        {
+          title: 'Fertility & Ovulation',
+          summary:
+            'Approved for triggering ovulation in fertility treatment and for undescended testes and low testosterone caused by a pituitary signal failure.',
+          evidenceLevel: 'approved-use',
+        },
+        {
+          title: 'Testicular Function',
+          summary:
+            'Mimics the pituitary signal to the testes, which is why it is tracked for maintaining natural testosterone production and testicular size.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
       studiedFor: ['ovulation induction', 'hypogonadotropic hypogonadism', 'cryptorchidism'],
       targets: ['LH / hCG receptor'],
       researchStatus:
@@ -201,7 +261,21 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Pitocin', 'Syntocinon'],
     research: {
       overview:
-        'A nonapeptide hormone produced in the hypothalamus, acting at the oxytocin receptor. Widely studied in both obstetric and social-neuroscience contexts.',
+        'Oxytocin is the hormone behind labour contractions and breastfeeding, and also the one popularly called the bonding hormone — it rises with touch, closeness and trust. It is approved as a medicine for starting labour, and is separately studied for its effects on trust, empathy and social connection, which are not an approved use.',
+      claims: [
+        {
+          title: 'Labour & Breastfeeding',
+          summary:
+            'Approved for starting and strengthening labour contractions and for controlling bleeding after birth.',
+          evidenceLevel: 'approved-use',
+        },
+        {
+          title: 'Bonding & Social Response',
+          summary:
+            'Extensively studied for effects on trust, empathy and social bonding, mostly using a nasal spray in research settings.',
+          evidenceLevel: 'early-human',
+        },
+      ],
       studiedFor: ['labour induction', 'social & affiliative behaviour in research'],
       targets: ['Oxytocin receptor'],
       researchStatus: 'FDA-approved for obstetric use. Other uses are investigational.',
@@ -218,7 +292,15 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['FTPP', 'Prohibitin-targeting peptide'],
     research: {
       overview:
-        'A peptidomimetic designed to target prohibitin in the vasculature supporting white adipose tissue. Studied in animal models.',
+        'Adipotide takes an unusual approach to fat loss: rather than suppressing appetite, it is designed to cut off the blood supply feeding fat tissue so that the fat cells die. Animal studies showed rapid fat loss, but also kidney toxicity, and it has never entered general human trials.',
+      claims: [
+        {
+          title: 'Fat Loss',
+          summary:
+            'Researched for destroying fat tissue directly by starving it of blood supply, rather than by reducing appetite. Animal work also showed kidney damage.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['obesity in animal models'],
       targets: ['Prohibitin'],
       researchStatus: 'Not FDA-approved. A research compound.',
@@ -234,18 +316,18 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'NNMT inhibitor',
     research: {
       overview:
-        '5-Amino-1MQ is a small research molecule commonly tracked alongside peptides, though it is not one itself. It has mainly been studied for metabolic and body-composition-related effects. Almost all of that work has been in animals and cells rather than people.',
+        '5-Amino-1MQ is a small research molecule commonly tracked for its potential effects on fat metabolism, body composition and how the body uses energy. It is not a peptide itself, but it is routinely sold and discussed alongside them. Research so far has been in animals and cells rather than people.',
       claims: [
         {
-          title: 'Body Composition',
+          title: 'Fat & Body Composition',
           summary:
-            'Animal research has examined whether it affects fat accumulation and body weight. There is no meaningful human evidence.',
+            'Researchers have studied whether 5-Amino-1MQ can reduce fat accumulation and support a leaner body composition by changing how the body stores and burns energy.',
           evidenceLevel: 'preclinical',
         },
         {
-          title: 'Energy Metabolism',
+          title: 'Metabolism & Energy Use',
           summary:
-            'Laboratory work has looked at effects on how cells use energy. Commonly discussed in this context, although direct human evidence is limited.',
+            'Studied for whether blocking the NNMT enzyme makes cells use energy more readily rather than storing it — the effect most of its metabolic research is built around.',
           evidenceLevel: 'preclinical',
         },
       ],
@@ -254,7 +336,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
           target: 'NNMT',
           title: 'Blocking the NNMT enzyme',
           explanation:
-            'NNMT is an enzyme involved in cellular metabolism. 5-Amino-1MQ is designed to inhibit it, which researchers have studied for possible downstream effects on energy use and fat metabolism.',
+            'NNMT is an enzyme that helps decide how cells process energy and nutrients. 5-Amino-1MQ is designed to block it, and researchers are studying whether turning that enzyme down makes the body readier to burn stored energy than to hold onto it.',
         },
       ],
       studiedFor: ['metabolic regulation in animal models'],
@@ -279,18 +361,18 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Nicotinamide adenine dinucleotide'],
     research: {
       overview:
-        'NAD+ is a molecule every cell uses to convert food into energy. It is not a peptide, but it is very commonly tracked alongside them, so it is listed here with its chemistry stated plainly. Levels fall with age, which is why it appears so often in longevity research.',
+        'NAD+ is a molecule every cell uses to turn food into usable energy. Levels fall as people get older, which is why it is tracked for energy, metabolism and healthy ageing. It is not a peptide, but it is so commonly sold and discussed alongside them that it is listed here.',
       claims: [
         {
           title: 'Cellular Energy',
           summary:
-            'Research has examined its role in how cells produce and use energy. This part is well established biochemistry.',
+            'Cells cannot produce energy from food without NAD+ — this part is settled biochemistry, and it is the reason low levels are thought to matter at all.',
           evidenceLevel: 'human-clinical',
         },
         {
-          title: 'Ageing & Longevity',
+          title: 'Energy & Healthy Ageing',
           summary:
-            'Commonly claimed for anti-ageing effects. Human evidence that raising NAD+ levels changes ageing outcomes is limited, and most supporting work is in animals.',
+            'Tracked for restoring the cellular energy production that declines with age, and for supporting DNA repair. Whether raising NAD+ levels changes ageing outcomes in people is still an open question.',
           evidenceLevel: 'preclinical',
         },
       ],

@@ -752,6 +752,52 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.5D — Plain-English Peptide Content Normalization 🟡
+
+**Objective:** make every one of the 72 pages answer the question an ordinary person actually arrives with — *what is this supposed to do?* — within a few seconds. A content pass, not a redesign. No architecture reopened, no calculator, no logging, no injection sites.
+
+**Why it exists.** 3.5C added the right sections; founder review on a real device found the copy inside them had overcorrected into defensiveness. The example given:
+
+> **Body Composition** — *Animal research has examined whether it affects fat accumulation and body weight. There is no meaningful human evidence.*
+
+Technically careful, and it never tells the reader what 5-Amino-1MQ is actually claimed to do. The limitation had become the sentence.
+
+**The claim now leads; the qualifier follows — in the copy and on the page.** The evidence label moved out of the claim's title row and onto a quiet line under the summary, rendered by a new `formatEvidenceContext()` helper as `Evidence · Primarily preclinical`. Two changes, one principle: a heading that shares its line with "Mainly Preclinical Research" reads as a disclaimer with a title attached, and a summary that opens with what the evidence lacks never gets round to the claim.
+
+| Before | After |
+|---|---|
+| *Body Composition* — Animal research has examined whether it affects fat accumulation and body weight. There is no meaningful human evidence. | **Fat & Body Composition** — Researchers have studied whether 5-Amino-1MQ can reduce fat accumulation and support a leaner body composition by changing how the body stores and burns energy. · *Evidence · Primarily preclinical* |
+
+**The guardrails were inverted, not removed.** 3.5C's tests *required* every limited or preclinical claim to restate its own weakness in prose — which is what produced the copy above. Those two tests were replaced with their opposites: a claim may not **open** with what the evidence lacks, and it must contain at least one word of real effect vocabulary rather than only describing research activity. Prohibitions on recommendations, guarantees, dosing, protocols and hype are untouched.
+
+**Evidence qualification is now a field, stated once.** A page already carries the level under every claim, in Research status, and in Development status. A test caps repeated limitation formulas at one per page and bans five retired phrases outright — *there is no meaningful human evidence*, *direct human evidence is limited*, *only animal studies exist*, *this has not been proven*, *more research is needed*.
+
+**All 72 entries reviewed. 72 overviews rewritten or verified, ~40 claim sections written or rewritten, 6 mechanisms added, 58 of 72 entries now carry claims.** Jargon-first openings were replaced throughout — Adipotide, AOD-9604, ARA-290, Cerebrolysin, Dihexa, Epitalon, Follistatin-344, Gonadorelin, hCG, Humanin, IGF-1 DES/LR3, Kisspeptin-10, KPV, Larazotide, LL-37, MGF, Oxytocin, Pinealon, SS-31, Thymulin, Triptorelin, VIP and the rest.
+
+**A new automated content audit** (`__tests__/consumerContent.test.ts`) enforces the floor rather than the style: every entry has an overview; it is at least 120 characters and at most 560; it must say why the compound is **tracked, researched or used**, not only what it is made of; claim titles may not be generic ("Metabolic Effects") or named after a receptor or enzyme; mechanisms must actually explain their own acronyms; and a compound with mechanisms must also have a plain claim, so jargon is never the only description.
+
+**That audit found nine real content gaps** the eye had missed — CagriSema, CJC-1295 with DAC, IGF-1 DES, IGF-1 LR3, Oxytocin, Semax + Selank, Sermorelin, Thymosin Beta-4 and Thymulin all described *what they were* without ever saying what they were for. **Pentadeca Arginate had no overview at all** and had been shipping as a title with a regulatory line under it.
+
+**Required rewrites delivered.** 5-Amino-1MQ now opens on fat metabolism and body composition and explains NNMT as "an enzyme that helps decide how cells process energy and nutrients" — a reader no longer needs to search for the term. Glutathione moved from "a naturally occurring tripeptide… central to cellular redox balance" to an antioxidant the body makes for itself, with four claims covering antioxidant protection, liver function, cellular balance and skin, and oxidative stress explained as reactive molecules building up faster than the body clears them.
+
+**Technical accuracy is layered, not lost.** Claims are plain; How It Works keeps the scientific terms and explains them; Targets keeps the receptor and enzyme names verbatim. Both audiences are served by different sections rather than one compromise register.
+
+**Blends explain why they are grouped without inventing blend-level evidence.** GLOW now says it combines compounds researched around skin quality, collagen and tissue repair, and states once that evidence for the named blend is limited because the research concerns its components. No blend gained a claim.
+
+**Development-status styling confirmed neutral.** Discontinued, Phase 3 and FDA Approved all render in the same Peptides accent. No red, no green, no celebration — the text says what the status is; colour does not judge it. Nothing in 3.5C's status architecture changed: `lastUpdated`, source-backed time-sensitive stages, and the ban on predicted approval all stand.
+
+**Contamination protection expanded** — Tirzepatide may not be described as Retatrutide or carry triple-agonist language, GHK-Cu may not carry pigmentation content, 5-Amino-1MQ must state it is not a peptide, and Glutathione must explain itself beyond "oxidative stress". The general sweep gained a fourth legitimate relationship: an entry whose own **aliases** declare the link (Pentadeca Arginate is sold as "BPC-157 arginate").
+
+**Page length was held.** Overviews are capped by test at 560 characters, claims at 300, mechanisms at 400. Longer was not the goal; clearer was.
+
+**Also fixed:** three definition files carried a literal `\u2019` escape left over from 3.5C tooling. They rendered correctly but were inconsistent source, and are normalised to the real character.
+
+**17 new tests, 528 total.** **Verified on device** across 5-Amino-1MQ, Glutathione, Retatrutide, Semaglutide, Tirzepatide, Semax, Selank, GHK-Cu, BPC-157, MOTS-c, Melanotan II, Bremelanotide, GLOW and IGF-1 DES, in Light and Dark.
+
+⚠️ **All research content remains engineering-authored and has not had medical or legal review.** Open Question #17 stays open, and plain-English effect language raises rather than lowers the value of that review.
+
+**Boundary audit:** every changed source file is under `src/lib/peptides` or `src/features/peptides`. Water, Fuel, Home, nutrition, `src/lib/daily`, `package.json` and `supabase/` have a zero-line diff.
+
 ### Slice 3.5C — Plain-English Claims, Mechanisms + Development Status 🟡
 
 **Objective:** make the detail pages answer the question an ordinary reader actually arrives with — *what is this supposed to do, and how far along is it?* — without VITA ever recommending anything. 3.5B fixed how the pages looked; this fixes what they say. No calculator, no logging, no injection sites.

@@ -20,24 +20,24 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Body Protection Compound 157', 'PL 14736'],
     research: {
       overview:
-        'BPC-157 is one of the most widely tracked research peptides, based on a fragment of a protein found in stomach fluid. It is researched almost entirely for tissue repair. Despite how commonly it is discussed, essentially all published evidence is from animal and laboratory studies rather than human trials.',
+        'BPC-157 is one of the most widely tracked research peptides, based on a fragment of a protein found in stomach fluid. It is researched almost entirely for healing and recovery — tendon, muscle, ligament and gut tissue — which is why it is so often discussed around injury. Its evidence base is animal and laboratory work rather than human trials.',
       claims: [
         {
           title: 'Tissue & Injury Repair',
           summary:
-            'Animal and laboratory research has suggested effects on healing in tendon, muscle and gut tissue. This is the claim it is best known for.',
+            'Researched for speeding up repair of tendon, muscle and ligament injuries, and for improving how well damaged tissue heals. This is the effect it is best known for.',
           evidenceLevel: 'preclinical',
         },
         {
           title: 'Gut Health',
           summary:
-            'Studied in animal models of gastrointestinal injury, reflecting where the original sequence was found.',
+            'Studied for protecting and repairing the gut lining, including damage from anti-inflammatory drugs — fitting, since the original sequence was found in stomach fluid.',
           evidenceLevel: 'preclinical',
         },
         {
           title: 'Joint & Connective Tissue',
           summary:
-            'Commonly claimed for joint and connective-tissue recovery, although direct human evidence is limited.',
+            'Commonly tracked for joint comfort and connective-tissue recovery, particularly around long-standing tendon problems.',
           evidenceLevel: 'limited',
         },
       ],
@@ -62,6 +62,17 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Research peptide',
     aliases: ['PDA', 'BPC-157 arginate'],
     research: {
+      overview:
+        'Pentadeca Arginate is a newer variant of BPC-157, salt-modified with arginate in an attempt to make it more stable. It is sold and tracked for the same reasons as BPC-157 — tissue repair, gut health and recovery from injury. It is much newer than BPC-157 and has correspondingly little research of its own.',
+      claims: [
+        {
+          title: 'Tissue & Injury Repair',
+          summary:
+            'Marketed and tracked as a more stable alternative to BPC-157 for healing tendon, muscle and gut tissue. Almost all supporting research concerns BPC-157 rather than this variant.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      studiedFor: ['tissue repair'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
       evidenceLevel: 'limited',
       references: [pubmed('pentadecapeptide arginate')],
@@ -75,18 +86,18 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Thymosin beta-4 fragment',
     research: {
       overview:
-        'TB-500 is a synthetic fragment of a natural protein called thymosin beta-4, and is researched mainly for tissue repair and recovery. It is frequently sold as though it were the full protein — it is not, and the two are listed separately here for that reason. Evidence is largely from animal studies.',
+        'TB-500 is a synthetic fragment of a natural protein called thymosin beta-4, researched for tissue repair, flexibility and recovery from injury. It is frequently sold as though it were the full protein — it is not, and the two are listed separately here for that reason.',
       claims: [
         {
           title: 'Tissue & Injury Repair',
           summary:
-            'Animal research has suggested effects on cell movement and repair after injury. Frequently paired with BPC-157 in recovery-focused research claims.',
+            'Researched for helping repair cells reach an injury and rebuild tissue, which is why it is so often paired with BPC-157 in recovery contexts.',
           evidenceLevel: 'preclinical',
         },
         {
           title: 'Flexibility & Recovery',
           summary:
-            'Commonly claimed for recovery and mobility, although direct human evidence is limited.',
+            'Commonly tracked for range of motion and general recovery, including after repeated soft-tissue injuries.',
           evidenceLevel: 'limited',
         },
       ],
@@ -110,7 +121,21 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Tβ4', 'TB4'],
     research: {
       overview:
-        'The full 43-amino-acid thymosin beta-4 peptide, an actin-sequestering molecule found widely in tissue. Distinct from the shorter TB-500 fragment.',
+        'Thymosin Beta-4 is the complete natural protein that TB-500 is only a fragment of — distinct compounds, listed separately here. It occurs throughout the body’s tissues and is tracked for wound healing and tissue repair. Unlike TB-500 it has genuinely been through human trials for eye and skin wounds.',
+      claims: [
+        {
+          title: 'Wound & Eye Repair',
+          summary:
+            'Taken into human trials for healing stubborn wounds and damage to the surface of the eye — rare in this catalog for having reached that stage.',
+          evidenceLevel: 'early-human',
+        },
+        {
+          title: 'Tissue Repair',
+          summary:
+            'Researched more broadly for repairing heart, muscle and other tissue after injury, mostly in animal models.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['wound healing & corneal repair in clinical research', 'tissue repair in animal models'],
       researchStatus: 'Not FDA-approved. Has been evaluated in human trials.',
       evidenceLevel: 'early-human',
@@ -126,22 +151,22 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Copper tripeptide-1', 'GHK copper'],
     research: {
       overview:
-        'GHK-Cu is a small naturally occurring peptide that carries copper, found in human plasma and widely used in skincare products. Most of its research concerns skin, wound healing and collagen. It is one of the few compounds here with genuine mainstream cosmetic use.',
+        'GHK-Cu is a small copper-carrying peptide found naturally in human blood, and one of the few compounds here in genuine mainstream use — it appears in ordinary skincare products. It is researched for firmer, better-quality skin, collagen production, wound healing and hair.',
       claims: [
         {
           title: 'Skin & Collagen',
           summary:
-            'Laboratory and topical research has examined effects on collagen production and skin appearance. This is its best-supported area.',
+            'Researched for stimulating collagen production and improving skin firmness, texture and the appearance of fine lines. This is its most established area, and the reason it appears in commercial skincare.',
           evidenceLevel: 'preclinical',
         },
         {
           title: 'Wound Healing',
-          summary: 'Studied in wound-repair models, which is where much of the early literature originates.',
+          summary: 'Studied for speeding up wound closure and improving how skin repairs itself, which is where much of the early literature originates.',
           evidenceLevel: 'preclinical',
         },
         {
           title: 'Hair',
-          summary: 'Commonly claimed for hair growth, although direct human evidence is limited.',
+          summary: 'Commonly tracked for hair thickness and growth, often in scalp preparations alongside its skin uses.',
           evidenceLevel: 'limited',
         },
       ],
@@ -166,7 +191,15 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Lys-Pro-Val'],
     research: {
       overview:
-        'A tripeptide corresponding to the C-terminal fragment of alpha-melanocyte-stimulating hormone, studied for anti-inflammatory activity in laboratory models.',
+        'KPV is a three-amino-acid fragment of a natural hormone, kept because that short piece carries the anti-inflammatory effect without the pigmentation effect of the whole molecule. It is tracked for calming inflammation, particularly in the gut and on the skin, and is the fourth component that distinguishes the KLOW blend from GLOW.',
+      claims: [
+        {
+          title: 'Inflammation',
+          summary:
+            'Researched for calming inflammation, particularly in the gut lining and on the skin, without the pigmentation effects of the larger hormone it comes from.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['inflammation in animal and cell models'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
       evidenceLevel: 'preclinical',
@@ -182,7 +215,21 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Cathelicidin LL-37', 'hCAP18'],
     research: {
       overview:
-        'The only human cathelicidin-derived antimicrobial peptide, part of innate immune defence. Extensively studied in microbiology and immunology research.',
+        'LL-37 is part of the body’s own first-line defence — a natural antibiotic your cells produce to attack bacteria directly, and one of the reasons ordinary cuts do not routinely become infected. It is tracked for immune support, wound healing and biofilm-related infections.',
+      claims: [
+        {
+          title: 'Bacteria & Infection',
+          summary:
+            'Kills bacteria directly and breaks down the protective films they form — one of the body’s own first-line defences against infection.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Wound Healing',
+          summary:
+            'Also researched for closing wounds, recruiting the immune and repair cells that rebuild damaged skin.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['antimicrobial activity', 'innate immune signalling', 'wound healing in laboratory research'],
       researchStatus: 'Not FDA-approved. A research reagent.',
       evidenceLevel: 'preclinical',
@@ -198,7 +245,15 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Cibinetide'],
     research: {
       overview:
-        'An 11-amino-acid peptide derived from a region of erythropoietin, designed to act at the innate repair receptor without erythropoietic activity. Evaluated in human trials.',
+        'ARA-290 is derived from EPO, the hormone that drives red blood cell production — but deliberately engineered to keep only its tissue-protective side and none of the blood-thickening. It has been through human trials for nerve pain and damage to the small nerve fibres in the skin.',
+      claims: [
+        {
+          title: 'Nerve Pain',
+          summary:
+            'Studied in human trials for reducing the burning nerve pain of small-fibre neuropathy, and for regrowing damaged nerve endings in the skin.',
+          evidenceLevel: 'early-human',
+        },
+      ],
       studiedFor: ['small-fibre neuropathy', 'sarcoidosis-associated neuropathic pain'],
       targets: ['Innate repair receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -215,7 +270,21 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Thymalfasin', 'Zadaxin', 'Tα1'],
     research: {
       overview:
-        'A 28-amino-acid peptide derived from prothymosin alpha, studied for effects on T-cell function and immune signalling.',
+        'Thymosin Alpha-1 is a natural immune-signalling peptide made by the thymus, the gland that trains the body’s T-cells. It is used as an approved medicine in over thirty countries — though not the United States — for hepatitis and as a vaccine booster, and is tracked for immune support.',
+      claims: [
+        {
+          title: 'Immune Support',
+          summary:
+            'Helps the immune system"+A+"s T-cells mature and respond, its approved use for hepatitis in over thirty countries and the reason it is tracked for immune resilience.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Vaccine Response',
+          summary:
+            'Also used and studied for improving how well vaccines take in people whose immune systems respond poorly.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['chronic hepatitis B and C', 'immune function in clinical research', 'sepsis'],
       researchStatus:
         'Approved in a number of countries outside the United States as thymalfasin. Not FDA-approved; the FDA placed it on the category 2 compounding list in 2023.',
@@ -230,7 +299,8 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'peptide',
     category: 'Thymic peptide',
     research: {
-      overview: 'A zinc-dependent thymic peptide studied in immunology research.',
+      overview:
+        'Thymulin is a hormone from the thymus gland, tracked for immune support and studied in immune-ageing research. It helps immune cells mature, and only works when bound to zinc — one of the mechanisms linking zinc deficiency to weakened immunity. Thymus output falls sharply with age.',
       studiedFor: ['immune signalling in laboratory research'],
       researchStatus: 'Not FDA-approved. A research reagent.',
       evidenceLevel: 'preclinical',
@@ -246,7 +316,21 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['AT-1001', 'Larazotide acetate'],
     research: {
       overview:
-        'An octapeptide studied as a regulator of intestinal tight junctions, evaluated in clinical trials for coeliac disease.',
+        'Larazotide is designed to tighten the seals between the cells lining the gut — the barrier that decides what gets absorbed and what stays out. It reached late-stage human trials for coeliac disease, making it one of the most seriously studied compounds in this catalog, and it is the compound most often referenced in "leaky gut" discussion.',
+      claims: [
+        {
+          title: 'Gut Barrier',
+          summary:
+            'Studied for tightening the junctions between gut-lining cells, so less passes through the barrier than should — the idea behind "leaky gut".',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Coeliac Symptoms',
+          summary:
+            'Taken into late-stage trials for reducing symptoms in coeliac disease alongside a gluten-free diet.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['coeliac disease'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'human-clinical',
@@ -262,7 +346,21 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['VIP', 'Aviptadil'],
     research: {
       overview:
-        'A 28-amino-acid neuropeptide with wide distribution in the nervous and immune systems, acting at VPAC receptors. A synthetic form, aviptadil, has been evaluated in clinical trials.',
+        'Vasoactive Intestinal Peptide is a natural signalling molecule found throughout the nerves, lungs and immune system. It relaxes airways and blood vessels and damps down inflammation, which is why a synthetic form was trialled in severe lung disease. It is commonly tracked in chronic inflammatory and mould-illness contexts.',
+      claims: [
+        {
+          title: 'Airways & Breathing',
+          summary:
+            'Relaxes the airways and the blood vessels of the lung, which is why a synthetic form was trialled in severe respiratory illness.',
+          evidenceLevel: 'early-human',
+        },
+        {
+          title: 'Inflammation',
+          summary:
+            'Also researched for damping down inflammatory immune signalling, the basis of its use in chronic inflammatory contexts.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
       studiedFor: ['pulmonary conditions', 'inflammatory signalling in research'],
       targets: ['VPAC1 receptor', 'VPAC2 receptor'],
       researchStatus: 'Not FDA-approved. Aviptadil has been studied under investigational status.',
@@ -279,8 +377,48 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['GSH', 'L-glutathione'],
     research: {
       overview:
-        'A naturally occurring tripeptide of glutamate, cysteine and glycine, central to cellular redox balance. Genuinely a peptide, though usually discussed as a supplement.',
-      studiedFor: ['oxidative stress', 'liver function in clinical research'],
+        'Glutathione is an antioxidant the body makes for itself, present in nearly every cell. Its job is to mop up reactive molecules — the unstable by-products of normal metabolism — before they damage cells. It is tracked for antioxidant support, liver function and skin, and it is genuinely a peptide, built from three amino acids, though most people meet it as a supplement.',
+      claims: [
+        {
+          title: 'Antioxidant Protection',
+          summary:
+            'Glutathione neutralises reactive molecules that build up as a by-product of normal metabolism, which is the basis for research into protecting cells from that kind of damage.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Liver Function',
+          summary:
+            'The liver uses glutathione heavily when it breaks down and clears substances from the body, and it has been studied in that context — including as an established hospital treatment for paracetamol overdose, given as its precursor.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Cellular Balance',
+          summary:
+            'Researched more broadly for keeping cells in balance between damaging and protective molecules, which is why it appears in work on ageing and general cellular health.',
+          evidenceLevel: 'early-human',
+        },
+        {
+          title: 'Skin & Pigmentation',
+          summary:
+            'Widely used and studied for skin brightening and pigmentation, particularly in Asia. Oral and topical research is more established here than the injectable forms sold online.',
+          evidenceLevel: 'early-human',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'Cellular redox balance',
+          title: 'Neutralising reactive molecules',
+          explanation:
+            'Everyday energy production leaves behind unstable molecules that can damage cells if they accumulate faster than the body clears them — what research calls oxidative stress. Glutathione donates part of itself to neutralise them, then is recycled back into its active form.',
+        },
+        {
+          target: 'Glutathione S-transferase pathway',
+          title: 'Helping the liver clear substances',
+          explanation:
+            'The liver attaches glutathione to certain drugs, toxins and metabolic waste, which makes them water-soluble so the body can excrete them. This is why glutathione levels matter to how well the liver does its normal clearing work.',
+        },
+      ],
+      studiedFor: ['oxidative stress & antioxidant capacity', 'liver function in clinical research', 'skin pigmentation'],
       researchStatus:
         'Available as a dietary supplement in the United States. Injectable forms are not FDA-approved; the FDA placed injectable glutathione on the category 2 compounding list in 2023.',
       evidenceLevel: 'early-human',

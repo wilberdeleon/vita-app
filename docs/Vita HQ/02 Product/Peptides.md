@@ -28,11 +28,25 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **Two things worth knowing as a founder.** First, the **time-sensitive entries need periodic re-checking** — a compound in Phase 3 today may not be in a year, which is why every one of them shows when it was last updated. Second, the risk of a page describing the wrong compound (Semax and Semaglutide are not related despite the similar names) is now **checked automatically on every build** rather than relying on someone noticing.
 
+**Slice 3.5D (2026-08-24) rewrote the words on every page so a normal person can use them.** The problem founder review found was tone: the pages had become so careful about evidence that they forgot to say what a compound is for. A claim that reads *"Animal research has examined whether it affects fat accumulation. There is no meaningful human evidence"* is accurate and useless — the limitation had swallowed the claim.
+
+**The fix is order.** Every page now answers, in this sequence: what is it, what is it claimed to do, how does it work, what has it been studied for, what does it target, how solid is the research, where did this come from. Limitations never lead. The evidence rating moved out of the claim heading and onto a quiet line underneath — *Evidence · Primarily preclinical* — so the claim gets read first and the qualifier second, which is the order a person actually thinks in.
+
+**Nothing was softened.** VITA still never says you should take something, how much, or that it will work for you. What changed is that it is now allowed to say plainly what people research a compound *for* — appetite, weight, blood sugar, memory, sleep, skin, pigmentation, tissue repair — instead of hiding those behind phrases like "metabolic outcomes". The tests that guard this were rewritten to prevent recommendations rather than to prevent explanation.
+
+**All 72 entries were reviewed.** Every overview was rewritten or verified, around 40 claim sections were written or rewritten, and 58 of the 72 compounds now carry plain-English claims. The rest are deliberately short — an obscure compound gets an honest short page rather than padding.
+
+**The two you flagged.** 5-Amino-1MQ now opens on fat metabolism and body composition, and explains NNMT as "an enzyme that helps decide how cells process energy and nutrients" — no search required. Glutathione is now "an antioxidant the body makes for itself, present in nearly every cell", with claims covering antioxidant protection, liver function, cellular balance and skin, and oxidative stress explained rather than named.
+
+**A new automatic check** now fails the build if any page describes a compound's chemistry without ever saying why anyone tracks it. On its first run it found nine pages doing exactly that — and caught that **Pentadeca Arginate had shipped with no description at all**.
+
+**Development status styling stays neutral**, as you confirmed: Discontinued, Phase 3 and FDA Approved all look the same. The words carry the meaning; the colour does not pass judgment.
+
 **⚠️ The research content is engineering-authored and has not had medical or legal review.** See [[Open Questions]] #17.
 
 **Not feature-complete.** Slice 3.6 (dose calculator), 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
 
-Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.5C.
+Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.5D.
 
 ## What it was before (Sprint 0 — mock data, superseded)
 
