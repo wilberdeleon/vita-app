@@ -29,20 +29,6 @@ const SCHEDULE_KINDS: readonly ScheduleKind[] = ['daily', 'daysOfWeek', 'everyND
  */
 const SCHEDULE_LABELS = ['Daily', 'Selected days', 'Every X days', 'As needed'];
 
-/**
- * Common insulin-syringe graduation densities.
- *
- * Labelled by density, not capacity — a "0.5 mL / 50 unit" syringe is still
- * U-100, and letting a user pick "50" here because their syringe holds 50
- * units would corrupt every calculation slice 3.6 builds on this value. The
- * caption below the control says so in words.
- */
-const SYRINGE_PRESETS = [
-  { unitsPerMl: DEFAULT_UNITS_PER_ML, label: 'U-100' },
-  { unitsPerMl: 50, label: 'U-50' },
-  { unitsPerMl: 40, label: 'U-40' },
-] as const;
-
 export type SetupFormValue = PeptideSetupDraft & { active?: boolean };
 
 type Props = {
@@ -75,7 +61,19 @@ export function SetupForm({ initial, onChange }: Props) {
   const [reconstitution, setReconstitution] = useState(
     initial?.reconstitutionMl !== undefined ? String(initial.reconstitutionMl) : '',
   );
-  const [unitsPerMl, setUnitsPerMl] = useState<number | null>(initial?.syringe?.unitsPerMl ?? null);
+  /**
+   * Syringe graduation density. **No longer asked for** (founder decision,
+   * slice 3.5B): people were being made to choose between U-100, U-50 and
+   * U-40 when what they actually see on the box is a *capacity* — 0.3 mL,
+   * 0.5 mL, 1 mL — and those are different things. A 0.5 mL syringe marked to
+   * 50 units is still U-100.
+   *
+   * V1 therefore assumes the ordinary U-100 scale, 100 units per mL, and the
+   * calculator in 3.6 will state that assumption beside its result. An
+   * existing setup keeps whatever it already had, and the field stays on the
+   * model so another scale can be supported without a migration.
+   */
+  const [unitsPerMl] = useState<number | null>(initial?.syringe?.unitsPerMl ?? DEFAULT_UNITS_PER_ML);
   const [doseUnit, setDoseUnit] = useState<MassUnit>(initial?.preferredDoseUnit ?? 'mg');
   const [scheduleKind, setScheduleKind] = useState<ScheduleKind | null>(initial?.schedule?.kind ?? null);
   const [days, setDays] = useState<number[]>(
@@ -244,27 +242,6 @@ export function SetupForm({ initial, onChange }: Props) {
       {reconInvalid ? (
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
-
-      <SectionHeader title="Syringe" />
-      <Text style={[styles.note, { color: surfaces.textTertiary }]}>
-        Optional. Choose by the units marked per millilitre, not by how much the syringe holds — a
-        0.5 mL syringe marked to 50 units is still U-100.
-      </Text>
-      <View style={styles.chips}>
-        {SYRINGE_PRESETS.map((preset) => (
-          <Chip
-            key={preset.unitsPerMl}
-            label={`${preset.label} · ${preset.unitsPerMl} units/mL`}
-            selected={unitsPerMl === preset.unitsPerMl}
-            color={palette.peptide}
-            onPress={() => {
-              const next = unitsPerMl === preset.unitsPerMl ? null : preset.unitsPerMl;
-              setUnitsPerMl(next);
-              emit({ unitsPerMl: next });
-            }}
-          />
-        ))}
-      </View>
 
       <SectionHeader title="Preferred unit" />
       <SegmentedTabs

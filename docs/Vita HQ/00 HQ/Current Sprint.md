@@ -45,7 +45,11 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **⚠️ [[Open Questions]] #17 (b) and (c) are now the live blockers.** All 71 entries and every research summary are **engineering-authored and have not had medical or legal review**, and the disclaimer copy slice 3.9 needs is still unwritten. The founders owe: approval of the catalog and its research content, and the final disclaimer wording.
 
-**Next: slice 3.6 — Dose / Unit Calculator.** Terminology recorded: the user-supplied field is **"Amount to convert"**, never a recommended dose.
+**Slice 3.5B built (2026-08-24) — final catalog + detail polish.** Founder real-device review said the structure was right but detail pages read like raw database output. Fixed without redesigning: **professional casing** through one display layer (with technical tokens like GHK-Cu and hCG deliberately left alone), **Studied For / Targets / Aliases as compact informational tags** rather than dot-separated runs, and **blend pages restructured** into Components → About → Formulation → Research Status → Research Context → Sources with a genuine duplication removed. New **research-area taxonomy** (12 areas, multi-tagged, **nothing dumped into Other**) reached through **one compact category control** — not a second chip row — opening a bottom sheet, with a one-tap Clear. Catalog rows carry one descriptor instead of three, fixing mid-word truncation. New **CJC-1295 without DAC + Ipamorelin** blend, DAC variant named explicitly; catalog now **72 entries**. **Syringe selection removed from setup** — people were picking a scale when what they see on the box is a capacity; V1 assumes U-100 / 100 units per mL. A **rendering defect was fixed**: four 3.5A summaries used markdown, which renders as literal asterisks. 460 tests.
+
+**Catalog, detail, and setup are locked for Sprint 3.**
+
+**Next: slice 3.6 — Dose / Unit Calculator.** Approved flow recorded: Vial Amount → Bacteriostatic Water / Reconstitution → **Amount Being Used** → Calculated Syringe Amount, with the derivation and the U-100 assumption shown. The amount originates from the user; VITA never selects it.
 
 ## Sprint 2 — Fuel — ✅ Complete (started 2026-08-17 · audited 2026-08-21 · merged to `main` 2026-08-21)
 

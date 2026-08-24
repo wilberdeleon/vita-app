@@ -260,9 +260,27 @@ describe('framing', () => {
     expect(texts(tree).join(' ')).toContain('not a recommended amount');
   });
 
-  it('distinguishes syringe graduation density from capacity', async () => {
+  /**
+   * Founder decision, slice 3.5B: people were being asked to choose between
+   * U-100, U-50 and U-40 when what they see on the box is a *capacity*
+   * (0.3 mL, 0.5 mL, 1 mL), which is a different thing entirely. V1 assumes
+   * the ordinary U-100 scale and the calculator will state that assumption
+   * beside its result.
+   */
+  it('no longer asks the user to choose a syringe scale', async () => {
     const tree = await render();
-    expect(texts(tree).join(' ')).toContain('not by how much the syringe holds');
+    const rendered = texts(tree).join(' ');
+    expect(rendered).not.toContain('U-100');
+    expect(rendered).not.toContain('units/mL');
+    expect(rendered).not.toContain('SYRINGE');
+  });
+
+  it('still records a syringe density on the setup it emits', async () => {
+    // The value stays on the model so slice 3.6 has it and another scale can
+    // be supported later without a migration.
+    const tree = await render();
+    await type(tree, 'Notes, optional', 'touch the form');
+    expect(latest?.value.syringe?.unitsPerMl).toBe(100);
   });
 
   it('never asks for a typical, recommended, or standard dose', async () => {

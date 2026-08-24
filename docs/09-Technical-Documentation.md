@@ -73,6 +73,12 @@ Collapsing any two would force a lie somewhere: Sermorelin is a withdrawn US app
 
 **Blends** carry a `components` list of definition ids. **Vendor-named blends never assert component amounts** — formulations vary between suppliers, and the user's own setup owns what is in their vial. `research.blendCaveat` marks blends whose evidence comes from the components rather than the combination.
 
+**Research areas (slice 3.5B)** are a second discovery dimension, typed and assigned in `data/definitions/researchAreas.ts` — one auditable table rather than inline across six files, because a taxonomy is only useful if it is consistent and consistency cannot be reviewed when scattered. A test asserts every catalog id is tagged exactly once. A compound may carry several areas where several are genuinely true. **These are discovery tags, not indications** — tagging Semax as Cognitive says where its literature sits, not that anyone should take it for anything. Catalog filtering composes as `classification AND researchArea AND query`.
+
+**Display casing (slice 3.5B).** `model/format.ts` title-cases content at render time so definitions stay authored in plain lowercase. The rule is inverted from an ordinary title-caser: **a token already containing a capital is left untouched**, because it is scientifically cased on purpose. That protects GLP-1, hCG, MOTS-c, GHK-Cu, c-Met and NAD+ without an exception list anyone has to maintain. Never run a generic `toTitleCase()` over compound names.
+
+**Syringe scale (slice 3.5B).** Setup no longer asks for it. Users were choosing between U-100/U-50/U-40 when what they see on the box is a *capacity* (0.3 / 0.5 / 1 mL) — a different property. **V1 assumes the ordinary U-100 scale, 100 units per mL**, which the calculator states beside its result. `syringe.unitsPerMl` stays on the model, defaulted to 100, so another scale needs no migration. Units are not a universal volume, and conflating them with capacity is what corrupts syringe arithmetic.
+
 **Research content** lives in `research?: PeptideResearchInfo` on the definition — never in `PeptideSetup`. Identity, reference material, and the user's configuration are three things with three lifetimes. References are **search pointers into PubMed, ClinicalTrials.gov and Drugs@FDA**, not specific citations: a hand-written PMID naming the wrong paper is worse than no citation and undetectable from inside the app. A content test fails the build on recommendation phrasing and on any concrete dosing amount in editorial prose.
 
 ⚠️ **Research content is engineering-authored and has not had medical or legal review** (Open Question #17).
@@ -294,6 +300,8 @@ Two constraints that do carry over regardless of implementation:
 | Peptide Log Entry | One recorded administration: dose, units, injection site, timestamp, notes |
 
 Collapsing these would repeat exactly the mistake the nutrition model avoids: a log entry that mutates when a definition changes, and a definition that cannot be reused across entries.
+
+**Calculator UX direction (recorded slice 3.5B, founder-approved, not implemented).** Vial Amount `10 mg` → Bacteriostatic Water / Reconstitution `1 mL` → **Amount Being Used** `2 mg` → Calculated Syringe Amount `20 units`, with the derivation `10 mg/mL · 2 mg = 0.2 mL = 20 units` and the U-100 assumption stated. The amount **originates from the user**; VITA returns the arithmetic equivalent and never selects it. "Amount to Convert" is acceptable if it reads better in the calculator itself. Never "recommended", "typical", "standard", or "suggested" dose.
 
 **Dose math is safety-adjacent and must be treated as such.** The bidirectional calculator (vial amount + reconstitution volume ⇄ syringe units ⇄ mg/mcg) is the reason this feature exists for users who think in syringe units, so it has to be right and it has to be legible:
 

@@ -10,6 +10,7 @@ export {
   DEFAULT_DOSE_UNIT,
   DEFAULT_UNITS_PER_ML,
   MASS_UNITS,
+  RESEARCH_AREAS,
   type BlendComponent,
   type CompoundType,
   type EvidenceLevel,
@@ -18,6 +19,7 @@ export {
   type PeptideDefinition,
   type PeptideResearchInfo,
   type PeptideSchedule,
+  type ResearchArea,
   type PeptideSetup,
   type ResearchReference,
 } from './model/types';
@@ -58,10 +60,19 @@ export {
   findCatalogDefinition,
   resolveBlendComponents,
   searchCatalog,
+  type AreaFilter,
   type CatalogFilter,
   type ResolvedComponent,
 } from './data/catalog';
-export { EVIDENCE_LABELS, classificationLabel, classificationSpoken, evidenceLabel } from './model/labels';
+export {
+  EVIDENCE_LABELS,
+  RESEARCH_AREA_LABELS,
+  classificationLabel,
+  classificationSpoken,
+  evidenceLabel,
+  researchAreaLabel,
+} from './model/labels';
+export { formatLabel, formatLabels } from './model/format';
 export { PEPTIDE_DOMAIN, PeptideKeys } from './data/keys';
 export type { PeptideRepository } from './data/PeptideRepository';
 export { asyncStoragePeptideRepository } from './data/asyncStorageRepository';

@@ -3,11 +3,14 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Chip, EmptyState, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
+import { CategorySelector } from '../../../features/peptides/components/CategorySelector';
 import { ClassificationChip } from '../../../features/peptides/components/ClassificationChip';
 import {
   classificationSpoken,
+  formatLabel,
   searchCatalog,
   usePeptideContext,
+  type AreaFilter,
   type CatalogFilter,
   type PeptideDefinition,
 } from '../../../lib/peptides';
@@ -45,19 +48,22 @@ export default function PeptideCatalog() {
   const { surfaces } = useTheme();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<CatalogFilter>('all');
+  const [area, setArea] = useState<AreaFilter>('all');
 
-  const catalogResults = useMemo(() => searchCatalog(query, filter), [query, filter]);
+  const catalogResults = useMemo(() => searchCatalog(query, filter, area), [query, filter, area]);
 
   const customResults = useMemo(() => {
     // Custom entries are neither approved nor research, so the regulatory
-    // filters exclude them rather than mislabelling them.
-    if (filter === 'approved' || filter === 'research') return [];
+    // filters exclude them rather than mislabelling them. They carry no
+    // research area either, so any area filter excludes them too — inventing
+    // one for a name the user typed would be guessing on their behalf.
+    if (filter === 'approved' || filter === 'research' || area !== 'all') return [];
     const trimmed = query.trim().toLowerCase();
     const sorted = [...customDefinitions].sort((a, b) => a.name.localeCompare(b.name));
     const byBlend = filter === 'blend' ? sorted.filter((d) => d.compoundType === 'blend') : sorted;
     if (trimmed.length === 0) return byBlend;
     return byBlend.filter((definition) => definition.name.toLowerCase().includes(trimmed));
-  }, [customDefinitions, query, filter]);
+  }, [customDefinitions, query, filter, area]);
 
   const nothingFound = catalogResults.length === 0 && customResults.length === 0;
 
@@ -86,6 +92,8 @@ export default function PeptideCatalog() {
           />
         ))}
       </View>
+
+      <CategorySelector value={area} onChange={setArea} />
 
       <Card style={styles.panel}>
         <Pressable
@@ -123,7 +131,11 @@ export default function PeptideCatalog() {
         <EmptyState
           icon="search-outline"
           title="No matches"
-          body="Add it as a Custom peptide instead."
+          body={
+            area === 'all'
+              ? 'Add it as a Custom peptide instead.'
+              : 'Try clearing the category, or add it as a Custom peptide.'
+          }
         />
       ) : null}
     </Screen>
@@ -136,10 +148,16 @@ function DefinitionPanel({ definitions }: { definitions: readonly PeptideDefinit
   return (
     <Card style={styles.panel}>
       {definitions.map((definition, index) => {
-        // Aliases are shown, not just searched: seeing "Ozempic" under
-        // "Semaglutide" is how someone confirms they found the right entry.
-        const aliasLine = definition.aliases?.slice(0, 3).join(' · ');
-        const detail = [definition.category, aliasLine].filter(Boolean).join(' · ');
+        /**
+         * One descriptor, not four.
+         *
+         * Category plus aliases plus mechanism produced lines like
+         * "Pro-apoptotic peptidomimetic · FTPP · Prohibitin-targeting p…" —
+         * three facts competing for a space that fits one, and truncating
+         * mid-word. The category alone is the identifying line; the detail
+         * page carries aliases and everything else with room to show them.
+         */
+        const detail = definition.category ? formatLabel(definition.category) : '';
 
         return (
           <View

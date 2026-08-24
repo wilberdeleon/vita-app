@@ -23,7 +23,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A long-acting GLP-1 receptor agonist. It mimics the incretin hormone GLP-1, which acts on receptors involved in insulin secretion, gastric emptying and appetite signalling. It has been evaluated in large cardiometabolic outcome trials.',
-      studiedFor: ['type 2 diabetes', 'obesity and weight management', 'cardiovascular risk reduction'],
+      studiedFor: ['type 2 diabetes', 'obesity & weight management', 'cardiovascular risk reduction'],
       targets: ['GLP-1 receptor'],
       researchStatus: 'FDA-approved. Marketed for type 2 diabetes and for chronic weight management.',
       evidenceLevel: 'approved-use',
@@ -40,7 +40,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A single peptide that activates both the GIP and GLP-1 receptors. The dual mechanism distinguishes it from GLP-1-only agonists, and it has been studied in large trials across metabolic conditions.',
-      studiedFor: ['type 2 diabetes', 'obesity and weight management', 'obstructive sleep apnoea'],
+      studiedFor: ['type 2 diabetes', 'obesity & weight management', 'obstructive sleep apnoea'],
       targets: ['GIP receptor', 'GLP-1 receptor'],
       researchStatus: 'FDA-approved. Marketed for type 2 diabetes and for chronic weight management.',
       evidenceLevel: 'approved-use',
@@ -57,7 +57,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A once-daily GLP-1 receptor agonist and one of the earlier compounds in this class to reach wide clinical use.',
-      studiedFor: ['type 2 diabetes', 'obesity and weight management'],
+      studiedFor: ['type 2 diabetes', 'obesity & weight management'],
       targets: ['GLP-1 receptor'],
       researchStatus: 'FDA-approved.',
       evidenceLevel: 'approved-use',
@@ -141,7 +141,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'An investigational compound designed to activate the GIP, GLP-1 and glucagon receptors together. The added glucagon-receptor activity is what distinguishes it from dual agonists. It has been evaluated in clinical trials for metabolic conditions including obesity.',
-      studiedFor: ['obesity and weight management', 'type 2 diabetes', 'other cardiometabolic conditions'],
+      studiedFor: ['obesity & weight management', 'type 2 diabetes', 'other cardiometabolic conditions'],
       targets: ['GIP receptor', 'GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved. Evaluated in late-stage clinical trials.',
       evidenceLevel: 'human-clinical',
@@ -157,7 +157,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'An investigational long-acting amylin analog. It has been studied alone and in a fixed combination with semaglutide.',
-      studiedFor: ['obesity and weight management', 'type 2 diabetes'],
+      studiedFor: ['obesity & weight management', 'type 2 diabetes'],
       targets: ['Amylin receptor', 'Calcitonin receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'human-clinical',
@@ -173,7 +173,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['IBI362', 'LY3305677'],
     research: {
       summary: 'An investigational dual GLP-1 and glucagon receptor agonist studied in metabolic conditions.',
-      studiedFor: ['obesity and weight management', 'type 2 diabetes'],
+      studiedFor: ['obesity & weight management', 'type 2 diabetes'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'human-clinical',
@@ -189,7 +189,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['BI 456906'],
     research: {
       summary: 'An investigational dual GLP-1 and glucagon receptor agonist evaluated in clinical trials.',
-      studiedFor: ['obesity and weight management', 'metabolic dysfunction-associated steatohepatitis'],
+      studiedFor: ['obesity & weight management', 'metabolic dysfunction-associated steatohepatitis'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'human-clinical',
@@ -205,7 +205,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['ALT-801'],
     research: {
       summary: 'An investigational dual GLP-1 and glucagon receptor agonist evaluated in clinical trials.',
-      studiedFor: ['obesity and weight management', 'metabolic dysfunction-associated steatohepatitis'],
+      studiedFor: ['obesity & weight management', 'metabolic dysfunction-associated steatohepatitis'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'human-clinical',
@@ -221,7 +221,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['MK-6024', 'HM12525A'],
     research: {
       summary: 'An investigational dual GLP-1 and glucagon receptor agonist studied in liver and metabolic conditions.',
-      studiedFor: ['metabolic dysfunction-associated steatohepatitis', 'obesity and weight management'],
+      studiedFor: ['metabolic dysfunction-associated steatohepatitis', 'obesity & weight management'],
       targets: ['GLP-1 receptor', 'Glucagon receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'early-human',
@@ -237,7 +237,7 @@ export const INCRETIN_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A small molecule, not a peptide, though it is commonly tracked alongside metabolic peptides. It inhibits reuptake of noradrenaline, dopamine and serotonin and has been studied for weight management.',
-      studiedFor: ['obesity and weight management'],
+      studiedFor: ['obesity & weight management'],
       targets: ['Noradrenaline transporter', 'Dopamine transporter', 'Serotonin transporter'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'early-human',

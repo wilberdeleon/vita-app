@@ -273,3 +273,75 @@ describe('coverage', () => {
     }
   });
 });
+
+describe('the CJC + Ipamorelin blend (slice 3.5B)', () => {
+  const blend = findCatalogDefinition('catalog:blend-cjc-ipamorelin');
+
+  it('exists and is typed as a blend', () => {
+    expect(blend).toBeDefined();
+    expect(blend?.compoundType).toBe('blend');
+    expect(blend?.classification).toBe('research-compound');
+  });
+
+  /**
+   * The DAC and DAC-free forms have very different durations of action and are
+   * never interchangeable. A blend that did not say which one it contained
+   * would be describing two different products with one entry.
+   */
+  it('names the DAC-free variant explicitly, not CJC-1295 generically', () => {
+    expect(blend?.name).toContain('without DAC');
+    const componentIds = (blend?.components ?? []).map((component) => component.definitionId);
+    expect(componentIds).toContain('catalog:cjc-1295-no-dac');
+    expect(componentIds).not.toContain('catalog:cjc-1295-dac');
+  });
+
+  it('resolves both components', () => {
+    const resolved = resolveBlendComponents(blend!);
+    expect(resolved.map((entry) => entry.definition.name)).toEqual([
+      'CJC-1295 without DAC',
+      'Ipamorelin',
+    ]);
+  });
+
+  it('asserts no standardized amounts', () => {
+    for (const component of blend?.components ?? []) {
+      expect(component.amount).toBeUndefined();
+      expect(component.unit).toBeUndefined();
+    }
+  });
+
+  it('carries the component-evidence caveat', () => {
+    expect(blend?.research?.blendCaveat).toBe(true);
+    expect(blend?.research?.evidenceLevel).toBe('limited');
+  });
+
+  it('is tagged Growth Hormone', () => {
+    expect(blend?.researchAreas).toEqual(['growth-hormone']);
+  });
+
+  it('explains that the two CJC forms are not interchangeable', () => {
+    expect(blend?.research?.summary).toContain('DAC-free variant');
+  });
+});
+
+describe('prose renders as written', () => {
+  /**
+   * A React Native `<Text>` shows markdown literally, so `**not a peptide**`
+   * reached the screen as asterisks. Found in slice 3.5B review of the 3.5A
+   * content.
+   */
+  it('contains no markdown emphasis anywhere in editorial content', () => {
+    for (const entry of PEPTIDE_CATALOG) {
+      const prose = [
+        entry.research?.summary ?? '',
+        entry.research?.researchStatus ?? '',
+        ...(entry.research?.studiedFor ?? []),
+        ...(entry.research?.targets ?? []),
+        entry.category ?? '',
+      ].join(' ');
+
+      expect(prose).not.toContain('**');
+      expect(prose).not.toMatch(/(^|\s)_[^_]+_(\s|$)/);
+    }
+  });
+});

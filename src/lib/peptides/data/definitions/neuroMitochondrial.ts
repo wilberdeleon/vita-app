@@ -22,7 +22,7 @@ export const MITOCHONDRIAL_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A 16-amino-acid peptide encoded in mitochondrial DNA. Studied in metabolic research, including work on AMPK signalling and exercise physiology.',
-      studiedFor: ['metabolic regulation in animal models', 'exercise and mitochondrial physiology'],
+      studiedFor: ['metabolic regulation in animal models', 'exercise & mitochondrial physiology'],
       targets: ['AMPK pathway'],
       researchStatus: 'Not FDA-approved. A research compound.',
       evidenceLevel: 'preclinical',
@@ -73,7 +73,7 @@ export const NEURO_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A synthetic peptide based on a fragment of adrenocorticotropic hormone with the melanocortin activity removed. Research has examined effects on BDNF expression and neuroprotection.',
-      studiedFor: ['stroke and cerebrovascular conditions', 'cognitive function in research settings'],
+      studiedFor: ['stroke & cerebrovascular conditions', 'cognitive function in research settings'],
       targets: ['BDNF signalling'],
       researchStatus:
         'Registered as a medicine in Russia and some neighbouring countries. Not FDA-approved in the United States.',

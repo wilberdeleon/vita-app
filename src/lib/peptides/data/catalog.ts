@@ -46,16 +46,17 @@
  * legal review — that is still owed under Open Question #17.
  */
 
-import type { MassUnit, PeptideDefinition } from '../model/types';
+import type { MassUnit, PeptideDefinition, ResearchArea } from '../model/types';
 import { BLEND_DEFINITIONS } from './definitions/blends';
 import { ENDOCRINE_DEFINITIONS } from './definitions/endocrine';
 import { GROWTH_HORMONE_DEFINITIONS } from './definitions/growthHormone';
 import { INCRETIN_DEFINITIONS } from './definitions/incretin';
 import { MITOCHONDRIAL_DEFINITIONS, NEURO_DEFINITIONS } from './definitions/neuroMitochondrial';
 import { RECOVERY_DEFINITIONS } from './definitions/recovery';
+import { RESEARCH_AREA_ASSIGNMENTS } from './definitions/researchAreas';
 
 /** Bumped when a built-in entry's metadata changes. Stored on setups for provenance. */
-export const CATALOG_VERSION = 2;
+export const CATALOG_VERSION = 3;
 
 /** Alphabetical by name — the only ordering, and deliberately not a ranking. */
 export const PEPTIDE_CATALOG: readonly PeptideDefinition[] = [
@@ -70,6 +71,9 @@ export const PEPTIDE_CATALOG: readonly PeptideDefinition[] = [
   .map((seed) => ({
     compoundType: 'peptide' as const,
     ...seed,
+    // Research areas are assigned in one auditable table rather than inline,
+    // so the whole taxonomy can be reviewed at once — see `researchAreas.ts`.
+    researchAreas: RESEARCH_AREA_ASSIGNMENTS[seed.id] ?? ['other'],
     origin: 'catalog' as const,
     catalogVersion: CATALOG_VERSION,
   }))
@@ -79,8 +83,11 @@ export function findCatalogDefinition(id: string): PeptideDefinition | undefined
   return PEPTIDE_CATALOG.find((definition) => definition.id === id);
 }
 
-/** The filters the catalog screen offers. Regulatory and chemical, never goal-based. */
+/** The first-level filter: regulatory and chemical, never goal-based. */
 export type CatalogFilter = 'all' | 'approved' | 'research' | 'blend';
+
+/** The second-level filter — a research area, or everything. */
+export type AreaFilter = ResearchArea | 'all';
 
 function matchesFilter(definition: PeptideDefinition, filter: CatalogFilter): boolean {
   switch (filter) {
@@ -108,9 +115,16 @@ function matchesFilter(definition: PeptideDefinition, filter: CatalogFilter): bo
 export function searchCatalog(
   query: string,
   filter: CatalogFilter = 'all',
+  area: AreaFilter = 'all',
 ): readonly PeptideDefinition[] {
   const trimmed = query.trim().toLowerCase();
-  const filtered = PEPTIDE_CATALOG.filter((definition) => matchesFilter(definition, filter));
+
+  // The three narrow together: classification AND research area AND query.
+  const filtered = PEPTIDE_CATALOG.filter(
+    (definition) =>
+      matchesFilter(definition, filter) &&
+      (area === 'all' || (definition.researchAreas ?? []).includes(area)),
+  );
   if (trimmed.length === 0) return filtered;
 
   return filtered.filter((definition) => {

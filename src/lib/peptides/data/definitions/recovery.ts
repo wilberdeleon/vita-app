@@ -66,7 +66,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'The full 43-amino-acid thymosin beta-4 peptide, an actin-sequestering molecule found widely in tissue. Distinct from the shorter TB-500 fragment.',
-      studiedFor: ['wound healing and corneal repair in clinical research', 'tissue repair in animal models'],
+      studiedFor: ['wound healing & corneal repair in clinical research', 'tissue repair in animal models'],
       researchStatus: 'Not FDA-approved. Has been evaluated in human trials.',
       evidenceLevel: 'early-human',
       references: [pubmed('thymosin beta 4'), trials('Thymosin beta 4')],
@@ -82,7 +82,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A naturally occurring tripeptide (glycyl-L-histidyl-L-lysine) that binds copper. Widely used in topical cosmetic formulations and studied in skin and wound-healing research.',
-      studiedFor: ['skin and wound healing', 'collagen synthesis in laboratory research'],
+      studiedFor: ['skin & wound healing', 'collagen synthesis in laboratory research'],
       researchStatus: 'Used in cosmetics. Not FDA-approved as an injectable drug.',
       evidenceLevel: 'preclinical',
       references: [pubmed('GHK-Cu copper tripeptide')],

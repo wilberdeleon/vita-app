@@ -64,6 +64,47 @@ export type EvidenceLevel =
   | 'preclinical'
   | 'limited';
 
+/**
+ * Broad research areas, for discovery only.
+ *
+ * A second dimension alongside classification: someone browsing 71 compounds
+ * needs a way in that is not alphabetical. **These are not recommendations and
+ * not indications** — tagging Semax as Cognitive says where its research
+ * literature sits, not that anyone should take it for anything.
+ *
+ * A compound may carry several. Forcing one exclusive area would make
+ * discovery worse — GHK-Cu genuinely sits in both Recovery and Aesthetics —
+ * and would quietly assert a primary purpose the compound does not have.
+ */
+export type ResearchArea =
+  | 'weight-metabolic'
+  | 'cognitive'
+  | 'sleep'
+  | 'growth-hormone'
+  | 'recovery'
+  | 'sexual-health'
+  | 'aesthetics'
+  | 'mitochondrial'
+  | 'longevity-aging'
+  | 'immune-inflammation'
+  | 'endocrine'
+  | 'other';
+
+export const RESEARCH_AREAS: readonly ResearchArea[] = [
+  'weight-metabolic',
+  'cognitive',
+  'sleep',
+  'growth-hormone',
+  'recovery',
+  'sexual-health',
+  'aesthetics',
+  'mitochondrial',
+  'longevity-aging',
+  'immune-inflammation',
+  'endocrine',
+  'other',
+];
+
 /** One component of a blend, referring to another definition by id. */
 export type BlendComponent = {
   definitionId: string;
@@ -157,6 +198,8 @@ export type PeptideDefinition = {
   aliases?: string[];
   /** Present when `compoundType` is `'blend'`. At least two components. */
   components?: BlendComponent[];
+  /** Discovery tags. Assigned in `data/definitions/researchAreas.ts`. */
+  researchAreas?: ResearchArea[];
   research?: PeptideResearchInfo;
   origin: 'catalog' | 'user';
   /** Bumped if a built-in entry's metadata changes; absent on custom ones. */

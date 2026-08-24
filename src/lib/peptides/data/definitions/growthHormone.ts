@@ -173,8 +173,8 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Ibutamoren', 'Ibutamoren mesylate', 'MK-0677'],
     research: {
       summary:
-        'An orally active small molecule, **not a peptide**, though it is routinely grouped with them. It acts at the ghrelin receptor and has been evaluated in human trials.',
-      studiedFor: ['growth hormone and IGF-1 levels', 'body composition', 'age-related decline in growth hormone'],
+        'An orally active small molecule, not a peptide, though it is routinely grouped with them. It acts at the ghrelin receptor and has been evaluated in human trials.',
+      studiedFor: ['growth hormone & IGF-1 levels', 'body composition', 'age-related decline in growth hormone'],
       targets: ['Ghrelin / GHS-R1a receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'human-clinical',
@@ -221,7 +221,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A modified analog of insulin-like growth factor 1 with reduced binding to IGF binding proteins, extending its activity. Widely used as a cell-culture reagent.',
-      studiedFor: ['cell growth and proliferation in laboratory research'],
+      studiedFor: ['cell growth & proliferation in laboratory research'],
       targets: ['IGF-1 receptor'],
       researchStatus: 'Not FDA-approved. A laboratory reagent and research chemical.',
       evidenceLevel: 'preclinical',

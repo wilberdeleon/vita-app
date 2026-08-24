@@ -18,6 +18,8 @@
 
 Each entry now has a **factual reference page** — About, *Studied for* (never "used for"), Targets, an evidence level, plain-language research status, and sources. Regulatory status is one line among those, not the whole page. Sources are pointers into PubMed, ClinicalTrials.gov and Drugs@FDA rather than hand-written citations.
 
+**Slice 3.5B (2026-08-24) polished the presentation and added a discovery taxonomy.** Detail pages moved from raw-looking output to professional presentation: title casing that leaves technical names (GHK-Cu, hCG, MOTS-c) untouched, *Studied For* and *Targets* as compact informational tags, and blend pages reorganised so the formulation caveat and the evidence caveat each have their own section instead of being restated three times. Compounds now carry **research-area tags** — Weight & Metabolic, Cognitive, Sleep, Growth Hormone, Recovery, Sexual Health, Aesthetics, Mitochondrial, Longevity & Aging, Immune & Inflammation, Endocrine — reached through **one compact category control** rather than a wall of chips. *These are discovery tags, not indications.* A **CJC-1295 without DAC + Ipamorelin** blend was added (72 entries total), and **syringe scale selection was removed from setup** — V1 assumes the ordinary U-100 scale.
+
 **⚠️ The research content is engineering-authored and has not had medical or legal review.** See [[Open Questions]] #17.
 
 **Not feature-complete.** Slice 3.6 (dose calculator), 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.

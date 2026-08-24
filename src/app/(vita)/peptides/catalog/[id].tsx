@@ -3,8 +3,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../../components/ui';
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
+import { InfoTags } from '../../../../features/peptides/components/InfoTags';
 import {
   evidenceLabel,
+  formatLabel,
   resolveBlendComponents,
   usePeptideContext,
   type ResearchReference,
@@ -46,6 +48,7 @@ export default function PeptideDetail() {
   const research = definition.research;
   const components = resolveBlendComponents(definition, findDefinition);
   const isResearch = definition.classification === 'research-compound';
+  const isBlend = definition.compoundType === 'blend';
 
   return (
     <Screen>
@@ -60,16 +63,18 @@ export default function PeptideDetail() {
           ) : null}
         </View>
         {definition.category ? (
-          <Text style={[styles.category, { color: surfaces.textSecondary }]}>{definition.category}</Text>
+          <Text style={[styles.category, { color: surfaces.textSecondary }]}>
+            {formatLabel(definition.category)}
+          </Text>
         ) : null}
       </View>
 
       {definition.aliases && definition.aliases.length > 0 ? (
         <>
           <SectionHeader title="Also known as" />
-          <Text style={[styles.body, { color: surfaces.textSecondary }]}>
-            {definition.aliases.join(' · ')}
-          </Text>
+          {/* Brand names and development codes are already correctly cased by
+              their authors, so `formatLabel` leaves them untouched. */}
+          <InfoTags values={definition.aliases} label="Also known as" />
         </>
       ) : null}
 
@@ -87,7 +92,9 @@ export default function PeptideDetail() {
                     router.push(`/peptides/catalog/${encodeURIComponent(component.definition.id)}`)
                   }
                   accessibilityRole="button"
-                  accessibilityLabel={`${component.definition.name}. ${component.definition.category ?? ''}. View details`}
+                  accessibilityLabel={`${component.definition.name}. ${
+                    component.definition.category ? formatLabel(component.definition.category) : ''
+                  }. View details`}
                   style={styles.componentRow}
                 >
                   <View style={styles.componentBody}>
@@ -96,7 +103,7 @@ export default function PeptideDetail() {
                     </Text>
                     {component.definition.category ? (
                       <Text style={[styles.componentDetail, { color: surfaces.textTertiary }]}>
-                        {component.definition.category}
+                        {formatLabel(component.definition.category)}
                       </Text>
                     ) : null}
                   </View>
@@ -110,15 +117,6 @@ export default function PeptideDetail() {
               </View>
             ))}
           </Card>
-          {/*
-            * Stated up front rather than buried: a blend name identifies which
-            * compounds are present, not how much of each. The user's own setup
-            * owns what is actually in their vial.
-            */}
-          <Text style={[styles.note, { color: surfaces.textTertiary }]}>
-            Amounts aren't standardized for this name and vary between suppliers. Your own setup records
-            what's in your vial.
-          </Text>
         </>
       ) : null}
 
@@ -129,21 +127,31 @@ export default function PeptideDetail() {
         </>
       ) : null}
 
+      {/*
+        * A blend's own section, separate from About. The formulation caveat is
+        * a fact about the *name*, not about the research, and mixing it into
+        * the research paragraph was part of what made these pages read long.
+        */}
+      {isBlend ? (
+        <>
+          <SectionHeader title="Formulation" />
+          <Text style={[styles.body, { color: surfaces.textSecondary }]}>
+            Ratios may vary between suppliers. Your setup records the actual contents of your vial.
+          </Text>
+        </>
+      ) : null}
+
       {research?.studiedFor && research.studiedFor.length > 0 ? (
         <>
           <SectionHeader title="Studied for" />
-          <Text style={[styles.body, { color: surfaces.textSecondary }]}>
-            {research.studiedFor.join(' · ')}
-          </Text>
+          <InfoTags values={research.studiedFor} label="Studied for" />
         </>
       ) : null}
 
       {research?.targets && research.targets.length > 0 ? (
         <>
           <SectionHeader title="Targets" />
-          <Text style={[styles.body, { color: surfaces.textSecondary }]}>
-            {research.targets.join(' · ')}
-          </Text>
+          <InfoTags values={research.targets} label="Targets" />
         </>
       ) : null}
 
@@ -158,12 +166,22 @@ export default function PeptideDetail() {
           {research.researchStatus ? (
             <Text style={[styles.body, { color: surfaces.textSecondary }]}>{research.researchStatus}</Text>
           ) : null}
-          {research.blendCaveat ? (
-            <Text style={[styles.note, { color: surfaces.textTertiary }]}>
-              Research context here comes from the individual components. The combination itself may not
-              have been studied as a single formulation.
-            </Text>
-          ) : null}
+        </>
+      ) : null}
+
+      {/*
+        * Its own section rather than a third paragraph tacked under Research
+        * Status. Previously a blend page said "not FDA-approved" in the header,
+        * again in the status line, and carried two more caveats below it —
+        * four restatements of roughly one idea.
+        */}
+      {research?.blendCaveat ? (
+        <>
+          <SectionHeader title="Research context" />
+          <Text style={[styles.body, { color: surfaces.textSecondary }]}>
+            Research evidence primarily comes from the individual components; the combined formulation
+            may not have been studied directly.
+          </Text>
         </>
       ) : null}
 

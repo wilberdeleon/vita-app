@@ -147,7 +147,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A nonapeptide hormone produced in the hypothalamus, acting at the oxytocin receptor. Widely studied in both obstetric and social-neuroscience contexts.',
-      studiedFor: ['labour induction', 'social and affiliative behaviour in research'],
+      studiedFor: ['labour induction', 'social & affiliative behaviour in research'],
       targets: ['Oxytocin receptor'],
       researchStatus: 'FDA-approved for obstetric use. Other uses are investigational.',
       evidenceLevel: 'approved-use',
@@ -179,7 +179,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'NNMT inhibitor',
     research: {
       summary:
-        'A small molecule, **not a peptide**, though it is commonly sold and tracked alongside them. It inhibits nicotinamide N-methyltransferase and has been studied in animal models of metabolic disease.',
+        'A small molecule, not a peptide, though it is commonly sold and tracked alongside them. It inhibits nicotinamide N-methyltransferase and has been studied in animal models of metabolic disease.',
       studiedFor: ['metabolic regulation in animal models'],
       targets: ['Nicotinamide N-methyltransferase (NNMT)'],
       researchStatus: 'Not FDA-approved. A research compound.',
@@ -196,7 +196,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     aliases: ['Nicotinamide adenine dinucleotide'],
     research: {
       summary:
-        'A coenzyme central to cellular metabolism. **Not a peptide** — a dinucleotide — but very commonly tracked alongside them, so it is listed with its chemistry stated honestly.',
+        'A coenzyme central to cellular metabolism. Not a peptide — a dinucleotide — but very commonly tracked alongside them, so it is listed with its chemistry stated honestly.',
       studiedFor: ['cellular metabolism', 'ageing biology in research settings'],
       researchStatus:
         'Available as a supplement in some forms. Injectable NAD+ is not FDA-approved; the FDA placed it on the category 2 compounding list in 2023.',

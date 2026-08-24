@@ -48,7 +48,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     ],
     research: {
       summary:
-        'A community- and vendor-named combination of GHK-Cu, BPC-157 and TB-500. The name describes which compounds are present, not how much of each — formulations vary between suppliers.',
+        'A community- and vendor-named combination of GHK-Cu, BPC-157 and TB-500. The name identifies which compounds are present.',
       researchStatus: 'Not FDA-approved. None of the components is an FDA-approved drug.',
       evidenceLevel: 'limited',
       blendCaveat: true,
@@ -69,7 +69,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     ],
     research: {
       summary:
-        'The GLOW combination with KPV added — the K in the name. As with GLOW, the name identifies the components rather than a fixed formulation, and amounts vary between suppliers.',
+        'The GLOW combination with KPV added — the K in the name.',
       researchStatus: 'Not FDA-approved. None of the components is an FDA-approved drug.',
       evidenceLevel: 'limited',
       blendCaveat: true,
@@ -85,11 +85,30 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     components: [{ definitionId: 'catalog:bpc-157' }, { definitionId: 'catalog:tb-500' }],
     research: {
       summary:
-        'The most commonly encountered two-component tissue-research blend. Sold under a range of vendor names; ratios are not standardized.',
+        'The most commonly encountered two-component tissue-research blend, sold under a range of vendor names.',
       researchStatus: 'Not FDA-approved. Neither component is an FDA-approved drug.',
       evidenceLevel: 'limited',
       blendCaveat: true,
       references: [pubmed('BPC 157'), pubmed('TB-500 thymosin beta 4 fragment')],
+    },
+  },
+  {
+    id: 'catalog:blend-cjc-ipamorelin',
+    name: 'CJC-1295 without DAC + Ipamorelin',
+    classification: 'research-compound',
+    compoundType: 'blend',
+    category: 'Blend · GHRH analog / secretagogue',
+    components: [
+      { definitionId: 'catalog:cjc-1295-no-dac' },
+      { definitionId: 'catalog:ipamorelin' },
+    ],
+    research: {
+      summary:
+        'The most commonly encountered growth-hormone research pairing: a GHRH analog alongside a ghrelin-receptor secretagogue, two different mechanisms rather than two of the same. This is the DAC-free variant: the DAC form has a far longer duration of action and is a different compound, so the two are never treated as interchangeable here.',
+      researchStatus: 'Not FDA-approved. Neither component is an FDA-approved drug.',
+      evidenceLevel: 'limited',
+      blendCaveat: true,
+      references: [pubmed('modified GRF 1-29'), pubmed('ipamorelin')],
     },
   },
   {
@@ -101,7 +120,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     components: [{ definitionId: 'catalog:semax' }, { definitionId: 'catalog:selank' }],
     research: {
       summary:
-        'A combination of the two Russian-developed research peptides Semax and Selank. Each has its own research literature; the combination does not have a standardized ratio.',
+        'A combination of the two Russian-developed research peptides Semax and Selank. Each has its own research literature.',
       // The blend's own status leads. Describing only the components' status
       // leaves the thing the user is actually holding unaddressed.
       researchStatus:
@@ -121,7 +140,7 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     research: {
       summary:
         'A manufacturer-developed fixed-dose combination of cagrilintide and semaglutide — unlike the vendor blends in this group, it is a defined investigational product evaluated as a single formulation in clinical trials.',
-      studiedFor: ['obesity and weight management', 'type 2 diabetes'],
+      studiedFor: ['obesity & weight management', 'type 2 diabetes'],
       researchStatus: 'Investigational; not FDA-approved.',
       evidenceLevel: 'human-clinical',
       // Deliberately no caveat: this combination has been studied as a

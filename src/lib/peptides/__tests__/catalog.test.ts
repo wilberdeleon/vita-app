@@ -19,6 +19,7 @@ const ALLOWED_FIELDS = [
   'category',
   'aliases',
   'components',
+  'researchAreas',
   'research',
   'origin',
   'catalogVersion',
@@ -212,8 +213,10 @@ describe('search', () => {
 
   it('finds both CJC variants and keeps them distinguishable', () => {
     const results = searchCatalog('cjc');
-    expect(results).toHaveLength(2);
-    expect(new Set(results.map((e) => e.name)).size).toBe(2);
+    // Two variants plus the blend that names one of them.
+    const variants = results.filter((entry) => entry.compoundType !== 'blend');
+    expect(variants).toHaveLength(2);
+    expect(new Set(variants.map((e) => e.name)).size).toBe(2);
   });
 
   it('returns nothing for a query that matches nothing', () => {
