@@ -20,11 +20,19 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **Slice 3.5B (2026-08-24) polished the presentation and added a discovery taxonomy.** Detail pages moved from raw-looking output to professional presentation: title casing that leaves technical names (GHK-Cu, hCG, MOTS-c) untouched, *Studied For* and *Targets* as compact informational tags, and blend pages reorganised so the formulation caveat and the evidence caveat each have their own section instead of being restated three times. Compounds now carry **research-area tags** — Weight & Metabolic, Cognitive, Sleep, Growth Hormone, Recovery, Sexual Health, Aesthetics, Mitochondrial, Longevity & Aging, Immune & Inflammation, Endocrine — reached through **one compact category control** rather than a wall of chips. *These are discovery tags, not indications.* A **CJC-1295 without DAC + Ipamorelin** blend was added (72 entries total), and **syringe scale selection was removed from setup** — V1 assumes the ordinary U-100 scale.
 
+**Slice 3.5C (2026-08-24) made the pages readable by someone who isn't a chemist.** Two sections were added. **Research claims** says what a compound is researched or commonly claimed to do, in plain English — and **each claim carries its own evidence label**, because one compound can have solid human trial evidence for one effect and vendor folklore for another, and a single label on the page would blur them together. A weakly supported claim has to say so in words, not just wear a small grey badge. **How it works** explains the pathway rather than naming it: *"Feeling full after a meal"* over *"GLP-1 Receptor"*, not *"GLP-1"* over *"GLP-1 Receptor"*.
+
+**Development status replaced the approved / not-approved binary**, which was true of almost everything in the catalog and told a reader nothing. A compound now shows where it actually sits — *FDA Approved*, *Phase 3 · Late Stage*, *Not in Clinical Development*, *Discontinued* — with a plain summary, an **updated date**, and its own sources. Sermorelin, for example, reads as discontinued because the manufacturer withdrew it commercially in 2008, explicitly **not** an FDA safety action and **not** a rejected application. Where a company has publicly stated a plan, VITA reports the statement — *"Lilly has said it plans to submit retatrutide to the U.S. FDA in Q1 2027"* — and never converts it into a prediction that approval is coming.
+
+**Sections appear only when there is something to say.** A compound with thin research gets a short, honest page rather than empty headings, and blends carry no combined claims at all: adding up what each component does would invent a claim about the blend that no study supports.
+
+**Two things worth knowing as a founder.** First, the **time-sensitive entries need periodic re-checking** — a compound in Phase 3 today may not be in a year, which is why every one of them shows when it was last updated. Second, the risk of a page describing the wrong compound (Semax and Semaglutide are not related despite the similar names) is now **checked automatically on every build** rather than relying on someone noticing.
+
 **⚠️ The research content is engineering-authored and has not had medical or legal review.** See [[Open Questions]] #17.
 
 **Not feature-complete.** Slice 3.6 (dose calculator), 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
 
-Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slice 3.5.
+Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.5C.
 
 ## What it was before (Sprint 0 — mock data, superseded)
 

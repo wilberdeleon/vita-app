@@ -752,6 +752,41 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.5C — Plain-English Claims, Mechanisms + Development Status 🟡
+
+**Objective:** make the detail pages answer the question an ordinary reader actually arrives with — *what is this supposed to do, and how far along is it?* — without VITA ever recommending anything. 3.5B fixed how the pages looked; this fixes what they say. No calculator, no logging, no injection sites.
+
+**Why it exists.** After 3.5B a page could be simultaneously accurate and useless. "Inhibits nicotinamide N-methyltransferase" is correct and answers nothing; "Not FDA-approved" is true of roughly the whole catalog and says nothing about whether a compound is in Phase 3 or was abandoned in 2008. Both were founder observations from real-device review.
+
+**Two new content sections.**
+
+| Section | Answers | Shape |
+|---|---|---|
+| **Research claims** | *what* is it researched or commonly claimed to do | short labelled blocks, each with **its own** evidence label |
+| **How it works** | *how* — the pathway, explained rather than recited | plain title, quiet target subtitle, one or two sentences |
+
+**The evidence label sits on each claim, not on the page.** One compound can have strong human evidence for one effect and vendor folklore for another. A single page-level badge would launder the second into the first, so `ResearchClaim` carries its own `evidenceLevel` and a test rejects any claim without one. A claim marked `limited` must additionally qualify itself *in words* — "commonly discussed… although direct human evidence is limited" — because a reader who skips a small grey badge should still not be misled. Preclinical claims must attribute themselves to animal or laboratory work, and `approved-use` is reserved by test for compounds that actually hold an approval.
+
+**Development status replaces the regulatory binary.** A new `DevelopmentStatus` records a typed `stage` (approved · submitted · phase 3/2/1 · early human · preclinical · not in clinical development · discontinued · unknown), a display `label`, a `summary`, an optional `nextMilestone`, `lastUpdated`, and its own `references`. The section heading switches to **Approval status** for approved medications. Sermorelin now reads *Discontinued — withdrawn from the US market in 2008 by the manufacturer; a commercial withdrawal, not an FDA safety action and not a rejected application*, which is the distinction the old one-line status could not make.
+
+**A stated plan is rendered as a plan.** "Lilly has said it plans to submit retatrutide to the U.S. FDA in Q1 2027" is a fact about a company's announcement. "Approval expected Q1 2027" would be a prediction VITA has no standing to make, and a content test fails the build on *will be approved*, *approval expected*, *awaiting approval*, *guaranteed*, *FDA denied*, *FDA rejected*, and *refused approval*.
+
+**Time-sensitive facts were researched, not recalled, and carry a date.** Pipeline claims for compounds in active development were verified against current sources rather than authored from model memory, and every stage that can change (submitted, phase 1–3, discontinued) is required by test to carry both `lastUpdated` and references. **This is maintenance debt by design** — a phase stated without a date asserts permanent truth about something that changes, and these entries need periodic re-checking. Approved medications are additionally forbidden from carrying a clinical phase, and `stage: 'approved'` is reserved for `approved-medication`.
+
+**Cross-compound contamination is now caught by test, not by eye.** The founder flagged Semax being described with Semaglutide's content — an error invisible to anyone who does not already know both compounds. Pinned: Semaglutide must contain GLP-1/metabolic content and **must not** contain BDNF, cognitive, nootropic or Semax content; Semax must contain cognitive/stroke content and **must not** contain GLP-1, incretin, obesity or type-2-diabetes content; Retatrutide must describe agonism at all three receptors; Cagrilintide must be an amylin analog and must not name Retatrutide; GLOW must remain a blend of GHK-Cu, BPC-157 and TB-500. Above those specifics sits a **general sweep**: no entry's overview may name an unrelated catalog compound, with three legitimate relationships excluded — itself, a blend naming its own components, and a derivative whose name already contains the parent's (N-Acetyl Selank Amidate). Anything else must explicitly distinguish the two, as Thymosin Beta-4 does from TB-500.
+
+**Blends still do not inherit their components' claims.** Summing component effects would manufacture a claim about the *blend* out of evidence that exists only for its parts. GLOW, KLOW, BPC-157 + TB-500, Semax + Selank and CJC-1295 + Ipamorelin carry no claims at all, asserted by test; CagriSema does, being a manufacturer combination evaluated as one formulation.
+
+**Two rendering defects found in device QA and fixed.** Tesamorelin headed a mechanism **"GHRH receptor"** with **"GHRH Receptor"** repeated directly beneath it, and the incretin pages headed theirs **"GLP-1"** over **"GLP-1 Receptor"** — the exact recitation this slice exists to remove. Both were fixed at the content level (*"Prompting your own growth hormone"*, *"Feeling full after a meal"*, *"Energy burn and the liver"*, *"Knowing you have eaten enough"*, *"Supporting neuron growth"*) **and** structurally: `Mechanisms` now drops a subtitle that only repeats its title, and a content test forbids any mechanism title that is contained in its own target. The reverse direction stays legal — "Blocking the NNMT enzyme" over "NNMT" is a sentence, not a recitation.
+
+**Sections appear only when populated.** A compound with nothing to say renders no heading, not an empty one. N-Acetyl Selank Amidate is verified on device as a deliberately short page: About, Research status, Sources, Track. Padding it with confident filler would be worse than the gap.
+
+**50 new tests, 510 total.** Including the first tests to render the detail route itself — `expo-router` mocked, real `PeptideProvider`, real `ThemeProvider` — because every one of these sections sits below the fold and the simulator cannot be scrolled without taps.
+
+⚠️ **All research content remains engineering-authored and has not had medical or legal review** — Open Question #17 stays open, and the time-sensitive pipeline entries add a recurring maintenance obligation on top of it.
+
+**Verified on device** across Retatrutide, Sermorelin, Tesamorelin, Semax, 5-Amino-1MQ and N-Acetyl Selank Amidate, in Light and Dark. **Boundary audit:** every changed file is under `src/lib/peptides`, `src/features/peptides`, or the peptide detail route. Water, Fuel, Home, nutrition, `src/lib/daily` and `package.json` have a zero-line diff.
+
 ### Slice 3.5B — Final Peptide Catalog + Detail Polish 🟡
 
 **Objective:** the last catalog/detail refinement before the calculator, from founder review on a real device. The verdict was that the structure is right but the detail pages read like raw database output rather than a consumer health product. Visual bones kept intact; presentation professionalised.

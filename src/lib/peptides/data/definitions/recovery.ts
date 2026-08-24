@@ -19,8 +19,34 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Gastric pentadecapeptide',
     aliases: ['Body Protection Compound 157', 'PL 14736'],
     research: {
-      summary:
-        'A synthetic 15-amino-acid sequence derived from a protein found in gastric juice. Most published work is animal and cell research examining tissue repair and gastrointestinal models.',
+      overview:
+        'BPC-157 is one of the most widely tracked research peptides, based on a fragment of a protein found in stomach fluid. It is researched almost entirely for tissue repair. Despite how commonly it is discussed, essentially all published evidence is from animal and laboratory studies rather than human trials.',
+      claims: [
+        {
+          title: 'Tissue & Injury Repair',
+          summary:
+            'Animal and laboratory research has suggested effects on healing in tendon, muscle and gut tissue. This is the claim it is best known for.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Gut Health',
+          summary:
+            'Studied in animal models of gastrointestinal injury, reflecting where the original sequence was found.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Joint & Connective Tissue',
+          summary:
+            'Commonly claimed for joint and connective-tissue recovery, although direct human evidence is limited.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'No active approval programme in the United States. The FDA placed it on its category 2 compounding list in 2023, meaning it identified significant safety concerns for compounded use.',
+      },
       studiedFor: ['tissue repair in animal models', 'gastrointestinal injury in animal models'],
       researchStatus:
         'Not FDA-approved. Placed on the FDA’s list of substances that present significant safety risks for compounding (category 2) in 2023.',
@@ -48,8 +74,27 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'peptide',
     category: 'Thymosin beta-4 fragment',
     research: {
-      summary:
-        'A synthetic peptide corresponding to the actin-binding region of thymosin beta-4, rather than the full protein. Listed separately from Thymosin Beta-4 because the two are frequently sold interchangeably and are not the same molecule.',
+      overview:
+        'TB-500 is a synthetic fragment of a natural protein called thymosin beta-4, and is researched mainly for tissue repair and recovery. It is frequently sold as though it were the full protein — it is not, and the two are listed separately here for that reason. Evidence is largely from animal studies.',
+      claims: [
+        {
+          title: 'Tissue & Injury Repair',
+          summary:
+            'Animal research has suggested effects on cell movement and repair after injury. Frequently paired with BPC-157 in recovery-focused research claims.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Flexibility & Recovery',
+          summary:
+            'Commonly claimed for recovery and mobility, although direct human evidence is limited.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary: 'No active approval programme. Prohibited in sport by WADA.',
+      },
       studiedFor: ['tissue repair in animal models'],
       researchStatus: 'Not FDA-approved. Prohibited in sport by WADA.',
       evidenceLevel: 'preclinical',
@@ -64,7 +109,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Actin-binding peptide',
     aliases: ['Tβ4', 'TB4'],
     research: {
-      summary:
+      overview:
         'The full 43-amino-acid thymosin beta-4 peptide, an actin-sequestering molecule found widely in tissue. Distinct from the shorter TB-500 fragment.',
       studiedFor: ['wound healing & corneal repair in clinical research', 'tissue repair in animal models'],
       researchStatus: 'Not FDA-approved. Has been evaluated in human trials.',
@@ -80,8 +125,32 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Copper peptide',
     aliases: ['Copper tripeptide-1', 'GHK copper'],
     research: {
-      summary:
-        'A naturally occurring tripeptide (glycyl-L-histidyl-L-lysine) that binds copper. Widely used in topical cosmetic formulations and studied in skin and wound-healing research.',
+      overview:
+        'GHK-Cu is a small naturally occurring peptide that carries copper, found in human plasma and widely used in skincare products. Most of its research concerns skin, wound healing and collagen. It is one of the few compounds here with genuine mainstream cosmetic use.',
+      claims: [
+        {
+          title: 'Skin & Collagen',
+          summary:
+            'Laboratory and topical research has examined effects on collagen production and skin appearance. This is its best-supported area.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Wound Healing',
+          summary: 'Studied in wound-repair models, which is where much of the early literature originates.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Hair',
+          summary: 'Commonly claimed for hair growth, although direct human evidence is limited.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'Used in cosmetic products rather than developed as a drug. Injectable forms are not FDA-approved.',
+      },
       studiedFor: ['skin & wound healing', 'collagen synthesis in laboratory research'],
       researchStatus: 'Used in cosmetics. Not FDA-approved as an injectable drug.',
       evidenceLevel: 'preclinical',
@@ -96,7 +165,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'α-MSH fragment',
     aliases: ['Lys-Pro-Val'],
     research: {
-      summary:
+      overview:
         'A tripeptide corresponding to the C-terminal fragment of alpha-melanocyte-stimulating hormone, studied for anti-inflammatory activity in laboratory models.',
       studiedFor: ['inflammation in animal and cell models'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
@@ -112,7 +181,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Antimicrobial peptide',
     aliases: ['Cathelicidin LL-37', 'hCAP18'],
     research: {
-      summary:
+      overview:
         'The only human cathelicidin-derived antimicrobial peptide, part of innate immune defence. Extensively studied in microbiology and immunology research.',
       studiedFor: ['antimicrobial activity', 'innate immune signalling', 'wound healing in laboratory research'],
       researchStatus: 'Not FDA-approved. A research reagent.',
@@ -128,7 +197,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'EPO-derived peptide',
     aliases: ['Cibinetide'],
     research: {
-      summary:
+      overview:
         'An 11-amino-acid peptide derived from a region of erythropoietin, designed to act at the innate repair receptor without erythropoietic activity. Evaluated in human trials.',
       studiedFor: ['small-fibre neuropathy', 'sarcoidosis-associated neuropathic pain'],
       targets: ['Innate repair receptor'],
@@ -145,7 +214,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Immune-modulating peptide',
     aliases: ['Thymalfasin', 'Zadaxin', 'Tα1'],
     research: {
-      summary:
+      overview:
         'A 28-amino-acid peptide derived from prothymosin alpha, studied for effects on T-cell function and immune signalling.',
       studiedFor: ['chronic hepatitis B and C', 'immune function in clinical research', 'sepsis'],
       researchStatus:
@@ -161,7 +230,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'peptide',
     category: 'Thymic peptide',
     research: {
-      summary: 'A zinc-dependent thymic peptide studied in immunology research.',
+      overview: 'A zinc-dependent thymic peptide studied in immunology research.',
       studiedFor: ['immune signalling in laboratory research'],
       researchStatus: 'Not FDA-approved. A research reagent.',
       evidenceLevel: 'preclinical',
@@ -176,7 +245,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Tight-junction regulator',
     aliases: ['AT-1001', 'Larazotide acetate'],
     research: {
-      summary:
+      overview:
         'An octapeptide studied as a regulator of intestinal tight junctions, evaluated in clinical trials for coeliac disease.',
       studiedFor: ['coeliac disease'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -192,7 +261,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Neuropeptide',
     aliases: ['VIP', 'Aviptadil'],
     research: {
-      summary:
+      overview:
         'A 28-amino-acid neuropeptide with wide distribution in the nervous and immune systems, acting at VPAC receptors. A synthetic form, aviptadil, has been evaluated in clinical trials.',
       studiedFor: ['pulmonary conditions', 'inflammatory signalling in research'],
       targets: ['VPAC1 receptor', 'VPAC2 receptor'],
@@ -209,7 +278,7 @@ export const RECOVERY_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Tripeptide antioxidant',
     aliases: ['GSH', 'L-glutathione'],
     research: {
-      summary:
+      overview:
         'A naturally occurring tripeptide of glutamate, cysteine and glycine, central to cellular redox balance. Genuinely a peptide, though usually discussed as a supplement.',
       studiedFor: ['oxidative stress', 'liver function in clinical research'],
       researchStatus:

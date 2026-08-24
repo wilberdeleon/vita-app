@@ -132,6 +132,96 @@ export type ResearchReference = {
 };
 
 /**
+ * Where a compound actually sits in development.
+ *
+ * Deliberately separate from both `classification` (a regulatory bucket) and
+ * `evidenceLevel` (how mature the literature is). They overlap but are not the
+ * same question: a compound can be unapproved *and* in Phase 3 *and* backed by
+ * strong human evidence, and flattening those into one badge is what made the
+ * old pages say only "Not FDA-approved" — true, and useless to someone asking
+ * whether anyone is still working on it.
+ *
+ * **`not-in-clinical-development` is not a failure state.** Most research
+ * peptides were never on an approval path at all, and writing "awaiting
+ * approval" for them would invent a process that does not exist.
+ */
+export type DevelopmentStage =
+  | 'approved'
+  | 'submitted'
+  | 'phase-3'
+  | 'phase-2'
+  | 'phase-1'
+  | 'early-human'
+  | 'preclinical'
+  | 'not-in-clinical-development'
+  | 'discontinued'
+  | 'unknown';
+
+/** Stages whose truth expires — these must carry a date and a source. */
+export const TIME_SENSITIVE_STAGES: readonly DevelopmentStage[] = [
+  'submitted',
+  'phase-3',
+  'phase-2',
+  'phase-1',
+  'discontinued',
+];
+
+export type DevelopmentStatus = {
+  stage: DevelopmentStage;
+  /** Short headline, e.g. "Phase 3 · Late Stage". */
+  label: string;
+  /** One or two plain sentences on what that means for this compound. */
+  summary?: string;
+  /**
+   * When this record was last checked, e.g. "July 2026".
+   *
+   * Required for time-sensitive stages. Pipeline facts go stale, and a page
+   * that states a phase without a date is asserting permanent truth about
+   * something that changes — the date is what makes it a point-in-time report.
+   */
+  lastUpdated?: string;
+  /**
+   * The next known step, where a sponsor has stated one.
+   *
+   * **A planned submission is not an approval and must never read like one.**
+   * A content test rejects any wording that promises or predicts approval.
+   */
+  nextMilestone?: string;
+  references?: ResearchReference[];
+};
+
+/**
+ * One plain-English effect a compound is researched or commonly claimed for.
+ *
+ * The section exists because a technically correct mechanism paragraph can
+ * leave an ordinary reader with no idea why anyone tracks the compound. A
+ * claim says *what*; `MechanismItem` says *how*.
+ *
+ * `evidenceLevel` is per claim on purpose: one compound can have strong human
+ * evidence for one effect and vendor folklore for another, and a single
+ * page-level badge would launder the second into the first.
+ */
+export type ResearchClaim = {
+  /** Short label, e.g. "Weight & Appetite". */
+  title: string;
+  /**
+   * Qualified to the evidence — "Clinical studies have reported…", "Animal and
+   * laboratory research has suggested…", "Commonly claimed for…, although
+   * direct human evidence is limited."
+   */
+  summary?: string;
+  evidenceLevel?: EvidenceLevel;
+};
+
+/** One pathway, explained the way a person would explain it. */
+export type MechanismItem = {
+  /** The receptor or enzyme, where naming it is useful. */
+  target?: string;
+  title: string;
+  explanation: string;
+};
+
+/**
  * Factual reference material about a compound.
  *
  * Kept out of `PeptideDefinition`'s identity fields and entirely out of
@@ -147,8 +237,20 @@ export type ResearchReference = {
  * than filling the space.
  */
 export type PeptideResearchInfo = {
-  /** A short plain-English paragraph. What it is, what it targets, what was studied. */
-  summary?: string;
+  /**
+   * A short plain-English paragraph, written for a non-scientist.
+   *
+   * Pattern: what the compound broadly is · why it is researched · important
+   * context. Deliberately **not** opened with molecular terminology — that
+   * belongs in `mechanisms`, further down the page.
+   */
+  overview?: string;
+  /** Plain-English effects, qualified to the evidence behind each. */
+  claims?: ResearchClaim[];
+  /** Pathway explanations. Omitted where jargon would add nothing. */
+  mechanisms?: MechanismItem[];
+  /** Where the compound sits in development, when known. */
+  developmentStatus?: DevelopmentStatus;
   /** Research contexts — "obesity", "type 2 diabetes". Deliberately *studied for*, not *used for*. */
   studiedFor?: string[];
   /** Receptors, pathways, or targets where established. */

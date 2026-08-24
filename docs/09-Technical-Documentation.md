@@ -81,6 +81,22 @@ Collapsing any two would force a lie somewhere: Sermorelin is a withdrawn US app
 
 **Research content** lives in `research?: PeptideResearchInfo` on the definition — never in `PeptideSetup`. Identity, reference material, and the user's configuration are three things with three lifetimes. References are **search pointers into PubMed, ClinicalTrials.gov and Drugs@FDA**, not specific citations: a hand-written PMID naming the wrong paper is worse than no citation and undetectable from inside the app. A content test fails the build on recommendation phrasing and on any concrete dosing amount in editorial prose.
 
+**Claims and mechanisms (slice 3.5C).** `research.claims` answers *what a compound is researched or claimed to do*; `research.mechanisms` answers *how*. **`evidenceLevel` lives on each claim, not on the page**, because one compound can have strong human evidence for one effect and vendor folklore for another, and a page-level badge would launder the second into the first. Enforced by test: every claim carries an evidence level; a `limited` claim must also qualify itself in prose; a `preclinical` claim must attribute itself to animal or laboratory work; `approved-use` only appears on `approved-medication`. A mechanism's `target` is a quiet subtitle — `Mechanisms` drops it when it merely repeats the title, and a content test forbids any mechanism title contained in its own target, so a heading can never be the receptor name.
+
+**Development status (slice 3.5C).** `research.developmentStatus` replaces the approved/not-approved binary, which was true of nearly the whole catalog and said nothing useful. It carries a typed `stage` (`approved` · `submitted` · `phase-3` · `phase-2` · `phase-1` · `early-human` · `preclinical` · `not-in-clinical-development` · `discontinued` · `unknown`), a display `label`, a `summary`, an optional `nextMilestone`, `lastUpdated`, and its own `references`. The detail page heading switches to **Approval status** for approved medications.
+
+Three rules are enforced by test rather than convention:
+
+| Rule | Why |
+|---|---|
+| Every stage in `TIME_SENSITIVE_STAGES` must carry `lastUpdated` **and** references | A phase stated without a date asserts permanent truth about something that moves |
+| No predictive approval language | *"Lilly has said it plans to submit…"* is a fact about an announcement; *"approval expected"* is a prediction VITA has no standing to make |
+| Approved medications carry no clinical phase, and `stage: 'approved'` is reserved for them | The two vocabularies describe different things |
+
+⚠️ **Time-sensitive pipeline entries are recurring maintenance.** They were researched against current sources rather than authored from model memory, and they go stale. `lastUpdated` is how a reader — and a future maintainer — can tell.
+
+**Content identity is asserted, not reviewed by eye.** Cross-compound contamination (Semax described with Semaglutide's content) is invisible to anyone who does not already know both compounds. `__tests__/claims.test.ts` pins the major identity distinctions and adds a general sweep: no overview may name an unrelated catalog compound, excluding only itself, a blend's own components, and a derivative whose name already contains the parent's. Anything else must explicitly distinguish the two.
+
 ⚠️ **Research content is engineering-authored and has not had medical or legal review** (Open Question #17).
 
 **Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.

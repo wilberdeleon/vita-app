@@ -21,6 +21,17 @@
  * formulation. That is the honest middle between pretending a blend is proven
  * and refusing to list something people demonstrably track.
  *
+ * ── Why vendor blends carry no `claims` ────────────────────────────────
+ *
+ * Adding up every component's claimed effects would manufacture a claim about
+ * the *blend* out of evidence that only exists for its parts. GLOW is not
+ * "clinically studied" because GHK-Cu, BPC-157 and TB-500 each have separate
+ * literature. So vendor blends get an overview, a formulation note and the
+ * research-context caveat — and no claims list. A test enforces this.
+ *
+ * CagriSema is the deliberate exception: a manufacturer combination evaluated
+ * as one formulation in trials, so a claim about the combination is supported.
+ *
  * ── On "CLOW" ──────────────────────────────────────────────────────────
  *
  * Raised in founder review and **deliberately not added**. GLOW and KLOW have
@@ -32,7 +43,7 @@
  */
 
 import type { CatalogSeed } from './seed';
-import { pubmed } from './seed';
+import { pubmed, trialProgram } from './seed';
 
 export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
   {
@@ -47,8 +58,14 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
       { definitionId: 'catalog:tb-500' },
     ],
     research: {
-      summary:
-        'A community- and vendor-named combination of GHK-Cu, BPC-157 and TB-500. The name identifies which compounds are present.',
+      overview:
+        'GLOW is a vendor and community name for a mix of three research compounds sold together — GHK-Cu, BPC-157 and TB-500. It is usually discussed for skin and recovery, reflecting what its components are individually researched for. The name identifies which compounds are present, not how much of each.',
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'A supplier-named combination rather than a developed product. No clinical programme exists for the blend, and none of its components is an FDA-approved drug.',
+      },
       researchStatus: 'Not FDA-approved. None of the components is an FDA-approved drug.',
       evidenceLevel: 'limited',
       blendCaveat: true,
@@ -68,8 +85,14 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
       { definitionId: 'catalog:kpv' },
     ],
     research: {
-      summary:
-        'The GLOW combination with KPV added — the K in the name.',
+      overview:
+        'KLOW is the GLOW combination with KPV added — the K in the name. KPV is researched for inflammation, which is what the fourth component adds to the mix. As with GLOW, the name says which compounds are present, not the amounts.',
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'A supplier-named combination rather than a developed product. No clinical programme exists for the blend.',
+      },
       researchStatus: 'Not FDA-approved. None of the components is an FDA-approved drug.',
       evidenceLevel: 'limited',
       blendCaveat: true,
@@ -84,8 +107,13 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Blend · BPC-157 / TB-500',
     components: [{ definitionId: 'catalog:bpc-157' }, { definitionId: 'catalog:tb-500' }],
     research: {
-      summary:
-        'The most commonly encountered two-component tissue-research blend, sold under a range of vendor names.',
+      overview:
+        'The most commonly encountered two-component recovery blend, sold under a range of vendor names. Both components are researched for tissue repair, which is why they are so often paired.',
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary: 'A supplier-named combination. No clinical programme exists for the blend.',
+      },
       researchStatus: 'Not FDA-approved. Neither component is an FDA-approved drug.',
       evidenceLevel: 'limited',
       blendCaveat: true,
@@ -103,8 +131,13 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
       { definitionId: 'catalog:ipamorelin' },
     ],
     research: {
-      summary:
-        'The most commonly encountered growth-hormone research pairing: a GHRH analog alongside a ghrelin-receptor secretagogue, two different mechanisms rather than two of the same. This is the DAC-free variant: the DAC form has a far longer duration of action and is a different compound, so the two are never treated as interchangeable here.',
+      overview:
+        'The most commonly encountered growth-hormone research pairing. The two components work through different routes — one signals the pituitary directly, the other acts on the ghrelin receptor — which is why they are combined rather than doubled up. This is the DAC-free variant; the DAC form lasts far longer in the body and is a different compound.',
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary: 'A supplier-named combination. No clinical programme exists for the blend.',
+      },
       researchStatus: 'Not FDA-approved. Neither component is an FDA-approved drug.',
       evidenceLevel: 'limited',
       blendCaveat: true,
@@ -119,8 +152,14 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Blend · Semax / Selank',
     components: [{ definitionId: 'catalog:semax' }, { definitionId: 'catalog:selank' }],
     research: {
-      summary:
-        'A combination of the two Russian-developed research peptides Semax and Selank. Each has its own research literature.',
+      overview:
+        'A combination of Semax and Selank, two research peptides developed in Russia and often used together — one studied for focus and cognition, the other for anxiety. Each has its own research literature; the pairing does not.',
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'Both components are registered medicines in Russia, but the combination is not a developed product and has no US programme.',
+      },
       // The blend's own status leads. Describing only the components' status
       // leaves the thing the user is actually holding unaddressed.
       researchStatus:
@@ -138,10 +177,26 @@ export const BLEND_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Blend · Cagrilintide / Semaglutide',
     components: [{ definitionId: 'catalog:cagrilintide' }, { definitionId: 'catalog:semaglutide' }],
     research: {
-      summary:
-        'A manufacturer-developed fixed-dose combination of cagrilintide and semaglutide — unlike the vendor blends in this group, it is a defined investigational product evaluated as a single formulation in clinical trials.',
+      overview:
+        'CagriSema is a manufacturer-developed combination of cagrilintide and semaglutide in one injection. Unlike the vendor blends in this group it is a defined investigational product that has been tested as a single formulation in clinical trials, which is why it is the one blend here with real trial evidence behind the combination itself.',
+      claims: [
+        {
+          title: 'Weight & Appetite',
+          summary:
+            'Late-stage trials have evaluated weight reduction from the combination itself, not only from its components separately.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
       studiedFor: ['obesity & weight management', 'type 2 diabetes'],
       researchStatus: 'Investigational; not FDA-approved.',
+      developmentStatus: {
+        stage: 'phase-3',
+        label: 'Phase 3',
+        summary:
+          'Evaluated in the late-stage REDEFINE programme as a single fixed-dose combination.',
+        lastUpdated: 'August 2026',
+        references: [trialProgram('ClinicalTrials.gov — REDEFINE programme', 'REDEFINE CagriSema')],
+      },
       evidenceLevel: 'human-clinical',
       // Deliberately no caveat: this combination has been studied as a
       // combination, which is precisely what the caveat exists to flag when

@@ -21,7 +21,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Melanocortin agonist',
     aliases: ['Afamelanotide', 'Scenesse', 'MT-1'],
     research: {
-      summary:
+      overview:
         'A synthetic analog of alpha-melanocyte-stimulating hormone acting at melanocortin receptors, principally MC1R. Approved as afamelanotide (Scenesse) as an implant.',
       studiedFor: ['erythropoietic protoporphyria', 'photoprotection'],
       targets: ['MC1 receptor'],
@@ -39,8 +39,42 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Melanocortin agonist',
     aliases: ['MT-2', 'MT-II'],
     research: {
-      summary:
-        'A non-selective melanocortin receptor agonist, active at MC1R, MC3R, MC4R and MC5R. Unlike Melanotan I, it has never been approved anywhere.',
+      overview:
+        'Melanotan II is a research compound that acts on the body\u2019s pigmentation and appetite signalling systems. It is most commonly discussed for skin tanning without sun exposure. Unlike Melanotan I it has never been approved anywhere, and several regulators have issued safety warnings about products sold under this name.',
+      claims: [
+        {
+          title: 'Pigmentation',
+          summary:
+            'Commonly claimed and researched for skin darkening through melanin production. Early human research explored this; it was never developed into an approved product.',
+          evidenceLevel: 'early-human',
+        },
+        {
+          title: 'Appetite & Sexual Arousal',
+          summary:
+            'Also commonly discussed for appetite and arousal effects, reflecting its action at several melanocortin receptors, although direct human evidence is limited.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'MC1 receptor',
+          title: 'Pigmentation signalling',
+          explanation:
+            'MC1R is the receptor that triggers melanin production in skin cells — the same system that responds to sun exposure.',
+        },
+        {
+          target: 'MC3 / MC4 receptors',
+          title: 'Appetite and arousal signalling',
+          explanation:
+            'These receptors take part in appetite regulation and sexual arousal pathways, which is why a non-selective compound affects more than pigmentation.',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'No active approval programme. Regulators including the FDA and several European agencies have published warnings about products sold under this name.',
+      },
       studiedFor: ['pigmentation in early research', 'melanocortin signalling'],
       targets: ['MC1 receptor', 'MC3 receptor', 'MC4 receptor', 'MC5 receptor'],
       researchStatus:
@@ -57,8 +91,29 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Melanocortin agonist',
     aliases: ['PT-141', 'Vyleesi'],
     research: {
-      summary:
-        'A melanocortin receptor agonist and a metabolite of Melanotan II, developed as a distinct compound. Approved as Vyleesi.',
+      overview:
+        'Bremelanotide is an approved medicine, sold as Vyleesi, for low sexual desire in premenopausal women. It acts on brain pathways involved in arousal rather than on blood flow, which is what distinguishes it from erectile-dysfunction drugs. It is also widely sold as a research chemical under the name PT-141 — that material is not the approved product.',
+      claims: [
+        {
+          title: 'Sexual Arousal',
+          summary:
+            'Clinical trials supporting approval measured improvements in sexual desire and related distress in premenopausal women.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'MC4 receptor',
+          title: 'Melanocortin arousal pathway',
+          explanation:
+            'Acts on melanocortin receptors in the brain that take part in sexual arousal signalling, rather than acting on blood vessels.',
+        },
+      ],
+      developmentStatus: {
+        stage: 'approved',
+        label: 'FDA Approved',
+        summary: 'Approved in the United States as Vyleesi for hypoactive sexual desire disorder in premenopausal women.',
+      },
       studiedFor: ['hypoactive sexual desire disorder'],
       targets: ['MC3 receptor', 'MC4 receptor'],
       researchStatus:
@@ -75,7 +130,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Kisspeptin fragment',
     aliases: ['KP-10', 'Metastin (45-54)'],
     research: {
-      summary:
+      overview:
         'A 10-amino-acid fragment of kisspeptin acting at the KISS1 receptor, upstream of GnRH release. Studied in reproductive endocrinology research.',
       studiedFor: ['reproductive hormone signalling in clinical research'],
       targets: ['KISS1 receptor'],
@@ -92,7 +147,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'GnRH analog',
     aliases: ['GnRH', 'LHRH', 'Factrel'],
     research: {
-      summary:
+      overview:
         'Synthetic gonadotropin-releasing hormone, the decapeptide that stimulates LH and FSH release from the pituitary.',
       studiedFor: ['diagnostic assessment of pituitary function', 'reproductive endocrinology'],
       targets: ['GnRH receptor'],
@@ -110,7 +165,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'GnRH agonist',
     aliases: ['Trelstar', 'Decapeptyl'],
     research: {
-      summary:
+      overview:
         'A long-acting GnRH agonist. Sustained receptor stimulation ultimately suppresses gonadotropin release, which is the basis of its clinical use.',
       studiedFor: ['prostate cancer', 'endometriosis', 'central precocious puberty'],
       targets: ['GnRH receptor'],
@@ -127,7 +182,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Gonadotropin',
     aliases: ['hCG', 'Chorionic gonadotropin', 'Pregnyl', 'Ovidrel'],
     research: {
-      summary:
+      overview:
         'A glycoprotein hormone that acts at the LH receptor. A full glycoprotein rather than a peptide, despite being commonly grouped with them.',
       studiedFor: ['ovulation induction', 'hypogonadotropic hypogonadism', 'cryptorchidism'],
       targets: ['LH / hCG receptor'],
@@ -145,7 +200,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Neurohypophyseal peptide',
     aliases: ['Pitocin', 'Syntocinon'],
     research: {
-      summary:
+      overview:
         'A nonapeptide hormone produced in the hypothalamus, acting at the oxytocin receptor. Widely studied in both obstetric and social-neuroscience contexts.',
       studiedFor: ['labour induction', 'social & affiliative behaviour in research'],
       targets: ['Oxytocin receptor'],
@@ -162,7 +217,7 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Pro-apoptotic peptidomimetic',
     aliases: ['FTPP', 'Prohibitin-targeting peptide'],
     research: {
-      summary:
+      overview:
         'A peptidomimetic designed to target prohibitin in the vasculature supporting white adipose tissue. Studied in animal models.',
       studiedFor: ['obesity in animal models'],
       targets: ['Prohibitin'],
@@ -178,11 +233,39 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'small-molecule',
     category: 'NNMT inhibitor',
     research: {
-      summary:
-        'A small molecule, not a peptide, though it is commonly sold and tracked alongside them. It inhibits nicotinamide N-methyltransferase and has been studied in animal models of metabolic disease.',
+      overview:
+        '5-Amino-1MQ is a small research molecule commonly tracked alongside peptides, though it is not one itself. It has mainly been studied for metabolic and body-composition-related effects. Almost all of that work has been in animals and cells rather than people.',
+      claims: [
+        {
+          title: 'Body Composition',
+          summary:
+            'Animal research has examined whether it affects fat accumulation and body weight. There is no meaningful human evidence.',
+          evidenceLevel: 'preclinical',
+        },
+        {
+          title: 'Energy Metabolism',
+          summary:
+            'Laboratory work has looked at effects on how cells use energy. Commonly discussed in this context, although direct human evidence is limited.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'NNMT',
+          title: 'Blocking the NNMT enzyme',
+          explanation:
+            'NNMT is an enzyme involved in cellular metabolism. 5-Amino-1MQ is designed to inhibit it, which researchers have studied for possible downstream effects on energy use and fat metabolism.',
+        },
+      ],
       studiedFor: ['metabolic regulation in animal models'],
       targets: ['Nicotinamide N-methyltransferase (NNMT)'],
       researchStatus: 'Not FDA-approved. A research compound.',
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'No known clinical trial programme. Research has been conducted in animal and laboratory models.',
+      },
       evidenceLevel: 'preclinical',
       references: [pubmed('5-amino-1MQ NNMT')],
     },
@@ -195,8 +278,28 @@ export const ENDOCRINE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Dinucleotide coenzyme',
     aliases: ['Nicotinamide adenine dinucleotide'],
     research: {
-      summary:
-        'A coenzyme central to cellular metabolism. Not a peptide — a dinucleotide — but very commonly tracked alongside them, so it is listed with its chemistry stated honestly.',
+      overview:
+        'NAD+ is a molecule every cell uses to convert food into energy. It is not a peptide, but it is very commonly tracked alongside them, so it is listed here with its chemistry stated plainly. Levels fall with age, which is why it appears so often in longevity research.',
+      claims: [
+        {
+          title: 'Cellular Energy',
+          summary:
+            'Research has examined its role in how cells produce and use energy. This part is well established biochemistry.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Ageing & Longevity',
+          summary:
+            'Commonly claimed for anti-ageing effects. Human evidence that raising NAD+ levels changes ageing outcomes is limited, and most supporting work is in animals.',
+          evidenceLevel: 'preclinical',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'Sold as a supplement in some forms rather than developed as a drug. The FDA placed injectable NAD+ on its category 2 compounding list in 2023.',
+      },
       studiedFor: ['cellular metabolism', 'ageing biology in research settings'],
       researchStatus:
         'Available as a supplement in some forms. Injectable NAD+ is not FDA-approved; the FDA placed it on the category 2 compounding list in 2023.',

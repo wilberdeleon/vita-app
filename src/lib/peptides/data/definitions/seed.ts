@@ -41,6 +41,32 @@ export function trials(term: string): ResearchReference {
   };
 }
 
+/**
+ * A specific ClinicalTrials.gov programme search, e.g. "TRIUMPH retatrutide".
+ *
+ * More specific than a bare compound search: it points at the actual trial
+ * programme a claim rests on, which is the difference between "there is
+ * literature" and "here is the study behind this sentence".
+ */
+export function trialProgram(label: string, term: string): ResearchReference {
+  return {
+    label,
+    url: `https://clinicaltrials.gov/search?term=${encodeURIComponent(term)}`,
+    sourceType: 'clinical-trial',
+  };
+}
+
+/**
+ * A sponsor announcement, for development-stage facts.
+ *
+ * Only ever used with a verified URL. Pipeline status is the one kind of
+ * content here that expires, so it is sourced to the primary announcement
+ * rather than to a database search.
+ */
+export function sponsor(label: string, url: string): ResearchReference {
+  return { label, url, sourceType: 'manufacturer' };
+}
+
 /** The FDA's approved-drug database, for anything whose approval status matters. */
 export function fdaLabel(term: string): ResearchReference {
   return {

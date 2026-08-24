@@ -20,7 +20,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Recombinant human growth hormone',
     aliases: ['HGH', 'Human growth hormone', 'rhGH'],
     research: {
-      summary:
+      overview:
         'Recombinant human growth hormone — a 191-amino-acid protein rather than a short peptide. Approved for a range of growth-hormone-related conditions.',
       studiedFor: ['growth hormone deficiency', 'short stature of several causes', 'HIV-associated wasting'],
       targets: ['Growth hormone receptor'],
@@ -37,8 +37,29 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'GHRH analog',
     aliases: ['Egrifta'],
     research: {
-      summary:
-        'A stabilized analog of growth-hormone-releasing hormone that acts at the GHRH receptor to stimulate the body’s own growth hormone release.',
+      overview:
+        'Tesamorelin is an approved medicine, sold as Egrifta, used to reduce excess abdominal fat in people with HIV-associated lipodystrophy. It works by prompting the body to release its own growth hormone. It is the only GHRH analog in this catalog with FDA approval.',
+      claims: [
+        {
+          title: 'Abdominal Fat',
+          summary:
+            'Approved on the basis of trials measuring reduction in visceral abdominal fat in people with HIV-associated lipodystrophy.',
+          evidenceLevel: 'approved-use',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'GHRH receptor',
+          title: 'Prompting your own growth hormone',
+          explanation:
+            'Stimulates the pituitary to release growth hormone in the body’s own pattern, rather than supplying growth hormone directly.',
+        },
+      ],
+      developmentStatus: {
+        stage: 'approved',
+        label: 'FDA Approved',
+        summary: 'Approved in the United States for reduction of excess abdominal fat in HIV-associated lipodystrophy.',
+      },
       studiedFor: ['HIV-associated lipodystrophy'],
       targets: ['GHRH receptor'],
       researchStatus: 'FDA-approved for reduction of excess abdominal fat in HIV-associated lipodystrophy.',
@@ -54,8 +75,24 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'GHRH analog',
     aliases: ['GHRH (1-29)', 'Geref'],
     research: {
-      summary:
-        'The first 29 amino acids of growth-hormone-releasing hormone — the shortest fragment that retains activity at the GHRH receptor.',
+      overview:
+        'Sermorelin is a shortened version of the body’s own growth-hormone-releasing hormone. It was once an approved US medicine and is now supplied mainly through compounding pharmacies. It prompts the pituitary to release growth hormone rather than supplying the hormone itself.',
+      claims: [
+        {
+          title: 'Growth Hormone Release',
+          summary:
+            'Clinical studies supported its former approved use, including as a diagnostic test of pituitary function.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
+      developmentStatus: {
+        stage: 'discontinued',
+        label: 'Discontinued',
+        summary:
+          'Approved as Geref and withdrawn from the US market in 2008 by the manufacturer. This was a commercial withdrawal, not an FDA safety action and not a rejected application.',
+        lastUpdated: 'August 2026',
+        references: [fdaLabel('Sermorelin')],
+      },
       studiedFor: ['growth hormone deficiency', 'diagnostic assessment of growth hormone secretion'],
       targets: ['GHRH receptor'],
       researchStatus:
@@ -72,8 +109,29 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'GHRH analog',
     aliases: ['CJC-1295 DAC', 'DAC:GRF'],
     research: {
-      summary:
-        'A modified GHRH analog carrying a Drug Affinity Complex (DAC) that binds albumin, substantially extending its half-life compared with the DAC-free form.',
+      overview:
+        'CJC-1295 with DAC is a research peptide that signals the pituitary to release growth hormone. The DAC attachment binds it to a blood protein so it lasts far longer in the body than the DAC-free form — the two are genuinely different compounds and are not interchangeable.',
+      claims: [
+        {
+          title: 'Growth Hormone Release',
+          summary:
+            'Early human research examined sustained increases in growth hormone and IGF-1 levels, reflecting the extended duration the DAC provides.',
+          evidenceLevel: 'early-human',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'GHRH receptor',
+          title: 'Prompting your own growth hormone',
+          explanation:
+            'The receptor the body’s own growth-hormone-releasing hormone acts on. Stimulating it prompts the pituitary to release growth hormone, rather than supplying the hormone directly.',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary: 'Studied in early human research but with no known active approval programme.',
+      },
       studiedFor: ['growth hormone secretion in early human studies'],
       targets: ['GHRH receptor'],
       researchStatus: 'Not FDA-approved. Studied in early human research; sold as a research chemical.',
@@ -89,7 +147,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'GHRH analog',
     aliases: ['Mod GRF 1-29', 'Modified GRF (1-29)', 'CJC-1295 DAC-free'],
     research: {
-      summary:
+      overview:
         'A modified GHRH (1-29) analog without the albumin-binding DAC, giving it a much shorter duration of action than the DAC form. In common ecosystem usage this name and "Mod GRF 1-29" refer to the same compound.',
       studiedFor: ['growth hormone secretion in early research'],
       targets: ['GHRH receptor'],
@@ -105,8 +163,35 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'peptide',
     category: 'Growth hormone secretagogue',
     research: {
-      summary:
-        'A pentapeptide that acts at the ghrelin (growth hormone secretagogue) receptor. Characterised in research as relatively selective compared with earlier secretagogues.',
+      overview:
+        'Ipamorelin is a research peptide that prompts the body to release its own growth hormone, rather than supplying growth hormone directly. It is one of the most commonly tracked compounds in this group, usually because it is described as more selective than the older secretagogues.',
+      claims: [
+        {
+          title: 'Growth Hormone Release',
+          summary:
+            'Early human research has explored short-term increases in the body’s own growth hormone output.',
+          evidenceLevel: 'early-human',
+        },
+        {
+          title: 'Recovery & Body Composition',
+          summary:
+            'Commonly claimed for recovery, sleep and body composition on the basis of raised growth hormone, although direct human evidence for those downstream effects is limited.',
+          evidenceLevel: 'limited',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'Ghrelin / GHS-R1a receptor',
+          title: 'Ghrelin receptor',
+          explanation:
+            'The receptor that responds to ghrelin, the hormone signalling hunger. Activating it also triggers a pulse of growth hormone from the pituitary — the effect these compounds are researched for.',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary: 'Studied in early human research but with no known active approval programme.',
+      },
       studiedFor: ['growth hormone release', 'post-operative gastrointestinal motility in early trials'],
       targets: ['Ghrelin / GHS-R1a receptor'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
@@ -122,7 +207,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Growth hormone secretagogue',
     aliases: ['Pralmorelin'],
     research: {
-      summary:
+      overview:
         'A synthetic growth hormone releasing peptide acting at the ghrelin receptor. Used in some countries as a diagnostic agent for growth hormone secretion.',
       studiedFor: ['growth hormone release', 'diagnostic assessment of growth hormone secretion'],
       targets: ['Ghrelin / GHS-R1a receptor'],
@@ -138,7 +223,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'peptide',
     category: 'Growth hormone secretagogue',
     research: {
-      summary:
+      overview:
         'One of the earliest synthetic growth hormone releasing peptides, acting at the ghrelin receptor. Notably associated in research with appetite signalling.',
       studiedFor: ['growth hormone release', 'appetite signalling'],
       targets: ['Ghrelin / GHS-R1a receptor'],
@@ -155,7 +240,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Growth hormone secretagogue',
     aliases: ['Examorelin'],
     research: {
-      summary:
+      overview:
         'A synthetic hexapeptide growth hormone secretagogue. Research has also examined effects at the CD36 receptor independent of growth hormone release.',
       studiedFor: ['growth hormone release', 'cardiac tissue in preclinical research'],
       targets: ['Ghrelin / GHS-R1a receptor', 'CD36'],
@@ -172,8 +257,36 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'Growth hormone secretagogue',
     aliases: ['Ibutamoren', 'Ibutamoren mesylate', 'MK-0677'],
     research: {
-      summary:
-        'An orally active small molecule, not a peptide, though it is routinely grouped with them. It acts at the ghrelin receptor and has been evaluated in human trials.',
+      overview:
+        'MK-677 is an orally active research compound — not a peptide, though it is routinely sold beside them. It raises the body’s own growth hormone and IGF-1 levels, and unlike most compounds here it has been through genuine human trials.',
+      claims: [
+        {
+          title: 'Growth Hormone & IGF-1',
+          summary:
+            'Human trials have reported sustained increases in growth hormone and IGF-1 levels with daily oral use.',
+          evidenceLevel: 'human-clinical',
+        },
+        {
+          title: 'Body Composition',
+          summary:
+            'Trials have measured changes in lean mass. Increased appetite and water retention are commonly reported alongside.',
+          evidenceLevel: 'human-clinical',
+        },
+      ],
+      mechanisms: [
+        {
+          target: 'Ghrelin / GHS-R1a receptor',
+          title: 'Ghrelin receptor',
+          explanation:
+            'Acts on the same receptor as the hunger hormone ghrelin. Activating it triggers growth hormone release — and, through the same pathway, appetite.',
+        },
+      ],
+      developmentStatus: {
+        stage: 'not-in-clinical-development',
+        label: 'Not in Clinical Development',
+        summary:
+          'Studied in human trials over many years but never brought to approval. No known active programme.',
+      },
       studiedFor: ['growth hormone & IGF-1 levels', 'body composition', 'age-related decline in growth hormone'],
       targets: ['Ghrelin / GHS-R1a receptor'],
       researchStatus: 'Investigational; not FDA-approved.',
@@ -188,7 +301,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'peptide',
     category: 'Growth hormone fragment',
     research: {
-      summary:
+      overview:
         'A modified fragment of human growth hormone corresponding to residues 177-191 with an added tyrosine. Distinct from the unmodified HGH Fragment 176-191, which is listed separately.',
       studiedFor: ['fat metabolism', 'obesity in early human trials'],
       researchStatus: 'Investigational; not FDA-approved as a drug.',
@@ -203,7 +316,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'peptide',
     category: 'Growth hormone fragment',
     research: {
-      summary:
+      overview:
         'The C-terminal fragment of human growth hormone spanning residues 176-191. Frequently conflated with AOD-9604, which is a modified version of a slightly different span — the two are kept as separate entries here because they are not the same molecule.',
       studiedFor: ['fat metabolism in preclinical research'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
@@ -219,7 +332,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'IGF-1 analog',
     aliases: ['Long R3 IGF-1'],
     research: {
-      summary:
+      overview:
         'A modified analog of insulin-like growth factor 1 with reduced binding to IGF binding proteins, extending its activity. Widely used as a cell-culture reagent.',
       studiedFor: ['cell growth & proliferation in laboratory research'],
       targets: ['IGF-1 receptor'],
@@ -236,7 +349,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'IGF-1 analog',
     aliases: ['DES(1-3) IGF-1'],
     research: {
-      summary:
+      overview:
         'A truncated IGF-1 analog missing the first three N-terminal amino acids, which reduces binding-protein affinity.',
       studiedFor: ['cell growth in laboratory research'],
       targets: ['IGF-1 receptor'],
@@ -253,7 +366,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     category: 'IGF-1 splice variant',
     aliases: ['MGF', 'IGF-1Ec'],
     research: {
-      summary:
+      overview:
         'A splice variant of IGF-1 expressed in muscle in response to mechanical loading, studied in muscle tissue research.',
       studiedFor: ['muscle tissue repair in preclinical research'],
       researchStatus: 'Not FDA-approved. Sold as a research chemical.',
@@ -268,7 +381,7 @@ export const GROWTH_HORMONE_DEFINITIONS: readonly CatalogSeed[] = [
     compoundType: 'protein',
     category: 'Myostatin-binding protein',
     research: {
-      summary:
+      overview:
         'A recombinant form of follistatin, a protein that binds and inhibits members of the TGF-β family including myostatin. Studied in muscle biology research.',
       studiedFor: ['muscle mass regulation in preclinical research'],
       targets: ['Myostatin', 'Activin'],

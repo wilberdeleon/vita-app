@@ -122,7 +122,14 @@ describe('compounds that are commonly conflated stay separate', () => {
     expect(tb500).toBeDefined();
     expect(tb4).toBeDefined();
     expect(tb500?.id).not.toBe(tb4?.id);
-    expect(tb500?.research?.summary).toContain('not the same molecule');
+
+    // Asserts the *substance* of the distinction rather than one phrasing —
+    // TB-500's page must say it is a fragment of the full protein, and the
+    // full protein's page must say it is not TB-500.
+    const tb500Text = (tb500?.research?.overview ?? '').toLowerCase();
+    expect(tb500Text).toContain('fragment');
+    expect(tb500Text).toContain('thymosin beta-4');
+    expect((tb4?.research?.overview ?? '').toLowerCase()).toContain('tb-500');
   });
 
   it('keeps AOD-9604 and HGH Fragment 176-191 as distinct entries', () => {
@@ -130,7 +137,7 @@ describe('compounds that are commonly conflated stay separate', () => {
     const fragment = findCatalogDefinition('catalog:hgh-fragment-176-191');
     expect(aod).toBeDefined();
     expect(fragment).toBeDefined();
-    expect(fragment?.research?.summary).toContain('not the same molecule');
+    expect(fragment?.research?.overview).toContain('not the same molecule');
   });
 });
 
@@ -320,7 +327,7 @@ describe('the CJC + Ipamorelin blend (slice 3.5B)', () => {
   });
 
   it('explains that the two CJC forms are not interchangeable', () => {
-    expect(blend?.research?.summary).toContain('DAC-free variant');
+    expect(blend?.research?.overview).toContain('DAC-free variant');
   });
 });
 
@@ -333,7 +340,7 @@ describe('prose renders as written', () => {
   it('contains no markdown emphasis anywhere in editorial content', () => {
     for (const entry of PEPTIDE_CATALOG) {
       const prose = [
-        entry.research?.summary ?? '',
+        entry.research?.overview ?? '',
         entry.research?.researchStatus ?? '',
         ...(entry.research?.studiedFor ?? []),
         ...(entry.research?.targets ?? []),

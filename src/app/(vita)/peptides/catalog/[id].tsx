@@ -3,7 +3,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../../components/ui';
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
+import { DevelopmentStatusBlock } from '../../../../features/peptides/components/DevelopmentStatusBlock';
 import { InfoTags } from '../../../../features/peptides/components/InfoTags';
+import { Mechanisms } from '../../../../features/peptides/components/Mechanisms';
+import { ResearchClaims } from '../../../../features/peptides/components/ResearchClaims';
 import {
   evidenceLabel,
   formatLabel,
@@ -120,10 +123,29 @@ export default function PeptideDetail() {
         </>
       ) : null}
 
-      {research?.summary ? (
+      {research?.overview ? (
         <>
           <SectionHeader title="About" />
-          <Text style={[styles.body, { color: surfaces.textSecondary }]}>{research.summary}</Text>
+          <Text style={[styles.body, { color: surfaces.textSecondary }]}>{research.overview}</Text>
+        </>
+      ) : null}
+
+      {/*
+        * What it is claimed or researched to do, before how it works. A reader
+        * who wants the mechanism will scroll; a reader who wants to know why
+        * anyone tracks the compound should not have to.
+        */}
+      {research?.claims && research.claims.length > 0 ? (
+        <>
+          <SectionHeader title="Research claims" />
+          <ResearchClaims claims={research.claims} />
+        </>
+      ) : null}
+
+      {research?.mechanisms && research.mechanisms.length > 0 ? (
+        <>
+          <SectionHeader title="How it works" />
+          <Mechanisms mechanisms={research.mechanisms} />
         </>
       ) : null}
 
@@ -152,6 +174,23 @@ export default function PeptideDetail() {
         <>
           <SectionHeader title="Targets" />
           <InfoTags values={research.targets} label="Targets" />
+        </>
+      ) : null}
+
+      {/*
+        * "Approval status" for an approved medicine, "Development status"
+        * otherwise — the same block answering the question each reader
+        * actually has. An approved drug has no phase to report, and inventing
+        * one would be nonsense.
+        */}
+      {research?.developmentStatus ? (
+        <>
+          <SectionHeader
+            title={
+              definition.classification === 'approved-medication' ? 'Approval status' : 'Development status'
+            }
+          />
+          <DevelopmentStatusBlock status={research.developmentStatus} />
         </>
       ) : null}
 
@@ -185,7 +224,7 @@ export default function PeptideDetail() {
         </>
       ) : null}
 
-      {!research?.summary ? (
+      {!research?.overview ? (
         /*
          * Honest about a gap rather than filling it. A definition with no
          * reviewed summary still has a real identity worth tracking; inventing

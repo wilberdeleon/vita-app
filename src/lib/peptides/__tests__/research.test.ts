@@ -20,7 +20,7 @@ const PROSE: { id: string; field: string; text: string }[] = PEPTIDE_CATALOG.fla
   const research = entry.research;
   if (!research) return [];
   return [
-    ...(research.summary ? [{ id: entry.id, field: 'summary', text: research.summary }] : []),
+    ...(research.overview ? [{ id: entry.id, field: 'overview', text: research.overview }] : []),
     ...(research.researchStatus
       ? [{ id: entry.id, field: 'researchStatus', text: research.researchStatus }]
       : []),
@@ -188,7 +188,7 @@ describe('research status', () => {
 describe('sources', () => {
   it('accompany every summary', () => {
     for (const entry of PEPTIDE_CATALOG) {
-      if (!entry.research?.summary) continue;
+      if (!entry.research?.overview) continue;
       expect(entry.research.references?.length ?? 0).toBeGreaterThan(0);
     }
   });
@@ -236,7 +236,7 @@ describe('sources', () => {
 
 describe('coverage of the research content itself', () => {
   it('gives most entries a summary', () => {
-    const withSummary = PEPTIDE_CATALOG.filter((entry) => entry.research?.summary);
+    const withSummary = PEPTIDE_CATALOG.filter((entry) => entry.research?.overview);
     expect(withSummary.length / PEPTIDE_CATALOG.length).toBeGreaterThan(0.85);
   });
 
@@ -247,7 +247,7 @@ describe('coverage of the research content itself', () => {
    */
   it('keeps entries without a summary honest rather than empty', () => {
     for (const entry of PEPTIDE_CATALOG) {
-      if (entry.research?.summary) continue;
+      if (entry.research?.overview) continue;
       expect(entry.category).toBeTruthy();
       if (entry.research) {
         expect(entry.research.researchStatus).toBeTruthy();
