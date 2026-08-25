@@ -56,6 +56,16 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
 
+**Slice 3.6C (2026-08-25) made the calculator say one thing.** It answers a single question — *given this concentration and this amount, how many units is that?* — and the screen now says nothing more than that.
+
+**Units are the only answer.** There is no second result in mcg, no reverse "how many mcg is 15 units" converter, and no conversion table. VITA still works in micrograms internally because that is what keeps the arithmetic exact, but you never see them: extra numbers only compete to be the one you act on, and only one of them ends up in a syringe. The answer is the one large figure on the card; equivalent volume, concentration and the working sit quietly underneath.
+
+**"Amount being used" is now just "Amount"**, under a section headed **Unit calculator**.
+
+**Switching mg ⇄ mcg now converts your number rather than reinterpreting it.** Type `2 mg`, tap mcg, and it becomes `2000 mcg` — the same physical amount, and the answer stays at 20 units. Getting this wrong would have shifted the amount by a thousandfold with the digits sitting still, so it is checked in both directions, including when you are half-way through typing a decimal.
+
+**Changing "Preferred unit" no longer disturbs an amount you already typed.** The preference sets the calculator's starting unit and then leaves it alone; they are separate things.
+
 **Slice 3.6B (2026-08-25) rebuilt where the calculator lives.** The first version made you create and save a tracked peptide before you could reach it — which is backwards, because working out how many units to draw is a question you ask *before* you commit to anything, usually with a vial already in your hand.
 
 **It is now in two places, and they are the same calculator.** Inside a peptide setup it sits directly under the vial fields and **works while you are still filling the form in** — enter 20 mg, 2 mL and 2 mg and it says 20 units, before you have saved a thing. And it stands on its own at **Settings → Tools → Peptide Calculator**, where it needs no peptide, no catalog entry and no setup at all.

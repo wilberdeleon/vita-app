@@ -5,6 +5,7 @@ import {
   MASS_UNITS,
   calculateSyringeUnits,
   doseConsistencyNotes,
+  fromMcg,
   toMcg,
   type DoseCalculationError,
   type DoseCalculationResult,
@@ -84,8 +85,42 @@ export function DoseCalculatorPanel({
 
   /** Blank. VITA supplies no amount, not even a plausible-looking one. */
   const [amount, setAmount] = useState('');
-  const [unit, setUnit] = useState<MassUnit | null>(null);
-  const amountUnit = unit ?? defaultAmountUnit ?? 'mg';
+
+  /**
+   * Seeded from the setup's display preference **once**, then independent.
+   *
+   * Reading the preference on every render would mean changing *Preferred
+   * unit* lower down the form silently reinterpreted the number already typed
+   * here — `2 mg` becoming `2 mcg` without the digits moving. The two are
+   * separate concepts (slice 3.5's founder correction on Water said the same
+   * thing about display units), so the preference seeds this and nothing more.
+   */
+  const [amountUnit, setAmountUnit] = useState<MassUnit>(defaultAmountUnit ?? 'mg');
+
+  /**
+   * Switching mg ⇄ mcg converts the number rather than reinterpreting it.
+   *
+   * `2 mg` becomes `2000 mcg`, not `2 mcg`: the user is restating the same
+   * physical amount in different words, so the syringe result must not move.
+   * Reinterpreting would silently change the amount by a factor of a thousand
+   * — the most dangerous possible failure on this screen.
+   *
+   * Only a genuinely parseable positive value is rewritten. Text that is
+   * blank or mid-typing is left exactly as it is, so switching units can
+   * never destroy what someone was in the middle of writing.
+   */
+  const changeAmountUnit = (next: MassUnit) => {
+    if (next === amountUnit) return;
+    const text = amount.trim();
+    // A *complete* number only. `Number('1.')` is 1, so parsing alone would
+    // rewrite someone half-way through typing "1.5" as "1000".
+    const complete = /^\d*\.?\d+$/.test(text);
+    const parsed = Number(text);
+    if (complete && parsed > 0) {
+      setAmount(String(fromMcg(toMcg(parsed, amountUnit), next)));
+    }
+    setAmountUnit(next);
+  };
 
   const vial = useMemo(
     () => ({ vialAmountMcg, reconstitutionMl, unitsPerMl }),
@@ -116,23 +151,23 @@ export function DoseCalculatorPanel({
 
   return (
     <>
-      <SectionHeader title="Calculator" />
+      <SectionHeader title="Unit calculator" />
 
       <View style={styles.amountRow}>
         <View style={styles.amountField}>
           <NumericField
-            label="Amount being used"
+            label="Amount"
             placeholder="e.g. 2"
             value={amount}
             onChangeText={setAmount}
-            accessibilityLabel={`Amount being used, in ${amountUnit}`}
+            accessibilityLabel={`Amount, in ${amountUnit}`}
           />
         </View>
         <View style={styles.unitControl}>
           <SegmentedTabs
             options={MASS_UNITS as readonly string[]}
             selectedIndex={MASS_UNITS.indexOf(amountUnit)}
-            onChange={(index) => setUnit(MASS_UNITS[index])}
+            onChange={(index) => changeAmountUnit(MASS_UNITS[index])}
             activeColor={palette.peptide}
             groupLabel="Amount unit"
           />

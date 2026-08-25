@@ -78,24 +78,33 @@ export function DoseResult({ calculation, vialUnit, amountUnit }: Props) {
        * The value is never carried by colour alone — it is the largest text
        * on the screen and it is spoken in full.
        */}
+      {/*
+       * Syringe units are the whole answer, and the only thing set large.
+       * Volume and concentration explain it; they must not compete with it.
+       * A screen where three numbers are equally loud makes the reader decide
+       * which one to act on, which is the opposite of what a calculator is
+       * for.
+       */}
       <Animated.View
         style={{ opacity: fade }}
         accessible
         accessibilityRole="text"
-        accessibilityLabel={`Calculated syringe amount: ${units}. Equivalent to ${volume}.`}
+        accessibilityLabel={`Calculated syringe amount: ${units}`}
       >
         <Text style={[styles.value, { color: palette.peptide }]}>{units}</Text>
-        <Text style={[styles.equivalent, { color: surfaces.textSecondary }]}>
-          Equivalent to {volume}
-        </Text>
       </Animated.View>
 
       <View style={[styles.working, { borderTopColor: surfaces.border }]}>
+        <Text
+          style={[styles.workingLine, { color: surfaces.textSecondary }]}
+          accessibilityLabel={`Equivalent volume: ${volume}`}
+        >
+          Equivalent volume · {volume}
+        </Text>
         {/*
-         * Concentration gets its own labelled line rather than being folded
-         * into the working. It is the number that explains *why* the answer
-         * is what it is, and the one a user checks first when a result looks
-         * wrong — it deserves to be findable, not parsed out of an equation.
+         * Concentration is labelled rather than folded into the working: it
+         * explains *why* the answer is what it is, and it is the first thing
+         * a user checks when a result looks wrong.
          */}
         <Text
           style={[styles.workingLine, { color: surfaces.textSecondary }]}
@@ -104,7 +113,7 @@ export function DoseResult({ calculation, vialUnit, amountUnit }: Props) {
           Concentration · {concentration}
         </Text>
         <Text
-          style={[styles.workingLine, { color: surfaces.textSecondary }]}
+          style={[styles.workingLine, { color: surfaces.textTertiary }]}
           accessibilityLabel={`Working: ${amount} equals ${volume}, which is ${units}.`}
         >
           {amount} = {volume} = {units}
@@ -119,7 +128,7 @@ export function DoseResult({ calculation, vialUnit, amountUnit }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    gap: spacing.xs,
+    gap: 4,
   },
   label: {
     ...typography.micro,
@@ -127,10 +136,6 @@ const styles = StyleSheet.create({
   },
   value: {
     ...typography.display,
-  },
-  equivalent: {
-    ...typography.body,
-    marginTop: 2,
   },
   working: {
     borderTopWidth: StyleSheet.hairlineWidth,

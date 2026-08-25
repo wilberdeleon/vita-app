@@ -752,6 +752,49 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.6C — Final Unit Calculator UX Correction 🟡
+
+**Objective:** one simplification, from founder device review of 3.6B. The calculator answers a single question — *given this concentration and this amount, how many syringe units is that?* — and the interface should say nothing more than that.
+
+**Syringe units are the only output.** The domain still normalises to micrograms internally, but micrograms never surface as a *result*. No second mcg figure, no `1 unit = X mcg`, no units → mass converter, no quick-reference table. Every extra output would be another number competing to be the one the user acts on, and only one of them is drawn into a syringe. `calculateAmountFromUnits` stays in the domain, tested and unused by any screen — it is the inverse that keeps the forward maths honest, not a feature.
+
+**Result hierarchy rebuilt** so units are the only large number. Volume moved out from under the headline into the supporting block:
+
+```
+CALCULATED SYRINGE AMOUNT
+20 units                        ← the only display-size text
+─────────────────────────
+Equivalent volume · 0.2 mL
+Concentration · 10 mg/mL
+2 mg = 0.2 mL = 20 units        ← quieter still
+Using U-100 · 100 units/mL
+```
+
+**Renamed.** *Amount being used* → **Amount**; section header *Calculator* → **Unit calculator**. Shorter, neutral, and it still says whose number it is: the user supplies it, VITA converts it.
+
+**Switching mg ⇄ mcg now converts rather than reinterprets.** `2 mg` becomes `2000 mcg` and the answer does not move; `500 mcg` becomes `0.5 mg`. This is the single most dangerous thing the screen could get wrong — reinterpreting would shift the amount by a factor of a thousand while the digits sat still — so it is pinned by a round-trip test in both directions.
+
+Two guards on that conversion:
+
+- **Only a complete number is rewritten.** `Number('1.')` is `1`, so parsing alone would turn someone half-way through typing "1.5" into "1000". A `/^\d*\.?\d+$/` check means blank or mid-typing text is left exactly as it is.
+- **It is a single explicit action on press**, not an effect reacting to state, so there is no loop, no bouncing value, and no cursor fighting the user.
+
+**Preferred unit now seeds the calculator once and then lets go.** Previously the amount unit read the setup's display preference on every render, so changing *Preferred unit* lower down the form silently reinterpreted an amount already typed above it. They are separate concepts — the same correction the founder made about Water's display unit in slice 3.3 — and a test pins it.
+
+**Unchanged and re-verified:** inline placement directly under the Vial section; calculation from live draft state with no Save required; the section staying visible with a helper line when the vial is incomplete; blank staying quiet; the U-100 assumption with no capacity selector; the Done accessory on all three numeric fields; the standalone Tools calculator; the removed setup-specific route; and `Save setup` persisting no calculator state.
+
+**10 new tests, 625 total.** The additions cover unit-switch conversion in both directions, the round trip, blank and half-typed text, preferred-unit independence, clearing and re-entering the amount, and three assertions that no mcg output or reverse conversion exists on screen.
+
+**Verified on device**, Light and Dark: standalone 20 mg / 2 mL / 2 mg → **20 units**, standalone 5 mg / 2 mL / 500 mcg → **20 units** with concentration correctly shown as `2.5 mg/mL` in the vial's own unit, and the inline surface reading NAME → VIAL → **UNIT CALCULATOR** → PREFERRED UNIT.
+
+⚠️ **Typing is still proven by tests rather than by hand** — engineering has no tap or type access to a simulator, so founder confirmation on a real iPhone remains the acceptance gate.
+
+**Observation, not changed:** the *vial* unit toggle still reinterprets rather than converts, because it feeds a value that gets **saved**, and changing that touches 3.5 persistence behaviour the founder did not ask to revisit. Worth a decision in the Peptides polish pass.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item.
+
+**Boundary audit:** three files changed, all under `src/features/peptides`. `model/dose.ts` has a zero-line diff. Water, Fuel, Home, nutrition, `package.json`, `supabase/` and the 72-entry catalog untouched. No logging, no injection sites.
+
 ### Slice 3.6B — Inline + Standalone Peptide Calculator 🟡
 
 **Objective:** put the calculator where people actually need it, and make the number pad dismissible. Founder device QA on 3.6 showed the design was wrong, not just the implementation — the only way to reach a calculator was through a peptide setup you had already created, and iOS's decimal pad has no return key, so the keyboard could not be put away.

@@ -166,6 +166,12 @@ The calculator route is `/peptides/setup/[id]/calculator`. It reads vial, water 
 
 `Screen` gained an **opt-in** `keyboardAware` prop (`keyboardShouldPersistTaps="handled"`, `keyboardDismissMode="interactive"`, extra bottom padding). Opt-in rather than default so no existing screen's behaviour changes — only the three peptide form screens use it.
 
+**Output is syringe units only (slice 3.6C).** Micrograms are canonical *inside* `model/dose.ts` and never appear as a result. No second mcg figure, no per-unit mass, no units → mass converter in any screen. `calculateAmountFromUnits` remains in the domain — tested, and deliberately unwired — because it is the inverse that keeps the forward arithmetic honest, not a feature.
+
+**Unit switching converts; it never reinterprets.** `changeAmountUnit` rewrites the field through `toMcg`/`fromMcg`, so `2 mg` becomes `2000 mcg` and the syringe result is unchanged. Reinterpreting would move the amount by a factor of a thousand while the digits sat still — the worst failure available on this screen. Two guards: only text matching `/^\d*\.?\d+$/` is rewritten (`Number('1.')` is `1`, so parsing alone would destroy a half-typed "1.5"), and the conversion happens on press rather than in an effect, so there is no feedback loop.
+
+**`preferredDoseUnit` seeds the amount unit once**, via `useState` initial value, and is not read again. Reading it every render meant changing *Preferred unit* elsewhere in the form silently reinterpreted an already-typed amount — the same separation Water established between a logged unit and a display preference in slice 3.3.
+
 **Tools** (`/settings/tools`) is a Settings destination for utilities that stand alone: no tracking, no persistence, no feature ownership. Reached from Settings rather than the dock, and intended to host slice 3.8's injection-site tools. **No placeholder rows** — a dead button is worse than a short list.
 
 **Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.

@@ -118,10 +118,10 @@ describe('inline — a brand new setup, nothing saved', () => {
 
     await type(tree, /^Vial amount/, '20');
     await type(tree, /reconstitution volume/i, '2');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
 
     expect(screen(tree)).toContain('20 units');
-    expect(screen(tree)).toContain('Equivalent to 0.2 mL');
+    expect(screen(tree)).toContain('Equivalent volume · 0.2 mL');
     expect(screen(tree)).toContain('Concentration · 10 mg/mL');
   });
 
@@ -130,7 +130,7 @@ describe('inline — a brand new setup, nothing saved', () => {
 
     await type(tree, /^Vial amount/, '20');
     await type(tree, /reconstitution volume/i, '2');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
     expect(screen(tree)).toContain('20 units');
 
     await type(tree, /reconstitution volume/i, '1');
@@ -143,10 +143,10 @@ describe('inline — a brand new setup, nothing saved', () => {
 
     await type(tree, /^Vial amount/, '20');
     await type(tree, /reconstitution volume/i, '1');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
     expect(screen(tree)).toContain('10 units');
 
-    await type(tree, /^Amount being used/, '1');
+    await type(tree, /^Amount,/, '1');
     expect(screen(tree)).toContain('5 units');
   });
 
@@ -155,7 +155,7 @@ describe('inline — a brand new setup, nothing saved', () => {
 
     await type(tree, /^Vial amount/, '20');
     await type(tree, /reconstitution volume/i, '2');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
     expect(screen(tree)).toContain('20 units');
 
     await type(tree, /^Vial amount/, '10');
@@ -167,7 +167,7 @@ describe('inline — a brand new setup, nothing saved', () => {
 
     // The section must not hide — a user who has not entered a vial should
     // still see that a calculator exists, and what it needs.
-    expect(texts(tree)).toContain('CALCULATOR');
+    expect(texts(tree)).toContain('UNIT CALCULATOR');
     expect(screen(tree)).toContain('Add vial amount and reconstitution volume above');
   });
 
@@ -179,7 +179,7 @@ describe('inline — a brand new setup, nothing saved', () => {
 
     await type(tree, /^Vial amount/, '20');
     await type(tree, /reconstitution volume/i, '2');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
 
     expect(screen(tree)).toContain('20 units');
     expect(emitted.length).toBeGreaterThan(0);
@@ -208,14 +208,14 @@ describe('inline — an existing setup', () => {
 
     const amountField = tree.root
       .findAllByType(TextInput)
-      .find((node) => /^Amount being used/.test(String(node.props.accessibilityLabel ?? '')));
+      .find((node) => /^Amount,/.test(String(node.props.accessibilityLabel ?? '')));
     expect(amountField?.props.value).toBe('');
     expect(screen(tree)).not.toContain('CALCULATED SYRINGE AMOUNT');
   });
 
   it('calculates from the saved vial once an amount is typed', async () => {
     const tree = await mount(<SetupForm initial={SAVED} onChange={() => undefined} />);
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
 
     expect(screen(tree)).toContain('20 units');
   });
@@ -233,7 +233,7 @@ describe('the founder’s pinned cases, through the UI', () => {
       const tree = await mount(<SetupForm onChange={() => undefined} />);
       await type(tree, /^Vial amount/, vial);
       await type(tree, /reconstitution volume/i, water);
-      await type(tree, /^Amount being used/, amount);
+      await type(tree, /^Amount,/, amount);
       expect(screen(tree)).toContain(expected);
     });
   }
@@ -243,7 +243,7 @@ describe('the founder’s pinned cases, through the UI', () => {
     await type(tree, /^Vial amount/, '5');
     await type(tree, /reconstitution volume/i, '2');
     await selectUnit(tree, 'Amount unit', 'mcg');
-    await type(tree, /^Amount being used/, '500');
+    await type(tree, /^Amount,/, '500');
     expect(screen(tree)).toContain('20 units');
   });
 
@@ -252,7 +252,7 @@ describe('the founder’s pinned cases, through the UI', () => {
     await type(tree, /^Vial amount/, '10');
     await type(tree, /reconstitution volume/i, '1');
     await selectUnit(tree, 'Amount unit', 'mcg');
-    await type(tree, /^Amount being used/, '250');
+    await type(tree, /^Amount,/, '250');
     expect(screen(tree)).toContain('2.5 units');
   });
 });
@@ -272,11 +272,11 @@ describe('standalone tool', () => {
 
     await type(tree, /^Vial amount/, '20');
     await type(tree, /reconstitution volume/i, '2');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
 
     const rendered = screen(tree);
     expect(rendered).toContain('20 units');
-    expect(rendered).toContain('Equivalent to 0.2 mL');
+    expect(rendered).toContain('Equivalent volume · 0.2 mL');
     expect(rendered).toContain('Concentration · 10 mg/mL');
   });
 
@@ -286,7 +286,7 @@ describe('standalone tool', () => {
     await type(tree, /^Vial amount/, '5');
     await type(tree, /reconstitution volume/i, '2');
     await selectUnit(tree, 'Amount unit', 'mcg');
-    await type(tree, /^Amount being used/, '500');
+    await type(tree, /^Amount,/, '500');
 
     expect(screen(tree)).toContain('20 units');
   });
@@ -296,7 +296,7 @@ describe('standalone tool', () => {
 
     await type(tree, /^Vial amount/, '20');
     await type(tree, /reconstitution volume/i, '2');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
     expect(screen(tree)).toContain('20 units');
 
     await type(tree, /reconstitution volume/i, '4');
@@ -310,7 +310,7 @@ describe('standalone tool', () => {
     const tree = await mount(<StandalonePeptideCalculator />);
     await type(tree, /^Vial amount/, '10');
     await type(tree, /reconstitution volume/i, '1');
-    await type(tree, /^Amount being used/, '2');
+    await type(tree, /^Amount,/, '2');
     expect(screen(tree)).toContain('20 units');
   });
 });
@@ -338,16 +338,16 @@ describe('validation, on both surfaces', () => {
 
       it('names a zero amount', async () => {
         const tree = await ready();
-        await type(tree, /^Amount being used/, '0');
+        await type(tree, /^Amount,/, '0');
         expect(screen(tree)).toContain('Amount must be greater than zero.');
       });
 
       it('recovers immediately from an invalid amount', async () => {
         const tree = await ready();
-        await type(tree, /^Amount being used/, 'abc');
+        await type(tree, /^Amount,/, 'abc');
         expect(screen(tree)).toContain('Amount must be greater than zero.');
 
-        await type(tree, /^Amount being used/, '2');
+        await type(tree, /^Amount,/, '2');
         expect(screen(tree)).toContain('20 units');
         expect(screen(tree)).not.toContain('Amount must be greater than zero.');
       });
@@ -355,7 +355,7 @@ describe('validation, on both surfaces', () => {
       it('never renders NaN or Infinity', async () => {
         const tree = await ready();
         for (const junk of ['abc', '-', '--', '1e', 'Infinity', '.', '']) {
-          await type(tree, /^Amount being used/, junk);
+          await type(tree, /^Amount,/, junk);
           expect(screen(tree)).not.toContain('NaN');
           expect(screen(tree)).not.toContain('Infinity');
         }
@@ -363,13 +363,13 @@ describe('validation, on both surfaces', () => {
 
       it('accepts decimals', async () => {
         const tree = await ready();
-        await type(tree, /^Amount being used/, '1.25');
+        await type(tree, /^Amount,/, '1.25');
         expect(screen(tree)).toContain('12.5 units');
       });
 
       it('notes an amount larger than the vial, and still calculates it', async () => {
         const tree = await ready();
-        await type(tree, /^Amount being used/, '12');
+        await type(tree, /^Amount,/, '12');
 
         const rendered = screen(tree);
         expect(rendered).toContain('120 units');
@@ -382,7 +382,7 @@ describe('validation, on both surfaces', () => {
 
       it('offers no recommendation language', async () => {
         const tree = await ready();
-        await type(tree, /^Amount being used/, '2');
+        await type(tree, /^Amount,/, '2');
         const rendered = screen(tree)
           .toLowerCase()
           // The setup form's own disclaimer — "a display preference, not a
@@ -395,6 +395,145 @@ describe('validation, on both surfaces', () => {
       });
     });
   }
+});
+
+describe('switching mg ⇄ mcg restates the same amount', () => {
+  /**
+   * The most dangerous thing this screen could do is reinterpret a number
+   * when its unit changes — turning `2 mg` into `2 mcg` would silently move
+   * the amount by a factor of a thousand while the digits sat still. So the
+   * value is converted and the answer must not budge.
+   */
+  async function ready() {
+    const tree = await mount(<StandalonePeptideCalculator />);
+    await type(tree, /^Vial amount/, '10');
+    await type(tree, /reconstitution volume/i, '1');
+    return tree;
+  }
+
+  function amountValue(tree: ReactTestRenderer) {
+    return tree.root
+      .findAllByType(TextInput)
+      .find((node) => /^Amount,/.test(String(node.props.accessibilityLabel ?? '')))?.props.value;
+  }
+
+  it('2 mg becomes 2000 mcg, and the result is unchanged', async () => {
+    const tree = await ready();
+    await type(tree, /^Amount,/, '2');
+    expect(screen(tree)).toContain('20 units');
+
+    await selectUnit(tree, 'Amount unit', 'mcg');
+    expect(amountValue(tree)).toBe('2000');
+    expect(screen(tree)).toContain('20 units');
+  });
+
+  it('round-trips back to 2 mg with the result still unchanged', async () => {
+    const tree = await ready();
+    await type(tree, /^Amount,/, '2');
+    await selectUnit(tree, 'Amount unit', 'mcg');
+    await selectUnit(tree, 'Amount unit', 'mg');
+
+    expect(amountValue(tree)).toBe('2');
+    expect(screen(tree)).toContain('20 units');
+  });
+
+  it('500 mcg becomes 0.5 mg', async () => {
+    const tree = await ready();
+    await selectUnit(tree, 'Amount unit', 'mcg');
+    await type(tree, /^Amount,/, '500');
+    expect(screen(tree)).toContain('5 units');
+
+    await selectUnit(tree, 'Amount unit', 'mg');
+    expect(amountValue(tree)).toBe('0.5');
+    expect(screen(tree)).toContain('5 units');
+  });
+
+  it('leaves a blank field blank rather than writing a number into it', async () => {
+    const tree = await ready();
+    await selectUnit(tree, 'Amount unit', 'mcg');
+    expect(amountValue(tree)).toBe('');
+  });
+
+  it('leaves half-typed text alone', async () => {
+    const tree = await ready();
+    await type(tree, /^Amount,/, '1.');
+    await selectUnit(tree, 'Amount unit', 'mcg');
+    // Converting mid-number would destroy what the user was writing.
+    expect(amountValue(tree)).toBe('1.');
+  });
+
+  it('does not follow the setup’s Preferred unit once shown', async () => {
+    // Preferred unit seeds the calculator and nothing more — otherwise
+    // changing it lower down the form would reinterpret a typed amount.
+    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    await type(tree, /^Vial amount/, '10');
+    await type(tree, /reconstitution volume/i, '1');
+    await type(tree, /^Amount,/, '2');
+    expect(screen(tree)).toContain('20 units');
+
+    await selectUnit(tree, 'Preferred unit', 'mcg');
+    expect(screen(tree)).toContain('20 units');
+  });
+});
+
+describe('clearing the amount', () => {
+  it('clears the result and recovers on re-entry, with no reload', async () => {
+    const tree = await mount(<StandalonePeptideCalculator />);
+    await type(tree, /^Vial amount/, '20');
+    await type(tree, /reconstitution volume/i, '2');
+    await type(tree, /^Amount,/, '2');
+    expect(screen(tree)).toContain('20 units');
+
+    await type(tree, /^Amount,/, '');
+    expect(screen(tree)).not.toContain('CALCULATED SYRINGE AMOUNT');
+    expect(screen(tree)).not.toContain('Amount must be greater than zero.');
+
+    await type(tree, /^Amount,/, '2');
+    expect(screen(tree)).toContain('20 units');
+  });
+});
+
+describe('syringe units are the only output', () => {
+  it('never shows the amount converted into mcg as a second result', async () => {
+    const tree = await mount(<StandalonePeptideCalculator />);
+    await type(tree, /^Vial amount/, '20');
+    await type(tree, /reconstitution volume/i, '2');
+    await type(tree, /^Amount,/, '2');
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('20 units');
+    // The canonical micrograms stay inside the domain. 2 mg is 2000 mcg, and
+    // that number must not surface anywhere as an output. ("mcg" itself is
+    // legitimately on screen — it is one half of the input unit selector.)
+    expect(rendered).not.toContain('2000');
+    expect(rendered).not.toContain('mcg/mL');
+    expect(rendered).not.toMatch(/=\s*\d+\s*mcg/);
+  });
+
+  it('offers no reverse units-to-mass conversion in the UI', async () => {
+    const tree = await mount(<StandalonePeptideCalculator />);
+    await type(tree, /^Vial amount/, '20');
+    await type(tree, /reconstitution volume/i, '2');
+    await type(tree, /^Amount,/, '2');
+
+    const rendered = screen(tree).toLowerCase();
+    for (const phrase of ['1 unit =', 'per unit', 'units to', 'reverse']) {
+      expect(rendered).not.toContain(phrase);
+    }
+  });
+
+  it('shows one large number and supporting lines, not competing results', async () => {
+    const tree = await mount(<StandalonePeptideCalculator />);
+    await type(tree, /^Vial amount/, '20');
+    await type(tree, /reconstitution volume/i, '2');
+    await type(tree, /^Amount,/, '2');
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('20 units');
+    expect(rendered).toContain('Equivalent volume · 0.2 mL');
+    expect(rendered).toContain('Concentration · 10 mg/mL');
+    expect(rendered).toContain('Using U-100 · 100 units/mL');
+  });
 });
 
 describe('numeric keyboard', () => {
