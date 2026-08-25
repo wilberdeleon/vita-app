@@ -56,6 +56,26 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
 
+## Open polish item — tracking CTA discoverability
+
+**Status: open. Not addressed in 3.6A. Must be resolved in the Peptides final polish pass.**
+
+Founder review (2026-08-25) identified friction on long research-detail pages. On a compound like Tirzepatide, **Track this peptide** sits at the very bottom, after About, Research claims, How it works, Studied for, Targets, Approval status, Research status and Sources. A user who opens the page and wants to start tracking has to scroll past everything first.
+
+The bottom-only CTA is fine on a short page. On an information-heavy one it buries the single action the page exists to enable.
+
+**The requirement:** someone opening a long compound page should understand immediately how to track it, without scrolling to the bottom to find out. **All research content stays** — this is not a trim.
+
+**Patterns worth evaluating** (pick one; do not stack them):
+- a primary Track action in or just under the hero/header
+- a compact action directly beneath the classification and category line
+- a sticky or floating bottom action
+- a duplicated top and bottom CTA where the page is genuinely long
+
+**Constraints:** do not clutter the page, do not remove the bottom CTA automatically, and stay inside the existing VITA visual language — no new pattern invented for this.
+
+**Also evaluate state-aware copy** once the tracked state is available to the detail page: `Track this peptide` when untracked, `View setup` (or equivalent) when a setup already exists. Deliberately not implemented in 3.6A — the detail page does not currently read setup state, so this is not the trivial change it looks like.
+
 **Not feature-complete.** Slice 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.6.

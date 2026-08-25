@@ -752,6 +752,39 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.6A — Calculator Real-Interaction Hotfix 🔴 BLOCKED
+
+**Slice 3.6 is not approved.** Founder device QA (2026-08-25): the calculator does not work through the real app.
+
+**Blocked on reproduction, not on effort.** The authorization requires the defect to be reproduced through real interaction (§3) and makes real-interaction acceptance QA mandatory (§13). Neither is currently possible from the engineering environment:
+
+| Path | Result |
+|---|---|
+| `Claude_Code_iOS_Simulator` control | Returns "Xcode is installed but not selected" — **spurious**: `xcode-select -p` already resolves to `/Applications/Xcode.app/Contents/Developer`. A known false failure in this project. |
+| Screen control of the Simulator app | Access requested and **declined**. |
+| `autoFocus` to raise the keyboard without a tap | Software keyboard never appeared — the simulator has a hardware keyboard attached. |
+
+No fix was committed. Guessing at a repair for an unreproduced defect is what §4 forbids, and shipping one would risk a second failed review.
+
+**What was ruled out**, tap-free, before stopping:
+
+- **Route registration.** Both `/(vita)/peptides/setup/[id].tsx` and `/(vita)/peptides/setup/[id]/calculator.tsx` are present in the compiled iOS bundle. `[id].tsx` and the `[id]/` directory coexisting is *not* a collision.
+- **Setup screen reachability.** `/peptides/setup/<id>` renders the full edit form on device.
+- **Calculator route reachability.** `/peptides/setup/<id>/calculator` renders correctly on device with a seeded setup.
+- **Provider scope.** `PeptideProvider` is mounted at `app/_layout.tsx`, above every peptide route.
+- **Entry-point href.** `router.push(\`/peptides/setup/${encodeURIComponent(setup.id)}/calculator\`)`; `newId()` produces `setup_<base36>` with no characters that affect path segmentation.
+- **Persistence.** `SetupForm.emit()` always emits the complete object, so a partial edit cannot drop the vial; `applySetupChanges` only deletes keys actually present in the patch, so saving an untouched form is a no-op.
+
+**The real process failure, and it is mine.** Slice 3.6 reported "verified on device" for six cases. Every one of those screenshots was taken with the amount **hardcoded into `useState`**. The single screenshot taken with the real empty initial state showed no result, correctly, and was read as the pristine state. **Typing was never exercised on a device — only `onChangeText` called directly from a test, which is the same call React Native makes and therefore proves nothing about whether a user can reach it.** That is the coverage blind spot that let 605 passing tests coexist with a non-functional feature.
+
+**Leading hypothesis, unconfirmed: keyboard handling.** The app has **no keyboard handling anywhere** — no `KeyboardAvoidingView`, no `keyboardShouldPersistTaps`, no dismiss affordance, in any screen. Every other input screen in VITA is *type, then tap a button*, where a covered lower half is an annoyance. The calculator is the only screen where the thing you need to read appears **below** the field you are typing into and **only while** you are typing. On a shorter device than the test simulator, the result card would sit under the keyboard, and the feature would read as completely dead. This is consistent with every piece of evidence — a real user fails, tests pass, hardcoded values render fine — but it is a hypothesis, not a diagnosis, and it was not committed as a fix.
+
+**What is needed to close this:** either device-interaction access for engineering, or, from the founder — what appeared on screen after typing (a wrong number, no result, an error, a blank screen, or the "Add your vial details first" state), which device, and whether the tracked setup had a vial amount and reconstitution volume saved.
+
+**Recorded this slice:** the peptide detail **CTA discoverability** item (§21–24) — on long compound pages *Track this peptide* is only reachable after scrolling past all research content. Documented in Vita HQ as an open Peptides final-polish requirement, deliberately not resolved here.
+
+**No source code changed.** Diagnostic instrumentation used during investigation was reverted; 605 tests and both typechecks are green at `c073da8`.
+
 ### Slice 3.6 — Dose / Unit Calculator 🟡
 
 **Objective:** convert an amount the user has chosen into the number of units they draw into a syringe. Deterministic arithmetic and nothing else. No logging, no injection sites, no catalog changes.
