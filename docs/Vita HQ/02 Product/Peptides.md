@@ -44,9 +44,21 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **⚠️ The research content is engineering-authored and has not had medical or legal review.** See [[Open Questions]] #17.
 
-**Not feature-complete.** Slice 3.6 (dose calculator), 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
+**Slice 3.6 (2026-08-24) added the dose / unit calculator.** This is the feature that answers the question people actually reach for a phone to work out: *my vial says 10 mg, I added 1 mL of water, and I'm using 2 mg — how many units is that?* VITA answers **20 units**, and shows its working underneath: `10 mg/mL · 2 mg = 0.2 mL = 20 units`.
 
-Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.5D.
+**The line VITA does not cross.** It converts; it does not choose. The vial and water come from the setup the user saved, the amount comes from the field in front of them, and the arithmetic lives in its own module with no access to anything else — so there is no place for a suggested amount to come from even if someone later wanted to add one. The field is called **Amount Being Used** for that reason: the number is the user's, the conversion is VITA's.
+
+**It reads your setup, and it stays current.** You do not re-enter your vial every time. If you change the water volume and come back, the answer changes with it — nothing is cached. If your setup is missing the vial amount or the water, VITA says so and offers to take you to edit it, rather than assuming a common value and giving you a confident wrong number.
+
+**Nothing is logged.** Using the calculator records nothing — no history, no timestamp, no plan. It is a conversion you do and close. Logging arrives in the next slice.
+
+**No syringe sizes to pick.** As agreed, V1 assumes the ordinary U-100 insulin scale (100 units per mL) and says so quietly next to the result. The 0.3 / 0.5 / 1 mL choice people see on the box is a capacity, not a scale, and does not change the maths.
+
+**If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
+
+**Not feature-complete.** Slice 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
+
+Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.6.
 
 ## What it was before (Sprint 0 — mock data, superseded)
 

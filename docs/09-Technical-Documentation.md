@@ -120,6 +120,33 @@ These are floors, not style rules — loose enough that ordinary copy editing do
 
 ⚠️ **Research content is engineering-authored and has not had medical or legal review** (Open Question #17).
 
+**Dose calculator (slice 3.6).** `model/dose.ts` is pure arithmetic with no React, no state, and no I/O — the module boundary *is* the product boundary. VITA converts; the user decides, and a function that cannot reach state cannot quietly acquire an opinion about an amount.
+
+```
+concentrationMcgPerMl = vialAmountMcg / reconstitutionMl
+volumeMl              = amountMcg / concentrationMcgPerMl
+syringeUnits          = volumeMl * unitsPerMl
+amountMcgFromUnits    = (syringeUnits / unitsPerMl) * concentrationMcgPerMl
+```
+
+Both directions share one private `resolveConcentration()`. That is what makes the inverse a real inverse instead of a second formula that agrees by coincidence, and the round-trip is asserted over sixteen vial/amount combinations rather than against restated literals.
+
+`DoseCalculationResult` is a **discriminated union** — `{ ok: true } & DoseCalculation` or `{ ok: false, reason }`. A failure carries no numbers at all, so there is nothing partially valid for a component to render. Nine typed reasons separate *missing* (a blank field on first open, normal) from *invalid* (a negative vial amount, actually wrong). The domain holds no user-facing English; screens map reasons to copy.
+
+**Precision is kept internally and spent once, at the edge.** `formatSyringeUnits`, `formatVolume` and `formatConcentration` in `model/units.ts` are the only places rounding happens, and a test asserts formatting never mutates the value it formats. Rounding inside the arithmetic is how a calculator ends up disagreeing with itself between two screens.
+
+| Quantity | Rule | Why |
+|---|---|---|
+| Syringe units | Whole when whole, otherwise one decimal | `20 units`, `2.5 units`, `13.3 units` — a syringe cannot be read finer |
+| Volume | Up to three decimals, no trailing zeros | `0.025 mL` is a real quantity here; two decimals would flatten it |
+| Concentration | The user's own authored vial unit | `10 mg/mL`, not `10000 mcg/mL` |
+
+**V1 assumes U-100 (100 units/mL)** and states it beside every result. `unitsPerMl` remains on `PeptideSetup` rather than being a constant in the formula — units are not a universal volume — so supporting another graduation density is a UI change, not a migration. **Syringe *capacity* is still never collected**: 0.3, 0.5 and 1 mL syringes are all U-100.
+
+The calculator route is `/peptides/setup/[id]/calculator`. It reads vial, water and graduation density from `useResolvedSetup` and **derives concentration every render**, so an edited setup cannot leave a stale figure behind. It **persists nothing** — the amount is component state and dies with the screen; logging an administration is slice 3.7. Without a vial amount or reconstitution volume it renders a neutral incomplete state and **never invents a default**, because a fabricated 10 mg / 1 mL would hand a confident wrong number to someone whose vial is neither.
+
+`doseConsistencyNotes()` compares two numbers the user entered against each other and nothing else. An amount exceeding the vial is arithmetically valid, still calculated, and worth one neutral line because it usually means a typo. There is deliberately no concept of a large, safe, or maximum amount, and none of how to administer a result over 100 units.
+
 **Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.
 
 **Orphaned setups** — a setup whose definition no longer resolves — are omitted from the lists, counted, and left untouched in storage. Re-pointing one at another definition is the only genuinely destructive option and is never done.

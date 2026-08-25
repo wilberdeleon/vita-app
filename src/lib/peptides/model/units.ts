@@ -1,5 +1,11 @@
 /**
- * Mass conversion for peptide setups.
+ * Units for peptide setups, and how they read on screen.
+ *
+ * Mass conversion, plus the display formatting for the three quantities the
+ * dose calculator produces — mass, volume, and syringe units. Formatting lives
+ * here rather than in components so one rounding rule serves every screen: the
+ * arithmetic in `dose.ts` keeps full precision and rounds exactly once, at the
+ * edge, on the way to a string.
  *
  * Micrograms are canonical. The conversion is an exact power of ten, so
  * unlike volume there is no representation error to reason about — but the
@@ -71,4 +77,43 @@ export function parseAmount(input: string): number | null {
   const value = Number(trimmed);
   if (!Number.isFinite(value) || value <= 0) return null;
   return value;
+}
+
+/**
+ * ── Volume and syringe units ───────────────────────────────────────────
+ */
+
+/**
+ * Millilitres, at up to three decimals.
+ *
+ * Three because 0.025 mL is a real quantity in this domain and two would
+ * silently flatten it to 0.03. Trailing zeros are dropped, so a clean 0.2 mL
+ * does not render as "0.200 mL".
+ */
+export function formatVolume(ml: number): string {
+  return `${Math.round(ml * 1000) / 1000} mL`;
+}
+
+/**
+ * Syringe units — whole when the answer is whole, one decimal when it is not.
+ *
+ * The founder's rule: `20 units`, never `20.000000 units`, and `12.5 units`
+ * when the value genuinely is. A third of a vial produces 13.333… units, and
+ * showing all of that is false precision on a syringe nobody can read to more
+ * than half a mark. The underlying number is never mutated — only this string.
+ */
+export function formatSyringeUnits(units: number): string {
+  const rounded = Math.round(units * 10) / 10;
+  const value = Number.isInteger(rounded) ? rounded : rounded.toFixed(1);
+  return `${value} ${units === 1 ? 'unit' : 'units'}`;
+}
+
+/**
+ * Concentration, in whichever mass unit the user authored their vial in.
+ *
+ * Rendered as a rate (`10 mg/mL`) rather than as a bare number, because the
+ * per-millilitre part is the half people forget when comparing two vials.
+ */
+export function formatConcentration(mcgPerMl: number, unit: MassUnit): string {
+  return `${roundForDisplay(fromMcg(mcgPerMl, unit), unit)} ${unit}/mL`;
 }

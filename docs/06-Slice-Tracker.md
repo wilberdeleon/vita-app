@@ -752,6 +752,56 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.6 — Dose / Unit Calculator 🟡
+
+**Objective:** convert an amount the user has chosen into the number of units they draw into a syringe. Deterministic arithmetic and nothing else. No logging, no injection sites, no catalog changes.
+
+**The boundary, stated once and enforced structurally.** VITA converts; the user decides. Every mass on this screen originates from something the user typed — the vial and water from their saved setup, the amount from the field in front of them. `model/dose.ts` is pure and lives outside every screen precisely because arithmetic that cannot reach state cannot quietly acquire an opinion, and no function in it has a "recommended" or "typical" input to supply one.
+
+**Canonical arithmetic**, micrograms throughout, matching the rest of the peptide domain:
+
+```
+concentrationMcgPerMl = vialAmountMcg / reconstitutionMl
+volumeMl              = amountMcg / concentrationMcgPerMl
+syringeUnits          = volumeMl * unitsPerMl
+
+amountMcgFromUnits    = (syringeUnits / unitsPerMl) * concentrationMcgPerMl
+```
+
+Both directions share one `resolveConcentration()`, which is what makes the inverse a genuine inverse rather than a second hand-written formula that agrees by coincidence — asserted by a round-trip test over sixteen vial/amount combinations rather than against restated literals.
+
+**`DoseCalculationResult` is a discriminated union**: either every field is meaningful or none is. A failure carries no numbers at all to misread. Nine typed reasons distinguish *missing* from *invalid*, because a blank field is a normal first-open state and a negative vial amount is not.
+
+**Full precision internally, rounded once at the edge.** `formatSyringeUnits` shows `20 units`, `2.5 units`, and `13.3 units` for a third of a vial — never `13.333333333333`. `formatVolume` allows three decimals because `0.025 mL` is a real quantity in this domain and two would flatten it. Formatting never mutates the calculation, which is pinned by test. Rounding earlier is how a calculator ends up disagreeing with itself between two screens.
+
+**V1 assumes U-100 · 100 units/mL** and says so beside every result, as context rather than a warning. **No syringe-capacity selector** — 0.3 mL, 0.5 mL and 1 mL syringes are all U-100, and the control conflating the two was removed in 3.5B and does not come back. `unitsPerMl` stays on the setup model, defaulted to 100, so another graduation density needs no migration; a test proves a `unitsPerMl: 50` setup changes the *reading* (10 units) while the volume stays 0.2 mL.
+
+**Route:** `/peptides/setup/[id]/calculator`, reached from a "Dose / unit calculator" button on the setup screen. Its own route rather than another section on the form, because editing a setup and converting an amount are different jobs with different lifetimes — one persists, one does not — and folding the second in would make Save feel like it saved the amount too.
+
+**Setup-prefilled, derived every render.** Vial, water and graduation density come from `useResolvedSetup`; concentration is recomputed rather than cached, so changing the water volume and reopening gives the new answer. Verified on device: 10 mg / 1 mL → **20 units**, reseeded to 10 mg / 2 mL → **40 units** with the concentration line moving 10 → 5 mg/mL.
+
+**Incomplete setups are refused, never guessed.** Without a vial amount or a reconstitution volume the screen shows a neutral state and an Edit setup action. A fabricated "10 mg / 1 mL" default would produce a confident, wrong number for someone whose vial is neither — the single worst thing this screen could do — and a test asserts no units or concentration render in that state.
+
+**Result hierarchy:** setup summary → Amount Being Used → the answer → the working → U-100 context. One number dominates, because the syringe units are the only figure anyone acts on. The working is shown from the same `DoseCalculation` object the headline uses, so the explanation cannot drift from the answer: `10 mg/mL · 2 mg = 0.2 mL = 20 units`.
+
+**Nothing is persisted.** The amount lives in component state and dies with the screen. A test asserts the repository receives zero writes across typing, switching units, and retyping. Storing it would turn an ephemeral conversion into something that looks like a saved plan.
+
+**Reverse conversion — function and tests now, UI deferred.** `calculateAmountFromUnits` is implemented and tested, including the two founder examples (20 units → 2 mg; 20 units → 500 mcg on a 5 mg / 2 mL vial). A mode switch is **not** in the V1 UI: the founder's primary flow is Amount → Units and the authorization explicitly permits deferring the surface if it would bloat the slice. Adding a second mode to a screen nobody has asked to reverse yet would trade the clarity of one obvious flow for an option.
+
+**Data-consistency notes, not medical judgements.** An amount larger than the whole vial is arithmetically fine and is still calculated — `12 mg` on a 10 mg vial gives `120 units = 1.2 mL`. It gets one neutral line saying the amount exceeds what the setup records, because that usually means a typo in one of two fields the user entered. Deliberately absent: any notion of a large dose, a safe dose, a maximum, or splitting an injection. A test asserts none of *split*, *two injections*, *divide the dose*, *too much* or *maximum* appears.
+
+**A real defect found while testing.** The shared `parseAmount` returns `null` for an empty field, `"0"` and `"abc"` alike — right for a form that only asks whether it has a usable number, wrong here, where a blank field must stay silent and a typed zero must say something. The screen now classifies the text before the domain sees it.
+
+**Accessibility:** the result is one accessible node announcing "Calculated syringe amount: 20 units. Equivalent to 0.2 mL" rather than four disconnected stops; each summary row reads as "Vial, 10 mg"; the amount input names its current unit; the mg/mcg control announces selected state via `SegmentedTabs`; the U-100 line is ordinary text. The value is never carried by colour alone.
+
+**Motion:** a 180 ms fade as the answer changes, through the shared `useReducedMotion()` added in Water, which lands on the final value directly. No number rolling.
+
+**77 new tests, 605 total.** **Verified on device** in Light and Dark: 20 units, 40 units after a reconstitution change, 20 units from an mcg-authored vial, 2.5 units from 250 mcg (`0.025 mL`), 120 units with the over-vial note, and both incomplete states.
+
+**Found and recorded, not fixed here:** the shared `Button` / `PressableScale` set no `accessibilityRole="button"`, so VoiceOver reads their label without announcing they are actionable. App-wide and pre-existing — out of this slice's boundary.
+
+**Boundary audit:** every changed source file is under `src/lib/peptides`, `src/features/peptides`, or the peptide setup routes. Water, Fuel, Home, nutrition, `src/lib/daily`, `package.json`, `supabase/` and the **72-entry catalog content** all have a zero-line diff.
+
 ### Slice 3.5D — Plain-English Peptide Content Normalization 🟡
 
 **Objective:** make every one of the 72 pages answer the question an ordinary person actually arrives with — *what is this supposed to do?* — within a few seconds. A content pass, not a redesign. No architecture reopened, no calculator, no logging, no injection sites.

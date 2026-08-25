@@ -31,8 +31,11 @@ export {
 
 export {
   MCG_PER_MG,
+  formatConcentration,
   formatMass,
   formatMcg,
+  formatSyringeUnits,
+  formatVolume,
   fromMcg,
   isMassUnit,
   parseAmount,
@@ -79,6 +82,18 @@ export {
   researchAreaLabel,
 } from './model/labels';
 export { formatLabel, formatLabels } from './model/format';
+export {
+  calculateAmountFromUnits,
+  calculateConcentration,
+  calculateSyringeUnits,
+  calculateSyringeUnitsForMass,
+  doseConsistencyNotes,
+  type DoseCalculation,
+  type DoseCalculationError,
+  type DoseCalculationResult,
+  type DoseConsistencyNote,
+  type VialInputs,
+} from './model/dose';
 export { PEPTIDE_DOMAIN, PeptideKeys } from './data/keys';
 export type { PeptideRepository } from './data/PeptideRepository';
 export { asyncStoragePeptideRepository } from './data/asyncStorageRepository';
