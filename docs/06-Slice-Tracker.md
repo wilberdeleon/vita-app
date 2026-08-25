@@ -752,6 +752,45 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.6B — Inline + Standalone Peptide Calculator 🟡
+
+**Objective:** put the calculator where people actually need it, and make the number pad dismissible. Founder device QA on 3.6 showed the design was wrong, not just the implementation — the only way to reach a calculator was through a peptide setup you had already created, and iOS's decimal pad has no return key, so the keyboard could not be put away.
+
+**The design error 3.6 made.** A calculator that requires you to first create and save a tracked peptide is a calculator you cannot use with a vial in your hand. Working out how many units to draw is a *question*, not a *record*.
+
+**Two surfaces, one calculator.**
+
+| Surface | Where the vial comes from |
+|---|---|
+| **Inline**, in the peptide setup form | the live draft text in the fields above it |
+| **Standalone**, Settings → Tools → Peptide Calculator | its own fields; no peptide, definition or setup involved |
+
+`DoseCalculatorPanel` is the single component behind both, so they cannot drift in arithmetic, wording, validation or layout. The surfaces differ *only* in where the vial numbers originate.
+
+**The inline calculator works before anything is saved.** It reads the draft values in the form — type `20 mg`, `2 mL`, `2 mg` and the answer appears, with no Save, no navigation and no persisted setup. Changing the vial, the water or the unit recalculates immediately.
+
+**Placement** follows the founder's hierarchy exactly: NAME → VIAL → **CALCULATOR** → PREFERRED UNIT → SCHEDULE → START DATE → NOTES → Save. Directly under the vial it depends on, not buried at the bottom.
+
+**The amount is owned by the panel and never leaves it.** Neither host can read it, which makes "the calculator persists nothing" a structural fact rather than a rule to remember: `Save setup` cannot capture the amount because it cannot see it. A test asserts the form's `onChange` payload never contains it.
+
+**The section stays visible when the vial is incomplete**, with one line — *"Add vial amount and reconstitution volume above to calculate syringe units."* Hiding it would leave a user unaware the calculator exists.
+
+**Keyboard, the defect that broke 3.6.** iOS's `decimal-pad` has no return key. New `NumericField` + `NumericKeyboardAccessory` put a **Done** bar above the pad via `InputAccessoryView` (iOS-only, guarded; Android's pad has its own dismiss). One accessory per screen, shared by every numeric field through a single `nativeID`. `Screen` gained an **opt-in** `keyboardAware` prop — taps outside a field dismiss instead of being swallowed, dragging dismisses, and extra bottom padding lets the foot of a form clear the keyboard. Opt-in on purpose: no existing screen changes behaviour.
+
+**Old surface removed.** `/peptides/setup/[id]/calculator` and its "Dose / unit calculator" button are gone. Inline covers the in-context case and Tools covers the standalone one; a third destination would have been duplicate navigation for no gain. Deleting the route also removes the `[id]/` directory that sat beside `[id].tsx`.
+
+**Tools** is a new Settings destination for utilities that stand on their own — things you use once and walk away from, without tracking or saving anything. Deliberately not a fifth dock tab. **Built to grow, not padded**: slice 3.8's injection-site work is the obvious next tenant, and there are no placeholder rows in the meantime, because a dead button is worse than a short list.
+
+**Accessibility.** `PressableScale` now announces `accessibilityRole="button"` whenever it has an `onPress` — the app-wide gap recorded in 3.6A, fixed here because §36 needed it. `SegmentedTabs` gained an optional `groupLabel`: a screen with three identical mg/mcg toggles gave a screen-reader user three indistinguishable "mg" buttons, and they now read "Vial unit, mg" and "Amount unit, mg". `ListRow` passes an `accessibilityHint`.
+
+**37 new interaction tests, 615 total.** These are the coverage that was missing: they start from an empty form and type into fields located by accessibility label in the rendered tree, rather than handing a component values the UI would have had to produce. Both surfaces are driven through the same suite — the founder's four pinned cases, live recomputation, validation, the consistency note, keyboard wiring, and the Tools route.
+
+**Verified on device**, Light and Dark: standalone blank state, standalone 20 mg / 2 mL / 2 mg → **20 units**, inline in a saved setup → **20 units**, and the Tools list. **The remaining gap is honest**: typing itself is proven by the interaction tests, not by a device, because tapping and typing are still unavailable from the engineering environment. Founder confirmation on a real iPhone is the acceptance gate.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item, unchanged from 3.6A.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `src/lib/daily`, `package.json`, `supabase/` and the 72-entry catalog content all have a zero-line diff. No logging, no injection sites.
+
 ### Slice 3.6A — Calculator Real-Interaction Hotfix 🔴 BLOCKED
 
 **Slice 3.6 is not approved.** Founder device QA (2026-08-25): the calculator does not work through the real app.

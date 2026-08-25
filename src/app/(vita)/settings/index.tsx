@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { ListRow, Screen, ScreenHeader, SectionHeader, SegmentedTabs } from '../../../components/ui';
 import { useAuth } from '../../../features/auth/AuthProvider';
@@ -39,6 +40,16 @@ export default function Settings() {
           onChange={(index) => setMode(APPEARANCE_OPTIONS[index])}
         />
       </View>
+
+      <SectionHeader title="Tools" />
+      <ListRow
+        icon="construct-outline"
+        title="Tools"
+        subtitle="Peptide calculator and other utilities"
+        chevron
+        accessibilityHint="Opens the tools list"
+        onPress={() => router.push('/settings/tools')}
+      />
 
       <SectionHeader title="Privacy" />
       <ListRow icon="lock-closed-outline" title="Privacy & Data" chevron />

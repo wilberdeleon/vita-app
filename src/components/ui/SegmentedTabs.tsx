@@ -12,9 +12,18 @@ type Props = {
    * track. Pass a domain color for domain flows.
    */
   activeColor?: string;
+  /**
+   * What this control is *for*, spoken before the option.
+   *
+   * A screen with three identical mg/mcg toggles — vial, calculator amount,
+   * display preference — gives a screen-reader user three indistinguishable
+   * "mg" buttons. Naming the group turns them into "Vial unit, mg" and
+   * "Amount unit, mg". Optional: single-toggle screens read fine without it.
+   */
+  groupLabel?: string;
 };
 
-export function SegmentedTabs({ options, selectedIndex, onChange, activeColor }: Props) {
+export function SegmentedTabs({ options, selectedIndex, onChange, activeColor, groupLabel }: Props) {
   const { scheme, surfaces } = useTheme();
   // The one case needing a dark label is the neutral default in dark mode,
   // where the active segment is white. Every domain color is dark enough for white.
@@ -33,6 +42,7 @@ export function SegmentedTabs({ options, selectedIndex, onChange, activeColor }:
             // Same reasoning as `Chip`: the active segment is distinguished
             // only by fill, so the selected state has to be announced.
             accessibilityRole="button"
+            accessibilityLabel={groupLabel ? `${groupLabel}, ${option}` : option}
             accessibilityState={{ selected: active }}
             style={[styles.segment, active && { backgroundColor: fill }]}
           >

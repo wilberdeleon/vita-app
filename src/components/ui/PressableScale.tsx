@@ -9,7 +9,14 @@ type Props = PropsWithChildren<
   }
 >;
 
-/** Light press animation shared by tappable components — subtle spring scale. */
+/**
+ * Light press animation shared by tappable components — subtle spring scale.
+ *
+ * Announces itself as a button whenever it actually does something. Without
+ * the role, VoiceOver reads a `Button`'s or `ListRow`'s label as ordinary
+ * text and never says it is actionable — the gap recorded during slice 3.6A.
+ * A caller can still override the role for the rare non-button pressable.
+ */
 export function PressableScale({ children, onPress, disabled, style, pressedScale = 0.97, ...pressableProps }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -20,6 +27,7 @@ export function PressableScale({ children, onPress, disabled, style, pressedScal
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole={onPress ? 'button' : undefined}
       onPressIn={() => springTo(pressedScale)}
       onPressOut={() => springTo(1)}
       {...pressableProps}

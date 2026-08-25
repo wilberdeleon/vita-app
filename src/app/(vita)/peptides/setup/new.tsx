@@ -31,7 +31,7 @@ export default function NewPeptideSetup() {
 
   if (!definition) {
     return (
-      <Screen>
+      <Screen keyboardAware>
         <ScreenHeader title="New Setup" back />
         <EmptyState
           icon="help-circle-outline"

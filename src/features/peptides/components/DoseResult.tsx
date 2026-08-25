@@ -91,11 +91,23 @@ export function DoseResult({ calculation, vialUnit, amountUnit }: Props) {
       </Animated.View>
 
       <View style={[styles.working, { borderTopColor: surfaces.border }]}>
+        {/*
+         * Concentration gets its own labelled line rather than being folded
+         * into the working. It is the number that explains *why* the answer
+         * is what it is, and the one a user checks first when a result looks
+         * wrong — it deserves to be findable, not parsed out of an equation.
+         */}
         <Text
           style={[styles.workingLine, { color: surfaces.textSecondary }]}
-          accessibilityLabel={`Working: ${concentration} concentration. ${amount} equals ${volume}, which is ${units}.`}
+          accessibilityLabel={`Concentration: ${concentration}`}
         >
-          {concentration} · {amount} = {volume} = {units}
+          Concentration · {concentration}
+        </Text>
+        <Text
+          style={[styles.workingLine, { color: surfaces.textSecondary }]}
+          accessibilityLabel={`Working: ${amount} equals ${volume}, which is ${units}.`}
+        >
+          {amount} = {volume} = {units}
         </Text>
         <Text style={[styles.context, { color: surfaces.textTertiary }]}>
           Using U-100 · {calculation.unitsPerMl} units/mL

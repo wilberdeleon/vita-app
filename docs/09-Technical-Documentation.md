@@ -147,6 +147,27 @@ The calculator route is `/peptides/setup/[id]/calculator`. It reads vial, water 
 
 `doseConsistencyNotes()` compares two numbers the user entered against each other and nothing else. An amount exceeding the vial is arithmetically valid, still calculated, and worth one neutral line because it usually means a typo. There is deliberately no concept of a large, safe, or maximum amount, and none of how to administer a result over 100 units.
 
+**Two calculator surfaces, one component (slice 3.6B).** `model/dose.ts` is unchanged — the arithmetic above is still the only place it lives. What changed is where it surfaces.
+
+| Surface | Route | Vial source |
+|---|---|---|
+| Inline | inside `SetupForm` | live **draft** text in the form's own fields |
+| Standalone | `/settings/tools/peptide-calculator` | the tool's own fields; no peptide required |
+
+`features/peptides/components/DoseCalculatorPanel` is the single component both render. It owns the amount input, validation, error copy, consistency notes and the `DoseResult` block; the hosts supply only `vialAmountMcg`, `reconstitutionMl`, `vialUnit` and `unitsPerMl`. Two calculators would have drifted; one cannot.
+
+**The amount never leaves the panel.** It is deliberately not lifted into either host, which turns "the calculator persists nothing" from a convention into a structural guarantee — `SetupForm.emit()` cannot include a value it has no access to. A test asserts the emitted payload never contains it.
+
+**Inline reads draft state, not persisted state.** The whole point is that a user configuring a peptide for the first time gets an answer before saving. `PeptideSetup` is irrelevant to the calculation; the two text fields above are the input.
+
+**Slice 3.6's `/peptides/setup/[id]/calculator` route is deleted.** Requiring a saved setup to reach a calculator was the design error founder QA exposed. Inline covers the in-context case; Tools covers the standalone one.
+
+**Numeric keyboard.** iOS `decimal-pad` has no return key, which on the calculator meant the keyboard could not be dismissed. `components/ui/NumericField` pairs a decimal-pad `TextField` with `NUMERIC_ACCESSORY_ID`; `NumericKeyboardAccessory` renders the **Done** bar through `InputAccessoryView` — iOS-only and explicitly guarded, since Android's pad has its own dismiss. Render the accessory **once per screen**: it is matched by `nativeID`, so one bar serves every field.
+
+`Screen` gained an **opt-in** `keyboardAware` prop (`keyboardShouldPersistTaps="handled"`, `keyboardDismissMode="interactive"`, extra bottom padding). Opt-in rather than default so no existing screen's behaviour changes — only the three peptide form screens use it.
+
+**Tools** (`/settings/tools`) is a Settings destination for utilities that stand alone: no tracking, no persistence, no feature ownership. Reached from Settings rather than the dock, and intended to host slice 3.8's injection-site tools. **No placeholder rows** — a dead button is worse than a short list.
+
 **Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.
 
 **Orphaned setups** — a setup whose definition no longer resolves — are omitted from the lists, counted, and left untouched in storage. Re-pointing one at another definition is the only genuinely destructive option and is never done.

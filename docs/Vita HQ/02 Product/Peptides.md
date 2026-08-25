@@ -56,6 +56,20 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
 
+**Slice 3.6B (2026-08-25) rebuilt where the calculator lives.** The first version made you create and save a tracked peptide before you could reach it — which is backwards, because working out how many units to draw is a question you ask *before* you commit to anything, usually with a vial already in your hand.
+
+**It is now in two places, and they are the same calculator.** Inside a peptide setup it sits directly under the vial fields and **works while you are still filling the form in** — enter 20 mg, 2 mL and 2 mg and it says 20 units, before you have saved a thing. And it stands on its own at **Settings → Tools → Peptide Calculator**, where it needs no peptide, no catalog entry and no setup at all.
+
+**Both surfaces are literally one component**, so the number you get in a setup and the number you get in Tools can never disagree.
+
+**The keyboard problem is fixed.** iOS's number pad has no return key, so there was no obvious way to put it away — which is what made the calculator feel broken. There is now a **Done** button above the pad, and tapping outside a field or dragging the screen also dismisses it.
+
+**What you type into "Amount being used" is never saved.** It belongs to the moment, not to your setup — and the code is built so that saving a setup literally cannot see it, rather than merely being told not to look.
+
+**New Tools section in Settings**, deliberately not a new tab. It is for small utilities you use once and walk away from, and it is where the injection-site tools will go in slice 3.8. There is nothing fake in it in the meantime.
+
+⚠️ **Needs your confirmation on a real iPhone.** Engineering still cannot tap or type on a simulator, so typing is proven by automated tests rather than by hand. That gap is exactly what let the previous version pass its tests and still fail for you, so this is not signed off until you have used it.
+
 ## Open polish item — tracking CTA discoverability
 
 **Status: open. Not addressed in 3.6A. Must be resolved in the Peptides final polish pass.**

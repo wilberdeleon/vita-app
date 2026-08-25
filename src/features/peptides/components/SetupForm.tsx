@@ -1,12 +1,22 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Chip, SectionHeader, SegmentedTabs, Stepper, TextField } from '../../../components/ui';
+import {
+  Chip,
+  NumericField,
+  NumericKeyboardAccessory,
+  SectionHeader,
+  SegmentedTabs,
+  Stepper,
+  TextField,
+} from '../../../components/ui';
 import { isValidLogDate, todayLogDate, type LogDate } from '../../../lib/daily';
+import { DoseCalculatorPanel } from './DoseCalculatorPanel';
 import {
   DEFAULT_UNITS_PER_ML,
   MASS_UNITS,
   WEEKDAY_INDEXES,
   parseAmount,
+  toMcg,
   sortedDays,
   vialFrom,
   weekdayLong,
@@ -194,10 +204,9 @@ export function SetupForm({ initial, onChange }: Props) {
       </Text>
       <View style={styles.row}>
         <View style={styles.grow}>
-          <TextField
+          <NumericField
             label={`Vial amount (${vialUnit})`}
             placeholder="e.g. 10"
-            keyboardType="decimal-pad"
             value={vialAmount}
             onChangeText={(text) => {
               setVialAmount(text);
@@ -216,6 +225,7 @@ export function SetupForm({ initial, onChange }: Props) {
               emit({ vialUnit: next });
             }}
             activeColor={palette.peptide}
+            groupLabel="Vial unit"
           />
         </View>
       </View>
@@ -228,10 +238,9 @@ export function SetupForm({ initial, onChange }: Props) {
         * water is what most people actually add, but `reconstitutionMl` does
         * not assume it is the only possible diluent.
         */}
-      <TextField
+      <NumericField
         label="Bacteriostatic water / reconstitution (mL)"
         placeholder="e.g. 1"
-        keyboardType="decimal-pad"
         value={reconstitution}
         onChangeText={(text) => {
           setReconstitution(text);
@@ -243,6 +252,26 @@ export function SetupForm({ initial, onChange }: Props) {
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
 
+      {/*
+        * The calculator, inline and immediately after the vial it depends on.
+        *
+        * It reads the **draft** values above — the live text in those two
+        * fields — not the saved setup, so a user configuring a peptide for
+        * the first time gets an answer before they have saved anything. That
+        * is the point: working out how many units to draw is not something
+        * you should have to create a tracked peptide to do.
+        *
+        * `DoseCalculatorPanel` owns the amount internally, so nothing here
+        * can capture it and `Save setup` cannot persist it.
+        */}
+      <DoseCalculatorPanel
+        vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, vialUnit) : undefined}
+        reconstitutionMl={reconParsed ?? undefined}
+        vialUnit={vialUnit}
+        unitsPerMl={unitsPerMl ?? undefined}
+        defaultAmountUnit={doseUnit}
+      />
+
       <SectionHeader title="Preferred unit" />
       <SegmentedTabs
         options={MASS_UNITS as readonly string[]}
@@ -253,6 +282,7 @@ export function SetupForm({ initial, onChange }: Props) {
           emit({ doseUnit: next });
         }}
         activeColor={palette.peptide}
+        groupLabel="Preferred unit"
       />
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>
         How amounts are shown for this peptide. A display preference, not a recommended amount.
@@ -351,6 +381,9 @@ export function SetupForm({ initial, onChange }: Props) {
         style={styles.notes}
         accessibilityLabel="Notes, optional"
       />
+
+      {/* One accessory bar for every numeric field on this form. */}
+      <NumericKeyboardAccessory />
     </>
   );
 }

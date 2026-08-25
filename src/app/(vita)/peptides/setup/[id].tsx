@@ -76,7 +76,7 @@ export default function EditPeptideSetup() {
   };
 
   return (
-    <Screen>
+    <Screen keyboardAware>
       <ScreenHeader title="Setup" back />
 
       <Text style={[styles.name, { color: surfaces.text }]}>{definition.name}</Text>
@@ -109,19 +109,6 @@ export default function EditPeptideSetup() {
         onPress={() => void save()}
       />
 
-      {/*
-        * The calculator gets its own route rather than another section on this
-        * form. Editing a setup and converting an amount are different jobs
-        * with different lifetimes — one persists, one does not — and folding
-        * the second into this screen would make saving feel like it was
-        * saving the amount too.
-        */}
-      <Button
-        label="Dose / unit calculator"
-        variant="soft"
-        color={palette.peptide}
-        onPress={() => router.push(`/peptides/setup/${encodeURIComponent(setup.id)}/calculator`)}
-      />
 
       <Button
         label={setup.active ? 'Move to inactive' : 'Reactivate'}
