@@ -56,6 +56,22 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
 
+**Slice 3.6D (2026-08-25) removed the last question.** The calculator no longer asks how much you are using. Three earlier versions did, and each one refined a question that should not have been there: when you are holding a reconstituted vial, what you actually want to know is what the marks on the syringe are worth — and that is decided entirely by the vial and the water you added.
+
+**So there are only two inputs now.** Enter `10 mg` and `1 mL`, and the answer appears on its own:
+
+> **1 mg = 10 units** · Concentration · 10 mg/mL
+>
+> 0.5 mg → 5 units · 1 mg → 10 units · 2 mg → 20 units · 3 mg → 30 units · 4 mg → 40 units · 5 mg → 50 units
+
+Change the water to 2 mL and it becomes **1 mg = 20 units** immediately. No Amount field, no unit toggle inside the conversion, no button to press.
+
+**Everything is worked out from your numbers**, never looked up — and the headline chooses a sensible scale by itself, so a vial measured in micrograms shows something readable like *500 mcg = 20 units* rather than an unhelpful "1 mcg".
+
+**Nothing in the table is a suggestion.** No row is highlighted or called typical or standard. It is a ruler you read, not a recommendation VITA makes.
+
+This version is also much harder to break than the last three: with nothing to type beyond the vial, the keyboard problem that made the first calculator unusable has no input left to hide behind.
+
 **Slice 3.6C (2026-08-25) made the calculator say one thing.** It answers a single question — *given this concentration and this amount, how many units is that?* — and the screen now says nothing more than that.
 
 **Units are the only answer.** There is no second result in mcg, no reverse "how many mcg is 15 units" converter, and no conversion table. VITA still works in micrograms internally because that is what keeps the arithmetic exact, but you never see them: extra numbers only compete to be the one you act on, and only one of them ends up in a syringe. The answer is the one large figure on the card; equivalent volume, concentration and the working sit quietly underneath.

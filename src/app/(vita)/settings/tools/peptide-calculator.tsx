@@ -8,7 +8,7 @@ import {
   SectionHeader,
   SegmentedTabs,
 } from '../../../../components/ui';
-import { DoseCalculatorPanel } from '../../../../features/peptides/components/DoseCalculatorPanel';
+import { UnitConversion } from '../../../../features/peptides/components/UnitConversion';
 import { DEFAULT_UNITS_PER_ML, MASS_UNITS, parseAmount, toMcg, type MassUnit } from '../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -52,8 +52,8 @@ export default function StandalonePeptideCalculator() {
       <ScreenHeader title="Peptide Calculator" back />
 
       <Text style={[styles.intro, { color: surfaces.textTertiary }]}>
-        Works out how many syringe units your own vial and reconstitution come to. Nothing here is
-        saved, and no peptide needs to be tracked.
+        Enter your vial and reconstitution volume to see what the marks on your syringe are worth.
+        Nothing here is saved, and no peptide needs to be tracked.
       </Text>
 
       <SectionHeader title="Vial" />
@@ -94,7 +94,7 @@ export default function StandalonePeptideCalculator() {
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
 
-      <DoseCalculatorPanel
+      <UnitConversion
         vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, vialUnit) : undefined}
         reconstitutionMl={reconParsed ?? undefined}
         vialUnit={vialUnit}

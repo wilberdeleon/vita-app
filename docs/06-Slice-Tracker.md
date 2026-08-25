@@ -752,6 +752,56 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.6D — Automatic Unit Conversion 🟡
+
+**Objective:** delete the amount input. The vial and the water already determine the entire relationship between mass and syringe units, so asking for a third number made the user do arithmetic before VITA would do arithmetic for them.
+
+**What was wrong with 3.6/3.6B/3.6C.** All three kept a target-amount field, and each revision refined a question that should not have been asked. A user holding a reconstituted vial does not want to be interrogated; they want to know what the marks on the syringe are worth. That is a property of the vial, not of an intention.
+
+**The whole interaction is now two numbers in, a reference out.**
+
+```
+Vial amount        10 mg
+Reconstitution      1 mL
+──────────────────────────
+UNIT CONVERSION
+1 mg = 10 units
+Concentration · 10 mg/mL
+
+AMOUNT      SYRINGE UNITS
+0.5 mg              5 units
+1 mg               10 units
+2 mg               20 units
+3 mg               30 units
+4 mg               40 units
+5 mg               50 units
+Using U-100 · 100 units/mL
+```
+
+No Amount field, no mg/mcg toggle inside the conversion, no Calculate button, no result waiting on a third input.
+
+**`unitConversionReference()` is a new pure function** in `model/dose.ts`, built on the existing `resolveConcentration` so there is still exactly one place the arithmetic lives. Values are always derived; nothing in the founder's examples is hard-coded.
+
+**The headline picks its own scale.** One whole authored unit wins whenever it is legible — "1 mg = 10 units" is the sentence people repeat to themselves, and opening on "0.5 mg = 5 units" would be equivalent and harder to carry. Only when that lands outside a readable band (1–100 units) does it fall back to a ladder and choose the candidate nearest a comfortable mid-barrel reading. A 5000 mcg vial in 2 mL headlines **500 mcg = 20 units**, because "1 mcg" there is four hundredths of a syringe mark.
+
+**Rows are the primary amount × 0.5, 1, 2, 3, 4, 5**, which reproduces the founder's worked table exactly for 10 mg / 1 mL and stays sensible elsewhere. Rows that would exceed twice a full barrel are dropped; the primary always survives, so the reference can never come back empty.
+
+**No row is recommended, and none can be.** Nothing is highlighted, reordered by desirability, or described as typical, standard or starting. The table is a ruler — the user reads the line they need, and VITA does not point at one. A test sweeps the rendered screen for that vocabulary.
+
+**Deleted:** `DoseCalculatorPanel`, `DoseResult`, their tests, and every trace of *Amount* / *Amount being used* / *Amount to convert* and the amount unit selector. `calculateSyringeUnits` and `calculateAmountFromUnits` stay in the domain — the reference is built from the former, and the latter is the inverse that keeps the forward maths honest.
+
+**Unchanged:** inline placement directly beneath the Vial section, derivation from live draft state with no Save required, the standalone Tools calculator (now two inputs, not three), the U-100 assumption with no capacity selector, the Done accessory on both numeric fields, and `Save setup` persisting nothing from the conversion.
+
+**37 tests, 615 total.** Both surfaces run the same parameterised suite, and the founder's mandatory sequence is pinned: type `10` and `1` → **1 mg = 10 units**; change water to `2` → **1 mg = 20 units**; change vial to `20` → **1 mg = 10 units**, with nothing else ever entered.
+
+**Verified on device**, Light and Dark: inline at 10 mg / 1 mL and 10 mg / 2 mL, and the standalone tool at 20 mg / 2 mL, each matching the founder's expected output exactly.
+
+**This design is materially easier to trust than its predecessors**, because there is nothing to type beyond the vial — the failure mode that broke 3.6 (a keyboard hiding a result the user was mid-way through producing) no longer has an input to hide behind. Founder confirmation on a real iPhone is still the acceptance gate.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/` and the 72-entry catalog untouched. No logging, no injection sites.
+
 ### Slice 3.6C — Final Unit Calculator UX Correction 🟡
 
 **Objective:** one simplification, from founder device review of 3.6B. The calculator answers a single question — *given this concentration and this amount, how many syringe units is that?* — and the interface should say nothing more than that.

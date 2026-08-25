@@ -166,6 +166,14 @@ The calculator route is `/peptides/setup/[id]/calculator`. It reads vial, water 
 
 `Screen` gained an **opt-in** `keyboardAware` prop (`keyboardShouldPersistTaps="handled"`, `keyboardDismissMode="interactive"`, extra bottom padding). Opt-in rather than default so no existing screen's behaviour changes — only the three peptide form screens use it.
 
+**No target amount is an input (slice 3.6D).** `unitConversionReference(vial, unit)` derives the whole reference from the vial and the reconstitution volume alone, reusing `resolveConcentration` so the arithmetic still lives in one place. Slices 3.6 through 3.6C each kept a target-amount field and each refined a question that should not have been asked: what the syringe marks are worth is a property of the vial, not of an intention.
+
+The headline scale is chosen, not fixed. One whole authored unit wins whenever the result falls in a readable 1–100 unit band, because "1 mg = 10 units" is the phrasing people carry in their heads; otherwise a ladder supplies the nearest candidate to a mid-barrel reading, so an mcg-authored vial does not headline an unreadable "1 mcg". Rows are the primary amount × `[0.5, 1, 2, 3, 4, 5]`, filtered to what fits on a barrel, with the primary always surviving so the reference is never empty.
+
+**Nothing in the table is a recommendation.** No row is highlighted, ordered by desirability, or labelled typical/standard/starting, and a rendering test sweeps for that vocabulary. The table is a ruler; VITA does not point at a line on it.
+
+`DoseCalculatorPanel` and `DoseResult` are deleted. `calculateSyringeUnits` builds the rows; `calculateAmountFromUnits` remains the tested inverse that keeps the forward arithmetic honest and is deliberately unwired.
+
 **Output is syringe units only (slice 3.6C).** Micrograms are canonical *inside* `model/dose.ts` and never appear as a result. No second mcg figure, no per-unit mass, no units → mass converter in any screen. `calculateAmountFromUnits` remains in the domain — tested, and deliberately unwired — because it is the inverse that keeps the forward arithmetic honest, not a feature.
 
 **Unit switching converts; it never reinterprets.** `changeAmountUnit` rewrites the field through `toMcg`/`fromMcg`, so `2 mg` becomes `2000 mcg` and the syringe result is unchanged. Reinterpreting would move the amount by a factor of a thousand while the digits sat still — the worst failure available on this screen. Two guards: only text matching `/^\d*\.?\d+$/` is rewritten (`Number('1.')` is `1`, so parsing alone would destroy a half-typed "1.5"), and the conversion happens on press rather than in an effect, so there is no feedback loop.

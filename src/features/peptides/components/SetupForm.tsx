@@ -10,7 +10,7 @@ import {
   TextField,
 } from '../../../components/ui';
 import { isValidLogDate, todayLogDate, type LogDate } from '../../../lib/daily';
-import { DoseCalculatorPanel } from './DoseCalculatorPanel';
+import { UnitConversion } from './UnitConversion';
 import {
   DEFAULT_UNITS_PER_ML,
   MASS_UNITS,
@@ -253,23 +253,20 @@ export function SetupForm({ initial, onChange }: Props) {
       ) : null}
 
       {/*
-        * The calculator, inline and immediately after the vial it depends on.
+        * The unit conversion, immediately beneath the vial it is derived from.
         *
         * It reads the **draft** values above — the live text in those two
-        * fields — not the saved setup, so a user configuring a peptide for
-        * the first time gets an answer before they have saved anything. That
-        * is the point: working out how many units to draw is not something
-        * you should have to create a tracked peptide to do.
-        *
-        * `DoseCalculatorPanel` owns the amount internally, so nothing here
-        * can capture it and `Save setup` cannot persist it.
+        * fields — not the saved setup, so it appears while someone is still
+        * filling the form in. There is nothing else to enter: the vial and
+        * the water already fix the entire relationship between mass and
+        * syringe units, so asking for a third number would only make the user
+        * do arithmetic before VITA would do arithmetic for them.
         */}
-      <DoseCalculatorPanel
+      <UnitConversion
         vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, vialUnit) : undefined}
         reconstitutionMl={reconParsed ?? undefined}
         vialUnit={vialUnit}
         unitsPerMl={unitsPerMl ?? undefined}
-        defaultAmountUnit={doseUnit}
       />
 
       <SectionHeader title="Preferred unit" />

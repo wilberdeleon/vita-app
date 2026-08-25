@@ -88,10 +88,14 @@ export {
   calculateSyringeUnits,
   calculateSyringeUnitsForMass,
   doseConsistencyNotes,
+  unitConversionReference,
   type DoseCalculation,
   type DoseCalculationError,
   type DoseCalculationResult,
   type DoseConsistencyNote,
+  type ConversionRow,
+  type UnitConversion,
+  type UnitConversionResult,
   type VialInputs,
 } from './model/dose';
 export { PEPTIDE_DOMAIN, PeptideKeys } from './data/keys';

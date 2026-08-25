@@ -238,3 +238,117 @@ export function doseConsistencyNotes(
 
   return notes;
 }
+
+/**
+ * ── The unit conversion reference ──────────────────────────────────────
+ *
+ * What the calculator surfaces actually show. A user with a reconstituted
+ * vial does not want to be asked a third number; they want to know what the
+ * marks on their syringe are worth. So the whole reference is derived from
+ * the vial and the water alone.
+ */
+
+/** One line of the reference: a mass, and the units it corresponds to. */
+export type ConversionRow = {
+  amountMcg: number;
+  syringeUnits: number;
+};
+
+export type UnitConversion = {
+  concentrationMcgPerMl: number;
+  unitsPerMl: number;
+  /** The headline relationship — "1 mg = 10 units". */
+  primary: ConversionRow;
+  /** A short ladder around the primary, for reading a syringe at a glance. */
+  rows: ConversionRow[];
+};
+
+export type UnitConversionResult =
+  | ({ ok: true } & UnitConversion)
+  | { ok: false; reason: DoseCalculationError };
+
+/**
+ * Candidate display amounts, in the unit the vial was authored in.
+ *
+ * Used only when the natural choice — a single whole unit, "1 mg" — lands
+ * somewhere unreadable. A vial authored in micrograms makes "1 mcg" a
+ * hundredth of a syringe mark, which tells nobody anything.
+ */
+const DISPLAY_LADDER: Record<MassUnit, readonly number[]> = {
+  mg: [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10],
+  mcg: [10, 25, 50, 100, 250, 500, 1000, 2500],
+};
+
+/** Units below this are unreadable on a syringe; above it, off the barrel. */
+const READABLE_MIN_UNITS = 1;
+const READABLE_MAX_UNITS = 100;
+
+/** The ladder the reference walks, as multiples of the primary amount. */
+const ROW_MULTIPLIERS = [0.5, 1, 2, 3, 4, 5] as const;
+
+/**
+ * Picks the mass to headline.
+ *
+ * **One whole authored unit wins whenever it is legible**, because "1 mg =
+ * 10 units" is the sentence people actually repeat to themselves, and a
+ * reference that opened on "0.5 mg = 5 units" instead would be technically
+ * equivalent and harder to carry around. Only when that lands outside the
+ * readable band does this fall back to the ladder, choosing whichever
+ * candidate sits closest to the middle of a syringe barrel.
+ */
+function pickPrimaryAmount(concentrationMcgPerMl: number, unitsPerMl: number, unit: MassUnit): number {
+  const unitsFor = (amount: number) => (toMcg(amount, unit) / concentrationMcgPerMl) * unitsPerMl;
+
+  const natural = unitsFor(1);
+  if (natural >= READABLE_MIN_UNITS && natural <= READABLE_MAX_UNITS) return 1;
+
+  const candidates = DISPLAY_LADDER[unit].filter((amount) => {
+    const units = unitsFor(amount);
+    return units >= READABLE_MIN_UNITS && units <= READABLE_MAX_UNITS;
+  });
+  if (candidates.length === 0) return 1;
+
+  // Closest to a comfortable mid-barrel reading.
+  const target = 20;
+  return candidates.reduce((best, amount) =>
+    Math.abs(unitsFor(amount) - target) < Math.abs(unitsFor(best) - target) ? amount : best,
+  );
+}
+
+/**
+ * Builds the whole reference from the vial alone.
+ *
+ * **No target amount is an input, and none is implied.** Every row is a
+ * neutral restatement of the same ratio — none is marked, ordered, or
+ * described as a suggestion, because VITA has no basis for suggesting one.
+ * The rows exist so a user can read their own syringe, not so VITA can point
+ * at a line on it.
+ */
+export function unitConversionReference(vial: VialInputs, unit: MassUnit): UnitConversionResult {
+  const concentration = resolveConcentration(vial);
+  if (!concentration.ok) return concentration;
+
+  const { concentrationMcgPerMl, unitsPerMl } = concentration;
+  const primaryAmount = pickPrimaryAmount(concentrationMcgPerMl, unitsPerMl, unit);
+
+  const row = (amount: number): ConversionRow => {
+    const amountMcg = toMcg(amount, unit);
+    return {
+      amountMcg,
+      syringeUnits: (amountMcg / concentrationMcgPerMl) * unitsPerMl,
+    };
+  };
+
+  const rows = ROW_MULTIPLIERS.map((multiplier) => row(primaryAmount * multiplier))
+    // A row nobody could draw is noise. The primary always survives, so the
+    // reference can never come back empty.
+    .filter((candidate) => candidate.syringeUnits <= READABLE_MAX_UNITS * 2);
+
+  return {
+    ok: true,
+    concentrationMcgPerMl,
+    unitsPerMl,
+    primary: row(primaryAmount),
+    rows,
+  };
+}
