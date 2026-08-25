@@ -15,6 +15,7 @@ import {
   DEFAULT_UNITS_PER_ML,
   MASS_UNITS,
   WEEKDAY_INDEXES,
+  convertAuthoredAmount,
   parseAmount,
   toMcg,
   sortedDays,
@@ -188,7 +189,7 @@ export function SetupForm({ initial, onChange }: Props) {
     <>
       <SectionHeader title="Name" />
       <TextField
-        label="Display name (optional)"
+        label="Display Name (Optional)"
         placeholder="Leave blank to use the peptide name"
         value={displayName}
         onChangeText={(text) => {
@@ -205,7 +206,7 @@ export function SetupForm({ initial, onChange }: Props) {
       <View style={styles.row}>
         <View style={styles.grow}>
           <NumericField
-            label={`Vial amount (${vialUnit})`}
+            label={`Vial Amount (${vialUnit})`}
             placeholder="e.g. 10"
             value={vialAmount}
             onChangeText={(text) => {
@@ -220,9 +221,19 @@ export function SetupForm({ initial, onChange }: Props) {
             options={MASS_UNITS as readonly string[]}
             selectedIndex={MASS_UNITS.indexOf(vialUnit)}
             onChange={(index) => {
+              /**
+               * Switching the unit **restates** the vial, it does not
+               * reinterpret it: `20 mg` becomes `20000 mcg`, so the canonical
+               * `amountMcg` that gets saved is identical before and after.
+               * Reinterpreting would silently change a vial by a factor of a
+               * thousand — and unlike the calculator's own fields, this one
+               * persists.
+               */
               const next = MASS_UNITS[index];
+              const converted = convertAuthoredAmount(vialAmount, vialUnit, next);
+              setVialAmount(converted);
               setVialUnit(next);
-              emit({ vialUnit: next });
+              emit({ vialAmount: converted, vialUnit: next });
             }}
             activeColor={palette.peptide}
             groupLabel="Vial unit"
@@ -239,7 +250,7 @@ export function SetupForm({ initial, onChange }: Props) {
         * not assume it is the only possible diluent.
         */}
       <NumericField
-        label="Bacteriostatic water / reconstitution (mL)"
+        label="Bacteriostatic Water / Reconstitution (mL)"
         placeholder="e.g. 1"
         value={reconstitution}
         onChangeText={(text) => {
@@ -337,7 +348,7 @@ export function SetupForm({ initial, onChange }: Props) {
       <View style={styles.row}>
         <View style={styles.grow}>
           <TextField
-            label="Optional (YYYY-MM-DD)"
+            label="Date (YYYY-MM-DD)"
             placeholder="2026-08-23"
             autoCapitalize="none"
             autoCorrect={false}

@@ -1,9 +1,14 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Card, SectionHeader } from '../../../components/ui';
+import { Card, NumericField, SectionHeader, SegmentedTabs } from '../../../components/ui';
 import {
+  MASS_UNITS,
+  calculateSyringeUnits,
+  convertAuthoredAmount,
   formatConcentration,
   formatMcg,
   formatSyringeUnits,
+  toMcg,
   unitConversionReference,
   type MassUnit,
 } from '../../../lib/peptides';
@@ -41,10 +46,44 @@ type Props = {
 export function UnitConversion({ vialAmountMcg, reconstitutionMl, vialUnit, unitsPerMl }: Props) {
   const { surfaces } = useTheme();
 
+  /**
+   * The optional custom conversion, owned here and never lifted.
+   *
+   * The generated table cannot cover every amount anyone cares about — a
+   * low-mass vial produces rows in single micrograms while a user may be
+   * thinking in hundreds — and sending them to a second calculator for that
+   * would be absurd. So there is one small field for an amount the table
+   * misses.
+   *
+   * **Nothing about it is suggested.** It starts blank, no value is
+   * pre-filled, and no row above is marked as a common or typical choice.
+   * Keeping the state local also makes "the calculator persists nothing" a
+   * structural fact: `Save setup` cannot capture what it cannot see.
+   */
+  const [custom, setCustom] = useState('');
+  const [customUnit, setCustomUnit] = useState<MassUnit>(vialUnit);
+
   const reference = unitConversionReference(
     { vialAmountMcg, reconstitutionMl, unitsPerMl },
     vialUnit,
   );
+
+  /**
+   * `null` while the field is untouched — blank is where everyone starts and
+   * must stay silent. The shared `parseAmount` collapses blank and "0" to the
+   * same value, and here the difference is the whole message.
+   */
+  const trimmed = custom.trim();
+  const typed = trimmed.length === 0 ? null : Number(trimmed);
+  const customResult =
+    typed === null
+      ? null
+      : !Number.isFinite(typed) || typed <= 0
+        ? ({ ok: false } as const)
+        : calculateSyringeUnits(
+            { vialAmountMcg, reconstitutionMl, unitsPerMl },
+            toMcg(typed, customUnit),
+          );
 
   return (
     <>
@@ -105,6 +144,57 @@ export function UnitConversion({ vialAmountMcg, reconstitutionMl, vialUnit, unit
           <Text style={[styles.context, { color: surfaces.textTertiary }]}>
             Using U-100 · {reference.unitsPerMl} units/mL
           </Text>
+
+          {/*
+           * Kept inside the same card, below a hairline, rather than given a
+           * section of its own. It is a supplement to the reference above,
+           * not a peer of it — and the founder's whole objection to earlier
+           * versions was an input taking over the page.
+           */}
+          <View style={[styles.custom, { borderTopColor: surfaces.border }]}>
+            <Text style={[styles.customHeading, { color: surfaces.textTertiary }]}>
+              CUSTOM CONVERSION
+            </Text>
+
+            <View style={styles.customRow}>
+              <View style={styles.customField}>
+                <NumericField
+                  label="Custom Amount"
+                  placeholder="e.g. 200"
+                  value={custom}
+                  onChangeText={setCustom}
+                  accessibilityLabel={`Custom amount, in ${customUnit}`}
+                />
+              </View>
+              <View style={styles.customUnit}>
+                <SegmentedTabs
+                  options={MASS_UNITS as readonly string[]}
+                  selectedIndex={MASS_UNITS.indexOf(customUnit)}
+                  onChange={(index) => {
+                    const next = MASS_UNITS[index];
+                    setCustom((text) => convertAuthoredAmount(text, customUnit, next));
+                    setCustomUnit(next);
+                  }}
+                  activeColor={palette.peptide}
+                  groupLabel="Custom amount unit"
+                />
+              </View>
+            </View>
+
+            {customResult === null ? null : customResult.ok ? (
+              <Text
+                style={[styles.customResult, { color: palette.peptide }]}
+                accessibilityRole="text"
+                accessibilityLabel={`${formatMcg(customResult.amountMcg, customUnit)} equals ${formatSyringeUnits(customResult.syringeUnits)}`}
+              >
+                = {formatSyringeUnits(customResult.syringeUnits)}
+              </Text>
+            ) : (
+              <Text style={[styles.customError, { color: palette.fat }]}>
+                Enter an amount greater than zero.
+              </Text>
+            )}
+          </View>
         </Card>
       )}
     </>
@@ -148,5 +238,32 @@ const styles = StyleSheet.create({
   context: {
     ...typography.micro,
     marginTop: spacing.xs,
+  },
+  custom: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: spacing.m,
+    paddingTop: spacing.m,
+    gap: spacing.xs,
+  },
+  customHeading: {
+    ...typography.micro,
+    letterSpacing: 0.6,
+  },
+  customRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.m,
+  },
+  customField: {
+    flex: 1,
+  },
+  customUnit: {
+    width: 120,
+  },
+  customResult: {
+    ...typography.heading,
+  },
+  customError: {
+    ...typography.caption,
   },
 });

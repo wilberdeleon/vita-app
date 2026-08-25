@@ -178,41 +178,31 @@ describe.each(SURFACES)('%s', (_name, render) => {
     expect(screen(tree)).not.toContain('Enter vial amount and reconstitution volume');
   });
 
-  it('has no amount input anywhere', async () => {
+  it('never gates the conversion behind an amount', async () => {
     const tree = await render();
     await enterVial(tree, '10', '1');
 
-    // Exactly two numeric fields: the vial and the water.
-    const numeric = tree.root
-      .findAllByType(TextInput)
-      .filter((node) => node.props.keyboardType === 'decimal-pad');
-    expect(numeric).toHaveLength(2);
-
-    for (const field of numeric) {
-      expect(String(field.props.accessibilityLabel)).not.toMatch(/^Amount/);
-    }
+    // The retired model asked for a target amount before showing anything.
     const rendered = screen(tree);
     for (const gone of ['Amount being used', 'Amount to convert', 'CALCULATED SYRINGE AMOUNT']) {
       expect(rendered).not.toContain(gone);
     }
+    // And the reference is already there without touching the custom field.
+    expect(rendered).toContain('1 mg = 10 units');
   });
 
-  it('has no unit toggle inside the conversion section', async () => {
+  it('offers the custom field only once a concentration exists', async () => {
     const tree = await render();
+    expect(screen(tree)).not.toContain('CUSTOM CONVERSION');
+
     await enterVial(tree, '10', '1');
-
-    const toggles = tree.root.findAll(
-      (node) =>
-        node.props?.accessibilityRole === 'button' &&
-        /^Amount unit,/.test(String(node.props?.accessibilityLabel ?? '')),
-    );
-    expect(toggles).toHaveLength(0);
+    expect(screen(tree)).toContain('CUSTOM CONVERSION');
   });
 
-  it('recomputes when the vial unit changes', async () => {
+  it('reads an mcg-authored vial at a legible scale', async () => {
     const tree = await render();
-    await enterVial(tree, '5000', '2');
     await selectUnit(tree, 'Vial unit', 'mcg');
+    await enterVial(tree, '5000', '2');
 
     // 5000 mcg in 2 mL is 2500 mcg/mL. "1 mcg" would be four hundredths of a
     // unit, so the reference picks a legible landmark instead — 500 mcg reads
@@ -281,6 +271,203 @@ describe.each(SURFACES)('%s', (_name, render) => {
       expect(field.props.inputAccessoryViewID).toBe('vita-numeric-done');
     }
     expect(control(tree, 'Done')).toBeDefined();
+  });
+});
+
+describe.each(SURFACES)('%s — custom conversion', (_name, render) => {
+  /** The optional field for an amount the generated table does not cover. */
+  async function ready(vial: string, water: string) {
+    const tree = await render();
+    await enterVial(tree, vial, water);
+    return tree;
+  }
+
+  function customValue(tree: ReactTestRenderer) {
+    return tree.root
+      .findAllByType(TextInput)
+      .find((node) => /^Custom amount,/.test(String(node.props.accessibilityLabel ?? '')))?.props
+      .value;
+  }
+
+  it('converts 2 mg to 20 units on a 10 mg / 1 mL vial', async () => {
+    const tree = await ready('10', '1');
+    await type(tree, /^Custom amount,/, '2');
+    expect(screen(tree)).toContain('= 20 units');
+  });
+
+  it('converts 500 mcg to 20 units on a 5 mg / 2 mL vial', async () => {
+    const tree = await ready('5', '2');
+    await selectUnit(tree, 'Custom amount unit', 'mcg');
+    await type(tree, /^Custom amount,/, '500');
+    expect(screen(tree)).toContain('= 20 units');
+  });
+
+  it('handles an amount the generated table never reaches', async () => {
+    // A 1 mg / 1 mL vial tables single-digit units; 200 mcg is off the end of
+    // it, which is the whole reason this field exists.
+    const tree = await ready('1', '1');
+    await selectUnit(tree, 'Custom amount unit', 'mcg');
+    await type(tree, /^Custom amount,/, '200');
+    expect(screen(tree)).toContain('= 20 units');
+  });
+
+  it('restates the amount when its unit changes, leaving the result alone', async () => {
+    const tree = await ready('10', '1');
+    await type(tree, /^Custom amount,/, '0.5');
+    expect(screen(tree)).toContain('= 5 units');
+
+    await selectUnit(tree, 'Custom amount unit', 'mcg');
+    expect(customValue(tree)).toBe('500');
+    expect(screen(tree)).toContain('= 5 units');
+
+    await selectUnit(tree, 'Custom amount unit', 'mg');
+    expect(customValue(tree)).toBe('0.5');
+    expect(screen(tree)).toContain('= 5 units');
+  });
+
+  it('stays silent while blank, and never blocks the reference', async () => {
+    const tree = await ready('10', '1');
+    expect(screen(tree)).toContain('1 mg = 10 units');
+    expect(screen(tree)).not.toContain('Enter an amount greater than zero.');
+    expect(customValue(tree)).toBe('');
+  });
+
+  it('names a zero or malformed amount without losing the reference', async () => {
+    const tree = await ready('10', '1');
+    for (const junk of ['0', '-2', 'abc']) {
+      await type(tree, /^Custom amount,/, junk);
+      expect(screen(tree)).toContain('Enter an amount greater than zero.');
+      // The automatic reference is unaffected by a bad custom value.
+      expect(screen(tree)).toContain('1 mg = 10 units');
+      expect(screen(tree)).not.toContain('NaN');
+      expect(screen(tree)).not.toContain('Infinity');
+    }
+  });
+
+  it('recovers as soon as the amount is valid', async () => {
+    const tree = await ready('10', '1');
+    await type(tree, /^Custom amount,/, '0');
+    await type(tree, /^Custom amount,/, '2');
+    expect(screen(tree)).toContain('= 20 units');
+    expect(screen(tree)).not.toContain('Enter an amount greater than zero.');
+  });
+
+  it('shows fractional units without false precision', async () => {
+    const tree = await ready('10', '1');
+    await type(tree, /^Custom amount,/, '1.25');
+    expect(screen(tree)).toContain('= 12.5 units');
+  });
+
+  it('calculates past a full barrel without advising on it', async () => {
+    const tree = await ready('10', '1');
+    await type(tree, /^Custom amount,/, '12');
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('= 120 units');
+    for (const advice of ['split', 'two injections', 'maximum', 'capacity']) {
+      expect(rendered.toLowerCase()).not.toContain(advice);
+    }
+  });
+
+  it('carries the Done accessory', async () => {
+    const tree = await ready('10', '1');
+    const field = tree.root
+      .findAllByType(TextInput)
+      .find((node) => /^Custom amount,/.test(String(node.props.accessibilityLabel ?? '')));
+    expect(field?.props.keyboardType).toBe('decimal-pad');
+    expect(field?.props.inputAccessoryViewID).toBe('vita-numeric-done');
+  });
+});
+
+describe.each(SURFACES)('%s — vial unit toggle', (_name, render) => {
+  function vialValue(tree: ReactTestRenderer) {
+    return tree.root
+      .findAllByType(TextInput)
+      .find((node) => /^Vial amount/.test(String(node.props.accessibilityLabel ?? '')))?.props.value;
+  }
+
+  it('restates 20 mg as 20000 mcg, preserving the ratio', async () => {
+    const tree = await render();
+    await enterVial(tree, '20', '2');
+    expect(screen(tree)).toContain('1 mg = 10 units');
+    expect(screen(tree)).toContain('Concentration · 10 mg/mL');
+
+    await selectUnit(tree, 'Vial unit', 'mcg');
+    expect(vialValue(tree)).toBe('20000');
+
+    /**
+     * The reference is written in whatever unit the vial is authored in, so
+     * the headline restates itself at an mcg-appropriate scale. What must not
+     * move is the underlying ratio: 10 mg/mL is 10000 mcg/mL, and 1 mg still
+     * comes to 10 units.
+     */
+    expect(screen(tree)).toContain('Concentration · 10000 mcg/mL');
+
+    // The custom field keeps its own unit — seeded once, then independent, so
+    // toggling the vial cannot silently reinterpret something typed here.
+    await selectUnit(tree, 'Custom amount unit', 'mcg');
+    await type(tree, /^Custom amount,/, '1000');
+    expect(screen(tree)).toContain('= 10 units');
+  });
+
+  it('round-trips back to 20 mg with no drift', async () => {
+    const tree = await render();
+    await enterVial(tree, '20', '2');
+    await selectUnit(tree, 'Vial unit', 'mcg');
+    await selectUnit(tree, 'Vial unit', 'mg');
+
+    expect(vialValue(tree)).toBe('20');
+    expect(screen(tree)).toContain('1 mg = 10 units');
+  });
+
+  it('leaves a blank or half-typed vial alone', async () => {
+    const tree = await render();
+    await selectUnit(tree, 'Vial unit', 'mcg');
+    expect(vialValue(tree)).toBe('');
+
+    await type(tree, /^Vial amount/, '1.');
+    await selectUnit(tree, 'Vial unit', 'mg');
+    expect(vialValue(tree)).toBe('1.');
+  });
+});
+
+describe('vial unit switching preserves what gets saved', () => {
+  it('emits an identical canonical amountMcg before and after', async () => {
+    /**
+     * The inline toggle is the one that persists. If it reinterpreted rather
+     * than restated, a saved vial would change by a factor of a thousand —
+     * so the canonical micrograms are compared across the switch.
+     */
+    const emitted: Array<Record<string, unknown>> = [];
+    const tree = await mount(
+      <SetupForm onChange={(value) => emitted.push(value as Record<string, unknown>)} />,
+    );
+
+    await enterVial(tree, '20', '2');
+    const before = (emitted.at(-1)?.vial as { amountMcg: number } | undefined)?.amountMcg;
+    expect(before).toBe(20_000);
+
+    await selectUnit(tree, 'Vial unit', 'mcg');
+    const after = (emitted.at(-1)?.vial as { amountMcg: number } | undefined)?.amountMcg;
+    expect(after).toBe(before);
+
+    await selectUnit(tree, 'Vial unit', 'mg');
+    expect((emitted.at(-1)?.vial as { amountMcg: number } | undefined)?.amountMcg).toBe(before);
+  });
+
+  it('never emits the custom amount', async () => {
+    const emitted: Array<Record<string, unknown>> = [];
+    const tree = await mount(
+      <SetupForm onChange={(value) => emitted.push(value as Record<string, unknown>)} />,
+    );
+    await enterVial(tree, '10', '1');
+    await type(tree, /^Custom amount,/, '2');
+
+    expect(screen(tree)).toContain('= 20 units');
+    for (const value of emitted) {
+      expect(Object.keys(value)).not.toContain('customAmount');
+      expect(JSON.stringify(value)).not.toContain('"2"');
+    }
   });
 });
 

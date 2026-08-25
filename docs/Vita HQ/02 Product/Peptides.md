@@ -56,6 +56,14 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
 
+**Slice 3.6E (2026-08-25) polished the calculator and added a custom conversion.** The automatic reference you approved is unchanged and still leads the section. Three things were finished around it.
+
+**Labels read properly now.** *Vial Amount*, *Bacteriostatic Water / Reconstitution*, *Custom Amount* — consistent title case, with the scientific parts (mg, mcg, mL, U-100, GHK-Cu) left exactly as they must be.
+
+**A small Custom Conversion sits under the table.** The generated rows cannot cover every amount anyone cares about — a low-mass vial lists single micrograms while you might be thinking in hundreds. So there is one compact field: type `200`, pick mcg, and it answers `= 2 units`. It starts blank, suggests nothing, is completely optional, and is never saved. It deliberately sits *under* the reference rather than beside it — the automatic conversion stays the main event.
+
+**The vial unit toggle is fixed.** Tapping mcg on a `20 mg` vial now gives `20000 mcg` rather than `20 mcg` — the same physical vial, restated. This matters more than the others because the vial is *saved*, so there is a test proving the stored amount is identical before and after the switch.
+
 **Slice 3.6D (2026-08-25) removed the last question.** The calculator no longer asks how much you are using. Three earlier versions did, and each one refined a question that should not have been there: when you are holding a reconstituted vial, what you actually want to know is what the marks on the syringe are worth — and that is decided entirely by the vial and the water you added.
 
 **So there are only two inputs now.** Enter `10 mg` and `1 mL`, and the answer appears on its own:

@@ -117,3 +117,29 @@ export function formatSyringeUnits(units: number): string {
 export function formatConcentration(mcgPerMl: number, unit: MassUnit): string {
   return `${roundForDisplay(fromMcg(mcgPerMl, unit), unit)} ${unit}/mL`;
 }
+
+/**
+ * Restates a typed amount in a different unit, preserving the quantity.
+ *
+ * `20 mg` becomes `20000 mcg`, not `20 mcg`. When someone taps a unit toggle
+ * they are renaming the same physical amount, so the value has to travel with
+ * the label — reinterpreting instead would move a vial or a dose by a factor
+ * of a thousand while the digits sat still, which is the most dangerous thing
+ * any of these screens could do.
+ *
+ * **Only a complete number is rewritten.** `Number('1.')` is `1`, so parsing
+ * alone would turn someone half-way through typing "1.5" into "1000". Blank
+ * or mid-typing text comes back untouched, so a unit toggle can never destroy
+ * what was being written.
+ *
+ * Call it on an explicit toggle press only. Running it while typing would
+ * rewrite the field under the cursor on every keystroke.
+ */
+export function convertAuthoredAmount(text: string, from: MassUnit, to: MassUnit): string {
+  if (from === to) return text;
+  const trimmed = text.trim();
+  if (!/^\d*\.?\d+$/.test(trimmed)) return text;
+  const value = Number(trimmed);
+  if (!(value > 0)) return text;
+  return String(fromMcg(toMcg(value, from), to));
+}

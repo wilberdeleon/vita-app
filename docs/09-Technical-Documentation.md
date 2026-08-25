@@ -166,6 +166,19 @@ The calculator route is `/peptides/setup/[id]/calculator`. It reads vial, water 
 
 `Screen` gained an **opt-in** `keyboardAware` prop (`keyboardShouldPersistTaps="handled"`, `keyboardDismissMode="interactive"`, extra bottom padding). Opt-in rather than default so no existing screen's behaviour changes — only the three peptide form screens use it.
 
+**Unit-toggle conversion is one shared helper (slice 3.6E).** `convertAuthoredAmount(text, from, to)` in `model/units.ts` restates a typed amount in another unit — `20 mg` → `20000 mcg` — and is used by all three toggles: the vial field inline, the vial field in the standalone tool, and the custom amount. Reinterpreting instead would move a quantity by a factor of a thousand while the digits sat still.
+
+Two invariants it guarantees:
+
+- **Only a complete number is rewritten.** `Number('1.')` is `1`, so parsing alone would turn a half-typed "1.5" into "1000". A `/^\d*\.?\d+$/` test leaves blank and mid-typing text untouched.
+- **It runs on an explicit toggle press only**, never in an effect and never while typing, so the field is not rewritten under the cursor.
+
+The **vial** toggle is the one that persists. `SetupForm` emits the converted text together with the new unit, so `vialFrom()` produces an identical canonical `amountMcg` before and after — asserted by test across a switch and a round trip.
+
+**The custom converter** (`UnitConversion`) is optional and ephemeral. Its state is local to the component, which makes "the calculator persists nothing" structural rather than a rule: `SetupForm.emit()` cannot include what it cannot reach. Its unit is seeded from the vial's authored unit once and then independent — the same separation applied between a logged unit and a display preference in Water slice 3.3.
+
+**Casing convention.** Section metadata stays uppercase (`VIAL`, `UNIT CONVERSION`, `PREFERRED UNIT`) via `SectionHeader`; field labels are Title Case. Compound and unit tokens (`mg`, `mcg`, `mL`, `U-100`, `GHK-Cu`, `MOTS-c`) are never re-cased — `formatLabel`'s rule leaves any token already containing a capital exactly as authored.
+
 **No target amount is an input (slice 3.6D).** `unitConversionReference(vial, unit)` derives the whole reference from the vial and the reconstitution volume alone, reusing `resolveConcentration` so the arithmetic still lives in one place. Slices 3.6 through 3.6C each kept a target-amount field and each refined a question that should not have been asked: what the syringe marks are worth is a property of the vial, not of an intention.
 
 The headline scale is chosen, not fixed. One whole authored unit wins whenever the result falls in a readable 1–100 unit band, because "1 mg = 10 units" is the phrasing people carry in their heads; otherwise a ladder supplies the nearest candidate to a mid-barrel reading, so an mcg-authored vial does not headline an unreadable "1 mcg". Rows are the primary amount × `[0.5, 1, 2, 3, 4, 5]`, filtered to what fits on a barrel, with the primary always surviving so the reference is never empty.

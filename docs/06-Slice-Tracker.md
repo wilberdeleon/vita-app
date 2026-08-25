@@ -752,6 +752,41 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.6E — Calculator Polish + Custom Conversion 🟡
+
+**Objective:** the automatic conversion model is approved; this finishes it. Professional casing, one compact custom converter for amounts the generated table cannot reach, and the vial unit toggle corrected.
+
+**Field labels are Title Case; section metadata stays uppercase.** `Vial Amount (mg)`, `Bacteriostatic Water / Reconstitution (mL)`, `Display Name (Optional)`, `Custom Amount`, `Date (YYYY-MM-DD)` — against the established `VIAL` / `UNIT CONVERSION` / `PREFERRED UNIT` metadata style. Sentence case and title case no longer mix inside one form. Scientific casing is untouched: `mg`, `mcg`, `mL`, `U-100`, `GHK-Cu`, `MOTS-c` all render exactly as authored, protected by `formatLabel`'s existing rule.
+
+**The automatic reference is unchanged and remains primary.** 20 mg / 2 mL still shows `1 mg = 10 units` with its table, before anything else is entered.
+
+**Custom Conversion**, for what the table cannot cover. A generated reference around a low-mass vial lists single micrograms while a user may be thinking in hundreds; sending them to a second calculator for that would be absurd. One field plus a mg/mcg toggle, and the answer inline: `= 20 units`.
+
+It is deliberately **subordinate**: inside the same card, below a hairline, under a micro heading matching the table's own column labels — not a second card and not a peer section. The founder's objection to three previous designs was an input taking over the page.
+
+| Property | Behaviour |
+|---|---|
+| Starts | blank; nothing pre-filled, nothing suggested |
+| Optional | blank shows no error, and the reference above is unaffected |
+| Output | syringe units only — no second mass card |
+| Persistence | none; state is local to the component, so `Save setup` cannot see it |
+
+**The vial unit toggle now converts instead of reinterpreting** — the defect flagged at the end of 3.6C. `20 mg` becomes `20000 mcg`, not `20 mcg`. This one **persists**, so a test asserts the emitted canonical `amountMcg` is byte-identical across a switch and a round trip: reinterpreting would have changed a saved vial by a factor of a thousand.
+
+**One shared helper**, `convertAuthoredAmount()` in `model/units.ts`, now serves all three toggles (vial inline, vial standalone, custom amount). It rewrites only a *complete* number — `Number('1.')` is `1`, so parsing alone would turn someone half-way through typing "1.5" into "1000" — and runs only on an explicit toggle press, never while typing.
+
+**The custom unit is seeded from the vial once, then independent.** Toggling the vial cannot silently reinterpret something already typed below it, the same separation applied to preferred unit in 3.6C.
+
+**Helper copy tightened**: the standalone intro now reads *"Enter your vial amount and reconstitution volume to view the U-100 unit conversion."*
+
+**28 new tests, 643 total.** Both surfaces run the same parameterised suite: automatic reference regression, custom mg and mcg conversion, an amount the table never reaches, custom unit round-trip, vial toggle round-trip with no drift, half-typed text preserved, blank staying silent, invalid input never producing NaN, fractional units, results past a full barrel with no advice, Done accessory on all three fields, and canonical-persistence equivalence.
+
+**Verified on device**, Light and Dark: standalone 20 mg / 2 mL with `2 mg → 20 units` and `200 mcg → 2 units`, and inline on a 50 mg / 5 mL GHK-Cu setup with its compound name casing intact.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog and the research components all untouched. No logging, no injection sites.
+
 ### Slice 3.6D — Automatic Unit Conversion 🟡
 
 **Objective:** delete the amount input. The vial and the water already determine the entire relationship between mass and syringe units, so asking for a third number made the user do arithmetic before VITA would do arithmetic for them.

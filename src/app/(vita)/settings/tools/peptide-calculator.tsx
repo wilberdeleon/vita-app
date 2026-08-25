@@ -9,7 +9,14 @@ import {
   SegmentedTabs,
 } from '../../../../components/ui';
 import { UnitConversion } from '../../../../features/peptides/components/UnitConversion';
-import { DEFAULT_UNITS_PER_ML, MASS_UNITS, parseAmount, toMcg, type MassUnit } from '../../../../lib/peptides';
+import {
+  DEFAULT_UNITS_PER_ML,
+  MASS_UNITS,
+  convertAuthoredAmount,
+  parseAmount,
+  toMcg,
+  type MassUnit,
+} from '../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
@@ -52,15 +59,15 @@ export default function StandalonePeptideCalculator() {
       <ScreenHeader title="Peptide Calculator" back />
 
       <Text style={[styles.intro, { color: surfaces.textTertiary }]}>
-        Enter your vial and reconstitution volume to see what the marks on your syringe are worth.
-        Nothing here is saved, and no peptide needs to be tracked.
+        Enter your vial amount and reconstitution volume to view the U-100 unit conversion. Nothing
+        here is saved, and no peptide needs to be tracked.
       </Text>
 
       <SectionHeader title="Vial" />
       <View style={styles.row}>
         <View style={styles.grow}>
           <NumericField
-            label={`Vial amount (${vialUnit})`}
+            label={`Vial Amount (${vialUnit})`}
             placeholder="e.g. 20"
             value={vialAmount}
             onChangeText={setVialAmount}
@@ -71,7 +78,13 @@ export default function StandalonePeptideCalculator() {
           <SegmentedTabs
             options={MASS_UNITS as readonly string[]}
             selectedIndex={MASS_UNITS.indexOf(vialUnit)}
-            onChange={(index) => setVialUnit(MASS_UNITS[index])}
+            onChange={(index) => {
+              // Restates the vial rather than reinterpreting it — `20 mg`
+              // becomes `20000 mcg`, and the conversion below is unchanged.
+              const next = MASS_UNITS[index];
+              setVialAmount((text) => convertAuthoredAmount(text, vialUnit, next));
+              setVialUnit(next);
+            }}
             activeColor={palette.peptide}
             groupLabel="Vial unit"
           />
@@ -84,7 +97,7 @@ export default function StandalonePeptideCalculator() {
       {/* Familiar words on screen; the model's name for it stays generic,
           since bacteriostatic water is the usual diluent but not the only one. */}
       <NumericField
-        label="Bacteriostatic water / reconstitution (mL)"
+        label="Bacteriostatic Water / Reconstitution (mL)"
         placeholder="e.g. 2"
         value={reconstitution}
         onChangeText={setReconstitution}

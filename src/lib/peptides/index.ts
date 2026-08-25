@@ -31,6 +31,7 @@ export {
 
 export {
   MCG_PER_MG,
+  convertAuthoredAmount,
   formatConcentration,
   formatMass,
   formatMcg,
