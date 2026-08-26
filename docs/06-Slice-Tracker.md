@@ -747,12 +747,48 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ⬜ Planned |
 | 3.8A | Injection Site UX + Interactive Body Map | Flat site taxonomy with Center Abdomen, SVG body map, Tools redesign, 3.8 migration on read | 🟡 Built — pending founder review |
 | 3.8B | Injection Site Visual + Selection Polish | One-tap canonical site list, body model as optional aid, redrawn silhouette, Site Reference rewrite | 🟡 Built — pending founder review |
+| 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | 🟡 Built — pending founder review |
 | 3.9 | Peptides UX Polish, Safety Copy + Fuel Integration | Landing rebuild, disclaimer placement, Fuel Peptides card on real state | ⬜ Planned |
 | 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.8C — Body Map Tapability + Light Mode Contrast 🟡
+
+**Objective:** founder QA on 3.8B was positive overall — **the body model is approved as a visual direction** — with two usability faults left: zones were hard to tap reliably, and in Light mode they were too faint against the silhouette. A narrow corrective slice. The site model, silhouette, taxonomy, fast list and copy are untouched.
+
+**The tapping problem was a defect, not ergonomics.** Every zone was padded to 44pt *independently* — `max(rx, 22)` — which sounds correct and is wrong the moment two zones are closer together than 44pt. The three abdominal zones sit 19 units apart, so their boxes overlapped by 25pt and the later sibling won the tap:
+
+| tap | selected |
+|---|---|
+| dead centre of **Left Abdomen** | Center Abdomen |
+| dead centre of **Center Abdomen** | Right Abdomen |
+
+**Left Abdomen could not be reached from the figure at all.** Upper arms also overlapped the abdomen, and the two glutes overlapped each other. Enlarging the targets further would have made it worse, not better.
+
+**Touch areas are now authored as a partition.** Explicit rectangles, laid out together, that never overlap in either view. Vertical bands separate arms from abdomen from thighs; inside a band, boundaries sit at the midpoint between neighbouring zone centres — where a tap genuinely becomes ambiguous. Mirrored for the back view by the same rule as the art, so a back-view tap cannot land on the wrong glute.
+
+**Where anatomy forbids 44pt, height compensates for width.** Three abdominal targets cannot each be 44pt wide across a 64-unit torso without colliding, and **a collision is worse than a narrow target** — a narrow target is fiddly, a colliding one records the wrong site. Those are 23–32pt wide by 79pt tall. Arms (52×113) and thighs (51×97) clear 44 in both axes; glutes are 37×54.
+
+**The figure is drawn 9/8 larger**, which grows every target by the same eighth without making the body broad — the founder explicitly did not want a cartoonishly wide figure, so the invisible rectangles do most of the work. **1.125 rather than a rounder 1.15 because it is exact in binary**: at 1.15, two rectangles authored to share a boundary landed 1.4e-14pt apart — invisible on screen, and a real overlap as far as the collision test was concerned.
+
+**Small silhouette spacing, as permitted:** arms moved 2 units further from the torso. Nothing else about the figure changed.
+
+**Light mode contrast rebuilt as three levels.** A zone at 0.11 ink over a body at 0.14 is a step of about four percent — it survives review on a bright screen and vanishes on a real one. Now silhouette 0.13 → zone 0.24 → selected purple at 0.50 alpha, so unselected zones are plainly visible and the selection is unmistakable. **Dark mode is unchanged** apart from its selected-purple constant being pulled into the same theme-aware pair; its silhouette and zone values are byte-identical.
+
+**No colour that means anything**, still: no green, no red, no scale, no ordering, nothing marked due, spent or safe.
+
+**Accessibility unchanged in shape:** one `Pressable` per zone, so assistive technology sees exactly one element per site — the rectangle is bigger than the art, not a second thing to land on. A test counts host elements per label and fails on duplicates.
+
+**10 new tests, 821 total** — pairwise non-collision in both views, every zone centre resolving to itself and nothing else, the three abdominal targets adjacent with no gap and no overlap, arms and thighs ≥44 in both axes, the anatomy-bound zones documented as narrow-but-tall, every target strictly larger than the art it covers, mirroring, and one accessible node per zone.
+
+**Verified on device, Light and Dark:** front and back in both themes, Left Abdomen selected in Light, Right Thigh selected in Dark, and the selector sheet confirming that the taller figure did not push **Use Right Thigh** below the fold.
+
+**Untouched:** taxonomy, log model, history behaviour, Site Reference copy, the fast site list, the calculator, Water, Fuel, Home, and all 3.9 scope.
+
+**Boundary audit:** everything outside `BodyMap.tsx` and its tests has a zero-line diff.
 
 ### Slice 3.8B — Injection Site Visual + Selection Polish 🟡
 

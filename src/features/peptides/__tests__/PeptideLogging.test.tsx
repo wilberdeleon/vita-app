@@ -33,10 +33,14 @@ import type { PeptideRepository } from '../../../lib/peptides/data/PeptideReposi
 import {
   PeptideProvider,
   createSiteSnapshot,
+  siteKeyLabel,
   toMcg,
+  type BodyView,
+  type InjectionSiteKey,
   type PeptideLogEntry,
   type PeptideSetup,
 } from '../../../lib/peptides';
+import { hitAreaFor, visibleZoneFor } from '../components/BodyMap';
 import { ToastProvider } from '../../../components/ui';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
@@ -945,6 +949,147 @@ describe('the body map', () => {
     // because the map relabelled anything.
     expect(zoneCentre(tree, 'Left Upper Arm')).toBeGreaterThan(frontLeftArm);
     expect(zoneCentre(tree, 'Left Glute')).toBeGreaterThan(zoneCentre(tree, 'Right Glute'));
+  });
+
+  /**
+   * Touch targets (slice 3.8C).
+   *
+   * Founder QA reported the zones were hard to tap reliably. The cause was
+   * not size — it was that every zone was padded to 44pt *independently*, so
+   * the three abdominal boxes overlapped by 25pt and the later sibling won.
+   * Tapping the middle of Left Abdomen selected Center Abdomen. These pin the
+   * partition that replaced it.
+   */
+  describe('touch targets', () => {
+    const FRONT: InjectionSiteKey[] = [
+      'upper-arm-left',
+      'upper-arm-right',
+      'abdomen-left',
+      'abdomen-center',
+      'abdomen-right',
+      'thigh-left',
+      'thigh-right',
+    ];
+    const BACK: InjectionSiteKey[] = [
+      'upper-arm-left',
+      'upper-arm-right',
+      'glute-left',
+      'glute-right',
+    ];
+
+    const box = (key: InjectionSiteKey, view: BodyView) => {
+      const area = hitAreaFor(key, view);
+      if (!area) throw new Error(`no hit area for ${key}`);
+      return { ...area, right: area.x + area.width, bottom: area.y + area.height };
+    };
+
+    const overlaps = (a: ReturnType<typeof box>, b: ReturnType<typeof box>) =>
+      a.x < b.right && b.x < a.right && a.y < b.bottom && b.y < a.bottom;
+
+    for (const [view, keys] of [
+      ['front', FRONT],
+      ['back', BACK],
+    ] as Array<[BodyView, InjectionSiteKey[]]>) {
+      it(`never lets two ${view} zones share a pixel`, () => {
+        for (let i = 0; i < keys.length; i += 1) {
+          for (let j = i + 1; j < keys.length; j += 1) {
+            const a = box(keys[i], view);
+            const b = box(keys[j], view);
+            expect({ pair: `${keys[i]} / ${keys[j]}`, collides: overlaps(a, b) }).toEqual({
+              pair: `${keys[i]} / ${keys[j]}`,
+              collides: false,
+            });
+          }
+        }
+      });
+
+      it(`resolves a tap on each ${view} zone to that zone and no other`, () => {
+        for (const key of keys) {
+          const target = box(key, view);
+          const cx = target.x + target.width / 2;
+          const cy = target.y + target.height / 2;
+          const hit = keys.filter((other) => {
+            const b = box(other, view);
+            return cx >= b.x && cx <= b.right && cy >= b.y && cy <= b.bottom;
+          });
+          expect({ key, hit }).toEqual({ key, hit: [key] });
+        }
+      });
+    }
+
+    it('keeps the three abdominal targets distinct and adjacent', () => {
+      const left = box('abdomen-left', 'front');
+      const centre = box('abdomen-center', 'front');
+      const right = box('abdomen-right', 'front');
+
+      // Left of centre, centre of centre, right of centre — in that order,
+      // with the boundaries where a tap genuinely becomes ambiguous.
+      expect(left.right).toBeLessThanOrEqual(centre.x);
+      expect(centre.right).toBeLessThanOrEqual(right.x);
+      // And no gap between them, so no tap inside the band falls through.
+      expect(centre.x - left.right).toBe(0);
+      expect(right.x - centre.right).toBe(0);
+    });
+
+    it('gives arms and thighs a comfortable target in both axes', () => {
+      for (const key of ['upper-arm-left', 'upper-arm-right', 'thigh-left', 'thigh-right'] as const) {
+        const area = box(key, 'front');
+        expect(area.width).toBeGreaterThanOrEqual(44);
+        expect(area.height).toBeGreaterThanOrEqual(44);
+      }
+    });
+
+    it('compensates with height where anatomy forbids a 44pt width', () => {
+      // Three abdominal zones cannot each be 44pt wide across one torso
+      // without colliding, and colliding is worse than narrow: a narrow
+      // target is fiddly, a colliding one records the wrong site.
+      for (const key of ['abdomen-left', 'abdomen-center', 'abdomen-right'] as const) {
+        const area = box(key, 'front');
+        expect(area.width).toBeLessThan(44);
+        expect(area.height).toBeGreaterThanOrEqual(60);
+      }
+      for (const key of ['glute-left', 'glute-right'] as const) {
+        expect(box(key, 'back').height).toBeGreaterThanOrEqual(44);
+      }
+    });
+
+    it('makes every target larger than the art it covers', () => {
+      // The whole point of an overlay: you aim at the drawn patch and the
+      // rectangle around it forgives you.
+      for (const key of FRONT) {
+        const area = box(key, 'front');
+        const art = visibleZoneFor(key, 'front');
+        expect(art).not.toBeNull();
+        expect(area.width).toBeGreaterThan(art!.width);
+        expect(area.height).toBeGreaterThan(art!.height);
+      }
+    });
+
+    it('mirrors the touch targets with the drawing', () => {
+      // Same zone, other side of the screen — the rectangles have to travel
+      // with the art or a back-view tap lands on the wrong glute.
+      expect(box('glute-left', 'back').x).toBeGreaterThan(box('glute-right', 'back').x);
+      expect(box('upper-arm-left', 'back').x).toBeGreaterThan(
+        box('upper-arm-left', 'front').x,
+      );
+    });
+
+    it('renders exactly one pressable per zone, so VoiceOver sees one target', async () => {
+      const { tree } = await openMap();
+      for (const key of FRONT) {
+        const label = siteKeyLabel(key);
+        // Host elements only — a Pressable is a composite that renders a
+        // View, and counting both would double every zone.
+        const nodes = tree.root.findAll(
+          (node) =>
+            typeof node.type === 'string' &&
+            node.props?.accessibilityRole === 'button' &&
+            node.props?.accessibilityLabel === label,
+        );
+        expect({ label, count: nodes.length }).toEqual({ label, count: 1 });
+        expect(nodes[0].props.accessibilityState).toBeDefined();
+      }
+    });
   });
 
   it('records nothing if the figure is dismissed without confirming', async () => {

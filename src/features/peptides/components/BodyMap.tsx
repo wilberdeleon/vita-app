@@ -15,11 +15,26 @@ type Props = {
   onSelect: (key: InjectionSiteKey) => void;
 };
 
-const WIDTH = 200;
-const HEIGHT = 420;
-/** Apple's minimum comfortable touch target, in the same units as the figure. */
-const MIN_TOUCH = 44;
+/** The coordinate space every path and zone below is authored in. */
+const VIEW_W = 200;
+const VIEW_H = 420;
 
+/**
+ * Drawn slightly larger than it is authored.
+ *
+ * Three abdominal targets cannot each be 44pt wide across a 64-unit torso, so
+ * once the overlap was fixed the only honest way to grow them was to grow the
+ * whole figure. An eighth again buys back real millimetres everywhere without
+ * making the body broad, which the founder explicitly did not want.
+ *
+ * 1.125 rather than a rounder-looking 1.15 because it is 9/8, and therefore
+ * exact in binary — so rectangles authored to share a boundary still share it
+ * after scaling. At 1.15 two such edges landed 1.4e-14pt apart: invisible on
+ * screen, and a genuine overlap as far as the collision test was concerned.
+ */
+const SCALE = 1.125;
+const WIDTH = VIEW_W * SCALE;
+const HEIGHT = VIEW_H * SCALE;
 /**
  * The figure, as path data.
  *
@@ -39,14 +54,14 @@ const TORSO =
   'C132 94 125 86 114 81 C108 77 106 70 106 56 Z';
 
 const ARM_LEFT =
-  'M62 100 C54 104 48 114 47 128 C46 148 46 166 48 186 ' +
-  'C49 204 51 220 52 235 C52 240 57 242 60 240 C63 238 64 234 63 229 ' +
-  'C62 214 61 198 61 180 C61 160 62 142 64 126 C65 116 67 108 71 103 Z';
+  'M60 100 C52 104 46 114 45 128 C44 148 44 166 46 186 ' +
+  'C47 204 49 220 50 235 C50 240 55 242 58 240 C61 238 62 234 61 229 ' +
+  'C60 214 59 198 59 180 C59 160 60 142 62 126 C63 116 65 108 69 103 Z';
 
 const ARM_RIGHT =
-  'M138 100 C146 104 152 114 153 128 C154 148 154 166 152 186 ' +
-  'C151 204 149 220 148 235 C148 240 143 242 140 240 C137 238 136 234 137 229 ' +
-  'C138 214 139 198 139 180 C139 160 138 142 136 126 C135 116 133 108 129 103 Z';
+  'M140 100 C148 104 154 114 155 128 C156 148 156 166 154 186 ' +
+  'C153 204 151 220 150 235 C150 240 145 242 142 240 C139 238 138 234 139 229 ' +
+  'C140 214 141 198 141 180 C141 160 140 142 138 126 C137 116 135 108 131 103 Z';
 
 const LEG_LEFT =
   'M69 204 C65 230 67 256 71 282 C73 304 72 326 73 348 ' +
@@ -83,12 +98,71 @@ const ZONES: Record<InjectionSiteKey, { cx: number; cy: number; rx: number; ry: 
   'abdomen-right': { cx: 119, cy: 176, rx: 7.5, ry: 14 },
   'thigh-left': { cx: 80, cy: 258, rx: 12, ry: 30 },
   'thigh-right': { cx: 120, cy: 258, rx: 12, ry: 30 },
-  'upper-arm-left': { cx: 55, cy: 145, rx: 6.5, ry: 24 },
-  'upper-arm-right': { cx: 145, cy: 145, rx: 6.5, ry: 24 },
+  'upper-arm-left': { cx: 53, cy: 145, rx: 6.5, ry: 24 },
+  'upper-arm-right': { cx: 147, cy: 145, rx: 6.5, ry: 24 },
   'glute-left': { cx: 84, cy: 196, rx: 15, ry: 18 },
   'glute-right': { cx: 116, cy: 196, rx: 15, ry: 18 },
   custom: null,
 };
+
+/**
+ * Where each zone can be *tapped*, as an explicit rectangle in the same
+ * authored front-view coordinates as `ZONES`.
+ *
+ * **Authored as a partition, not inflated per zone** (slice 3.8C). The
+ * previous version padded every zone independently to 44pt — `max(rx, 22)` —
+ * which sounds right and was badly wrong: the three abdominal zones sit 19
+ * units apart, so their 44pt boxes overlapped by 25pt, and the later sibling
+ * won the tap. Tapping the dead centre of *Left Abdomen* selected *Center
+ * Abdomen*; tapping the centre of *Center Abdomen* selected *Right Abdomen*.
+ * Left Abdomen could not be reached from the figure at all. That, not target
+ * size, was why the map felt unreliable.
+ *
+ * So the rectangles are now laid out together and **never overlap**. Vertical
+ * bands separate arms from abdomen from thighs; within a band, boundaries sit
+ * at the midpoint between neighbouring zone centres, which is where a tap
+ * genuinely becomes ambiguous.
+ *
+ * **Where anatomy forbids 44pt, height compensates for width.** Three
+ * abdominal targets cannot each be 44pt wide across a 64-unit torso without
+ * colliding, and a collision is worse than a narrow target — a narrow target
+ * is merely fiddly, a colliding one selects the wrong site. Those zones are
+ * 20–28 wide and 70 tall instead. Arms and thighs clear 44 in both axes.
+ *
+ * The SVG is rendered at its viewBox size, so one unit is one point.
+ */
+const HIT_AREAS: Record<
+  InjectionSiteKey,
+  { x: number; y: number; width: number; height: number } | null
+> = {
+  'upper-arm-left': { x: 16, y: 100, width: 46, height: 100 },
+  'upper-arm-right': { x: 138, y: 100, width: 46, height: 100 },
+  'abdomen-left': { x: 62, y: 146, width: 28, height: 70 },
+  'abdomen-center': { x: 90, y: 146, width: 20, height: 70 },
+  'abdomen-right': { x: 110, y: 146, width: 28, height: 70 },
+  'thigh-left': { x: 54, y: 218, width: 45, height: 86 },
+  'thigh-right': { x: 101, y: 218, width: 45, height: 86 },
+  'glute-left': { x: 66, y: 170, width: 33, height: 48 },
+  'glute-right': { x: 101, y: 170, width: 33, height: 48 },
+  custom: null,
+};
+
+/**
+ * A zone's touch rectangle **in points**, mirrored for the back view exactly
+ * as the art is. Returned already scaled, so callers and tests reason about
+ * the size a thumb actually meets rather than about authored units.
+ */
+export function hitAreaFor(key: InjectionSiteKey, view: BodyView) {
+  const area = HIT_AREAS[key];
+  if (!area) return null;
+  const x = view === 'back' ? VIEW_W - area.x - area.width : area.x;
+  return {
+    x: x * SCALE,
+    y: area.y * SCALE,
+    width: area.width * SCALE,
+    height: area.height * SCALE,
+  };
+}
 
 /**
  * The same zone seen from behind.
@@ -101,8 +175,19 @@ const ZONES: Record<InjectionSiteKey, { cx: number; cy: number; rx: number; ry: 
 function zoneFor(key: InjectionSiteKey, view: BodyView) {
   const zone = ZONES[key];
   if (!zone) return null;
-  return view === 'back' ? { ...zone, cx: WIDTH - zone.cx } : zone;
+  return view === 'back' ? { ...zone, cx: VIEW_W - zone.cx } : zone;
 }
+
+/** A zone's drawn ellipse, mirrored for the back view. Exported for tests. */
+export function visibleZoneFor(key: InjectionSiteKey, view: BodyView) {
+  const zone = zoneFor(key, view);
+  if (!zone) return null;
+  return {
+    width: zone.rx * 2 * SCALE,
+    height: zone.ry * 2 * SCALE,
+  };
+}
+
 
 /**
  * A stylized human figure with tappable injection zones.
@@ -145,15 +230,27 @@ export function BodyMap({ view, selected, onSelect }: Props) {
    * hips where the legs met the torso and a notch under the chin. Compositing
    * the group once and fading the result makes every join invisible.
    */
+  /**
+   * Three levels, and they have to stay three levels in both themes.
+   *
+   * Silhouette → unselected zone → selected zone. Founder QA found the
+   * middle level almost invisible in Light mode: a zone at 0.11 over a body
+   * at 0.14 is a step of about four percent of ink, which survives a design
+   * review on a bright screen and disappears on a real one. Light is now
+   * roughly as separated as Dark already was, and the selected purple is
+   * strengthened there too, since purple over a pale body reads weaker than
+   * the same purple over a dark one.
+   */
   const ink = dark ? '#FFFFFF' : '#111114';
-  const bodyOpacity = dark ? 0.1 : 0.14;
-  const zoneFill = dark ? 'rgba(255,255,255,0.14)' : 'rgba(17,17,20,0.11)';
+  const bodyOpacity = dark ? 0.1 : 0.13;
+  const zoneFill = dark ? 'rgba(255,255,255,0.14)' : 'rgba(17,17,20,0.24)';
+  const selectedFill = dark ? `${palette.peptide}59` : `${palette.peptide}80`;
 
   const zones = sitesForView(view);
 
   return (
     <View style={styles.wrap}>
-      <Svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${WIDTH} ${HEIGHT}`}>
+      <Svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}>
         {/* The figure — decorative, and hidden from assistive tech, which
             reads the zones instead. One flat fill, no strokes: the shapes
             overlap, and any outline would draw a seam through every join. */}
@@ -178,7 +275,7 @@ export function BodyMap({ view, selected, onSelect }: Props) {
                 cy={zone.cy}
                 rx={zone.rx}
                 ry={zone.ry}
-                fill={active ? `${palette.peptide}59` : zoneFill}
+                fill={active ? selectedFill : zoneFill}
               />
             );
           })}
@@ -205,16 +302,16 @@ export function BodyMap({ view, selected, onSelect }: Props) {
 
       {/*
        * Touch targets as real views on top of the drawing, rather than
-       * pressable SVG shapes. Two reasons: SVG primitives cannot carry an
-       * accessibility role or selected state, and a rectangle sized to a
-       * finger — at least 44pt, whatever the ellipse beneath it looks like —
-       * means nobody has to pixel-hunt an arm.
+       * pressable SVG shapes: SVG primitives cannot carry an accessibility
+       * role or selected state.
+       *
+       * One Pressable per zone, so assistive technology sees exactly one
+       * element per site — the rectangle is bigger than the art, not a second
+       * thing to land on.
        */}
       {zones.map((key) => {
-        const zone = zoneFor(key, view);
-        if (!zone) return null;
-        const halfWidth = Math.max(zone.rx, MIN_TOUCH / 2);
-        const halfHeight = Math.max(zone.ry, MIN_TOUCH / 2);
+        const area = hitAreaFor(key, view);
+        if (!area) return null;
         return (
           <Pressable
             key={key}
@@ -222,15 +319,7 @@ export function BodyMap({ view, selected, onSelect }: Props) {
             accessibilityRole="button"
             accessibilityLabel={siteKeyLabel(key)}
             accessibilityState={{ selected: selected === key }}
-            style={[
-              styles.hit,
-              {
-                left: zone.cx - halfWidth,
-                top: zone.cy - halfHeight,
-                width: halfWidth * 2,
-                height: halfHeight * 2,
-              },
-            ]}
+            style={[styles.hit, { left: area.x, top: area.y, width: area.width, height: area.height }]}
           />
         );
       })}
