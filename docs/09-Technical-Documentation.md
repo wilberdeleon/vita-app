@@ -193,19 +193,33 @@ The headline scale is chosen, not fixed. One whole authored unit wins whenever t
 
 **`preferredDoseUnit` seeds the amount unit once**, via `useState` initial value, and is not read again. Reading it every render meant changing *Preferred unit* elsewhere in the form silently reinterpreted an already-typed amount — the same separation Water established between a logged unit and a display preference in slice 3.3.
 
-**Tools** (`/settings/tools`) is a Settings destination for utilities that stand alone: no tracking, no persistence, no feature ownership. Reached from Settings rather than the dock, and intended to host slice 3.8's injection-site tools. **No placeholder rows** — a dead button is worse than a short list.
+**Tools** (`/settings/tools`) is a Settings destination for utilities that stand alone: no tracking, no persistence, no feature ownership. Reached from Settings rather than the dock. It hosts the peptide calculator and, since slice 3.8A, **Injection Sites** — a map of where administrations happened, built around the body figure rather than prose. **No placeholder rows** — a dead button is worse than a short list.
 
-**Injection sites (slice 3.8).** `model/sites.ts` holds the taxonomy — five regions, four sides — and **contains no function that proposes anything.** A test enumerates its exports and fails on any name matching `recommend|suggest|next|rotate|avoid|due|safe`; the absence of rotation logic is enforced, not merely intended.
+**Injection sites (slice 3.8, reshaped in 3.8A).** `model/sites.ts` holds the taxonomy and **contains no function that proposes anything.** A test enumerates its exports and fails on any name matching `recommend|suggest|next|rotate|avoid|due|safe`; the absence of rotation logic is enforced, not merely intended.
 
-The site lives on `PeptideLogEntry.site` as an `InjectionSiteSnapshot`, alongside the dose conversion and for the same reason: `label` is written once at record time, so a custom "Left Hip" survives verbatim rather than being re-derived from a taxonomy that may have moved on. `createSiteSnapshot` forces `side: 'none'` for a custom region.
+**One canonical key per site.** 3.8 modelled a broad `region` plus a `side`, which could not express **Center Abdomen** and left `abdomen` + `none` ambiguous between *the middle* and *I didn't say*. `SITE_KEYS` is now flat — `abdomen-left|center|right`, `thigh-left|right`, `upper-arm-left|right`, `glute-left|right`, `custom` — so every recorded site has exactly one identity.
 
-**Additive, no migration.** `parseLogEntry` calls `parseSiteSnapshot`, which returns `undefined` for anything malformed — dropping the site and keeping the entry. A pre-3.8 record has no `site` key and loads unchanged. Discarding a whole log because one optional field rotted would destroy more than it protects.
+The site lives on `PeptideLogEntry.site` as an `InjectionSiteSnapshot`, alongside the dose conversion and for the same reason: `label` is written once at record time, so a custom "Left Hip" survives verbatim rather than being re-derived from a taxonomy that may have moved on. `createSiteSnapshot` keeps a `customLabel` only for the `custom` key.
 
-**No second source of truth.** Site usage is derived from log entries (`lastRecordedSite`, `entriesWithSites`, `siteUsageCounts`) and never stored separately — a parallel store of the same events is one that can disagree with history. The static taxonomy is the only site data that lives apart from logs.
+**Malformed sites drop the site, never the entry.** `parseLogEntry` calls `parseSiteSnapshot`, which returns `undefined` for anything it cannot read. A pre-3.8 record has no `site` key and loads unchanged. Discarding a whole log because one optional field rotted would destroy more than it protects.
+
+**3.8 records migrate on read and are never rewritten on disk.** `LEGACY_REGION_SIDE` translates a stored `region` + `side` into a canonical key, so a log recorded as `abdomen` + `left` reads *Left Abdomen* exactly as a new one would. This is the **one** place a stored label is deliberately overridden: 3.8 generated labels in a format that no longer exists (`Abdomen · Left`), and leaving them verbatim would put two spellings of the same place side by side in one list. Only *authored* text is sacred — a custom site typed as *Left Hip* is returned exactly as written.
+
+**No second source of truth.** Site usage is derived from log entries (`lastRecordedSite`, `entriesWithSites`, `entriesAtSite`) and never stored separately — a parallel store of the same events is one that can disagree with history. The static taxonomy is the only site data that lives apart from logs.
 
 **Never preselected.** `SiteSelector` starts empty even when a previous site exists; the last site is passed as `lastRecordedLabel` and rendered as context. Prefilling would convert a record into a recommendation, which is the inference this feature must not invite.
 
-Tools → Injection Sites aggregates across setups and resolves compound names through `findDefinition` against the compiled catalog, so history survives an inactive — and later removed — setup.
+**`BodyMap` (slice 3.8A)** is an original SVG figure drawn as primitives — head, torso, arms, legs — deliberately neutral, with **no external or copyrighted artwork and nothing traced**. Zones are ellipses rather than traced anatomy: the claim is *roughly here on your body*, and an exact outline would imply a precision about placement VITA has no business implying.
+
+**Every zone is styled identically** — no colour scale, no ordering, no marking a site due, spent or safe. The only visual state a zone has is *selected*, in peptides purple, which carries no safety meaning anywhere else in the app. A body map is the easiest surface in this feature to accidentally imply a recommendation.
+
+**The figure is a self-view, and the convention is deliberate.** Zones are authored in front-view coordinates where *your left* is on the **left of the screen** — the side your left hand is on when you look down at yourself. Medical illustration uses the opposite convention because its reader stands opposite the body; VITA's reader is inside it. `zoneFor(key, view)` mirrors `cx` for the back view, so front and back are derived from one source and cannot drift apart. Two tests pin the relative positions.
+
+**Touch targets are absolutely-positioned `Pressable` views over the `Svg`**, not pressable SVG shapes. SVG primitives cannot carry `accessibilityRole` or `accessibilityState`, and a rectangle sized to a finger — at least 44pt whatever the ellipse beneath it looks like — means nobody pixel-hunts an arm.
+
+**The map is never the only path.** `SiteSelector` pairs the figure with the same choices as text chips, and either records the identical canonical site. The list is not an accessibility afterthought: it is faster for someone who already knows their site, and it is the path VoiceOver can use with confidence.
+
+Tools → Injection Sites aggregates across setups and resolves compound names through `findDefinition` against the compiled catalog, so history survives an inactive — and later removed — setup. Since 3.8A the map leads: selecting a zone reports that zone's history, or says *No history recorded here* plainly rather than styling it as available. Tapping there records nothing — the screen is a lens onto history, not a logging surface.
 
 **Peptide log entries (slice 3.7).** `PeptideLogEntry` is a **historical snapshot, never a derived view.** Everything needed to render it years from now is copied in at save time: the amount as authored and in canonical micrograms, the local calendar day, the exact instant, and a `calculationSnapshot` of the vial, reconstitution volume, graduation density, and the units and volume they produced.
 

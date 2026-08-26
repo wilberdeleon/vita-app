@@ -64,13 +64,25 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **Your last site is shown, never filled in.** Under the picker you will see *Last recorded · Abdomen · Left* while the field itself stays empty. That distinction is deliberate: showing you what you did is a memory aid, filling it in for you would be a suggestion.
 
-**Choose Abdomen, Thigh, Upper Arm or Glute** — with Left or Right — **or name your own**, like "Left Hip". A name you type is kept exactly as you wrote it, forever, never rewritten into a category.
+**Choose Abdomen — left, centre or right — Thigh, Upper Arm or Glute, or name your own**, like "Left Hip". A name you type is kept exactly as you wrote it, forever, never rewritten into a category.
 
 **History shows the site** without the rows getting taller, and editing a log lets you change or clear it. Changing where it happened never affects the dose conversion — they are separate facts about the same event.
 
-**New: Settings → Tools → Injection Sites.** Site history gathered across *all* your peptides, since people rotate locations across whatever they are taking rather than per compound. Plus a simple tally of what you have used, and a plain-English guide explaining what the four body areas mean — no needle angles, no technique, nothing compound-specific.
+**New: Settings → Tools → Injection Sites.** Site history gathered across *all* your peptides, since people rotate locations across whatever they are taking rather than per compound. Since 3.8A the body map leads: tap a place on the figure and it tells you when you last used it and how many times — or says plainly that you have never recorded anything there. Underneath, your recent sites and a short guide to what the body areas mean — no needle angles, no technique, nothing compound-specific. Tapping the figure here records nothing; it only looks back.
 
-**No body diagram, on purpose.** It was optional in the brief. Its only real advantage over a short list is how it looks, and a tappable body map risks regions reading as "recommended" or "avoid" — which is exactly what this feature must never imply. Reliable tracking and a clean picker mattered more.
+**Slice 3.8A (2026-08-26) reversed the body-diagram decision, at founder direction.** 3.8 shipped without a figure and argued a short list was enough. The founder reviewed it on device and did not approve it: the Injection Sites tool read as a page of definitions rather than a tool. **There is now an interactive body map**, and it is the centre of both the picker and the Tools screen. The earlier reasoning was wrong about what matters — seeing *Left Thigh* on a body communicates instantly what four sentences never will.
+
+**The risk the old decision was worried about is handled by design, not by omission.** Every region on the figure looks exactly the same: no colour scale, nothing green or red, nothing marked as due, spent, or safe to use again. The only thing that ever changes on a zone is that *you* selected it. VITA still says nothing about where you should inject.
+
+**The figure is drawn as you see yourself.** Your left is on the left of the picture — the side your left hand is on when you look down at yourself. Medical drawings do the opposite, because they are drawn for someone standing opposite you; this one is for you. Turn the body around with the Front / Back switch and the sides swap, exactly as they would in life.
+
+**It is our own drawing.** A plain head, torso, arms and legs, with no gender, no muscles, and no textbook detail. Nothing traced, nothing licensed, nothing borrowed.
+
+**You never have to hit a shape.** The same choices sit underneath as ordinary buttons, and either way records the same thing. That list is not a fallback bolted on — it is genuinely quicker when you already know the site you want, and it is what VoiceOver reads.
+
+**Slice 3.8A also fixed the thing that made 3.8 look broken.** The founder reported that site selection "was not appearing when logging" — the screen in the report was **New Setup**, where site selection does not belong and has not been added. The real problem was that after creating a peptide, the Log screen was several taps away. Creating a setup now takes you straight to it.
+
+**Center Abdomen exists now.** 3.8 only offered left and right, which could not express a site the founder actually uses. Sites recorded under the old scheme are translated automatically and read normally — including a name you typed yourself, which is still shown exactly as you wrote it.
 
 **Slice 3.7 (2026-08-25) turned Peptides into real tracking.** You can now record that you took something, and see it back.
 
@@ -84,7 +96,7 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **Your list shows real activity now** — "Logged 2× today", from actual entries. It never says something is due, missed or overdue, and there is no adherence score, streak or compliance percentage. VITA records what you did; it does not grade you on it.
 
-**Still to come:** injection sites (3.8), then Fuel integration and final polish.
+**Still to come:** Fuel integration and final polish (3.9).
 
 **Slice 3.6E (2026-08-25) polished the calculator and added a custom conversion.** The automatic reference you approved is unchanged and still leads the section. Three things were finished around it.
 
@@ -130,7 +142,7 @@ This version is also much harder to break than the last three: with nothing to t
 
 **What you type into "Amount being used" is never saved.** It belongs to the moment, not to your setup — and the code is built so that saving a setup literally cannot see it, rather than merely being told not to look.
 
-**New Tools section in Settings**, deliberately not a new tab. It is for small utilities you use once and walk away from, and it is where the injection-site tools will go in slice 3.8. There is nothing fake in it in the meantime.
+**New Tools section in Settings**, deliberately not a new tab. It is for small utilities you use once and walk away from, and and since 3.8A it holds the peptide calculator and Injection Sites. There is nothing fake in it in the meantime.
 
 ⚠️ **Needs your confirmation on a real iPhone.** Engineering still cannot tap or type on a simulator, so typing is proven by automated tests rather than by hand. That gap is exactly what let the previous version pass its tests and still fail for you, so this is not signed off until you have used it.
 
@@ -174,7 +186,7 @@ The bottom-only CTA is fine on a short page. On an information-heavy one it buri
 
 **Also evaluate state-aware copy** once the tracked state is available to the detail page: `Track this peptide` when untracked, `View setup` (or equivalent) when a setup already exists. Deliberately not implemented in 3.6A — the detail page does not currently read setup state, so this is not the trivial change it looks like.
 
-**Not feature-complete.** Slice 3.7 (administration logging and history), 3.8 (injection sites), and 3.9 (UX polish, final safety copy, [[Fuel]] integration) all remain. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
+**Not feature-complete.** Slice 3.9 (UX polish, final safety copy, [[Fuel]] integration) remains. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.6.
 

@@ -1,132 +1,161 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Card, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../../components/ui';
+import { Card, Screen, ScreenHeader, SectionHeader, SegmentedTabs } from '../../../../components/ui';
+import { BodyMap } from '../../../../features/peptides/components/BodyMap';
 import { formatClockTime, formatLogDateLong } from '../../../../lib/daily';
 import {
   REGION_DESCRIPTIONS,
-  SITE_REGIONS,
+  entriesAtSite,
   entriesWithSites,
-  regionLabel,
-  siteUsageCounts,
+  siteKeyLabel,
   usePeptideContext,
+  type BodyView,
+  type InjectionSiteKey,
 } from '../../../../lib/peptides';
-import { spacing, typography } from '../../../../theme/tokens';
+import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
-/** How many recent site records the tool lists before it stops. */
-const RECENT_LIMIT = 20;
+/** How many recent records the screen lists before it stops. */
+const RECENT_LIMIT = 12;
+/** How many entries are shown for one selected zone. */
+const ZONE_LIMIT = 4;
+
+const VIEWS: readonly BodyView[] = ['front', 'back'];
+const VIEW_LABELS = ['Front', 'Back'];
 
 /**
- * Injection Sites — a record of where administrations happened.
+ * Injection Sites — a map of where administrations happened.
  *
- * **This screen never tells anyone where to inject.** It has no recommended
- * site, no "next" site, no rotation schedule, no colour coding of good and
- * bad. It answers three factual questions — where did I last do this, what
- * have I used recently, and what do these words mean — and stops there.
+ * **This screen never tells anyone where to inject.** No recommended site, no
+ * "next" site, no rotation schedule, no colour coding of good and bad. It
+ * answers factual questions — where have I used, when was that one last, what
+ * do these words mean — and stops there. Tapping a zone here records nothing;
+ * it is a lens onto history, not a logging surface.
+ *
+ * **The figure leads** (slice 3.8A). The first version was a list of text and
+ * the founder was right that it read as a definitions page rather than a
+ * tool. A body gives the screen a focal point and makes "left thigh" mean
+ * something instantly, which four sentences never will.
  *
  * **Aggregated across every peptide**, because that is how sites are actually
- * used: someone rotating locations does it across whatever they are taking,
- * not per compound. So the history is one list, and each row names its
- * peptide.
- *
- * Reads from log entries and nothing else. There is deliberately no separate
- * store of site usage — a second source of truth about the same events would
- * be one that could disagree with history.
+ * used: someone rotating locations does it across whatever they are taking.
+ * Names resolve from the compiled catalog rather than the setup, so history
+ * survives a setup going inactive — or being removed in a later slice.
  */
 export default function InjectionSites() {
   const { logs, findDefinition } = usePeptideContext();
   const { surfaces } = useTheme();
 
-  const recent = useMemo(() => entriesWithSites(logs).slice(0, RECENT_LIMIT), [logs]);
-  const counts = useMemo(() => siteUsageCounts(logs), [logs]);
+  const [view, setView] = useState<BodyView>('front');
+  const [selected, setSelected] = useState<InjectionSiteKey | undefined>();
+
+  const withSites = useMemo(() => entriesWithSites(logs), [logs]);
+  const recent = useMemo(() => withSites.slice(0, RECENT_LIMIT), [withSites]);
+  const atZone = useMemo(
+    () => (selected ? entriesAtSite(withSites, selected) : []),
+    [withSites, selected],
+  );
+
+  const describe = (entry: (typeof logs)[number]) => {
+    const name = findDefinition(entry.definitionId)?.name ?? 'Peptide';
+    return `${name} · ${formatLogDateLong(entry.logDate)} · ${formatClockTime(entry.loggedAt)}`;
+  };
 
   return (
     <Screen>
       <ScreenHeader title="Injection Sites" back />
 
-      <Text style={[styles.intro, { color: surfaces.textTertiary }]}>
-        Where you recorded each administration. VITA keeps the history; choosing where to inject is
-        yours.
-      </Text>
+      <Card style={styles.mapCard}>
+        <SegmentedTabs
+          options={VIEW_LABELS}
+          selectedIndex={VIEWS.indexOf(view)}
+          onChange={(index) => setView(VIEWS[index])}
+          activeColor={palette.peptide}
+          groupLabel="Body view"
+        />
+        <BodyMap
+          view={view}
+          selected={selected}
+          onSelect={(key) => setSelected((current) => (current === key ? undefined : key))}
+        />
+
+        {/*
+         * What this zone's history says, and only that. A zone with nothing
+         * recorded says so plainly rather than being styled as available.
+         */}
+        <View style={[styles.zone, { borderTopColor: surfaces.border }]}>
+          {selected === undefined ? (
+            <Text style={[styles.zoneHint, { color: surfaces.textTertiary }]}>
+              Tap a location to see what you have recorded there.
+            </Text>
+          ) : (
+            <>
+              <Text style={[styles.zoneName, { color: surfaces.text }]}>
+                {siteKeyLabel(selected)}
+              </Text>
+              {atZone.length === 0 ? (
+                <Text style={[styles.zoneHint, { color: surfaces.textTertiary }]}>
+                  No history recorded here.
+                </Text>
+              ) : (
+                <>
+                  <Text style={[styles.zoneHint, { color: surfaces.textSecondary }]}>
+                    Last recorded {formatLogDateLong(atZone[0].logDate)} ·{' '}
+                    {atZone.length} {atZone.length === 1 ? 'log' : 'logs'}
+                  </Text>
+                  {atZone.slice(0, ZONE_LIMIT).map((entry) => (
+                    <Text
+                      key={entry.id}
+                      style={[styles.zoneEntry, { color: surfaces.textTertiary }]}
+                      numberOfLines={1}
+                    >
+                      {describe(entry)}
+                    </Text>
+                  ))}
+                </>
+              )}
+            </>
+          )}
+        </View>
+      </Card>
 
       <SectionHeader title="Recent sites" />
       {recent.length === 0 ? (
-        <EmptyState
-          icon="body-outline"
-          title="No sites recorded yet"
-          body="Add a site when you log a peptide and it will appear here."
-        />
+        <Text style={[styles.empty, { color: surfaces.textTertiary }]}>
+          No sites recorded yet. Add one when you log a peptide and it will appear here.
+        </Text>
       ) : (
         <Card style={styles.panel}>
-          {recent.map((entry, index) => {
-            const name = findDefinition(entry.definitionId)?.name ?? 'Peptide';
-            const when = `${formatLogDateLong(entry.logDate)} · ${formatClockTime(entry.loggedAt)}`;
-            return (
-              // One accessible node per record, so it reads as a sentence
-              // rather than three disconnected stops.
-              <View
-                key={entry.id}
-                style={[
-                  styles.row,
-                  index > 0 && styles.divided,
-                  index > 0 && { borderTopColor: surfaces.border },
-                ]}
-                accessible
-                accessibilityRole="text"
-                accessibilityLabel={`${entry.site!.label}. ${name}. ${when}`}
-              >
-                <Text style={[styles.site, { color: surfaces.text }]}>{entry.site!.label}</Text>
-                <Text style={[styles.meta, { color: surfaces.textTertiary }]} numberOfLines={1}>
-                  {name} · {when}
-                </Text>
-              </View>
-            );
-          })}
+          {recent.map((entry, index) => (
+            // One accessible node per record, so it reads as a sentence
+            // rather than three disconnected stops.
+            <View
+              key={entry.id}
+              style={[
+                styles.row,
+                index > 0 && styles.divided,
+                index > 0 && { borderTopColor: surfaces.border },
+              ]}
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={`${entry.site!.label}. ${describe(entry)}`}
+            >
+              <Text style={[styles.site, { color: surfaces.text }]}>{entry.site!.label}</Text>
+              <Text style={[styles.meta, { color: surfaces.textTertiary }]} numberOfLines={1}>
+                {describe(entry)}
+              </Text>
+            </View>
+          ))}
         </Card>
       )}
 
-      {/*
-        * A plain tally of what was recorded. Ordered most-used first because
-        * that is the only ordering the data itself supports — it is a
-        * description of the past, not a ranking of preference, and no row is
-        * marked as due, avoided, or suggested.
-        */}
-      {counts.length > 1 ? (
-        <>
-          <SectionHeader title="Sites used" />
-          <Card style={styles.panel}>
-            {counts.map((entry, index) => (
-              <View
-                key={entry.label}
-                style={[
-                  styles.countRow,
-                  index > 0 && styles.divided,
-                  index > 0 && { borderTopColor: surfaces.border },
-                ]}
-                accessible
-                accessibilityRole="text"
-                accessibilityLabel={`${entry.label}, ${entry.count} ${entry.count === 1 ? 'log' : 'logs'}`}
-              >
-                <Text style={[styles.site, { color: surfaces.text }]}>{entry.label}</Text>
-                <Text style={[styles.count, { color: surfaces.textSecondary }]}>
-                  {entry.count} {entry.count === 1 ? 'log' : 'logs'}
-                </Text>
-              </View>
-            ))}
-          </Card>
-        </>
-      ) : null}
-
-      {/*
-        * What the words mean, and nothing more. No needle angle, no depth, no
-        * technique, and nothing compound-specific — "best for GLP-1" is the
-        * sentence this screen exists to not contain.
-        */}
+      {/* Four lines, not four paragraphs — the figure above already explains
+          the locations better than prose can. */}
       <SectionHeader title="Site guide" />
       <Card style={styles.panel}>
-        {SITE_REGIONS.map((region, index) => (
+        {REGION_DESCRIPTIONS.map((entry, index) => (
           <View
-            key={region}
+            key={entry.region}
             style={[
               styles.guideRow,
               index > 0 && styles.divided,
@@ -134,27 +163,26 @@ export default function InjectionSites() {
             ]}
             accessible
             accessibilityRole="text"
-            accessibilityLabel={`${regionLabel(region)}. ${REGION_DESCRIPTIONS[region]}`}
+            accessibilityLabel={`${entry.region}. ${entry.description}`}
           >
-            <Text style={[styles.guideName, { color: surfaces.text }]}>{regionLabel(region)}</Text>
-            <Text style={[styles.guideBody, { color: surfaces.textSecondary }]}>
-              {REGION_DESCRIPTIONS[region]}
+            <Text style={[styles.guideName, { color: surfaces.text }]}>{entry.region}</Text>
+            <Text style={[styles.guideBody, { color: surfaces.textTertiary }]}>
+              {entry.description}
             </Text>
           </View>
         ))}
       </Card>
 
       <Text style={[styles.footer, { color: surfaces.textTertiary }]}>
-        Information is for tracking and educational reference only. VITA does not recommend
-        injection sites, dosing, or treatment.
+        For tracking only. VITA doesn't recommend injection sites.
       </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  intro: {
-    ...typography.caption,
+  mapCard: {
+    gap: spacing.s,
   },
   panel: {
     paddingVertical: spacing.xs,
@@ -162,19 +190,29 @@ const styles = StyleSheet.create({
   divided: {
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  zone: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: spacing.m,
+    gap: 2,
+  },
+  zoneName: {
+    ...typography.bodyMedium,
+  },
+  zoneHint: {
+    ...typography.caption,
+  },
+  zoneEntry: {
+    ...typography.caption,
+  },
   row: {
     gap: 2,
     paddingVertical: spacing.s,
   },
-  countRow: {
+  guideRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: spacing.m,
-    paddingVertical: spacing.s,
-  },
-  guideRow: {
-    gap: 2,
     paddingVertical: spacing.s,
   },
   site: {
@@ -183,17 +221,19 @@ const styles = StyleSheet.create({
   meta: {
     ...typography.caption,
   },
-  count: {
-    ...typography.caption,
-  },
   guideName: {
-    ...typography.bodyMedium,
+    ...typography.captionMedium,
   },
   guideBody: {
     ...typography.caption,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  empty: {
+    ...typography.caption,
   },
   footer: {
-    ...typography.caption,
+    ...typography.micro,
     marginTop: spacing.s,
   },
 });

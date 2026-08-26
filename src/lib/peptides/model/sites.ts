@@ -1,159 +1,230 @@
 /**
  * Injection sites — where an administration happened.
  *
- * **This is a record, not a recommendation.** Nothing in this module ranks
- * sites, proposes a next one, marks one as due or safe, or derives a rotation.
- * VITA stores where the user says they injected and can tell them what they
- * did before; deciding where to inject next is theirs, and a health app that
+ * **This is a record, not a recommendation.** Nothing here ranks sites,
+ * proposes a next one, marks one as due or safe, or derives a rotation. VITA
+ * stores where the user says they injected and can tell them what they did
+ * before; deciding where to inject next is theirs, and a health app that
  * quietly starts advising on it has crossed a line it cannot uncross.
  *
- * The taxonomy is deliberately shallow. Four broad regions plus an escape
- * hatch covers how people actually describe this to themselves; subdividing
- * the abdomen into quadrants would be precision nobody asked for and a
- * selector nobody wants to scroll.
+ * **One canonical key per site** (slice 3.8A). The first version modelled a
+ * broad region plus a side, which could not express *Center Abdomen* — a site
+ * the founder uses — and left "abdomen + none" ambiguous between "the middle"
+ * and "I didn't say". A flat key removes both problems: every recorded site
+ * has exactly one identity.
  */
 
 import type { PeptideLogEntry } from './types';
 
-export const SITE_REGIONS = ['abdomen', 'thigh', 'upper-arm', 'glute', 'custom'] as const;
-export type InjectionSiteRegion = (typeof SITE_REGIONS)[number];
+export const SITE_KEYS = [
+  'abdomen-left',
+  'abdomen-center',
+  'abdomen-right',
+  'thigh-left',
+  'thigh-right',
+  'upper-arm-left',
+  'upper-arm-right',
+  'glute-left',
+  'glute-right',
+  'custom',
+] as const;
+export type InjectionSiteKey = (typeof SITE_KEYS)[number];
+
+/** Which silhouette a site is reachable from. `custom` is on neither. */
+export type BodyView = 'front' | 'back';
+
+const SITE_LABELS: Record<InjectionSiteKey, string> = {
+  'abdomen-left': 'Left Abdomen',
+  'abdomen-center': 'Center Abdomen',
+  'abdomen-right': 'Right Abdomen',
+  'thigh-left': 'Left Thigh',
+  'thigh-right': 'Right Thigh',
+  'upper-arm-left': 'Left Upper Arm',
+  'upper-arm-right': 'Right Upper Arm',
+  'glute-left': 'Left Glute',
+  'glute-right': 'Right Glute',
+  custom: 'Other',
+};
 
 /**
- * `none` is for a region where sides are meaningless or the user simply did
- * not record one — distinct from `center`, which is a positive statement.
+ * Where each site lives on the body map.
+ *
+ * Upper arms appear on both silhouettes because an arm is visible from either
+ * side and hunting for the right view would be pointless friction. Glutes are
+ * back-only for the obvious reason.
  */
-export const SITE_SIDES = ['left', 'right', 'center', 'none'] as const;
-export type InjectionSiteSide = (typeof SITE_SIDES)[number];
+const SITE_VIEWS: Record<InjectionSiteKey, readonly BodyView[]> = {
+  'abdomen-left': ['front'],
+  'abdomen-center': ['front'],
+  'abdomen-right': ['front'],
+  'thigh-left': ['front'],
+  'thigh-right': ['front'],
+  'upper-arm-left': ['front', 'back'],
+  'upper-arm-right': ['front', 'back'],
+  'glute-left': ['back'],
+  'glute-right': ['back'],
+  custom: [],
+};
+
+/** The grouped choices the text list offers, mirroring the map's regions. */
+export const SITE_GROUPS: ReadonlyArray<{ region: string; keys: readonly InjectionSiteKey[] }> = [
+  { region: 'Abdomen', keys: ['abdomen-left', 'abdomen-center', 'abdomen-right'] },
+  { region: 'Thigh', keys: ['thigh-left', 'thigh-right'] },
+  { region: 'Upper Arm', keys: ['upper-arm-left', 'upper-arm-right'] },
+  { region: 'Glute', keys: ['glute-left', 'glute-right'] },
+];
+
+/** Short position words for the text list, where the region is already a heading. */
+const SHORT_LABELS: Partial<Record<InjectionSiteKey, string>> = {
+  'abdomen-left': 'Left',
+  'abdomen-center': 'Center',
+  'abdomen-right': 'Right',
+  'thigh-left': 'Left',
+  'thigh-right': 'Right',
+  'upper-arm-left': 'Left',
+  'upper-arm-right': 'Right',
+  'glute-left': 'Left',
+  'glute-right': 'Right',
+};
+
+export function siteKeyLabel(key: InjectionSiteKey): string {
+  return SITE_LABELS[key];
+}
+
+export function siteShortLabel(key: InjectionSiteKey): string {
+  return SHORT_LABELS[key] ?? SITE_LABELS[key];
+}
+
+export function sitesForView(view: BodyView): InjectionSiteKey[] {
+  return SITE_KEYS.filter((key) => SITE_VIEWS[key].includes(view));
+}
+
+export function isSiteKey(value: unknown): value is InjectionSiteKey {
+  return typeof value === 'string' && (SITE_KEYS as readonly string[]).includes(value);
+}
 
 /**
  * The site as recorded, stored on the log entry it belongs to.
  *
- * `label` is a **snapshot**, written once at save time, for the same reason
- * the dose conversion is: a custom site typed as "Left Hip" must still read
- * "Left Hip" years later, not be re-derived into "Custom · Left". History
- * says what the user said.
+ * `label` is a **snapshot**, written once, for the same reason the dose
+ * conversion is: a custom site typed as "Left Hip" must still read "Left Hip"
+ * years later, not be re-derived from a taxonomy that has since changed —
+ * which it now has.
  */
 export type InjectionSiteSnapshot = {
-  region: InjectionSiteRegion;
-  side: InjectionSiteSide;
+  key: InjectionSiteKey;
   customLabel?: string;
   label: string;
 };
 
-const REGION_LABELS: Record<InjectionSiteRegion, string> = {
-  abdomen: 'Abdomen',
-  thigh: 'Thigh',
-  'upper-arm': 'Upper Arm',
-  glute: 'Glute',
-  custom: 'Other',
-};
-
-const SIDE_LABELS: Record<InjectionSiteSide, string> = {
-  left: 'Left',
-  right: 'Right',
-  center: 'Center',
-  none: '',
-};
-
-export function regionLabel(region: InjectionSiteRegion): string {
-  return REGION_LABELS[region];
+export function siteLabel(key: InjectionSiteKey, customLabel?: string): string {
+  const custom = customLabel?.trim();
+  if (key === 'custom') return custom && custom.length > 0 ? custom : SITE_LABELS.custom;
+  return SITE_LABELS[key];
 }
 
-export function sideLabel(side: InjectionSiteSide): string {
-  return SIDE_LABELS[side];
+export function createSiteSnapshot(
+  key: InjectionSiteKey,
+  customLabel?: string,
+): InjectionSiteSnapshot {
+  const custom = customLabel?.trim();
+  return {
+    key,
+    customLabel: key === 'custom' && custom && custom.length > 0 ? custom : undefined,
+    label: siteLabel(key, custom),
+  };
 }
 
 /**
- * Plain anatomical descriptions, for the site guide.
+ * Broad anatomical descriptions, kept short for the compact guide.
  *
  * Where the words point on a body, and nothing else. No needle angle, no
  * depth, no technique, and nothing peptide-specific — "best for GLP-1" is
  * exactly the sentence this app must never write.
  */
-export const REGION_DESCRIPTIONS: Record<InjectionSiteRegion, string> = {
-  abdomen: 'The front of the torso, around the stomach area.',
-  thigh: 'The upper leg, between hip and knee.',
-  'upper-arm': 'The upper arm, between shoulder and elbow.',
-  glute: 'The buttock, or gluteal area.',
-  custom: 'Anywhere you would rather name yourself.',
+export const REGION_DESCRIPTIONS: ReadonlyArray<{ region: string; description: string }> = [
+  { region: 'Abdomen', description: 'Front torso, around the stomach.' },
+  { region: 'Thigh', description: 'Upper leg, between hip and knee.' },
+  { region: 'Upper Arm', description: 'Between shoulder and elbow.' },
+  { region: 'Glute', description: 'Buttock area.' },
+];
+
+/* ── reading stored sites ──────────────────────────────────────────────── */
+
+/**
+ * Slice 3.8's shape, kept only so its records keep working.
+ *
+ * That version stored a broad `region` plus a `side`. Those entries are real
+ * history and are never rewritten on disk — they are translated on read, so a
+ * log recorded as `abdomen` + `left` now reads *Left Abdomen* exactly as a new
+ * one would.
+ */
+const LEGACY_REGION_SIDE: Record<string, InjectionSiteKey> = {
+  'abdomen:left': 'abdomen-left',
+  'abdomen:right': 'abdomen-right',
+  'abdomen:center': 'abdomen-center',
+  'abdomen:none': 'abdomen-center',
+  'thigh:left': 'thigh-left',
+  'thigh:right': 'thigh-right',
+  'upper-arm:left': 'upper-arm-left',
+  'upper-arm:right': 'upper-arm-right',
+  'glute:left': 'glute-left',
+  'glute:right': 'glute-right',
 };
 
-/** Regions where left and right are meaningful choices. */
-export function regionHasSides(region: InjectionSiteRegion): boolean {
-  return region !== 'custom';
-}
-
 /**
- * Builds the display label once, at record time.
- *
- * A custom label wins outright — someone who typed "Left Hip" gets "Left Hip",
- * not "Other · Left Hip · Left". Anything else reads "Abdomen · Left", with
- * the side omitted when there is none rather than rendered as a dangling dot.
- */
-export function siteLabel(
-  region: InjectionSiteRegion,
-  side: InjectionSiteSide,
-  customLabel?: string,
-): string {
-  const custom = customLabel?.trim();
-  if (region === 'custom') return custom && custom.length > 0 ? custom : REGION_LABELS.custom;
-  const suffix = SIDE_LABELS[side];
-  return suffix.length > 0 ? `${REGION_LABELS[region]} · ${suffix}` : REGION_LABELS[region];
-}
-
-export function createSiteSnapshot(
-  region: InjectionSiteRegion,
-  side: InjectionSiteSide,
-  customLabel?: string,
-): InjectionSiteSnapshot {
-  const custom = customLabel?.trim();
-  return {
-    region,
-    side: regionHasSides(region) ? side : 'none',
-    customLabel: custom && custom.length > 0 ? custom : undefined,
-    label: siteLabel(region, side, custom),
-  };
-}
-
-export function isSiteRegion(value: unknown): value is InjectionSiteRegion {
-  return typeof value === 'string' && (SITE_REGIONS as readonly string[]).includes(value);
-}
-
-export function isSiteSide(value: unknown): value is InjectionSiteSide {
-  return typeof value === 'string' && (SITE_SIDES as readonly string[]).includes(value);
-}
-
-/**
- * Validates a stored site.
+ * Validates a stored site, in either the current or the slice-3.8 shape.
  *
  * Returns `undefined` for anything malformed — which drops the site and keeps
  * the entry. A log whose amount and time are intact is still a true record of
  * an administration; discarding the whole thing because one optional field
  * rotted would destroy more than it protects.
- *
- * A missing `label` is rebuilt rather than treated as corruption, so entries
- * written by any future shape still read correctly.
  */
 export function parseSiteSnapshot(value: unknown): InjectionSiteSnapshot | undefined {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
 
-  const { region, side, customLabel, label } = value as Record<string, unknown>;
-  if (!isSiteRegion(region) || !isSiteSide(side)) return undefined;
+  const record = value as Record<string, unknown>;
+  const customLabel =
+    typeof record.customLabel === 'string' && record.customLabel.trim().length > 0
+      ? record.customLabel.trim()
+      : undefined;
+  const storedLabel =
+    typeof record.label === 'string' && record.label.trim().length > 0 ? record.label : undefined;
 
-  const custom = typeof customLabel === 'string' && customLabel.trim().length > 0
-    ? customLabel.trim()
-    : undefined;
+  if (isSiteKey(record.key)) {
+    return {
+      key: record.key,
+      customLabel: record.key === 'custom' ? customLabel : undefined,
+      label: storedLabel ?? siteLabel(record.key, customLabel),
+    };
+  }
 
-  return {
-    region,
-    side,
-    customLabel: custom,
-    label:
-      typeof label === 'string' && label.trim().length > 0
-        ? label
-        : siteLabel(region, side, custom),
-  };
+  // ── slice 3.8 records ──
+  const { region, side } = record;
+  if (typeof region !== 'string') return undefined;
+
+  if (region === 'custom') {
+    // The authored name is what history said; it stays exactly as written.
+    const label = customLabel ?? storedLabel;
+    if (!label) return undefined;
+    return { key: 'custom', customLabel: label, label };
+  }
+
+  const key = LEGACY_REGION_SIDE[`${region}:${typeof side === 'string' ? side : 'none'}`];
+  if (!key) return undefined;
+  /**
+   * The canonical label wins here, unlike everywhere else.
+   *
+   * A stored label is normally authoritative — it is what the user was shown.
+   * But slice 3.8 wrote labels in a format that no longer exists ("Abdomen ·
+   * Left"), and leaving those verbatim would put two spellings of the same
+   * place side by side in one list. Only *authored* text is sacred, and this
+   * label was generated, not typed.
+   */
+  return { key, label: siteLabel(key) };
 }
+
+/* ── reading history ───────────────────────────────────────────────────── */
 
 /**
  * The most recently recorded site, or `undefined` if there is none.
@@ -161,8 +232,6 @@ export function parseSiteSnapshot(value: unknown): InjectionSiteSnapshot | undef
  * Offered purely as a memory aid — "where did I do it last?" — and never used
  * to preselect anything. Preselecting would make VITA's answer look like a
  * suggestion, which is exactly the inference this feature must not invite.
- *
- * Entries are expected newest-first, as every provider read returns them.
  */
 export function lastRecordedSite(
   entries: readonly PeptideLogEntry[],
@@ -178,22 +247,15 @@ export function entriesWithSites(entries: readonly PeptideLogEntry[]): PeptideLo
   return entries.filter((entry) => entry.site !== undefined);
 }
 
-/**
- * How often each label appears — a count of what happened, nothing more.
- *
- * Grouped by the recorded label rather than by region so "Left Hip" stays its
- * own line instead of collapsing into "Other". Returned most-used first,
- * which is a description of the past and not an ordering of preference.
- */
-export function siteUsageCounts(
+/** Every entry recorded at one exact site, newest first. */
+export function entriesAtSite(
   entries: readonly PeptideLogEntry[],
-): Array<{ label: string; count: number }> {
-  const counts = new Map<string, number>();
-  for (const entry of entries) {
-    if (!entry.site) continue;
-    counts.set(entry.site.label, (counts.get(entry.site.label) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  key: InjectionSiteKey,
+  customLabel?: string,
+): PeptideLogEntry[] {
+  return entries.filter((entry) => {
+    if (entry.site?.key !== key) return false;
+    // Two different custom names are two different places.
+    return key !== 'custom' || entry.site.label === customLabel;
+  });
 }

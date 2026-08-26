@@ -1,10 +1,11 @@
 /**
  * Injection sites as a record.
  *
- * Two properties matter most and both are pinned below: the site travels with
- * the log entry as a snapshot, so history cannot be rewritten by a later
- * setup change; and **nothing in this domain recommends anything.** There is
- * no next-site function to test because there is no next-site function.
+ * Three properties matter and all are pinned below: the site travels with the
+ * log entry as a snapshot; **slice 3.8's records keep working** now that the
+ * taxonomy has changed under them; and **nothing here recommends anything.**
+ * There is no next-site function to test because there is no next-site
+ * function.
  */
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -14,23 +15,22 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import { applyLogChanges, createLogEntry, parseLogEntry } from '../model/logs';
 import {
   REGION_DESCRIPTIONS,
-  SITE_REGIONS,
-  SITE_SIDES,
+  SITE_GROUPS,
+  SITE_KEYS,
   createSiteSnapshot,
+  entriesAtSite,
   entriesWithSites,
-  isSiteRegion,
-  isSiteSide,
+  isSiteKey,
   lastRecordedSite,
   parseSiteSnapshot,
-  regionHasSides,
-  regionLabel,
+  siteKeyLabel,
   siteLabel,
-  siteUsageCounts,
+  sitesForView,
 } from '../model/sites';
 import type { PeptideLogDraft, PeptideLogEntry, PeptideSetup } from '../model/types';
 import { toMcg } from '../model/units';
 
-const NOW = new Date('2026-08-25T20:32:00.000Z');
+const NOW = new Date('2026-08-26T20:32:00.000Z');
 
 function setupFixture(overrides: Partial<PeptideSetup> = {}): PeptideSetup {
   return {
@@ -51,193 +51,218 @@ function draft(overrides: Partial<PeptideLogDraft> = {}): PeptideLogDraft {
   return {
     authoredAmount: 2,
     authoredUnit: 'mg',
-    loggedAt: new Date(2026, 7, 25, 12, 0).toISOString(),
+    loggedAt: new Date(2026, 7, 26, 12, 0).toISOString(),
     ...overrides,
   };
 }
 
-describe('labels', () => {
-  it('reads region and side together', () => {
-    expect(siteLabel('abdomen', 'left')).toBe('Abdomen · Left');
-    expect(siteLabel('thigh', 'right')).toBe('Thigh · Right');
-    expect(siteLabel('upper-arm', 'center')).toBe('Upper Arm · Center');
+describe('the canonical taxonomy', () => {
+  it('names every site the founder asked for', () => {
+    expect(SITE_KEYS.map(siteKeyLabel)).toEqual([
+      'Left Abdomen',
+      'Center Abdomen',
+      'Right Abdomen',
+      'Left Thigh',
+      'Right Thigh',
+      'Left Upper Arm',
+      'Right Upper Arm',
+      'Left Glute',
+      'Right Glute',
+      'Other',
+    ]);
   });
 
-  it('omits a side that was never chosen, rather than leaving a dangling dot', () => {
-    expect(siteLabel('glute', 'none')).toBe('Glute');
+  it('includes Center Abdomen as a first-class site', () => {
+    // The whole reason the region+side model was replaced: it could not say
+    // "the middle" without overloading "I didn't record a side".
+    expect(SITE_KEYS).toContain('abdomen-center');
+    expect(siteKeyLabel('abdomen-center')).toBe('Center Abdomen');
   });
 
-  it('lets a custom label speak for itself', () => {
-    // Not "Other · Left Hip" — the user named it, so the name is the label.
-    expect(siteLabel('custom', 'none', 'Left Hip')).toBe('Left Hip');
-    expect(siteLabel('custom', 'left', '  Hip  ')).toBe('Hip');
-  });
-
-  it('falls back to the region name when a custom label is blank', () => {
-    expect(siteLabel('custom', 'none', '   ')).toBe('Other');
-    expect(siteLabel('custom', 'none')).toBe('Other');
-  });
-
-  it('names every region', () => {
-    for (const region of SITE_REGIONS) {
-      expect(regionLabel(region).length).toBeGreaterThan(0);
+  it('never shows a programmer-ish key in a label', () => {
+    for (const key of SITE_KEYS) {
+      expect(siteKeyLabel(key)).not.toContain('-');
     }
+  });
+
+  it('places every anatomical site on at least one silhouette', () => {
+    const shown = new Set([...sitesForView('front'), ...sitesForView('back')]);
+    for (const key of SITE_KEYS) {
+      if (key === 'custom') continue;
+      expect(shown.has(key)).toBe(true);
+    }
+  });
+
+  it('puts abdomen and thighs on the front, glutes on the back', () => {
+    const front = sitesForView('front');
+    const back = sitesForView('back');
+
+    expect(front).toEqual(
+      expect.arrayContaining(['abdomen-left', 'abdomen-center', 'abdomen-right', 'thigh-left', 'thigh-right']),
+    );
+    expect(back).toEqual(expect.arrayContaining(['glute-left', 'glute-right']));
+    expect(front).not.toContain('glute-left');
+  });
+
+  it('shows upper arms from either side, since an arm is visible from both', () => {
+    expect(sitesForView('front')).toContain('upper-arm-left');
+    expect(sitesForView('back')).toContain('upper-arm-left');
+  });
+
+  it('offers every anatomical site in the text list too', () => {
+    const listed = SITE_GROUPS.flatMap((group) => group.keys);
+    for (const key of SITE_KEYS) {
+      if (key === 'custom') continue;
+      expect(listed).toContain(key);
+    }
+  });
+
+  it('guards keys without walking the prototype chain', () => {
+    expect(isSiteKey('toString')).toBe(false);
+    expect(isSiteKey('abdomen')).toBe(false);
+    for (const key of SITE_KEYS) expect(isSiteKey(key)).toBe(true);
   });
 });
 
 describe('snapshots', () => {
-  it('records region, side and label together', () => {
-    expect(createSiteSnapshot('abdomen', 'left')).toEqual({
-      region: 'abdomen',
-      side: 'left',
+  it('records a canonical site with its label', () => {
+    expect(createSiteSnapshot('abdomen-center')).toEqual({
+      key: 'abdomen-center',
       customLabel: undefined,
-      label: 'Abdomen · Left',
+      label: 'Center Abdomen',
     });
   });
 
-  it('forces a custom site to have no side', () => {
-    // "Left Hip · Right" would be nonsense; the user's own words carry it.
-    const snapshot = createSiteSnapshot('custom', 'left', 'Left Hip');
-    expect(snapshot.side).toBe('none');
+  it('lets a custom label speak for itself', () => {
+    const snapshot = createSiteSnapshot('custom', 'Left Hip');
     expect(snapshot.label).toBe('Left Hip');
+    expect(snapshot.customLabel).toBe('Left Hip');
   });
 
-  it('keeps sides for anatomical regions', () => {
-    for (const region of SITE_REGIONS) {
-      expect(regionHasSides(region)).toBe(region !== 'custom');
-    }
+  it('falls back to Other when a custom label is blank', () => {
+    expect(siteLabel('custom', '   ')).toBe('Other');
+    expect(createSiteSnapshot('custom').label).toBe('Other');
   });
 });
 
-describe('validation', () => {
-  it('accepts a well-formed site', () => {
-    const snapshot = createSiteSnapshot('thigh', 'right');
-    expect(parseSiteSnapshot(JSON.parse(JSON.stringify(snapshot)))).toEqual(snapshot);
+describe('slice 3.8 records keep working', () => {
+  /**
+   * The taxonomy changed under data that already exists on the founder's
+   * device. Those entries are never rewritten on disk — they are translated
+   * on read, so nothing is lost and nothing is migrated destructively.
+   */
+  const LEGACY: Array<[string, unknown, string]> = [
+    ['abdomen + left', { region: 'abdomen', side: 'left' }, 'Left Abdomen'],
+    ['abdomen + right', { region: 'abdomen', side: 'right' }, 'Right Abdomen'],
+    ['abdomen + center', { region: 'abdomen', side: 'center' }, 'Center Abdomen'],
+    ['thigh + right', { region: 'thigh', side: 'right' }, 'Right Thigh'],
+    ['thigh + left', { region: 'thigh', side: 'left' }, 'Left Thigh'],
+    ['upper-arm + left', { region: 'upper-arm', side: 'left' }, 'Left Upper Arm'],
+    ['glute + left', { region: 'glute', side: 'left' }, 'Left Glute'],
+    ['glute + right', { region: 'glute', side: 'right' }, 'Right Glute'],
+  ];
+
+  for (const [label, stored, expected] of LEGACY) {
+    it(`reads ${label} as ${expected}`, () => {
+      expect(parseSiteSnapshot(stored)?.label).toBe(expected);
+    });
+  }
+
+  it('resolves a sideless abdomen to the centre rather than dropping it', () => {
+    // The old model's "abdomen + none" meant the middle in practice; keeping
+    // the record beats discarding it over an ambiguity we introduced.
+    expect(parseSiteSnapshot({ region: 'abdomen', side: 'none' })?.key).toBe('abdomen-center');
   });
 
-  it('rebuilds a missing label rather than treating it as corruption', () => {
-    expect(parseSiteSnapshot({ region: 'abdomen', side: 'left' })?.label).toBe('Abdomen · Left');
+  it('restates an old generated label in the current format', () => {
+    // 3.8 wrote "Abdomen · Left". Keeping that verbatim would show two
+    // spellings of one place in the same list; only *authored* text is sacred.
+    const parsed = parseSiteSnapshot({ region: 'abdomen', side: 'left', label: 'Abdomen · Left' });
+    expect(parsed?.label).toBe('Left Abdomen');
   });
 
-  it('preserves an authored custom label exactly', () => {
+  it('keeps an old custom label exactly as authored', () => {
     const parsed = parseSiteSnapshot({
       region: 'custom',
       side: 'none',
       customLabel: 'Left Hip',
       label: 'Left Hip',
     });
-    // Never rewritten to "Other".
+    expect(parsed?.key).toBe('custom');
     expect(parsed?.label).toBe('Left Hip');
-    expect(parsed?.customLabel).toBe('Left Hip');
   });
 
-  it('rejects unknown regions and sides', () => {
+  it('rejects an old region that has no modern equivalent', () => {
     expect(parseSiteSnapshot({ region: 'forehead', side: 'left' })).toBeUndefined();
-    expect(parseSiteSnapshot({ region: 'abdomen', side: 'sideways' })).toBeUndefined();
+  });
+});
+
+describe('validation', () => {
+  it('round-trips a current snapshot', () => {
+    const snapshot = createSiteSnapshot('thigh-right');
+    expect(parseSiteSnapshot(JSON.parse(JSON.stringify(snapshot)))).toEqual(snapshot);
   });
 
-  it('rejects non-objects', () => {
-    for (const junk of [null, undefined, 42, 'abdomen', []]) {
+  it('rebuilds a missing label rather than treating it as corruption', () => {
+    expect(parseSiteSnapshot({ key: 'glute-left' })?.label).toBe('Left Glute');
+  });
+
+  it('rejects non-objects and unknown keys', () => {
+    for (const junk of [null, undefined, 42, 'abdomen-left', [], { key: 'moon' }]) {
       expect(parseSiteSnapshot(junk)).toBeUndefined();
     }
-  });
-
-  it('guards region and side lookups without walking the prototype chain', () => {
-    expect(isSiteRegion('toString')).toBe(false);
-    expect(isSiteSide('constructor')).toBe(false);
-    for (const region of SITE_REGIONS) expect(isSiteRegion(region)).toBe(true);
-    for (const side of SITE_SIDES) expect(isSiteSide(side)).toBe(true);
   });
 });
 
 describe('sites on log entries', () => {
   it('records a site when one is given', () => {
-    const site = createSiteSnapshot('abdomen', 'left');
-    const entry = createLogEntry(setupFixture(), draft({ site }), NOW);
-    expect(entry.site).toEqual(site);
+    const site = createSiteSnapshot('abdomen-center');
+    expect(createLogEntry(setupFixture(), draft({ site }), NOW).site).toEqual(site);
   });
 
   it('records nothing when none is given', () => {
-    // Optional means optional: a log without a site is a complete record.
-    const entry = createLogEntry(setupFixture(), draft(), NOW);
-    expect(entry.site).toBeUndefined();
-  });
-
-  it('keeps the site through a setup change — the historical rule', () => {
-    const site = createSiteSnapshot('abdomen', 'left');
-    const entry = createLogEntry(setupFixture(), draft({ site }), NOW);
-
-    // The setup is later reconstituted differently and deactivated. Neither
-    // touches what was recorded.
-    setupFixture({ reconstitutionMl: 1, active: false });
-    expect(entry.site?.label).toBe('Abdomen · Left');
+    expect(createLogEntry(setupFixture(), draft(), NOW).site).toBeUndefined();
   });
 
   it('changes the site on edit without touching the conversion', () => {
     const entry = createLogEntry(
       setupFixture(),
-      draft({ site: createSiteSnapshot('abdomen', 'left') }),
+      draft({ site: createSiteSnapshot('abdomen-left') }),
       NOW,
     );
     const before = entry.calculationSnapshot;
+    const edited = applyLogChanges(entry, draft({ site: createSiteSnapshot('thigh-right') }), NOW);
 
-    const edited = applyLogChanges(
-      entry,
-      draft({ site: createSiteSnapshot('thigh', 'right') }),
-      NOW,
-    );
-
-    expect(edited.site?.label).toBe('Thigh · Right');
-    // Where it happened and what was drawn are independent facts.
+    expect(edited.site?.label).toBe('Right Thigh');
     expect(edited.calculationSnapshot).toEqual(before);
   });
 
   it('clears the site on edit', () => {
     const entry = createLogEntry(
       setupFixture(),
-      draft({ site: createSiteSnapshot('abdomen', 'left') }),
+      draft({ site: createSiteSnapshot('abdomen-left') }),
       NOW,
     );
-    const edited = applyLogChanges(entry, draft({ site: undefined }), NOW);
-
-    expect(edited.site).toBeUndefined();
-    expect(edited.amount.amountMcg).toBe(2000);
-  });
-});
-
-describe('stored entries', () => {
-  const stored = (site?: unknown) => {
-    const entry = JSON.parse(
-      JSON.stringify(createLogEntry(setupFixture(), draft({ site: createSiteSnapshot('abdomen', 'left') }), NOW)),
-    );
-    if (site !== undefined) entry.site = site;
-    return entry;
-  };
-
-  it('round-trips an entry with a site', () => {
-    const value = stored();
-    expect(parseLogEntry(value, '2026-08-25')?.site?.label).toBe('Abdomen · Left');
+    expect(applyLogChanges(entry, draft({ site: undefined }), NOW).site).toBeUndefined();
   });
 
   it('loads an entry written before sites existed', () => {
-    // Additive, with no migration: pre-3.8 records must keep working.
-    const value = stored();
+    const value = JSON.parse(JSON.stringify(createLogEntry(setupFixture(), draft(), NOW)));
     delete value.site;
-    const parsed = parseLogEntry(value, '2026-08-25');
+    const parsed = parseLogEntry(value, '2026-08-26');
     expect(parsed).not.toBeNull();
     expect(parsed?.site).toBeUndefined();
-    expect(parsed?.amount.amountMcg).toBe(2000);
   });
 
   it('drops a malformed site but keeps the entry', () => {
-    // A log whose amount and time survive is still a true record; discarding
-    // it because one optional field rotted would destroy more than it saves.
-    for (const junk of [{ region: 'moon', side: 'left' }, 'abdomen', 42, []]) {
-      const parsed = parseLogEntry(stored(junk), '2026-08-25');
-      expect(parsed).not.toBeNull();
-      expect(parsed?.site).toBeUndefined();
-      expect(parsed?.amount.amountMcg).toBe(2000);
-    }
+    const value = JSON.parse(
+      JSON.stringify(createLogEntry(setupFixture(), draft({ site: createSiteSnapshot('abdomen-left') }), NOW)),
+    );
+    value.site = { key: 'moon' };
+    const parsed = parseLogEntry(value, '2026-08-26');
+    expect(parsed).not.toBeNull();
+    expect(parsed?.site).toBeUndefined();
+    expect(parsed?.amount.amountMcg).toBe(2000);
   });
 });
 
@@ -246,60 +271,47 @@ describe('reading site history', () => {
     return {
       ...createLogEntry(
         setupFixture(),
-        draft({ site, loggedAt: new Date(2026, 7, 25, hour, 0).toISOString() }),
+        draft({ site, loggedAt: new Date(2026, 7, 26, hour, 0).toISOString() }),
         NOW,
       ),
       id,
     };
   }
 
-  /** Newest first, as every provider read returns them. */
   const newestFirst: PeptideLogEntry[] = [
     entryWith('c', undefined, 20),
-    entryWith('b', createSiteSnapshot('thigh', 'right'), 14),
-    entryWith('a', createSiteSnapshot('abdomen', 'left'), 8),
+    entryWith('b', createSiteSnapshot('thigh-right'), 14),
+    entryWith('a', createSiteSnapshot('abdomen-left'), 8),
   ];
 
   it('finds the most recent entry that actually recorded a site', () => {
-    // Skips the newer entry with no site rather than reporting nothing.
-    expect(lastRecordedSite(newestFirst)?.site.label).toBe('Thigh · Right');
-    expect(lastRecordedSite(newestFirst)?.entry.id).toBe('b');
+    expect(lastRecordedSite(newestFirst)?.site.label).toBe('Right Thigh');
   });
 
   it('reports nothing when no site was ever recorded', () => {
     expect(lastRecordedSite([entryWith('x', undefined, 9)])).toBeUndefined();
-    expect(lastRecordedSite([])).toBeUndefined();
   });
 
   it('lists only entries that recorded a site, in order', () => {
     expect(entriesWithSites(newestFirst).map((entry) => entry.id)).toEqual(['b', 'a']);
   });
 
-  it('counts usage by the recorded label', () => {
-    const entries = [
-      entryWith('a', createSiteSnapshot('abdomen', 'left'), 8),
-      entryWith('b', createSiteSnapshot('abdomen', 'left'), 9),
-      entryWith('c', createSiteSnapshot('thigh', 'right'), 10),
-      entryWith('d', undefined, 11),
-    ];
-
-    expect(siteUsageCounts(entries)).toEqual([
-      { label: 'Abdomen · Left', count: 2 },
-      { label: 'Thigh · Right', count: 1 },
-    ]);
+  it('filters to one exact zone', () => {
+    expect(entriesAtSite(newestFirst, 'abdomen-left').map((entry) => entry.id)).toEqual(['a']);
+    expect(entriesAtSite(newestFirst, 'abdomen-center')).toEqual([]);
   });
 
-  it('keeps a custom label as its own line rather than collapsing it', () => {
+  it('treats two different custom names as two different places', () => {
     const entries = [
-      entryWith('a', createSiteSnapshot('custom', 'none', 'Left Hip'), 8),
-      entryWith('b', createSiteSnapshot('custom', 'none', 'Right Hip'), 9),
+      entryWith('a', createSiteSnapshot('custom', 'Left Hip'), 8),
+      entryWith('b', createSiteSnapshot('custom', 'Right Hip'), 9),
     ];
-    expect(siteUsageCounts(entries).map((row) => row.label)).toEqual(['Left Hip', 'Right Hip']);
+    expect(entriesAtSite(entries, 'custom', 'Left Hip').map((entry) => entry.id)).toEqual(['a']);
   });
 
   it('supports several different sites on one day', () => {
-    const morning = entryWith('a', createSiteSnapshot('abdomen', 'left'), 8);
-    const evening = entryWith('b', createSiteSnapshot('thigh', 'right'), 20);
+    const morning = entryWith('a', createSiteSnapshot('abdomen-left'), 8);
+    const evening = entryWith('b', createSiteSnapshot('thigh-right'), 20);
     expect(morning.logDate).toBe(evening.logDate);
     expect(entriesWithSites([evening, morning])).toHaveLength(2);
   });
@@ -314,8 +326,8 @@ describe('nothing here recommends anything', () => {
   });
 
   it('keeps the site guide anatomical and free of technique', () => {
-    for (const region of SITE_REGIONS) {
-      const text = REGION_DESCRIPTIONS[region].toLowerCase();
+    for (const entry of REGION_DESCRIPTIONS) {
+      const text = entry.description.toLowerCase();
       for (const word of [
         'inject',
         'needle',

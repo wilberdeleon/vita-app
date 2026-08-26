@@ -45,11 +45,23 @@ export default function NewPeptideSetup() {
   const save = async () => {
     if (!isValid || saving) return;
     setSaving(true);
-    await addSetup(definition.id, value);
+    const setup = await addSetup(definition.id, value);
     showToast({ message: `Added · ${value.displayName?.trim() || definition.name}` });
-    // Back past the catalog to Peptides, so the new setup is what the user
-    // lands on rather than the list they just came through.
+
+    /**
+     * Land on the new setup, not back on the list.
+     *
+     * Founder QA on slice 3.8 reported that injection site "was not appearing
+     * in the Log Peptide flow" — from the New Setup screen, which is where
+     * dismissing to the list leaves you looking. Site selection is not a
+     * setup field and correctly is not there; the real problem was that the
+     * next step had no visible path from where the user actually was.
+     *
+     * Opening the setup puts **Log Peptide** — its first action — directly in
+     * front of someone who has just finished saying what they are tracking.
+     */
     router.dismissAll();
+    router.push(`/peptides/setup/${encodeURIComponent(setup.id)}`);
   };
 
   return (

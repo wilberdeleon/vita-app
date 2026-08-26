@@ -745,12 +745,49 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.6 | Dose / Unit Calculator | Pure bidirectional syringe-units ⇄ mass conversion, fully tested | ⬜ Planned |
 | 3.7 | Peptide Logging + History | Log entry with snapshot fields, history by date, edit/delete | ⬜ Planned |
 | 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ⬜ Planned |
+| 3.8A | Injection Site UX + Interactive Body Map | Flat site taxonomy with Center Abdomen, SVG body map, Tools redesign, 3.8 migration on read | 🟡 Built — pending founder review |
 | 3.9 | Peptides UX Polish, Safety Copy + Fuel Integration | Landing rebuild, disclaimer placement, Fuel Peptides card on real state | ⬜ Planned |
 | 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.8A — Injection Site UX + Interactive Body Map 🟡
+
+**Objective:** fix the two things founder QA rejected in 3.8 — injection-site selection that never appeared in the Log Peptide flow actually being used, and a standalone Injection Sites tool that was mostly text where a body was wanted. **Slice 3.8 remains unapproved until this passes founder device QA.**
+
+**The reported defect, and what it actually was.** The founder's screenshot showed **New Setup**, not Log Peptide. Site selection was never on New Setup and does not belong there — a setup is configuration, a site is something that happened — so nothing was added to that screen. What was missing was a way to *reach* the log form after creating a setup: New Setup dismissed back to the list, leaving the new peptide's Log screen several taps away. Creating a setup now routes straight to it, and the exact founder path is pinned by a route-level test rather than a component test, because a component test would have passed on the broken build.
+
+**A flat taxonomy replaces region-plus-side.** 3.8 modelled a broad region and a side, which could not express **Center Abdomen** — a site the founder uses — and left `abdomen` + `none` ambiguous between *the middle* and *I didn't say*. Every site is now one canonical key: three abdominal, two thigh, two upper arm, two glute, plus `custom`.
+
+**3.8 records are migrated on read, never rewritten on disk.** A log stored as `abdomen` + `left` resolves to *Left Abdomen* exactly as a new one does. The one place a stored label is deliberately overridden is here: 3.8 generated labels in a format that no longer exists (`Abdomen · Left`), and leaving them verbatim put two spellings of one place side by side in the same list. **Authored** text is still sacred — a custom site typed as *Left Hip* stays *Left Hip* forever. Confirmed on device against seeded legacy records.
+
+**New — `BodyMap`.** An original SVG figure drawn as primitives: head, torso, arms, legs, deliberately neutral, no gender, no musculature, no medical-textbook detail. **No external or copyrighted artwork, and no traced illustration.** Zones are ellipses rather than traced anatomy, because the claim being made is *roughly here on your body* and a precise outline would imply a precision about placement VITA has no business implying.
+
+**Every zone is styled identically.** No colour scale, no green or red, no ordering, no marking of a site as due, spent or safe. The only visual state a zone has is *selected*, in peptides purple — a colour that carries no safety meaning anywhere else in the app. A body map is the easiest surface in this feature to accidentally imply a recommendation.
+
+**The figure is a self-view, and this is a deliberate decision.** *Your left* sits on the **left of the screen** — the side your left hand is on when you look down at yourself. Medical illustration uses the opposite convention because its reader stands opposite the patient; VITA's reader is the person being injected. The back view is the front **mirrored**, derived rather than authored, so the two cannot drift apart.
+
+**A real defect found by comparing screenshots, not by a test:** before that mirroring, Left Abdomen and Left Glute both rendered on the same side of the screen — wrong under *either* convention. Now pinned by two tests asserting relative zone positions, so a future refactor cannot silently flip it.
+
+**Touch targets are real views over the drawing**, not pressable SVG shapes. SVG primitives cannot carry an accessibility role or selected state, and every zone gets at least a 44pt box whatever the ellipse beneath it looks like, so nobody pixel-hunts an arm.
+
+**The map never becomes the only path.** The selector pairs the figure with the same choices as text chips, and either records the identical canonical site. That list is not an accessibility afterthought — it is faster for someone who already knows the site they want, and it is the path VoiceOver can use with confidence.
+
+**Still never preselected.** The field starts empty every time, including when a previous site exists. The last site is shown as a line of context — *Last recorded · Center Abdomen* — because filling the field in with it would turn a record into a suggestion.
+
+**Tools → Injection Sites, rebuilt around the figure.** The map is the hero; tapping a zone reports that zone's history (*Last recorded {date} · N logs*, or *No history recorded here* — plainly, never styled as available). Recent sites aggregate across every peptide, because that is how sites are actually used. The site guide is four lines, not four paragraphs. Tapping a zone here records nothing; the screen is a lens onto history, not a logging surface.
+
+**31 new tests, 799 total.** Covering the expanded taxonomy, 3.8 records migrating on read with generated labels restated and authored labels preserved, the route-level regression for the founder's exact path, per-zone history, the empty-zone case, the front/back mirror convention, and the existing prose and export sweeps extended to the new surfaces.
+
+**Verified on device, Light and Dark:** the Log Peptide screen showing the Injection Site row with last-recorded context, the selector sheet on Front with Left Abdomen selected on the figure and in the chips simultaneously, the sheet on Back with Left Glute correctly mirrored, and Tools → Injection Sites both unselected and with a zone selected showing its history — including migrated legacy records reading *Left Abdomen* and a preserved custom *Left Hip*. Three visual defects were found by inspecting those screenshots and fixed: the legacy label format, colliding abdomen zones on a poorly proportioned figure, and the front/back mirror.
+
+**Still prohibited, and still absent:** recommended next site, rotation schedule, site-rest timers, over-use warnings, adherence. The export-name sweep still fails on *recommend*, *suggest*, *next*, *rotate*, *avoid*, *due* or *safe*.
+
+**Still open, unchanged and untouched by this slice:** the **Track this peptide** CTA discoverability item, the approved removal of **Display Name (Optional)** from Peptide Setup, and **Remove Setup preserving history** — all 3.9.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog, the calculator core and the log snapshot model all have a zero-line diff.
 
 ### Slice 3.8 — Injection Site Tracking 🟡
 
