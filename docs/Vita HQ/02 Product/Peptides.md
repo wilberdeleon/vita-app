@@ -56,6 +56,22 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
 
+**Slice 3.8 (2026-08-25) added injection site tracking.** When you log a peptide, you can now record where you administered it — and that stays with the entry permanently.
+
+**VITA never tells you where to inject.** There is no recommended site, no "use this one next", no rotation schedule, and no colour coding. It remembers what you did and shows it back; the decision is yours. This is enforced in the code itself, not just as an intention — a test fails the build if any function in the site domain is so much as *named* like a recommendation.
+
+**It is entirely optional.** You can save a log without a site, and the picker sits after the amount so if you do not care about sites you scroll straight past. Logging stays as fast as it was.
+
+**Your last site is shown, never filled in.** Under the picker you will see *Last recorded · Abdomen · Left* while the field itself stays empty. That distinction is deliberate: showing you what you did is a memory aid, filling it in for you would be a suggestion.
+
+**Choose Abdomen, Thigh, Upper Arm or Glute** — with Left or Right — **or name your own**, like "Left Hip". A name you type is kept exactly as you wrote it, forever, never rewritten into a category.
+
+**History shows the site** without the rows getting taller, and editing a log lets you change or clear it. Changing where it happened never affects the dose conversion — they are separate facts about the same event.
+
+**New: Settings → Tools → Injection Sites.** Site history gathered across *all* your peptides, since people rotate locations across whatever they are taking rather than per compound. Plus a simple tally of what you have used, and a plain-English guide explaining what the four body areas mean — no needle angles, no technique, nothing compound-specific.
+
+**No body diagram, on purpose.** It was optional in the brief. Its only real advantage over a short list is how it looks, and a tappable body map risks regions reading as "recommended" or "avoid" — which is exactly what this feature must never imply. Reliable tracking and a clean picker mattered more.
+
 **Slice 3.7 (2026-08-25) turned Peptides into real tracking.** You can now record that you took something, and see it back.
 
 **Logging is fast on purpose.** Open a tracked peptide, tap **Log Peptide**, type the amount, save. Date and time default to now and can be corrected if you are logging something from earlier. Your vial information is already there, so the syringe units appear as you type — you never re-enter it.
@@ -117,6 +133,16 @@ This version is also much harder to break than the last three: with nothing to t
 **New Tools section in Settings**, deliberately not a new tab. It is for small utilities you use once and walk away from, and it is where the injection-site tools will go in slice 3.8. There is nothing fake in it in the meantime.
 
 ⚠️ **Needs your confirmation on a real iPhone.** Engineering still cannot tap or type on a simulator, so typing is proven by automated tests rather than by hand. That gap is exactly what let the previous version pass its tests and still fail for you, so this is not signed off until you have used it.
+
+## Open polish item — Remove Setup, preserving history
+
+**Status: approved by the founder, not yet done. Required in the Peptides final polish pass (3.9/3.10).**
+
+Peptide Setup today offers only Active / Inactive. There is no way to remove a setup you no longer want in either list — someone who added a compound by mistake, or finished with one permanently, is stuck with it filed under Inactive forever.
+
+**The requirement:** a deliberate **Remove** action, alongside Active/Inactive, that takes the setup out of both tracked lists while **preserving every historical log entry** and keeping that history attributable to the right compound. Requires confirmation.
+
+**Already compatible.** Log entries denormalise `definitionId`, and Tools → Injection Sites resolves compound names from the compiled catalog rather than the setup — so history already renders correctly for a setup that no longer exists. What remains is the removal action itself and deciding where orphaned history is reachable from.
 
 ## Open polish item — remove Display Name from Peptide Setup
 

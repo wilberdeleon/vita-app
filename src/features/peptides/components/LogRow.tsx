@@ -23,6 +23,10 @@ type Props = {
  * The syringe units sit beside it as support, and are simply **absent** when
  * no conversion was saved. A `— units` placeholder would imply a number went
  * missing; nothing was missing, there was just no vial to convert against.
+ *
+ * The site, when one was recorded, shares the time line rather than adding a
+ * third — a history that grows a row taller for every optional field becomes
+ * a table, and this is meant to be scannable.
  */
 export function LogRow({ entry, showDate = false, onPress }: Props) {
   const { surfaces } = useTheme();
@@ -33,12 +37,13 @@ export function LogRow({ entry, showDate = false, onPress }: Props) {
     : null;
   const time = formatClockTime(entry.loggedAt);
   const when = showDate ? `${formatLogDateLong(entry.logDate)} · ${time}` : time;
+  const meta = entry.site ? `${entry.site.label} · ${when}` : when;
 
   return (
     <PressableScale
       onPress={onPress}
       disabled={!onPress}
-      accessibilityLabel={`${amount}${units ? `, ${units}` : ''}, ${when}`}
+      accessibilityLabel={`${amount}${units ? `, ${units}` : ''}${entry.site ? `, ${entry.site.label}` : ''}, ${when}`}
       style={[styles.row, { backgroundColor: surfaces.card, borderColor: surfaces.border }]}
       pressedScale={0.98}
     >
@@ -49,7 +54,9 @@ export function LogRow({ entry, showDate = false, onPress }: Props) {
             <Text style={[styles.units, { color: surfaces.textSecondary }]}>· {units}</Text>
           ) : null}
         </View>
-        <Text style={[styles.when, { color: surfaces.textTertiary }]}>{when}</Text>
+        <Text style={[styles.when, { color: surfaces.textTertiary }]} numberOfLines={1}>
+          {meta}
+        </Text>
       </View>
 
       {/* A note is signalled, never previewed — a truncated sentence in a list

@@ -10,7 +10,12 @@ import {
   useToast,
 } from '../../../../../components/ui';
 import { LogForm } from '../../../../../features/peptides/components/LogForm';
-import { usePeptideContext, useResolvedSetup, type PeptideLogDraft } from '../../../../../lib/peptides';
+import {
+  lastRecordedSite,
+  usePeptideContext,
+  useResolvedSetup,
+  type PeptideLogDraft,
+} from '../../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../../theme/tokens';
 import { useTheme } from '../../../../../theme/ThemeProvider';
 
@@ -30,7 +35,7 @@ export default function LogPeptide() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const setupId = decodeURIComponent(id ?? '');
 
-  const { addLog } = usePeptideContext();
+  const { addLog, logsForSetup } = usePeptideContext();
   const resolved = useResolvedSetup(setupId);
   const { showToast } = useToast();
   const { surfaces } = useTheme();
@@ -52,6 +57,10 @@ export default function LogPeptide() {
   }
 
   const { setup, name } = resolved;
+
+  // Shown beneath the picker as a memory aid. Never used to preselect — see
+  // `SiteSelector` for why that distinction matters.
+  const lastSite = lastRecordedSite(logsForSetup(setup.id));
 
   const save = async () => {
     if (!draft || saving) return;
@@ -76,6 +85,7 @@ export default function LogPeptide() {
           vialUnit: setup.vial?.authored.unit ?? setup.preferredDoseUnit,
         }}
         preferredUnit={setup.preferredDoseUnit}
+        lastSiteLabel={lastSite?.site.label}
         onChange={setDraft}
       />
 

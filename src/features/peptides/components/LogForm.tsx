@@ -17,12 +17,14 @@ import {
   formatSyringeUnits,
   formatVolume,
   toMcg,
+  type InjectionSiteSnapshot,
   type LogCalculationSnapshot,
   type MassUnit,
   type PeptideLogDraft,
 } from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
+import { SiteSelector } from './SiteSelector';
 
 /**
  * The conversion context this form should preview against.
@@ -44,7 +46,15 @@ type Props = {
   /** Seeds the amount unit. A display preference, never a quantity. */
   preferredUnit?: MassUnit;
   /** Present when editing; absent for a new entry. */
-  initial?: { amount: number; unit: MassUnit; loggedAt: string; notes?: string };
+  initial?: {
+    amount: number;
+    unit: MassUnit;
+    loggedAt: string;
+    notes?: string;
+    site?: InjectionSiteSnapshot;
+  };
+  /** Where the last administration was recorded — context, never a default. */
+  lastSiteLabel?: string;
   onChange: (draft: PeptideLogDraft | null) => void;
 };
 
@@ -60,7 +70,7 @@ type Props = {
  * after the fact. Everything else defaults sensibly so the common case is
  * open, type a number, save.
  */
-export function LogForm({ context, preferredUnit, initial, onChange }: Props) {
+export function LogForm({ context, preferredUnit, initial, lastSiteLabel, onChange }: Props) {
   const { surfaces } = useTheme();
 
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '');
@@ -76,6 +86,11 @@ export function LogForm({ context, preferredUnit, initial, onChange }: Props) {
   );
   const [time, setTime] = useState(toTimeInput(initial?.loggedAt ?? new Date().toISOString()));
   const [notes, setNotes] = useState(initial?.notes ?? '');
+  /**
+   * Blank for a new entry even when a previous site exists. Prefilling it
+   * would make VITA's memory look like VITA's advice.
+   */
+  const [site, setSite] = useState<InjectionSiteSnapshot | undefined>(initial?.site);
 
   /**
    * A date edited by hand can be nonsense mid-typing, so the *stored* day is
@@ -97,8 +112,9 @@ export function LogForm({ context, preferredUnit, initial, onChange }: Props) {
     logDate?: LogDate;
     time?: string;
     notes?: string;
+    site?: InjectionSiteSnapshot | undefined;
   }) => {
-    const state = { amount, unit, logDate, time, notes, ...next };
+    const state = { amount, unit, logDate, time, notes, site, ...next };
     const text = state.amount.trim();
     const ok = /^\d*\.?\d+$/.test(text) && Number(text) > 0;
     const at = fromDateAndTime(
@@ -112,6 +128,7 @@ export function LogForm({ context, preferredUnit, initial, onChange }: Props) {
             authoredAmount: Number(text),
             authoredUnit: state.unit,
             loggedAt: at,
+            site: state.site,
             notes: state.notes.trim() || undefined,
           }
         : null,
@@ -190,6 +207,20 @@ export function LogForm({ context, preferredUnit, initial, onChange }: Props) {
           </Text>
         </Card>
       ) : null}
+
+      {/*
+        * Optional, and it sits after the amount so skipping it costs nothing:
+        * someone who does not track sites scrolls straight past.
+        */}
+      <SectionHeader title="Site" />
+      <SiteSelector
+        value={site}
+        lastRecordedLabel={lastSiteLabel}
+        onChange={(next) => {
+          setSite(next);
+          emit({ site: next });
+        }}
+      />
 
       <SectionHeader title="When" />
       <View style={styles.row}>

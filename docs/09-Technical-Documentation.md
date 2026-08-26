@@ -195,6 +195,18 @@ The headline scale is chosen, not fixed. One whole authored unit wins whenever t
 
 **Tools** (`/settings/tools`) is a Settings destination for utilities that stand alone: no tracking, no persistence, no feature ownership. Reached from Settings rather than the dock, and intended to host slice 3.8's injection-site tools. **No placeholder rows** — a dead button is worse than a short list.
 
+**Injection sites (slice 3.8).** `model/sites.ts` holds the taxonomy — five regions, four sides — and **contains no function that proposes anything.** A test enumerates its exports and fails on any name matching `recommend|suggest|next|rotate|avoid|due|safe`; the absence of rotation logic is enforced, not merely intended.
+
+The site lives on `PeptideLogEntry.site` as an `InjectionSiteSnapshot`, alongside the dose conversion and for the same reason: `label` is written once at record time, so a custom "Left Hip" survives verbatim rather than being re-derived from a taxonomy that may have moved on. `createSiteSnapshot` forces `side: 'none'` for a custom region.
+
+**Additive, no migration.** `parseLogEntry` calls `parseSiteSnapshot`, which returns `undefined` for anything malformed — dropping the site and keeping the entry. A pre-3.8 record has no `site` key and loads unchanged. Discarding a whole log because one optional field rotted would destroy more than it protects.
+
+**No second source of truth.** Site usage is derived from log entries (`lastRecordedSite`, `entriesWithSites`, `siteUsageCounts`) and never stored separately — a parallel store of the same events is one that can disagree with history. The static taxonomy is the only site data that lives apart from logs.
+
+**Never preselected.** `SiteSelector` starts empty even when a previous site exists; the last site is passed as `lastRecordedLabel` and rendered as context. Prefilling would convert a record into a recommendation, which is the inference this feature must not invite.
+
+Tools → Injection Sites aggregates across setups and resolves compound names through `findDefinition` against the compiled catalog, so history survives an inactive — and later removed — setup.
+
 **Peptide log entries (slice 3.7).** `PeptideLogEntry` is a **historical snapshot, never a derived view.** Everything needed to render it years from now is copied in at save time: the amount as authored and in canonical micrograms, the local calendar day, the exact instant, and a `calculationSnapshot` of the vial, reconstitution volume, graduation density, and the units and volume they produced.
 
 That is the single most important property in the domain. A setup edited next month must not reach back and change what someone drew last week — so nothing on read is ever recomputed from a setup.

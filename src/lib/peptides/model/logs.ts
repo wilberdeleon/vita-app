@@ -10,6 +10,7 @@
 
 import { isValidLogDate, newId, toLogDate, type LogDate } from '../../daily';
 import { calculateSyringeUnits } from './dose';
+import { parseSiteSnapshot } from './sites';
 import type {
   LogCalculationSnapshot,
   MassUnit,
@@ -98,6 +99,7 @@ export function createLogEntry(
       amountMcg,
     },
     calculationSnapshot: snapshotContext(setup, amountMcg),
+    site: draft.site,
     notes: draft.notes?.trim() || undefined,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -130,6 +132,9 @@ export function applyLogChanges(
     calculationSnapshot: entry.calculationSnapshot
       ? recomputeInOriginalContext(entry.calculationSnapshot, amountMcg)
       : undefined,
+    // Changing where it happened cannot change what was drawn — the site and
+    // the conversion are independent facts about the same event.
+    site: draft.site,
     notes: draft.notes?.trim() || undefined,
     updatedAt: now.toISOString(),
   };
@@ -207,6 +212,9 @@ export function parseLogEntry(value: unknown, logDate: LogDate): PeptideLogEntry
       amountMcg,
     },
     calculationSnapshot: parseSnapshot(value.calculationSnapshot),
+    // A malformed site drops the site, never the entry: a log whose amount
+    // and time are intact is still a true record of an administration.
+    site: parseSiteSnapshot(value.site),
     notes: typeof notes === 'string' && notes.trim().length > 0 ? notes : undefined,
     createdAt,
     updatedAt,

@@ -15,10 +15,9 @@ import { palette } from '../../../../theme/tokens';
  * not a fifth destination, and a bottom tab would give it a prominence it
  * has not earned.
  *
- * **Built to grow, not padded to look full.** Slice 3.8's injection-site
- * work is the obvious next tenant — a site guide, a rotation helper — and
- * whatever else proves to belong here. No placeholder rows in the meantime:
- * a dead button is worse than a short list.
+ * **Built to grow, not padded to look full.** Injection Sites joined in slice
+ * 3.8; a food/product scanning tool is a recorded future candidate. Nothing
+ * is listed before it works — a dead button is worse than a short list.
  */
 export default function Tools() {
   return (
@@ -34,6 +33,15 @@ export default function Tools() {
         chevron
         accessibilityHint="Opens the peptide calculator"
         onPress={() => router.push('/settings/tools/peptide-calculator')}
+      />
+      <ListRow
+        icon="body-outline"
+        iconColor={palette.peptide}
+        title="Injection Sites"
+        subtitle="Where you recorded each administration"
+        chevron
+        accessibilityHint="Opens your injection site history"
+        onPress={() => router.push('/settings/tools/injection-sites')}
       />
     </Screen>
   );

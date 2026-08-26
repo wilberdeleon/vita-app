@@ -27,8 +27,15 @@ import LogPeptide from '../../../app/(vita)/peptides/setup/[id]/log';
 import PeptideHistory from '../../../app/(vita)/peptides/setup/[id]/history';
 import PeptideLogDetail from '../../../app/(vita)/peptides/log/[id]';
 import EditPeptideSetup from '../../../app/(vita)/peptides/setup/[id]';
+import InjectionSites from '../../../app/(vita)/settings/tools/injection-sites';
 import type { PeptideRepository } from '../../../lib/peptides/data/PeptideRepository';
-import { PeptideProvider, toMcg, type PeptideLogEntry, type PeptideSetup } from '../../../lib/peptides';
+import {
+  PeptideProvider,
+  createSiteSnapshot,
+  toMcg,
+  type PeptideLogEntry,
+  type PeptideSetup,
+} from '../../../lib/peptides';
 import { ToastProvider } from '../../../components/ui';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
@@ -151,6 +158,16 @@ function control(tree: ReactTestRenderer, label: string) {
         return children.join('').trim() === label;
       }),
     );
+}
+
+/** Presses a control identified by its accessibility label. */
+async function pressByLabel(tree: ReactTestRenderer, label: string) {
+  const [target] = tree.root.findAll(
+    (node) =>
+      typeof node.props?.onPress === 'function' && node.props?.accessibilityLabel === label,
+  );
+  if (!target) throw new Error(`no control labelled "${label}"`);
+  await act(async () => target.props.onPress());
 }
 
 async function press(tree: ReactTestRenderer, label: string) {
@@ -550,6 +567,261 @@ describe('editing and deleting an entry', () => {
     );
     const tree = await mount(<PeptideLogDetail />, repository);
     expect(texts(tree)).not.toContain('CONVERSION USED');
+  });
+});
+
+describe('injection sites', () => {
+  /** Picks a region then a side in the sheet, as a user would. */
+  async function chooseSite(tree: ReactTestRenderer, region: string, side?: string) {
+    await pressByLabel(tree, 'Choose injection site');
+    await press(tree, region);
+    if (side) await press(tree, side);
+  }
+
+  it('records a site chosen through the picker', async () => {
+    mockRouteId = 'setup-1';
+    const { repository, days } = repositoryWith([setupFixture()]);
+    const tree = await mount(<LogPeptide />, repository);
+
+    await type(tree, /^Amount,/, '2');
+    await chooseSite(tree, 'Abdomen', 'Left');
+    expect(screen(tree)).toContain('Abdomen · Left');
+
+    await press(tree, 'Save log');
+    const stored = [...days.values()].flat();
+    expect(stored[0].site?.label).toBe('Abdomen · Left');
+    expect(stored[0].site?.region).toBe('abdomen');
+    expect(stored[0].site?.side).toBe('left');
+  });
+
+  it('saves perfectly well without one', async () => {
+    mockRouteId = 'setup-1';
+    const { repository, days } = repositoryWith([setupFixture()]);
+    const tree = await mount(<LogPeptide />, repository);
+
+    await type(tree, /^Amount,/, '2');
+    await press(tree, 'Save log');
+
+    const stored = [...days.values()].flat();
+    expect(stored).toHaveLength(1);
+    expect(stored[0].site).toBeUndefined();
+  });
+
+  it('records a custom site under the user’s own name', async () => {
+    mockRouteId = 'setup-1';
+    const { repository, days } = repositoryWith([setupFixture()]);
+    const tree = await mount(<LogPeptide />, repository);
+
+    await type(tree, /^Amount,/, '2');
+    await pressByLabel(tree, 'Choose injection site');
+    await press(tree, 'Other');
+    await type(tree, /^Custom injection site name/, 'Left Hip');
+    await press(tree, 'Use this name');
+    await press(tree, 'Save log');
+
+    // Never rewritten to "Other".
+    expect([...days.values()].flat()[0].site?.label).toBe('Left Hip');
+  });
+
+  it('never preselects the last site', async () => {
+    mockRouteId = 'setup-1';
+    const seeded: PeptideLogEntry = {
+      id: 'plog-prev',
+      setupId: 'setup-1',
+      definitionId: 'catalog:retatrutide',
+      logDate: '2026-08-21',
+      loggedAt: noonOn(21),
+      amount: { authoredAmount: 2, authoredUnit: 'mg', amountMcg: 2000 },
+      site: createSiteSnapshot('abdomen', 'left'),
+      createdAt: CREATED,
+      updatedAt: CREATED,
+    };
+    const { repository, days } = repositoryWith([setupFixture()], [seeded]);
+    const tree = await mount(<LogPeptide />, repository);
+
+    // Shown as context…
+    expect(screen(tree)).toContain('Last recorded · Abdomen · Left');
+    // …but the field itself is empty, so accepting it is never implicit.
+    expect(screen(tree)).toContain('Optional — choose a site');
+
+    await type(tree, /^Amount,/, '2');
+    await press(tree, 'Save log');
+    const saved = [...days.values()].flat().find((entry) => entry.id !== 'plog-prev');
+    expect(saved?.site).toBeUndefined();
+  });
+
+  it('offers no next-site suggestion anywhere on the log screen', async () => {
+    mockRouteId = 'setup-1';
+    const { repository } = repositoryWith([setupFixture()]);
+    const tree = await mount(<LogPeptide />, repository);
+    await pressByLabel(tree, 'Choose injection site');
+
+    const rendered = screen(tree).toLowerCase();
+    for (const word of ['recommended', 'suggested', 'next site', 'rotate', 'avoid', 'due', 'safe to use']) {
+      expect(rendered).not.toContain(word);
+    }
+  });
+});
+
+describe('editing a site', () => {
+  const WITH_SITE: PeptideLogEntry = {
+    id: 'plog-site',
+    setupId: 'setup-1',
+    definitionId: 'catalog:retatrutide',
+    logDate: '2026-08-25',
+    loggedAt: noonOn(25),
+    amount: { authoredAmount: 2, authoredUnit: 'mg', amountMcg: 2000 },
+    calculationSnapshot: {
+      vialAmountMcg: 20_000,
+      reconstitutionMl: 2,
+      unitsPerMl: 100,
+      calculatedUnits: 20,
+      calculatedVolumeMl: 0.2,
+    },
+    site: createSiteSnapshot('abdomen', 'left'),
+    createdAt: CREATED,
+    updatedAt: CREATED,
+  };
+
+  it('prefills the recorded site', async () => {
+    mockRouteId = 'plog-site';
+    const { repository } = repositoryWith([setupFixture()], [WITH_SITE]);
+    const tree = await mount(<PeptideLogDetail />, repository);
+    expect(screen(tree)).toContain('Abdomen · Left');
+  });
+
+  it('changes the site without touching the conversion', async () => {
+    mockRouteId = 'plog-site';
+    const { repository, days } = repositoryWith([setupFixture()], [WITH_SITE]);
+    const tree = await mount(<PeptideLogDetail />, repository);
+
+    await pressByLabel(tree, 'Injection site, currently Abdomen · Left. Opens the site picker');
+    await press(tree, 'Thigh');
+    await press(tree, 'Right');
+    await press(tree, 'Save changes');
+
+    const stored = [...days.values()].flat()[0];
+    expect(stored.site?.label).toBe('Thigh · Right');
+    // Where it happened cannot change what was drawn.
+    expect(stored.calculationSnapshot?.calculatedUnits).toBe(20);
+    expect(stored.amount.amountMcg).toBe(2000);
+  });
+
+  it('clears the site and leaves a valid log', async () => {
+    mockRouteId = 'plog-site';
+    const { repository, days } = repositoryWith([setupFixture()], [WITH_SITE]);
+    const tree = await mount(<PeptideLogDetail />, repository);
+
+    await pressByLabel(tree, 'Clear injection site');
+    await press(tree, 'Save changes');
+
+    const stored = [...days.values()].flat()[0];
+    expect(stored.site).toBeUndefined();
+    expect(stored.amount.amountMcg).toBe(2000);
+  });
+
+  it('restores the site when a deletion is undone', async () => {
+    mockRouteId = 'plog-site';
+    const { repository, days } = repositoryWith([setupFixture()], [WITH_SITE]);
+    const tree = await mount(<PeptideLogDetail />, repository);
+
+    await press(tree, 'Delete log');
+    const confirm = alertButtons.find((button) => button.text === 'Delete');
+    await act(async () => confirm!.onPress?.());
+    expect([...days.values()].flat()).toHaveLength(0);
+
+    // Undo puts back the whole record, site included.
+    await act(async () => press(tree, 'Undo'));
+    const restored = [...days.values()].flat();
+    expect(restored).toHaveLength(1);
+    expect(restored[0].site?.label).toBe('Abdomen · Left');
+  });
+});
+
+describe('Tools — Injection Sites', () => {
+  function siteLog(id: string, setupId: string, definitionId: string, day: number, hour: number, site: PeptideLogEntry['site']): PeptideLogEntry {
+    return {
+      id,
+      setupId,
+      definitionId,
+      logDate: `2026-08-${day}`,
+      loggedAt: new Date(2026, 7, day, hour, 0).toISOString(),
+      amount: { authoredAmount: 2, authoredUnit: 'mg', amountMcg: 2000 },
+      site,
+      createdAt: CREATED,
+      updatedAt: CREATED,
+    };
+  }
+
+  it('says so plainly when nothing has been recorded', async () => {
+    const { repository } = repositoryWith([setupFixture()]);
+    const tree = await mount(<InjectionSites />, repository);
+    expect(screen(tree)).toContain('No sites recorded yet');
+  });
+
+  it('aggregates sites across different peptides, newest first', async () => {
+    const { repository } = repositoryWith(
+      [setupFixture(), setupFixture({ id: 'setup-2', definitionId: 'catalog:mots-c' })],
+      [
+        siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('abdomen', 'left')),
+        siteLog('b', 'setup-2', 'catalog:mots-c', 23, 19, createSiteSnapshot('thigh', 'right')),
+      ],
+    );
+    const tree = await mount(<InjectionSites />, repository);
+
+    const rendered = texts(tree);
+    const newest = rendered.findIndex((line) => line.includes('Abdomen · Left'));
+    const older = rendered.findIndex((line) => line.includes('Thigh · Right'));
+    expect(newest).toBeGreaterThanOrEqual(0);
+    expect(newest).toBeLessThan(older);
+    // Each row names its own compound, since sites rotate across them.
+    expect(screen(tree)).toContain('Retatrutide');
+    expect(screen(tree)).toContain('MOTS-c');
+  });
+
+  it('keeps history for an inactive setup', async () => {
+    const { repository } = repositoryWith(
+      [setupFixture({ active: false })],
+      [siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('glute', 'none'))],
+    );
+    const tree = await mount(<InjectionSites />, repository);
+    expect(screen(tree)).toContain('Glute');
+  });
+
+  it('renders a custom label as written', async () => {
+    const { repository } = repositoryWith(
+      [setupFixture()],
+      [siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('custom', 'none', 'Left Hip'))],
+    );
+    const tree = await mount(<InjectionSites />, repository);
+    expect(screen(tree)).toContain('Left Hip');
+    expect(screen(tree)).not.toContain('Other · Left Hip');
+  });
+
+  it('counts usage without ranking or advising', async () => {
+    const { repository } = repositoryWith(
+      [setupFixture()],
+      [
+        siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('abdomen', 'left')),
+        siteLog('b', 'setup-1', 'catalog:retatrutide', 24, 20, createSiteSnapshot('abdomen', 'left')),
+        siteLog('c', 'setup-1', 'catalog:retatrutide', 23, 20, createSiteSnapshot('thigh', 'right')),
+      ],
+    );
+    const tree = await mount(<InjectionSites />, repository);
+
+    expect(screen(tree)).toContain('2 logs');
+    expect(screen(tree)).toContain('1 log');
+  });
+
+  it('carries a site guide with no technique or peptide-specific advice', async () => {
+    const { repository } = repositoryWith([setupFixture()]);
+    const tree = await mount(<InjectionSites />, repository);
+
+    expect(texts(tree)).toContain('SITE GUIDE');
+    const rendered = screen(tree).toLowerCase();
+    for (const word of ['needle', 'angle', 'depth', 'pinch', 'best for', 'recommended', 'rotate', 'avoid this']) {
+      expect(rendered).not.toContain(word);
+    }
   });
 });
 

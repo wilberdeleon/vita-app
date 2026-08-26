@@ -397,6 +397,8 @@ export const DEFAULT_DOSE_UNIT: MassUnit = 'mg';
  * ── Peptide log entries (slice 3.7) ────────────────────────────────────
  */
 
+import type { InjectionSiteSnapshot } from './sites';
+
 /**
  * The conversion context as it stood **when the entry was saved**.
  *
@@ -461,6 +463,16 @@ export type PeptideLogEntry = {
   calculationSnapshot?: LogCalculationSnapshot;
 
   /**
+   * Where it was administered (slice 3.8). Optional, and additive: entries
+   * written before sites existed have none and remain perfectly valid.
+   *
+   * A snapshot for the same reason the conversion is — a custom label typed
+   * as "Left Hip" must still read "Left Hip" years later rather than being
+   * re-derived from a taxonomy that may have moved on.
+   */
+  site?: InjectionSiteSnapshot;
+
+  /**
    * About *this administration* — how it felt, where it happened, anything
    * worth remembering. Deliberately separate from `PeptideSetup.notes`, which
    * describes the tracking configuration and outlives any single event.
@@ -474,13 +486,14 @@ export type PeptideLogEntry = {
 /**
  * What a caller supplies to create or edit an entry.
  *
- * Injection sites (slice 3.8) will extend `PeptideLogEntry` with an optional
- * site field. Nothing is stubbed for it here — a nullable field nobody writes
- * is speculative weight, and adding one later is a purely additive change.
+ * Site is optional throughout: a user may not track it, may not remember it,
+ * or may be logging something historical. Saving is never blocked on it.
  */
 export type PeptideLogDraft = {
   authoredAmount: number;
   authoredUnit: MassUnit;
   loggedAt: string;
   notes?: string;
+  /** Optional. Recording a site is never required to save a log. */
+  site?: InjectionSiteSnapshot;
 };

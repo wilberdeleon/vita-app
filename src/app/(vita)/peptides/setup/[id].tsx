@@ -5,7 +5,7 @@ import { Button, EmptyState, Screen, ScreenHeader, SectionHeader, useToast } fro
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
 import { LogRow } from '../../../../features/peptides/components/LogRow';
 import { SetupForm, type SetupFormValue } from '../../../../features/peptides/components/SetupForm';
-import { usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
+import { lastRecordedSite, usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
@@ -66,6 +66,9 @@ export default function EditPeptideSetup() {
 
   const allLogs = logsForSetup(setup.id);
   const recent = allLogs.slice(0, RECENT_LOG_COUNT);
+  // A memory aid, stated as a fact about the past. Nothing here suggests a
+  // next site, and the log screen never preselects it.
+  const lastSite = lastRecordedSite(allLogs);
 
   const save = async () => {
     if (!isValid || saving) return;
@@ -113,6 +116,11 @@ export default function EditPeptideSetup() {
       {recent.length > 0 ? (
         <>
           <SectionHeader title="Recent logs" />
+          {lastSite ? (
+            <Text style={[styles.lastSite, { color: surfaces.textTertiary }]}>
+              Last recorded site · {lastSite.site.label}
+            </Text>
+          ) : null}
           {recent.map((entry) => (
             <LogRow
               key={entry.id}
@@ -173,5 +181,9 @@ const styles = StyleSheet.create({
   },
   inactive: {
     ...typography.caption,
+  },
+  lastSite: {
+    ...typography.caption,
+    marginTop: -spacing.xs,
   },
 });

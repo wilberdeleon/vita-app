@@ -115,6 +115,7 @@ export default function PeptideLogDetail() {
           unit: entry.amount.authoredUnit,
           loggedAt: entry.loggedAt,
           notes: entry.notes,
+          site: entry.site,
         }}
         onChange={setDraft}
       />

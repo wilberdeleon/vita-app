@@ -91,6 +91,25 @@ export {
   parseLogEntry,
   sortLogsNewestFirst,
 } from './model/logs';
+export {
+  REGION_DESCRIPTIONS,
+  SITE_REGIONS,
+  SITE_SIDES,
+  createSiteSnapshot,
+  entriesWithSites,
+  isSiteRegion,
+  isSiteSide,
+  lastRecordedSite,
+  parseSiteSnapshot,
+  regionHasSides,
+  regionLabel,
+  sideLabel,
+  siteLabel,
+  siteUsageCounts,
+  type InjectionSiteRegion,
+  type InjectionSiteSide,
+  type InjectionSiteSnapshot,
+} from './model/sites';
 export { formatLabel, formatLabels } from './model/format';
 export {
   calculateAmountFromUnits,

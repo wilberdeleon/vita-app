@@ -752,6 +752,40 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.8 — Injection Site Tracking 🟡
+
+**Objective:** let a user record where an administration happened, see what they have used recently, and stop having to remember it. **Not** to tell anyone where to inject.
+
+**The line this slice does not cross.** There is no recommended site, no next site, no rotation algorithm, no colour coding of good and bad, and no "safe to use again". VITA stores what the user says and can tell them what they did before; deciding where to inject is theirs. A test enumerates the domain's exports and fails on any name containing *recommend*, *suggest*, *next*, *rotate*, *avoid*, *due* or *safe* — the guarantee is structural, not a habit.
+
+**Taxonomy, deliberately shallow.** Abdomen · Thigh · Upper Arm · Glute · Other, with Left / Right / Center where sides mean anything. Subdividing the abdomen into quadrants would be precision nobody asked for and a selector nobody wants to scroll.
+
+**The site is a snapshot on the log entry**, like the dose conversion beside it. `label` is written once at record time, so a custom site typed as "Left Hip" still reads "Left Hip" years later rather than being re-derived into "Custom · Left". A custom label wins outright and forces `side: 'none'` — "Left Hip · Right" would be nonsense.
+
+**Additive, with no migration.** Entries written before 3.8 have no site and load unchanged. A **malformed** site drops the site and keeps the entry: a log whose amount and time are intact is still a true record, and discarding it because one optional field rotted would destroy more than it protects.
+
+**Optional at every step.** Saving is never blocked on a site. The picker sits after the amount so anyone who does not track sites scrolls straight past, and logging stays open → type → save.
+
+**Never preselected — the decision this slice turns on.** A previous site is shown as `Last recorded · Abdomen · Left` and the field itself stays empty. Prefilling it would turn a record into a suggestion: the user would be accepting VITA's answer rather than stating their own. Pinned by test, on the picker and after save.
+
+**Two-step picker** (region, then side) built on React Native's own `Modal`, matching `CategorySelector`. Five options then three, rather than a combinatorial grid. Every option is styled identically, on purpose.
+
+**History integration** keeps rows two lines whether or not a site exists — the site shares the time line rather than adding a third, because a list that grows taller for every optional field becomes a table. Editing prefills the site, can change it, and can clear it; **changing where it happened never touches what was drawn**, since those are independent facts about one event. Undo restores the site with the rest of the record.
+
+**Tools → Injection Sites** aggregates across every peptide, because that is how sites are actually used — someone rotating locations does it across whatever they are taking, not per compound. Recent records name their own compound, resolved from the compiled catalog rather than the setup, so history stays readable for inactive setups and survives the Remove Setup action planned for 3.9. A plain **Sites used** tally follows, and a **Site guide** explains the four anatomical words in one sentence each, with no needle angle, depth, technique or compound-specific guidance.
+
+**Body diagram: deferred, deliberately.** §26 makes it optional and secondary, and the founder did not require one. A stylized silhouette with tappable regions is a real graphics project, and its only advantage over a five-item list is aesthetic — while its risk (regions reading as recommended or discouraged) runs directly against this slice's central constraint. Reliable tracking, a clean selector, history and Tools were the stated priorities and all four shipped. Recorded as a candidate if selection ever proves to be the friction.
+
+**45 new tests, 768 total.** Covering labels and laterality, custom labels surviving storage, pre-3.8 entries loading, malformed sites dropping without taking the log, edit/clear/Undo, several sites in one day, last-recorded skipping entries that recorded none, cross-peptide aggregation ordering, inactive-setup history, and two prose sweeps asserting no recommendation language reaches the screen.
+
+**Verified on device**, Light and Dark: the picker sheet, an optional and empty site field with last-recorded context beneath, history rows with and without sites, and the Tools screen showing cross-peptide history, counts and the guide.
+
+**Carried forward to 3.9/3.10, all three still open and unimplemented:** (A) **Track this peptide** CTA discoverability on long detail pages; (B) removal of **Display Name (Optional)** from Peptide Setup; (C) a deliberate **Remove Setup** action that preserves historical log entries.
+
+**Tools is a growing utility destination** — Peptide Calculator, Injection Sites, and a recorded future candidate for food/product scanning. Not surfaced on Dashboard; that remains a separate roadmap idea.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `lib/daily`, `package.json`, `supabase/`, the 72-entry catalog and the calculator all have a zero-line diff.
+
 ### Slice 3.7 — Peptide Logging + History 🟡
 
 **Objective:** turn a peptide setup into real tracking. Record an administration, keep it as a historical fact, and show it back.
