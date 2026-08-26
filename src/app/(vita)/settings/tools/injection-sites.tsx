@@ -64,6 +64,9 @@ export default function InjectionSites() {
   return (
     <Screen>
       <ScreenHeader title="Injection Sites" back />
+      <Text style={[styles.subtitle, { color: surfaces.textSecondary }]}>
+        Where you have recorded administrations.
+      </Text>
 
       <Card style={styles.mapCard}>
         <SegmentedTabs
@@ -86,7 +89,7 @@ export default function InjectionSites() {
         <View style={[styles.zone, { borderTopColor: surfaces.border }]}>
           {selected === undefined ? (
             <Text style={[styles.zoneHint, { color: surfaces.textTertiary }]}>
-              Tap a location to see what you have recorded there.
+              Tap a location to see its history.
             </Text>
           ) : (
             <>
@@ -119,10 +122,10 @@ export default function InjectionSites() {
         </View>
       </Card>
 
-      <SectionHeader title="Recent sites" />
+      <SectionHeader title="Recent Sites" />
       {recent.length === 0 ? (
         <Text style={[styles.empty, { color: surfaces.textTertiary }]}>
-          No sites recorded yet. Add one when you log a peptide and it will appear here.
+          Nothing recorded yet. Sites you add when logging a peptide appear here.
         </Text>
       ) : (
         <Card style={styles.panel}>
@@ -149,9 +152,10 @@ export default function InjectionSites() {
         </Card>
       )}
 
-      {/* Four lines, not four paragraphs — the figure above already explains
-          the locations better than prose can. */}
-      <SectionHeader title="Site guide" />
+      {/* Five lines, not five paragraphs — the figure above already explains
+          the locations better than prose can, and this is reference material
+          sitting under it rather than an introduction to it. */}
+      <SectionHeader title="Site Reference" />
       <Card style={styles.panel}>
         {REGION_DESCRIPTIONS.map((entry, index) => (
           <View
@@ -173,14 +177,22 @@ export default function InjectionSites() {
         ))}
       </Card>
 
+      {/* One quiet line, once. The boundary is real and is stated — but
+          repeating it beside every block would make the screen read as
+          nervous, and nothing else here offers advice to disclaim. */}
       <Text style={[styles.footer, { color: surfaces.textTertiary }]}>
-        For tracking only. VITA doesn't recommend injection sites.
+        For tracking and anatomical reference only.
       </Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  subtitle: {
+    ...typography.caption,
+    marginTop: -spacing.s,
+    marginBottom: spacing.xs,
+  },
   mapCard: {
     gap: spacing.s,
   },

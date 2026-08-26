@@ -15,7 +15,8 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import { applyLogChanges, createLogEntry, parseLogEntry } from '../model/logs';
 import {
   REGION_DESCRIPTIONS,
-  SITE_GROUPS,
+  SITE_PICKER_ORDER,
+  CUSTOM_SITE_OPTION_LABEL,
   SITE_KEYS,
   createSiteSnapshot,
   entriesAtSite,
@@ -109,12 +110,33 @@ describe('the canonical taxonomy', () => {
     expect(sitesForView('back')).toContain('upper-arm-left');
   });
 
-  it('offers every anatomical site in the text list too', () => {
-    const listed = SITE_GROUPS.flatMap((group) => group.keys);
-    for (const key of SITE_KEYS) {
-      if (key === 'custom') continue;
-      expect(listed).toContain(key);
+  it('offers every canonical site in the fast picker, custom included', () => {
+    // The list is the primary path, so it carries everything — including
+    // glutes, which the front silhouette cannot show.
+    for (const key of SITE_KEYS) expect(SITE_PICKER_ORDER).toContain(key);
+    expect(SITE_PICKER_ORDER).toHaveLength(SITE_KEYS.length);
+  });
+
+  it('lists each site exactly once, with custom last', () => {
+    expect(new Set(SITE_PICKER_ORDER).size).toBe(SITE_PICKER_ORDER.length);
+    expect(SITE_PICKER_ORDER[SITE_PICKER_ORDER.length - 1]).toBe('custom');
+  });
+
+  it("keeps each region's sides adjacent, so the list scans without headings", () => {
+    const region = (key: string) => key.replace(/-(left|center|right)$/, '');
+    const seen: string[] = [];
+    for (const key of SITE_PICKER_ORDER) {
+      const name = region(key);
+      if (seen[seen.length - 1] !== name) {
+        // A region must never reappear after another one has interrupted it.
+        expect(seen).not.toContain(name);
+        seen.push(name);
+      }
     }
+  });
+
+  it('names the custom option in full, since "Other" alone reads thin', () => {
+    expect(CUSTOM_SITE_OPTION_LABEL).toBe('Other / Custom');
   });
 
   it('guards keys without walking the prototype chain', () => {

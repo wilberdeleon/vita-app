@@ -592,13 +592,13 @@ describe('the founder’s real flow, route by route', () => {
     // 2. That href resolves to the log route, and the route shows the site row.
     const log = await mount(<LogPeptide />, repository);
     expect(texts(log)).toContain('INJECTION SITE');
-    expect(screen(log)).toContain('Choose Site');
+    expect(screen(log)).toContain('Select Site');
 
-    // 3. The picker opens, a site is chosen, and it sticks.
+    // 3. Two taps total: open the picker, name the site. No Done, no
+    //    region-then-side, no figure in the way.
     await type(log, /^Amount,/, '2');
-    await pressByLabel(log, 'Choose injection site');
+    await pressByLabel(log, 'Select injection site');
     await pressByLabel(log, 'Left Abdomen');
-    await press(log, 'Done');
     expect(screen(log)).toContain('Left Abdomen');
 
     // 4. Saving persists it.
@@ -623,16 +623,15 @@ describe('the founder’s real flow, route by route', () => {
     const tree = await mount(<NewPeptideSetup />, repository);
 
     expect(texts(tree)).not.toContain('INJECTION SITE');
-    expect(screen(tree)).not.toContain('Choose Site');
+    expect(screen(tree)).not.toContain('Select Site');
   });
 });
 
 describe('injection sites', () => {
-  /** Opens the picker, taps a canonical site, and confirms. */
+  /** The fast path: open the picker, tap the site. That is the whole flow. */
   async function chooseSite(tree: ReactTestRenderer, label: string) {
-    await pressByLabel(tree, 'Choose injection site');
+    await pressByLabel(tree, 'Select injection site');
     await pressByLabel(tree, label);
-    await press(tree, 'Done');
   }
 
   it('records a site chosen through the picker', async () => {
@@ -669,7 +668,8 @@ describe('injection sites', () => {
     const tree = await mount(<LogPeptide />, repository);
 
     await type(tree, /^Amount,/, '2');
-    await pressByLabel(tree, 'Choose injection site');
+    await pressByLabel(tree, 'Select injection site');
+    await pressByLabel(tree, 'Other / Custom');
     await type(tree, /^Custom injection site name/, 'Left Hip');
     await press(tree, 'Done');
     await press(tree, 'Save log');
@@ -697,7 +697,7 @@ describe('injection sites', () => {
     // Shown as context…
     expect(screen(tree)).toContain('Last recorded · Left Abdomen');
     // …but the field itself is empty, so accepting it is never implicit.
-    expect(screen(tree)).toContain('Choose Site');
+    expect(screen(tree)).toContain('Select Site');
 
     await type(tree, /^Amount,/, '2');
     await press(tree, 'Save log');
@@ -709,7 +709,7 @@ describe('injection sites', () => {
     mockRouteId = 'setup-1';
     const { repository } = repositoryWith([setupFixture()]);
     const tree = await mount(<LogPeptide />, repository);
-    await pressByLabel(tree, 'Choose injection site');
+    await pressByLabel(tree, 'Select injection site');
 
     const rendered = screen(tree).toLowerCase();
     for (const word of ['recommended', 'suggested', 'next site', 'rotate', 'avoid', 'due', 'safe to use']) {
@@ -736,71 +736,143 @@ describe('every canonical site can be recorded', () => {
       const tree = await mount(<LogPeptide />, repository);
 
       await type(tree, /^Amount,/, '2');
-      await pressByLabel(tree, 'Choose injection site');
+      await pressByLabel(tree, 'Select injection site');
       await pressByLabel(tree, label);
-      await press(tree, 'Done');
       await press(tree, 'Save log');
 
       expect([...days.values()].flat()[0].site?.key).toBe(key);
     });
   }
 
-  for (const [label, key] of [
-    ['Left Glute', 'glute-left'],
-    ['Right Glute', 'glute-right'],
-  ] as Array<[string, string]>) {
-    it(`${label}, via the Back view`, async () => {
+  it('reaches glutes from the same list, with no view to switch', async () => {
+    // The figure can only draw glutes from behind. The list has no such
+    // constraint, which is the point of it being the primary path.
+    for (const [label, key] of [
+      ['Left Glute', 'glute-left'],
+      ['Right Glute', 'glute-right'],
+    ] as Array<[string, string]>) {
       mockRouteId = 'setup-1';
       const { repository, days } = repositoryWith([setupFixture()]);
       const tree = await mount(<LogPeptide />, repository);
 
       await type(tree, /^Amount,/, '2');
-      await pressByLabel(tree, 'Choose injection site');
-      await pressByLabel(tree, 'Body view, Back');
+      await pressByLabel(tree, 'Select injection site');
       await pressByLabel(tree, label);
-      await press(tree, 'Done');
       await press(tree, 'Save log');
 
       expect([...days.values()].flat()[0].site?.key).toBe(key);
-    });
-  }
+      await act(async () => tree.unmount());
+      mounted = null;
+    }
+  });
 });
 
-describe('the body map', () => {
-  async function openPicker() {
+describe('the fast site list', () => {
+  async function openList() {
     mockRouteId = 'setup-1';
     const { repository, days } = repositoryWith([setupFixture()]);
     const tree = await mount(<LogPeptide />, repository);
-    await pressByLabel(tree, 'Choose injection site');
+    await pressByLabel(tree, 'Select injection site');
+    return { tree, days };
+  }
+
+  it('lists every canonical site as its own row', async () => {
+    const { tree } = await openList();
+    const rendered = screen(tree);
+    for (const label of [
+      'Left Upper Arm',
+      'Right Upper Arm',
+      'Left Abdomen',
+      'Center Abdomen',
+      'Right Abdomen',
+      'Left Thigh',
+      'Right Thigh',
+      'Left Glute',
+      'Right Glute',
+      'Other / Custom',
+    ]) {
+      expect(rendered).toContain(label);
+    }
+  });
+
+  it('never asks for a region and then a side', async () => {
+    const { tree } = await openList();
+    const rendered = screen(tree);
+    // The bare region words were the two-step picker's first screen.
+    for (const heading of ['ABDOMEN', 'THIGH', 'UPPER ARM', 'GLUTE']) {
+      expect(rendered).not.toContain(heading);
+    }
+  });
+
+  it('commits on the single tap, with no confirmation step', async () => {
+    const { tree } = await openList();
+    await pressByLabel(tree, 'Right Upper Arm');
+
+    // The sheet is gone and the control already reads the choice.
+    expect(screen(tree)).toContain('Right Upper Arm');
+    expect(screen(tree)).not.toContain('Other / Custom');
+  });
+
+  it('marks the current value in the list when reopened', async () => {
+    const { tree } = await openList();
+    await pressByLabel(tree, 'Center Abdomen');
+    await pressByLabel(tree, 'Injection site, currently Center Abdomen. Opens the site picker');
+
+    const rows = tree.root.findAll(
+      (node) =>
+        node.props?.accessibilityRole === 'button' &&
+        node.props?.accessibilityLabel === 'Center Abdomen',
+    );
+    expect(rows.some((node) => node.props.accessibilityState?.selected === true)).toBe(true);
+  });
+
+  it('clears the site again', async () => {
+    const { tree, days } = await openList();
+    await pressByLabel(tree, 'Left Thigh');
+    await pressByLabel(tree, 'Clear injection site');
+    expect(screen(tree)).toContain('Select Site');
+
+    await type(tree, /^Amount,/, '2');
+    await press(tree, 'Save log');
+    expect([...days.values()].flat()[0].site).toBeUndefined();
+  });
+
+  it('offers the body model without making anyone use it', async () => {
+    const { tree } = await openList();
+    expect(screen(tree)).toContain('View Body Model');
+  });
+});
+
+describe('the body map', () => {
+  /** The optional visual path: open the picker, then open the figure. */
+  async function openMap() {
+    mockRouteId = 'setup-1';
+    const { repository, days } = repositoryWith([setupFixture()]);
+    const tree = await mount(<LogPeptide />, repository);
+    await pressByLabel(tree, 'Select injection site');
+    await pressByLabel(tree, 'View Body Model');
     return { tree, days };
   }
 
   it('opens on the front view with nothing chosen', async () => {
-    const { tree } = await openPicker();
+    const { tree } = await openMap();
     expect(screen(tree)).toContain('No site selected');
 
-    // A front-only zone is reachable straight away…
     await pressByLabel(tree, 'Left Thigh');
     expect(screen(tree)).toContain('Left Thigh');
   });
 
-  it('still reaches a back-only site through the text list', async () => {
-    // The figure only draws glutes on the back view, but the list always
-    // carries every site — so nobody is ever forced to find the right
-    // silhouette to record where they injected.
-    const { tree } = await openPicker();
-    await pressByLabel(tree, 'Left Glute');
-    expect(screen(tree)).toContain('Left Glute');
-  });
-
-  it('shows the selection as it is made', async () => {
-    const { tree } = await openPicker();
+  it('shows the selection as it is made, and names the confirm action', async () => {
+    const { tree } = await openMap();
     await pressByLabel(tree, 'Center Abdomen');
-    expect(screen(tree)).toContain('Center Abdomen');
+
+    // Not a bare "Done" — nobody should have to wonder whether the tap on
+    // the figure registered, or what it registered as.
+    expect(screen(tree)).toContain('Use Center Abdomen');
   });
 
   it('keeps a selection across a view switch', async () => {
-    const { tree } = await openPicker();
+    const { tree } = await openMap();
     await pressByLabel(tree, 'Left Abdomen');
     await pressByLabel(tree, 'Body view, Back');
 
@@ -809,8 +881,15 @@ describe('the body map', () => {
     expect(screen(tree)).toContain('Left Abdomen');
   });
 
+  it('reaches a back-only site through the Front / Back toggle', async () => {
+    const { tree } = await openMap();
+    await pressByLabel(tree, 'Body view, Back');
+    await pressByLabel(tree, 'Left Glute');
+    expect(screen(tree)).toContain('Use Left Glute');
+  });
+
   it('marks the chosen zone as selected for assistive technology', async () => {
-    const { tree } = await openPicker();
+    const { tree } = await openMap();
     await pressByLabel(tree, 'Right Thigh');
 
     const zones = tree.root.findAll(
@@ -819,6 +898,12 @@ describe('the body map', () => {
         node.props?.accessibilityLabel === 'Right Thigh',
     );
     expect(zones.some((node) => node.props.accessibilityState?.selected === true)).toBe(true);
+  });
+
+  it('can be backed out of, returning to the list', async () => {
+    const { tree } = await openMap();
+    await pressByLabel(tree, 'Back to site list');
+    expect(screen(tree)).toContain('Other / Custom');
   });
 
   /**
@@ -845,13 +930,13 @@ describe('the body map', () => {
   }
 
   it('puts your left on the left of the screen in the front view', async () => {
-    const { tree } = await openPicker();
+    const { tree } = await openMap();
     expect(zoneCentre(tree, 'Left Abdomen')).toBeLessThan(zoneCentre(tree, 'Right Abdomen'));
     expect(zoneCentre(tree, 'Left Thigh')).toBeLessThan(zoneCentre(tree, 'Right Thigh'));
   });
 
   it('mirrors the sides when the body is turned around', async () => {
-    const { tree } = await openPicker();
+    const { tree } = await openMap();
     const frontLeftArm = zoneCentre(tree, 'Left Upper Arm');
 
     await pressByLabel(tree, 'Body view, Back');
@@ -862,14 +947,41 @@ describe('the body map', () => {
     expect(zoneCentre(tree, 'Left Glute')).toBeGreaterThan(zoneCentre(tree, 'Right Glute'));
   });
 
-  it('records nothing if the picker is dismissed without Done', async () => {
-    const { tree, days } = await openPicker();
+  it('records nothing if the figure is dismissed without confirming', async () => {
+    const { tree, days } = await openMap();
     await pressByLabel(tree, 'Left Abdomen');
     await pressByLabel(tree, 'Close');
 
     await type(tree, /^Amount,/, '2');
     await press(tree, 'Save log');
     expect([...days.values()].flat()[0].site).toBeUndefined();
+  });
+
+  /**
+   * The whole supplemental path, end to end, on the real route (§23).
+   *
+   * Log Peptide → Injection Site → View Body Model → tap a zone → confirm →
+   * back on the form → save → the stored record says Right Thigh.
+   */
+  it('log route → body model → confirm → save, with the site persisted', async () => {
+    mockRouteId = 'setup-1';
+    const { repository, days } = repositoryWith([setupFixture()]);
+    const tree = await mount(<LogPeptide />, repository);
+
+    await type(tree, /^Amount,/, '2');
+    await pressByLabel(tree, 'Select injection site');
+    await pressByLabel(tree, 'View Body Model');
+    await pressByLabel(tree, 'Right Thigh');
+    await press(tree, 'Use Right Thigh');
+
+    // Back on the form, with the choice visible before anything is saved.
+    expect(screen(tree)).toContain('Right Thigh');
+    expect(screen(tree)).not.toContain('No site selected');
+
+    await press(tree, 'Save log');
+    const stored = [...days.values()].flat();
+    expect(stored[0].site?.key).toBe('thigh-right');
+    expect(stored[0].site?.label).toBe('Right Thigh');
   });
 });
 
@@ -907,7 +1019,6 @@ describe('editing a site', () => {
 
     await pressByLabel(tree, 'Injection site, currently Left Abdomen. Opens the site picker');
     await pressByLabel(tree, 'Right Thigh');
-    await press(tree, 'Done');
     await press(tree, 'Save changes');
 
     const stored = [...days.values()].flat()[0];
@@ -928,6 +1039,43 @@ describe('editing a site', () => {
     const stored = [...days.values()].flat()[0];
     expect(stored.site).toBeUndefined();
     expect(stored.amount.amountMcg).toBe(2000);
+  });
+
+  /**
+   * Editing through the figure, with the existing value already on it (§24).
+   *
+   * The map opens on the view the current site lives on — a glute is on the
+   * back — and shows it as selected, so nobody has to hunt for what the log
+   * already says before changing it.
+   */
+  it('opens the body model on the recorded site and can change it', async () => {
+    mockRouteId = 'plog-glute';
+    const withGlute: PeptideLogEntry = {
+      ...WITH_SITE,
+      id: 'plog-glute',
+      site: createSiteSnapshot('glute-left'),
+    };
+    const { repository, days } = repositoryWith([setupFixture()], [withGlute]);
+    const tree = await mount(<PeptideLogDetail />, repository);
+
+    await pressByLabel(tree, 'Injection site, currently Left Glute. Opens the site picker');
+    await pressByLabel(tree, 'View Body Model');
+
+    // Already on the back view, already highlighted, already confirmable.
+    expect(screen(tree)).toContain('Use Left Glute');
+    const zones = tree.root.findAll(
+      (node) =>
+        node.props?.accessibilityRole === 'button' &&
+        node.props?.accessibilityLabel === 'Left Glute',
+    );
+    expect(zones.some((node) => node.props.accessibilityState?.selected === true)).toBe(true);
+
+    await pressByLabel(tree, 'Right Glute');
+    await press(tree, 'Use Right Glute');
+    expect(screen(tree)).toContain('Right Glute');
+
+    await press(tree, 'Save changes');
+    expect([...days.values()].flat()[0].site?.key).toBe('glute-right');
   });
 
   it('restores the site when a deletion is undone', async () => {
@@ -966,7 +1114,7 @@ describe('Tools — Injection Sites', () => {
   it('says so plainly when nothing has been recorded', async () => {
     const { repository } = repositoryWith([setupFixture()]);
     const tree = await mount(<InjectionSites />, repository);
-    expect(screen(tree)).toContain('No sites recorded yet');
+    expect(screen(tree)).toContain('Nothing recorded yet');
   });
 
   it('aggregates sites across different peptides, newest first', async () => {
@@ -1018,7 +1166,7 @@ describe('Tools — Injection Sites', () => {
       ],
     );
     const tree = await mount(<InjectionSites />, repository);
-    expect(screen(tree)).toContain('Tap a location to see what you have recorded there.');
+    expect(screen(tree)).toContain('Tap a location to see its history.');
 
     await pressByLabel(tree, 'Left Abdomen');
     expect(screen(tree)).toContain('2 logs');
@@ -1054,15 +1202,32 @@ describe('Tools — Injection Sites', () => {
     expect(screen(tree)).toContain('1 log');
   });
 
-  it('carries a site guide with no technique or peptide-specific advice', async () => {
+  it('carries a Site Reference with no technique or peptide-specific advice', async () => {
     const { repository } = repositoryWith([setupFixture()]);
     const tree = await mount(<InjectionSites />, repository);
 
-    expect(texts(tree)).toContain('SITE GUIDE');
+    expect(texts(tree)).toContain('SITE REFERENCE');
+    // Including Other, so the custom option is explained rather than left
+    // as the one entry with no reference line.
+    for (const region of ['Abdomen', 'Thigh', 'Upper Arm', 'Glute', 'Other']) {
+      expect(texts(tree)).toContain(region);
+    }
+
     const rendered = screen(tree).toLowerCase();
     for (const word of ['needle', 'angle', 'depth', 'pinch', 'best for', 'recommended', 'rotate', 'avoid this']) {
       expect(rendered).not.toContain(word);
     }
+  });
+
+  it('states the tracking boundary once, not beside every block', async () => {
+    // The boundary is real and is stated. Repeating it under each section
+    // made the screen read as nervous, and nothing here offers advice.
+    const { repository } = repositoryWith([setupFixture()]);
+    const tree = await mount(<InjectionSites />, repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('For tracking and anatomical reference only.');
+    expect(rendered.match(/for tracking/gi)).toHaveLength(1);
   });
 });
 

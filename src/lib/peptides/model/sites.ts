@@ -66,33 +66,36 @@ const SITE_VIEWS: Record<InjectionSiteKey, readonly BodyView[]> = {
   custom: [],
 };
 
-/** The grouped choices the text list offers, mirroring the map's regions. */
-export const SITE_GROUPS: ReadonlyArray<{ region: string; keys: readonly InjectionSiteKey[] }> = [
-  { region: 'Abdomen', keys: ['abdomen-left', 'abdomen-center', 'abdomen-right'] },
-  { region: 'Thigh', keys: ['thigh-left', 'thigh-right'] },
-  { region: 'Upper Arm', keys: ['upper-arm-left', 'upper-arm-right'] },
-  { region: 'Glute', keys: ['glute-left', 'glute-right'] },
+/**
+ * The order the fast picker lists sites in.
+ *
+ * **One tap, not two** (slice 3.8B). The picker used to ask for a region and
+ * then a side, which is a reasonable way to *model* a body and a poor way to
+ * choose from ten known places. Every canonical site is now its own row.
+ *
+ * Ordered top-of-body down and grouped by region, so the list is scannable
+ * without headings. The order carries no preference — it is anatomy, not a
+ * ranking — and `custom` sits last because it is the escape hatch, not the
+ * least advisable choice.
+ */
+export const SITE_PICKER_ORDER: readonly InjectionSiteKey[] = [
+  'upper-arm-left',
+  'upper-arm-right',
+  'abdomen-left',
+  'abdomen-center',
+  'abdomen-right',
+  'thigh-left',
+  'thigh-right',
+  'glute-left',
+  'glute-right',
+  'custom',
 ];
 
-/** Short position words for the text list, where the region is already a heading. */
-const SHORT_LABELS: Partial<Record<InjectionSiteKey, string>> = {
-  'abdomen-left': 'Left',
-  'abdomen-center': 'Center',
-  'abdomen-right': 'Right',
-  'thigh-left': 'Left',
-  'thigh-right': 'Right',
-  'upper-arm-left': 'Left',
-  'upper-arm-right': 'Right',
-  'glute-left': 'Left',
-  'glute-right': 'Right',
-};
+/** How `custom` is offered in the picker, where "Other" alone reads thin. */
+export const CUSTOM_SITE_OPTION_LABEL = 'Other / Custom';
 
 export function siteKeyLabel(key: InjectionSiteKey): string {
   return SITE_LABELS[key];
-}
-
-export function siteShortLabel(key: InjectionSiteKey): string {
-  return SHORT_LABELS[key] ?? SITE_LABELS[key];
 }
 
 export function sitesForView(view: BodyView): InjectionSiteKey[] {
@@ -136,17 +139,20 @@ export function createSiteSnapshot(
 }
 
 /**
- * Broad anatomical descriptions, kept short for the compact guide.
+ * What each body area refers to, for the Site Reference block.
  *
  * Where the words point on a body, and nothing else. No needle angle, no
  * depth, no technique, and nothing peptide-specific — "best for GLP-1" is
- * exactly the sentence this app must never write.
+ * exactly the sentence this app must never write. Deliberately flat and
+ * clinical rather than conversational: this is reference material, and the
+ * chattier register it replaces read as improvised.
  */
 export const REGION_DESCRIPTIONS: ReadonlyArray<{ region: string; description: string }> = [
-  { region: 'Abdomen', description: 'Front torso, around the stomach.' },
-  { region: 'Thigh', description: 'Upper leg, between hip and knee.' },
-  { region: 'Upper Arm', description: 'Between shoulder and elbow.' },
-  { region: 'Glute', description: 'Buttock area.' },
+  { region: 'Abdomen', description: 'Front abdominal area.' },
+  { region: 'Thigh', description: 'Upper portion of the leg.' },
+  { region: 'Upper Arm', description: 'Upper portion of the arm.' },
+  { region: 'Glute', description: 'Gluteal area on the back of the body.' },
+  { region: 'Other', description: 'Use a custom label for another location.' },
 ];
 
 /* ── reading stored sites ──────────────────────────────────────────────── */

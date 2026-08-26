@@ -199,6 +199,8 @@ The headline scale is chosen, not fixed. One whole authored unit wins whenever t
 
 **One canonical key per site.** 3.8 modelled a broad `region` plus a `side`, which could not express **Center Abdomen** and left `abdomen` + `none` ambiguous between *the middle* and *I didn't say*. `SITE_KEYS` is now flat — `abdomen-left|center|right`, `thigh-left|right`, `upper-arm-left|right`, `glute-left|right`, `custom` — so every recorded site has exactly one identity.
 
+**`SITE_PICKER_ORDER` is the fast path (slice 3.8B).** The picker asked for a region and then a side, which is a reasonable way to *model* a body and a poor way to choose from ten known places. Every canonical site is now its own row, ordered top-of-body down and grouped by region so the list scans without headings. The order carries **no preference** — it is anatomy, not a ranking — and `custom` is last because it is the escape hatch, not the least advisable choice. `SITE_GROUPS` and `siteShortLabel` were deleted with the two-step chips they served.
+
 The site lives on `PeptideLogEntry.site` as an `InjectionSiteSnapshot`, alongside the dose conversion and for the same reason: `label` is written once at record time, so a custom "Left Hip" survives verbatim rather than being re-derived from a taxonomy that may have moved on. `createSiteSnapshot` keeps a `customLabel` only for the `custom` key.
 
 **Malformed sites drop the site, never the entry.** `parseLogEntry` calls `parseSiteSnapshot`, which returns `undefined` for anything it cannot read. A pre-3.8 record has no `site` key and loads unchanged. Discarding a whole log because one optional field rotted would destroy more than it protects.
@@ -209,7 +211,15 @@ The site lives on `PeptideLogEntry.site` as an `InjectionSiteSnapshot`, alongsid
 
 **Never preselected.** `SiteSelector` starts empty even when a previous site exists; the last site is passed as `lastRecordedLabel` and rendered as context. Prefilling would convert a record into a recommendation, which is the inference this feature must not invite.
 
-**`BodyMap` (slice 3.8A)** is an original SVG figure drawn as primitives — head, torso, arms, legs — deliberately neutral, with **no external or copyrighted artwork and nothing traced**. Zones are ellipses rather than traced anatomy: the claim is *roughly here on your body*, and an exact outline would imply a precision about placement VITA has no business implying.
+**`BodyMap` (slice 3.8A, redrawn in 3.8B)** is an original SVG figure drawn as primitives — head, torso, arms, legs — deliberately neutral, with **no external or copyrighted artwork and nothing traced**. Zones are ellipses rather than traced anatomy: the claim is *roughly here on your body*, and an exact outline would imply a precision about placement VITA has no business implying.
+
+**The figure is one component in two contexts.** From a log it is a picker that returns a site; from Tools it is a lens onto history that records nothing. Only the wrapper differs — there is deliberately no second implementation to drift.
+
+**Three rendering constraints learned on device**, all of which shape how it is drawn:
+
+- **`ClipPath` did not apply.** Zones were meant to be clipped to the silhouette so each took the shape of its limb. It rendered unclipped, with outlines crossing the body edges. Zones now fit **by geometry** — each sized to sit inside the limb it marks — which is verified visually rather than enforced by the renderer.
+- **Translucent overlapping shapes accumulate alpha.** The figure is assembled from overlapping paths, and per-shape `rgba` fills drew a bright band across the hips where the legs met the torso and a notch under the chin. Fills are now **solid ink inside a `<G opacity>`**: the group composites once and every join disappears.
+- **Zones carry no stroke.** An outlined ellipse reads as a sticker stuck on a drawing; an unstroked patch of lighter fill reads as part of the body. The selected zone adds a purple fill and a centre marker, because on a narrow limb the patch alone is too subtle.
 
 **Every zone is styled identically** — no colour scale, no ordering, no marking a site due, spent or safe. The only visual state a zone has is *selected*, in peptides purple, which carries no safety meaning anywhere else in the app. A body map is the easiest surface in this feature to accidentally imply a recommendation.
 
@@ -217,9 +227,11 @@ The site lives on `PeptideLogEntry.site` as an `InjectionSiteSnapshot`, alongsid
 
 **Touch targets are absolutely-positioned `Pressable` views over the `Svg`**, not pressable SVG shapes. SVG primitives cannot carry `accessibilityRole` or `accessibilityState`, and a rectangle sized to a finger — at least 44pt whatever the ellipse beneath it looks like — means nobody pixel-hunts an arm.
 
-**The map is never the only path.** `SiteSelector` pairs the figure with the same choices as text chips, and either records the identical canonical site. The list is not an accessibility afterthought: it is faster for someone who already knows their site, and it is the path VoiceOver can use with confidence.
+**The map is never the only path — and since 3.8B it is not the default one.** `SiteSelector` opens on the flat list; the figure is a `View Body Model` step behind it, reachable from both New Log and Edit Log rather than only through Settings → Tools. The list is not an accessibility afterthought: it is faster for someone who already knows their site, and it is the path VoiceOver can use with confidence.
 
-Tools → Injection Sites aggregates across setups and resolves compound names through `findDefinition` against the compiled catalog, so history survives an inactive — and later removed — setup. Since 3.8A the map leads: selecting a zone reports that zone's history, or says *No history recorded here* plainly rather than styling it as available. Tapping there records nothing — the screen is a lens onto history, not a logging surface.
+**Confirming is explicit from the figure, implicit from the list.** A list row commits on the single tap — that is the point of it. The figure cannot, because tapping a zone is also how you *look* at one, so it shows the selection, names it, and confirms through a button reading **Use Left Abdomen** rather than a bare *Done*. Opening the model from a log that already has a site opens on that site's view with it already highlighted.
+
+Tools → Injection Sites aggregates across setups and resolves compound names through `findDefinition` against the compiled catalog, so history survives an inactive — and later removed — setup. Since 3.8A the map leads: selecting a zone reports that zone's history, or says *No history recorded here* plainly rather than styling it as available. Tapping there records nothing — the screen is a lens onto history, not a logging surface. 3.8B re-tiered it (title, one-line subtitle, figure, per-zone history only on selection, compact recents, then **Site Reference**) and cut the boundary statement to one line stated once — a test asserts it appears exactly once, because repeating it under every block made the screen read as nervous when nothing on it offers advice.
 
 **Peptide log entries (slice 3.7).** `PeptideLogEntry` is a **historical snapshot, never a derived view.** Everything needed to render it years from now is copied in at save time: the amount as authored and in canonical micrograms, the local calendar day, the exact instant, and a `calculationSnapshot` of the vial, reconstitution volume, graduation density, and the units and volume they produced.
 

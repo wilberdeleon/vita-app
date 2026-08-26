@@ -746,12 +746,59 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.7 | Peptide Logging + History | Log entry with snapshot fields, history by date, edit/delete | ⬜ Planned |
 | 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ⬜ Planned |
 | 3.8A | Injection Site UX + Interactive Body Map | Flat site taxonomy with Center Abdomen, SVG body map, Tools redesign, 3.8 migration on read | 🟡 Built — pending founder review |
+| 3.8B | Injection Site Visual + Selection Polish | One-tap canonical site list, body model as optional aid, redrawn silhouette, Site Reference rewrite | 🟡 Built — pending founder review |
 | 3.9 | Peptides UX Polish, Safety Copy + Fuel Integration | Landing rebuild, disclaimer placement, Fuel Peptides card on real state | ⬜ Planned |
 | 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.8B — Injection Site Visual + Selection Polish 🟡
+
+**Objective:** founder QA found 3.8A's functionality substantially improved but did not approve it. This is the corrective polish pass — make everyday selection much faster, keep the figure as an optional aid, raise its visual quality, and rewrite the reference copy so it reads like product rather than notes. **Slice 3.8 remains unapproved until 3.8B passes founder device QA.**
+
+**The list is the fast path; the figure is the optional one.** 3.8A put a full anatomical model between the user and a choice they already knew. Logging is done in a hurry, standing up, several times a week. Tapping the row now opens a flat list of all ten canonical sites and **one tap records it** — no region-then-side, no confirm step, no figure in the way. Two taps total from the log form.
+
+**The region → laterality workflow is gone.** Asking for *Abdomen* and then *Left* is a reasonable way to model a body and a poor way to choose from ten known places. `SITE_PICKER_ORDER` lists every site as its own row, ordered top-of-body down and grouped by region so it scans without headings. The order carries **no preference** — it is anatomy, not a ranking — and `custom` sits last because it is the escape hatch, not the least advisable choice. A test asserts the bare region headings no longer appear anywhere in the picker.
+
+**`View Body Model` sits under the list**, reachable from both New Log and Edit Log — never only through Settings → Tools. It answers a genuinely different question, *which one is that?*, and someone who wants it should not have to leave the form.
+
+**One component, two contexts.** `BodyMap` is unchanged between logging and Tools; only what wraps it differs. From a log it is a picker that returns a site; from Tools it is a lens onto history that records nothing. There is no second implementation.
+
+**Nobody wonders whether the tap registered.** Selecting a zone highlights it, names it under the figure, and the confirm button reads **Use Left Abdomen** rather than a bare *Done*. Opening the model from a log that already has a site opens on that site's view with it already highlighted and already confirmable.
+
+**The silhouette was redrawn.** Roughly seven-and-a-half heads, a real shoulder line, a waist that narrows, hips that flare, and arms held clear of the torso so an upper-arm zone is visibly on an arm. The straight-edged limbs of 3.8A were what made it read as a developer's SVG demo.
+
+**Three rendering defects found by inspecting screenshots, not by tests:**
+
+1. **`ClipPath` did not apply on device.** Zones were meant to be clipped to the silhouette so each took the shape of its limb. It rendered unclipped — ellipse outlines crossing the body edges. Replaced with geometry: each zone is sized to sit inside the limb it marks, verified on screen.
+2. **Translucent overlapping shapes accumulated alpha**, drawing a bright band across the hips where the legs met the torso and a notch under the chin. Fixed by filling with solid ink inside a group that carries the opacity — the group composites once, so joins are invisible.
+3. **The arms sat almost inside the torso**, leaving a sliver of gap, and the arm zones bled across the boundary. Torso narrowed, arms moved outward; the gap is now unambiguous at a glance.
+
+**Zones are unstroked fills.** An outlined ellipse reads as a sticker on a drawing; a soft patch of lighter fill reads as part of the body. The selected zone adds a purple fill and a centre marker, because on a narrow limb the patch alone is too subtle a change.
+
+**Still no colour that means anything.** No green, no red, no scale, no ordering, nothing marked due, spent, or safe. The only visual state a zone has is *selected*, in peptides purple.
+
+**Front / back mirroring is unchanged and still pinned.** The figure remains a self-view — your left on the left of the screen — with the back view derived as a mirror.
+
+**Tools → Injection Sites re-tiered**: title, one-line subtitle, the body as the focal point, per-zone history only when a zone is selected, compact Recent Sites, then Site Reference. It no longer reads as a text page with a diagram inserted into it.
+
+**Site Guide → Site Reference**, rewritten flat and clinical: *Front abdominal area.* · *Upper portion of the leg.* · *Upper portion of the arm.* · *Gluteal area on the back of the body.* · *Use a custom label for another location.* **Other** gained an entry, so the custom option is no longer the one choice with nothing explaining it.
+
+**Safety copy reduced to one line, stated once:** *For tracking and anatomical reference only.* A test asserts it appears exactly once. The boundary is real and is stated — repeating it under every block made the screen read as nervous, and nothing on it offers advice to disclaim.
+
+**Removed as dead:** `SITE_GROUPS` and `siteShortLabel`, both of which existed only for the two-step chip picker.
+
+**12 net new tests, 811 total** — several 3.8A tests were rewritten rather than added, since the interaction they drove no longer exists. New coverage: every canonical site listed and recordable in one tap, no region headings, single-tap commit with no confirmation, the current value marked on reopen, clear, custom, the mandatory log → body model → confirm → save → persisted route flow, editing through the model with the existing value highlighted, and the boundary line appearing exactly once.
+
+**Verified on device, Light and Dark:** the fast list, the log form with a site recorded in §20's order, the body model on Front and Back with a selection, Tools unselected, Tools with a zone selected showing its history, and Site Reference. Migrated 3.8 records still read *Left Abdomen* and *Right Glute*, and the authored *Left Hip* is unchanged.
+
+**Still prohibited, and still absent:** recommended next site, rotation schedule, site-rest timers, over-use warnings, adherence.
+
+**Untouched 3.9 scope:** Add to Routine, Needs Setup, Taken / Skipped, routine calendar, Track CTA discoverability, Display Name removal, Remove Setup.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog, the calculator core (`dose.ts`, `units.ts`, `UnitConversion.tsx`) and the log snapshot model (`logs.ts`) all have a zero-line diff.
 
 ### Slice 3.8A — Injection Site UX + Interactive Body Map 🟡
 

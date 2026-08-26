@@ -16,9 +16,49 @@ type Props = {
 };
 
 const WIDTH = 200;
-const HEIGHT = 400;
+const HEIGHT = 420;
 /** Apple's minimum comfortable touch target, in the same units as the figure. */
 const MIN_TOUCH = 44;
+
+/**
+ * The figure, as path data.
+ *
+ * Drawn to roughly seven-and-a-half heads, with a real shoulder line, a waist
+ * that narrows and hips that flare — the proportions that make a silhouette
+ * read as a person rather than as stacked primitives. Curved throughout: the
+ * straight-edged limbs of the first version are what made it look like a
+ * developer's SVG demo rather than a drawing.
+ */
+const HEAD = { cx: 100, cy: 38, rx: 19, ry: 23 };
+
+const TORSO =
+  'M94 56 C94 70 92 77 86 81 C75 86 68 94 67 107 ' +
+  'C66 127 72 147 76 164 C71 177 68 190 68 202 ' +
+  'C69 213 75 220 85 222 L115 222 C125 220 131 213 132 202 ' +
+  'C132 190 129 177 124 164 C128 147 134 127 133 107 ' +
+  'C132 94 125 86 114 81 C108 77 106 70 106 56 Z';
+
+const ARM_LEFT =
+  'M62 100 C54 104 48 114 47 128 C46 148 46 166 48 186 ' +
+  'C49 204 51 220 52 235 C52 240 57 242 60 240 C63 238 64 234 63 229 ' +
+  'C62 214 61 198 61 180 C61 160 62 142 64 126 C65 116 67 108 71 103 Z';
+
+const ARM_RIGHT =
+  'M138 100 C146 104 152 114 153 128 C154 148 154 166 152 186 ' +
+  'C151 204 149 220 148 235 C148 240 143 242 140 240 C137 238 136 234 137 229 ' +
+  'C138 214 139 198 139 180 C139 160 138 142 136 126 C135 116 133 108 129 103 Z';
+
+const LEG_LEFT =
+  'M69 204 C65 230 67 256 71 282 C73 304 72 326 73 348 ' +
+  'C73 366 74 382 75 396 C75 401 80 403 84 401 C87 399 88 395 88 390 ' +
+  'C88 374 89 358 90 342 C91 320 93 300 96 280 C99 254 100 234 100 216 Z';
+
+const LEG_RIGHT =
+  'M131 204 C135 230 133 256 129 282 C127 304 128 326 127 348 ' +
+  'C127 366 126 382 125 396 C125 401 120 403 116 401 C113 399 112 395 112 390 ' +
+  'C112 374 111 358 110 342 C109 320 107 300 104 280 C101 254 100 234 100 216 Z';
+
+const FIGURE = [TORSO, ARM_LEFT, ARM_RIGHT, LEG_LEFT, LEG_RIGHT];
 
 /**
  * Where each selectable zone sits, in SVG user units.
@@ -32,19 +72,21 @@ const MIN_TOUCH = 44;
  * is on the left of the screen — the side your left hand is on when you look
  * down at yourself. Medical illustration uses the opposite convention because
  * its reader is standing opposite the body; ours is inside it.
+ *
+ * Sized generously and then **clipped to the silhouette**, so a zone fills its
+ * part of the body instead of sitting on top of it. Centres are spaced so no
+ * two zones overlap, which would make one place ambiguous to tap.
  */
 const ZONES: Record<InjectionSiteKey, { cx: number; cy: number; rx: number; ry: number } | null> = {
-  // Spaced so the three abdominal zones read as three places rather than one
-  // smudge, and sat over the belly rather than the ribs.
-  'abdomen-left': { cx: 81, cy: 170, rx: 8, ry: 18 },
-  'abdomen-center': { cx: 100, cy: 173, rx: 8, ry: 18 },
-  'abdomen-right': { cx: 119, cy: 170, rx: 8, ry: 18 },
-  'thigh-left': { cx: 84, cy: 252, rx: 13, ry: 32 },
-  'thigh-right': { cx: 116, cy: 252, rx: 13, ry: 32 },
-  'upper-arm-left': { cx: 54, cy: 120, rx: 8, ry: 26 },
-  'upper-arm-right': { cx: 146, cy: 120, rx: 8, ry: 26 },
-  'glute-left': { cx: 86, cy: 188, rx: 12, ry: 17 },
-  'glute-right': { cx: 114, cy: 188, rx: 12, ry: 17 },
+  'abdomen-left': { cx: 81, cy: 176, rx: 7.5, ry: 14 },
+  'abdomen-center': { cx: 100, cy: 178, rx: 7.5, ry: 14 },
+  'abdomen-right': { cx: 119, cy: 176, rx: 7.5, ry: 14 },
+  'thigh-left': { cx: 80, cy: 258, rx: 12, ry: 30 },
+  'thigh-right': { cx: 120, cy: 258, rx: 12, ry: 30 },
+  'upper-arm-left': { cx: 55, cy: 145, rx: 6.5, ry: 24 },
+  'upper-arm-right': { cx: 145, cy: 145, rx: 6.5, ry: 24 },
+  'glute-left': { cx: 84, cy: 196, rx: 15, ry: 18 },
+  'glute-right': { cx: 116, cy: 196, rx: 15, ry: 18 },
   custom: null,
 };
 
@@ -71,72 +113,91 @@ function zoneFor(key: InjectionSiteKey, view: BodyView) {
  * "which part of me is that?" faster than a list of words can, and nothing
  * more.
  *
+ * **A solid silhouette, with no outlines anywhere** (slice 3.8B). The figure
+ * is assembled from overlapping shapes, and stroking them drew a seam through
+ * every join — a line across the hips where the legs met the torso, a collar
+ * under the head. One flat fill makes the overlaps invisible and the figure
+ * read as a single form. `ClipPath` was tried first and did not apply on
+ * device, so zones fit by geometry rather than by masking.
+ *
+ * **Zones are unstroked fills** for the same reason. An outlined ellipse reads
+ * as a sticker on a drawing; a soft patch of lighter fill reads as part of the
+ * body. Each one is sized to sit inside the limb it marks.
+ *
  * **Every zone is styled identically.** No colour scale, no green or red, no
  * ordering, no marking of a site as due or spent. A body map is the easiest
  * place in this whole feature to accidentally imply a recommendation, so the
  * only visual state a zone has is *selected* — in VITA's peptide purple,
  * which carries no safety meaning anywhere else in the app either.
  *
- * The figure is never the only way to choose: the selector pairs it with a
- * text list, so nobody has to hit a shape to record where they injected.
+ * The figure is never the only way to choose. Since 3.8B the fast path is a
+ * flat list of every site and this is the optional visual aid beside it.
  */
 export function BodyMap({ view, selected, onSelect }: Props) {
   const { surfaces, scheme } = useTheme();
 
-  const bodyFill = scheme === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
-  const bodyStroke = surfaces.border;
-  const zoneFill = scheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
-  const zoneStroke = scheme === 'dark' ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.14)';
+  const dark = scheme === 'dark';
+  /**
+   * Solid ink plus a group opacity, never per-shape alpha.
+   *
+   * The figure is built from overlapping shapes, and translucent fills
+   * *accumulate* where they overlap — which drew a bright band across the
+   * hips where the legs met the torso and a notch under the chin. Compositing
+   * the group once and fading the result makes every join invisible.
+   */
+  const ink = dark ? '#FFFFFF' : '#111114';
+  const bodyOpacity = dark ? 0.1 : 0.14;
+  const zoneFill = dark ? 'rgba(255,255,255,0.14)' : 'rgba(17,17,20,0.11)';
 
   const zones = sitesForView(view);
 
   return (
     <View style={styles.wrap}>
       <Svg width={WIDTH} height={HEIGHT} viewBox={`0 0 ${WIDTH} ${HEIGHT}`}>
-        {/* The figure itself — decorative, and hidden from assistive tech,
-            which reads the zones instead. */}
-        <G accessible={false}>
-          <Circle cx={100} cy={32} r={18} fill={bodyFill} stroke={bodyStroke} strokeWidth={1} />
-          {/* Torso: shoulders tapering through the waist to the hips. */}
-          <Path
-            d="M100 56 C118 56 129 63 132 78 L126 172 C125 194 121 210 100 210 C79 210 75 194 74 172 L68 78 C71 63 82 56 100 56 Z"
-            fill={bodyFill}
-            stroke={bodyStroke}
-            strokeWidth={1}
-          />
-          {/* Arms held clear of the torso, so an upper-arm zone is visibly on
-              the arm rather than blurring into the shoulder. */}
-          <Path
-            d="M68 66 C54 72 47 92 47 114 L50 178 L62 177 L60 114 C60 98 64 82 72 72 Z"
-            fill={bodyFill}
-            stroke={bodyStroke}
-            strokeWidth={1}
-          />
-          <Path
-            d="M132 66 C146 72 153 92 153 114 L150 178 L138 177 L140 114 C140 98 136 82 128 72 Z"
-            fill={bodyFill}
-            stroke={bodyStroke}
-            strokeWidth={1}
-          />
-          {/* Legs */}
-          <Path d="M76 208 L72 300 L76 386 L91 386 L94 300 L99 210 Z" fill={bodyFill} stroke={bodyStroke} strokeWidth={1} />
-          <Path d="M124 208 L128 300 L124 386 L109 386 L106 300 L101 210 Z" fill={bodyFill} stroke={bodyStroke} strokeWidth={1} />
+        {/* The figure — decorative, and hidden from assistive tech, which
+            reads the zones instead. One flat fill, no strokes: the shapes
+            overlap, and any outline would draw a seam through every join. */}
+        <G accessible={false} opacity={bodyOpacity}>
+          <Ellipse cx={HEAD.cx} cy={HEAD.cy} rx={HEAD.rx} ry={HEAD.ry} fill={ink} />
+          {FIGURE.map((d) => (
+            <Path key={d} d={d} fill={ink} />
+          ))}
         </G>
 
+        {/* Zones as soft patches on the body rather than rings drawn over it,
+            each sized to sit inside the limb it marks. */}
+        <G accessible={false}>
+          {zones.map((key) => {
+            const zone = zoneFor(key, view);
+            if (!zone) return null;
+            const active = selected === key;
+            return (
+              <Ellipse
+                key={key}
+                cx={zone.cx}
+                cy={zone.cy}
+                rx={zone.rx}
+                ry={zone.ry}
+                fill={active ? `${palette.peptide}59` : zoneFill}
+              />
+            );
+          })}
+        </G>
+
+        {/* A marker at the centre of the chosen zone — on a narrow limb the
+            patch alone is a subtle change, and this is unmistakable. */}
         {zones.map((key) => {
           const zone = zoneFor(key, view);
-          if (!zone) return null;
-          const active = selected === key;
+          if (!zone || selected !== key) return null;
           return (
-            <Ellipse
-              key={key}
+            <Circle
+              key={`marker-${key}`}
               cx={zone.cx}
               cy={zone.cy}
-              rx={zone.rx}
-              ry={zone.ry}
-              fill={active ? `${palette.peptide}33` : zoneFill}
-              stroke={active ? palette.peptide : zoneStroke}
-              strokeWidth={active ? 2 : 1}
+              r={4}
+              fill={palette.peptide}
+              stroke={surfaces.background}
+              strokeWidth={2}
             />
           );
         })}

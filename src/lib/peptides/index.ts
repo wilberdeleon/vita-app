@@ -93,7 +93,8 @@ export {
 } from './model/logs';
 export {
   REGION_DESCRIPTIONS,
-  SITE_GROUPS,
+  SITE_PICKER_ORDER,
+  CUSTOM_SITE_OPTION_LABEL,
   SITE_KEYS,
   createSiteSnapshot,
   entriesAtSite,
@@ -103,7 +104,6 @@ export {
   parseSiteSnapshot,
   siteKeyLabel,
   siteLabel,
-  siteShortLabel,
   sitesForView,
   type BodyView,
   type InjectionSiteKey,
