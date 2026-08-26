@@ -15,6 +15,7 @@
  */
 
 import type { LogDate } from '../../daily';
+import type { RoutineDayStatus } from '../model/routine';
 import type { PeptideDefinition, PeptideLogEntry, PeptideSetup } from '../model/types';
 
 export interface PeptideRepository {
@@ -54,4 +55,20 @@ export interface PeptideRepository {
    * backwards from today would read nothing on every skipped one.
    */
   getRecentLogs(maxDays: number): Promise<PeptideLogEntry[]>;
+
+  /**
+   * ── Routine day statuses (slice 3.9) ─────────────────────────────────
+   *
+   * What the user answered about a planned day. Day-partitioned like logs,
+   * on a separate domain, because a skipped day has no administration and a
+   * manual administration belongs to no planned day.
+   *
+   * A day with no record means the user has not answered — that absence is
+   * the model, so there is nothing here that writes an "unconfirmed" value.
+   */
+  getRoutineStatuses(logDate: LogDate): Promise<RoutineDayStatus[]>;
+
+  saveRoutineStatuses(logDate: LogDate, statuses: RoutineDayStatus[]): Promise<void>;
+
+  getRecentRoutineStatuses(maxDays: number): Promise<RoutineDayStatus[]>;
 }

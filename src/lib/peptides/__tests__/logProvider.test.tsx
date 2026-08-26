@@ -16,6 +16,7 @@ import type { PeptideRepository } from '../data/PeptideRepository';
 import type { PeptideLogEntry, PeptideSetup } from '../model/types';
 import { PeptideProvider, usePeptideContext, type PeptideContextValue } from '../state/PeptideProvider';
 import { toMcg } from '../model/units';
+import type { RoutineDayStatus } from '../model/routine';
 
 const CREATED = '2026-08-25T10:00:00.000Z';
 
@@ -27,6 +28,7 @@ function setupFixture(overrides: Partial<PeptideSetup> = {}): PeptideSetup {
     reconstitutionMl: 2,
     preferredDoseUnit: 'mg',
     preferredEntryMode: 'mass',
+    routineState: 'active',
     active: true,
     createdAt: CREATED,
     updatedAt: CREATED,
@@ -36,6 +38,7 @@ function setupFixture(overrides: Partial<PeptideSetup> = {}): PeptideSetup {
 
 function fakeRepository(setups: PeptideSetup[], seed: PeptideLogEntry[] = []) {
   const days = new Map<string, PeptideLogEntry[]>();
+  const statusDays = new Map<string, RoutineDayStatus[]>();
   for (const entry of seed) days.set(entry.logDate, [...(days.get(entry.logDate) ?? []), entry]);
 
   const repository: PeptideRepository = {
@@ -56,6 +59,16 @@ function fakeRepository(setups: PeptideSetup[], seed: PeptideLogEntry[] = []) {
     },
     async getRecentLogs() {
       return [...days.values()].flat();
+    },
+    async getRoutineStatuses(logDate: string) {
+      return statusDays.get(logDate) ?? [];
+    },
+    async saveRoutineStatuses(logDate: string, next: RoutineDayStatus[]) {
+      if (next.length === 0) statusDays.delete(logDate);
+      else statusDays.set(logDate, next);
+    },
+    async getRecentRoutineStatuses() {
+      return [...statusDays.values()].flat();
     },
   };
   return { repository, days };

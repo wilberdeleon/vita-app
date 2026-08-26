@@ -24,6 +24,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import PeptideDetail from '../../../app/(vita)/peptides/catalog/[id]';
 import { PEPTIDE_CATALOG, PeptideProvider } from '../../../lib/peptides';
+import { ToastProvider } from '../../../components/ui';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 let mounted: ReactTestRenderer | null = null;
@@ -41,9 +42,11 @@ async function renderDetail(definitionId: string): Promise<ReactTestRenderer> {
         }}
       >
         <ThemeProvider>
-          <PeptideProvider>
-            <PeptideDetail />
-          </PeptideProvider>
+          <ToastProvider>
+            <PeptideProvider>
+              <PeptideDetail />
+            </PeptideProvider>
+          </ToastProvider>
         </ThemeProvider>
       </SafeAreaProvider>,
     );

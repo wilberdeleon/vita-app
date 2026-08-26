@@ -6,6 +6,7 @@
  */
 
 import { newId } from '../../daily/ids';
+import type { PeptideRoutineState } from './routine';
 import type { MassUnit, PeptideSetup } from './types';
 import { DEFAULT_DOSE_UNIT } from './types';
 import { toMcg } from './units';
@@ -28,7 +29,14 @@ export function vialFrom({ amount, unit }: VialInput): NonNullable<PeptideSetup[
 /** Everything a setup may carry beyond its identity. All optional. */
 export type PeptideSetupDraft = Omit<
   PeptideSetup,
-  'id' | 'definitionId' | 'active' | 'createdAt' | 'updatedAt' | 'preferredDoseUnit' | 'preferredEntryMode'
+  | 'id'
+  | 'definitionId'
+  | 'active'
+  | 'routineState'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'preferredDoseUnit'
+  | 'preferredEntryMode'
 > & {
   preferredDoseUnit?: MassUnit;
   preferredEntryMode?: PeptideSetup['preferredEntryMode'];
@@ -50,6 +58,7 @@ export function createPeptideSetup(
   definitionId: string,
   draft: PeptideSetupDraft = {},
   now: Date = new Date(),
+  routineState: PeptideRoutineState = 'active',
 ): PeptideSetup {
   if (definitionId.length === 0) {
     throw new Error('createPeptideSetup: definitionId is required');
@@ -60,7 +69,9 @@ export function createPeptideSetup(
   return {
     id: newId('pep'),
     definitionId,
-    active: true,
+    routineState,
+    // Legacy mirror, written so a pre-3.9 build still reads the store.
+    active: routineState === 'active',
     preferredDoseUnit: draft.preferredDoseUnit ?? DEFAULT_DOSE_UNIT,
     preferredEntryMode: draft.preferredEntryMode ?? 'mass',
     ...(draft.displayName ? { displayName: draft.displayName } : {}),
@@ -111,7 +122,10 @@ export function applySetupChanges(
   // cleared them through the generic path above.
   next.preferredDoseUnit = next.preferredDoseUnit ?? setup.preferredDoseUnit;
   next.preferredEntryMode = next.preferredEntryMode ?? setup.preferredEntryMode;
-  next.active = changes.active ?? setup.active;
+  next.routineState = changes.routineState ?? setup.routineState;
+  // The mirror is derived, never authored — an edit that set them apart would
+  // leave two answers to the same question on disk.
+  next.active = next.routineState === 'active';
 
   return next;
 }

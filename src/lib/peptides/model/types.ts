@@ -20,6 +20,7 @@
  */
 
 import type { LogDate } from '../../daily/dates';
+import type { PeptideRoutineState } from './routine';
 
 /* ── Peptide Definition ─────────────────────────────────────────────── */
 
@@ -379,7 +380,21 @@ export type PeptideSetup = {
   /** Local calendar day, via the shared date model. */
   startDate?: LogDate;
 
-  /** Inactive setups leave the primary list. Deactivation never deletes anything. */
+  /**
+   * Where this routine sits in the user's list (slice 3.9).
+   *
+   * Authoritative. `active` below is kept in step as a legacy mirror so a
+   * build predating 3.9 still reads the store sensibly, but nothing in the
+   * app branches on it any more.
+   */
+  routineState: PeptideRoutineState;
+
+  /**
+   * @deprecated Legacy mirror of `routineState === 'active'`.
+   *
+   * Still written, still parsed, never read for behaviour. It could not
+   * express *added but not configured yet*, which is why 3.9 replaced it.
+   */
   active: boolean;
 
   notes?: string;

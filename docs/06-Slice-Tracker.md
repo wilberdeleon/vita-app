@@ -748,12 +748,72 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.8A | Injection Site UX + Interactive Body Map | Flat site taxonomy with Center Abdomen, SVG body map, Tools redesign, 3.8 migration on read | 🟡 Built — pending founder review |
 | 3.8B | Injection Site Visual + Selection Polish | One-tap canonical site list, body model as optional aid, redrawn silhouette, Site Reference rewrite | 🟡 Built — pending founder review |
 | 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | 🟡 Built — pending founder review |
-| 3.9 | Peptides UX Polish, Safety Copy + Fuel Integration | Landing rebuild, disclaimer placement, Fuel Peptides card on real state | ⬜ Planned |
+| 3.9 | Peptides Routine + UX Integration | Add to Routine, needs-setup/active/inactive, routine detail, daily Taken/Skipped, removal preserving history, Fuel on real state | 🟡 Built — pending founder review |
 | 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.9 — Peptides Routine + UX Integration 🟡
+
+**Objective:** replace *browse → Track this peptide → long Setup form → Save → open → Log Peptide → another form* with a model people already hold: peptides are **added to a routine**, and adding, configuring, tracking daily, pausing and removing are separate acts.
+
+**Three saved founder requirements close here** — CTA discoverability, Display Name removal, and Remove from Routine.
+
+---
+
+**Routine state is persisted, not inferred.** `PeptideSetup.routineState` is `needs-setup | active | inactive`. The old `active: boolean` could not express *added but not configured yet*, which is the whole reason the old flow forced a form up front. It survives as a derived legacy mirror — written on every save so a pre-3.9 build still reads the store, never branched on.
+
+**`needs-setup` and `inactive` are not merged**, and that was the point of separating them: one means "I added this and haven't configured it", the other "I configured this and deliberately paused it". A list that conflates them tells someone their brand-new peptide is switched off.
+
+**Removed is not a state.** A removed routine is simply no longer in the store. A tombstone would mean every list, count and lookup had to remember to exclude it, and the one that forgot would resurrect it.
+
+**Legacy migration is by `active`, never to `needs-setup`.** Before 3.9 the only way a setup could exist was to have been created through the full form, so every stored one is configured *by definition* — including a pre-filled-pen user with no vial, whose missing vial data is a legitimate setup rather than an incomplete one. Nothing is rewritten on disk; the mapping happens on read, so a store still being written by an older build keeps working. Pinned by tests against the real parser rather than an in-memory double, which would have proved nothing.
+
+---
+
+**The daily model, and the one rule it exists to protect.** A schedule is a plan; a `PeptideLogEntry` is a fact; a **routine day status** is the user's answer about a planned day. Nothing converts a plan into an administration, in either direction.
+
+**`unconfirmed` is the absence of a record, not a value.** This is the load-bearing design decision. If "no response" were storable, something would eventually have to decide *when* to write it — midnight, on read, on app open — and every one of those answers quietly converts silence into an assertion. Instead: a day the user answered has a record, a day they did not has nothing. `ROUTINE_DAY_STATES` is `['taken', 'skipped']` and a test asserts `isRoutineDayState('unconfirmed')` is false, so the state cannot be reintroduced by accident.
+
+**Taken writes the log first and the status only if that succeeded.** A status saying *taken* with no administration behind it is the only genuinely corrupt state this feature can reach — a confirmed dose in the calendar that appears nowhere in history. If the write fails, the optimistic entry is rolled back out of memory and no status is written, so the day stays honestly unanswered.
+
+**`linkedLogId` is what makes undo safe.** Only the administration a *Taken* created is removed with it, by id. A manual log has no status pointing at it and can never be swept up — someone who typed three entries by hand and then untaps Taken keeps all three. Pinned by tests.
+
+**Skipped never creates an administration**, and never asks why.
+
+**Persistence:** `vita:v1:peptides:routine:log:<YYYY-MM-DD>` on the shared day-keyed store, a sibling domain of the log store. The prefixes are disjoint — neither store can enumerate the other's days. Parsing is defensive in the same way logs are: a status whose own date contradicts its storage key is dropped rather than trusted, and a malformed `linkedLogId` drops the link while keeping the answer.
+
+---
+
+**Add to Routine is lightweight and immediately visible.** Tapping it creates a shell in `needs-setup`, toasts, and returns — no form. The CTA sits directly under the compound's name, above claims, mechanisms, studied-for, targets, status and sources; a test asserts its index precedes the first research heading, because *position* was the entire defect. It is state-aware: **Add to Routine** → **Finish Setup** → **View Routine**, so a tap always names the next real step.
+
+**One current routine per definition.** `addToRoutine` returns the existing routine in any state rather than creating a second. The `setup/new` route was **deleted**: a second entry point that created setups directly was a hole in that guarantee.
+
+**Saving Setup is what activates a routine** — no separate Activate button. Editing an already-configured routine keeps whatever state it had, so saving never quietly un-pauses something.
+
+**Opening a routine no longer opens a form.** The new routine screen answers what people actually arrive with: today's status and actions, a human-readable schedule (`Mon, Wed, Fri`), a seven-day strip, recent history, a compact setup *summary* (`20 mg vial · 2 mL reconstitution`), then Edit Setup, Pause and Remove. The full form lives behind **Edit Setup**.
+
+**Removing preserves everything.** Logs, injection-site history and recorded day statuses are all untouched — history resolves names through each log's own `definitionId` against the compiled catalog, so nothing becomes an *Unknown Peptide*. The confirmation says so out loud, because "remove" in a health app reads as "delete my records", and someone who believes that keeps a routine they no longer want just to be safe. Re-adding creates a fresh shell; the old history stays as separate historical records rather than being silently resurrected.
+
+**The status strip carries shape and text, never colour alone** — ✓ taken, – skipped, ○ nothing recorded, blank for a day the schedule does not cover. Deliberately not a tick-and-cross: a cross reads as *wrong*, and skipping on purpose is not wrong. Every cell has an accessible sentence naming the date and state.
+
+**No scoring of any kind.** No adherence, no compliance, no streak, no percentage, no "missed". A test sweeps the rendered home screen for all of them, and another sweeps the domain's exported names.
+
+---
+
+**Display Name is gone from the UI and preserved on disk.** A routine is named by its definition — one thing, one name. The stored value round-trips through the form invisibly: `applySetupChanges` deletes any key passed as `undefined`, so emitting nothing would have erased what an old setup was called the first time its owner edited anything else.
+
+**Fuel now runs on real state.** The `getPeptideToday` shim — which told every user `1 of 3 logged` forever, describing a feature that did not exist and a goal VITA has never had — is **deleted**. The tile reads administrations actually recorded today, falls back to how many routines are scheduled, and draws no progress, because there is no target to divide by. It remains a summary and a door; Fuel grows no routine widget of its own.
+
+**Manual logging is untouched** and reachable from the routine screen as *Add Log* — backdated entries, unscheduled administrations, As Needed routines, corrections and multiple administrations in a day all still need it. The 3.8C injection-site UX is reused verbatim in the Taken flow.
+
+**66 new tests, 887 total**, across routine state and its transitions, legacy migration through the real parser, the state-aware CTA and its position, Display Name removal and preservation, daily status in every combination, Taken/log transaction integrity including a forced storage failure, undo semantics against manual logs, the strip's states, the routine screen, needs-setup, and the full eleven-step removal-preservation flow.
+
+**Verified on device, Light and Dark.** One visual defect found by inspecting screenshots and fixed: the Taken sheet's amount field was collapsed to a sliver because the unit toggle had no width constraint. Add Peptide was also moved below the routine lists, where it no longer interrupts the scan.
+
+**Boundary audit:** Water, nutrition, Home, the 72-entry catalog content, the calculator domain, `BodyMap` and `SiteSelector` all have a zero-line diff. No Supabase work. Slice 3.10 has not begun.
 
 ### Slice 3.8C — Body Map Tapability + Light Mode Contrast 🟡
 

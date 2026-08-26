@@ -1,19 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../../components/ui';
+import { Card, EmptyState, Screen, ScreenHeader, SectionHeader } from '../../../../components/ui';
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
 import { DevelopmentStatusBlock } from '../../../../features/peptides/components/DevelopmentStatusBlock';
 import { InfoTags } from '../../../../features/peptides/components/InfoTags';
 import { Mechanisms } from '../../../../features/peptides/components/Mechanisms';
 import { ResearchClaims } from '../../../../features/peptides/components/ResearchClaims';
+import { RoutineCta } from '../../../../features/peptides/components/RoutineCta';
 import {
   evidenceLabel,
   formatLabel,
   resolveBlendComponents,
   usePeptideContext,
+  useRoutineForDefinition,
   type ResearchReference,
 } from '../../../../lib/peptides';
+import { useToast } from '../../../../components/ui';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
@@ -34,7 +37,9 @@ export default function PeptideDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const definitionId = decodeURIComponent(id ?? '');
 
-  const { findDefinition } = usePeptideContext();
+  const { findDefinition, addToRoutine } = usePeptideContext();
+  const routine = useRoutineForDefinition(definitionId);
+  const { showToast } = useToast();
   const { surfaces } = useTheme();
 
   const definition = findDefinition(definitionId);
@@ -71,6 +76,34 @@ export default function PeptideDetail() {
           </Text>
         ) : null}
       </View>
+
+      {/*
+        * The action sits with the identity, not after the research.
+        *
+        * These pages run to claims, mechanisms, studied-for, targets,
+        * development status and sources. Founder QA found the old CTA at the
+        * bottom of all that, which meant deciding to track something required
+        * scrolling past everything you had already decided about. It is the
+        * first thing under the name now, and it states what tapping it does.
+        */}
+      <RoutineCta
+        state={routine?.routineState}
+        onPress={async () => {
+          if (routine) {
+            router.push(
+              routine.routineState === 'needs-setup'
+                ? `/peptides/setup/${encodeURIComponent(routine.setup.id)}`
+                : `/peptides/routine/${encodeURIComponent(routine.setup.id)}`,
+            );
+            return;
+          }
+          // Adding is not configuring. A shell is created and the user goes
+          // back to their list; Setup happens when they are ready.
+          await addToRoutine(definition.id);
+          showToast({ message: `${definition.name} added to your routine.` });
+          router.back();
+        }}
+      />
 
       {definition.aliases && definition.aliases.length > 0 ? (
         <>
@@ -252,15 +285,6 @@ export default function PeptideDetail() {
           </Card>
         </>
       ) : null}
-
-      <Button
-        label="Track this peptide"
-        icon="add"
-        color={palette.peptide}
-        onPress={() =>
-          router.push(`/peptides/setup/new?definitionId=${encodeURIComponent(definition.id)}`)
-        }
-      />
 
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>
         Information is for tracking and educational reference only. VITA does not recommend peptides,

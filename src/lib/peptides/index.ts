@@ -109,6 +109,26 @@ export {
   type InjectionSiteKey,
   type InjectionSiteSnapshot,
 } from './model/sites';
+
+export {
+  ROUTINE_STATES,
+  ROUTINE_DAY_STATES,
+  createRoutineStatus,
+  isRoutineDayState,
+  isRoutineState,
+  parseRoutineStatus,
+  routineDayMark,
+  routineDayMarkLabel,
+  routineDayMarkSymbol,
+  routineStateFromLegacyActive,
+  routineStateLabel,
+  statusFor,
+  statusesForSetup,
+  type PeptideRoutineState,
+  type RoutineDayMark,
+  type RoutineDayState,
+  type RoutineDayStatus,
+} from './model/routine';
 export { formatLabel, formatLabels } from './model/format';
 export {
   calculateAmountFromUnits,
@@ -131,4 +151,13 @@ export type { PeptideRepository } from './data/PeptideRepository';
 export { asyncStoragePeptideRepository } from './data/asyncStorageRepository';
 
 export { PeptideProvider, usePeptideContext, type PeptideContextValue } from './state/PeptideProvider';
-export { usePeptides, useResolvedSetup, type PeptidesView, type ResolvedSetup } from './state/usePeptides';
+export {
+  usePeptides,
+  useResolvedSetup,
+  useRoutineForDefinition,
+  useRoutineHistory,
+  usePeptideSummary,
+  type PeptidesView,
+  type ResolvedSetup,
+  type TodayRoutine,
+} from './state/usePeptides';

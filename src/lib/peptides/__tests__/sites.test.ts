@@ -41,6 +41,7 @@ function setupFixture(overrides: Partial<PeptideSetup> = {}): PeptideSetup {
     reconstitutionMl: 2,
     preferredDoseUnit: 'mg',
     preferredEntryMode: 'mass',
+    routineState: 'active',
     active: true,
     createdAt: NOW.toISOString(),
     updatedAt: NOW.toISOString(),

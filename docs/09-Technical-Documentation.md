@@ -233,6 +233,38 @@ The site lives on `PeptideLogEntry.site` as an `InjectionSiteSnapshot`, alongsid
 
 Tools → Injection Sites aggregates across setups and resolves compound names through `findDefinition` against the compiled catalog, so history survives an inactive — and later removed — setup. Since 3.8A the map leads: selecting a zone reports that zone's history, or says *No history recorded here* plainly rather than styling it as available. Tapping there records nothing — the screen is a lens onto history, not a logging surface. 3.8B re-tiered it (title, one-line subtitle, figure, per-zone history only on selection, compact recents, then **Site Reference**) and cut the boundary statement to one line stated once — a test asserts it appears exactly once, because repeating it under every block made the screen read as nervous when nothing on it offers advice.
 
+**Routines (slice 3.9).** `model/routine.ts` holds three things: the routine state union, the routine-day status, and the rules for reading a day. It contains no function that scores anything — a test sweeps its exports for *adherence*, *compliance*, *streak*, *score*, *missed*, *overdue*, *recommend* and *suggest*.
+
+**`PeptideSetup.routineState` is persisted and authoritative** — `needs-setup | active | inactive`. The pre-3.9 `active: boolean` could not express *added but not configured yet*, which is precisely why the old flow had to open a form at the moment of interest. `active` is still written and still parsed as a **derived mirror** (`routineState === 'active'`), so a build predating 3.9 reads the store sensibly; nothing branches on it.
+
+**Removed is deliberately not a state.** A removed routine leaves the store. A tombstone would oblige every list, count and lookup to exclude it, and the one that forgot would resurrect it.
+
+**Legacy setups map by `active`, never to `needs-setup`.** Before 3.9 the only way a setup could exist was to have been created through the full form, so every stored one is configured by definition — including a pre-filled-pen user with no vial, for whom missing vial data is a legitimate setup rather than an incomplete one. The mapping happens in `parseSetup` on every read and rewrites nothing, so a store still being written by an older build keeps working.
+
+**Three concepts, kept apart on purpose:**
+
+| | what it is | writes a log? |
+|---|---|---|
+| Schedule | a plan the user entered | never |
+| `RoutineDayStatus` | the user's answer about a planned day | only via `taken` |
+| `PeptideLogEntry` | an administration that happened | it *is* the log |
+
+**`unconfirmed` is the absence of a record, not a value.** This is the load-bearing decision in the whole model. Were "no response" storable, something would have to decide *when* to write it — at midnight, on read, on app open — and every one of those answers silently converts silence into an assertion about whether someone injected themselves. So `ROUTINE_DAY_STATES` is `['taken', 'skipped']`, `isRoutineDayState('unconfirmed')` is false, and a day with no record simply has no record.
+
+**`markTaken` is one logical operation with a deliberate order.** The administration is written first; the status is written **only if that succeeded**. A status reading *taken* with no log behind it is the single genuinely corrupt state this feature can reach — a confirmed dose in the calendar that appears nowhere in history — so on failure the optimistic entry is rolled back out of memory and no status is written. The day stays honestly unanswered, which is both true and recoverable. A regression test forces the storage failure.
+
+**`linkedLogId` is what makes undo safe.** `clearRoutineDay` follows the link by id and removes *that* administration and no other. A manual log has no status pointing at it, so changing a routine status can never sweep it up — the difference between "I tapped the wrong button" and losing a record someone typed by hand.
+
+**Persistence** is `vita:v1:peptides:routine:log:<YYYY-MM-DD>` on the shared `createDayKeyedStore`, under a sibling domain of the log store. The prefixes are disjoint, so neither store can enumerate the other's days. `parseRoutineStatus` receives the day it was read from and rejects a record whose own `logDate` contradicts it; a malformed `linkedLogId` drops the link and keeps the answer, because the user still said *taken* and that is the part worth keeping.
+
+**One current routine per definition.** `addToRoutine` returns any existing routine — in any state — rather than creating a second. The `setup/new` route was **deleted** in this slice: a second entry point that created setups directly was a hole in that guarantee, not a convenience.
+
+**Removal preserves history by construction, not by care.** `removeRoutine` filters the setup array and touches nothing else; logs and statuses are day-keyed and independent. Names resolve through each log's own `definitionId` against the compiled catalog, so history renders correctly for a routine that no longer exists.
+
+**Display name is parsed, preserved, and never read** (slice 3.9). The field is gone from Setup — a routine is named by its definition. `SetupForm` still holds the stored value in state and emits it unchanged, because `applySetupChanges` deletes any key passed as `undefined`; emitting nothing would have erased what an old setup was called the first time its owner edited anything else.
+
+**Fuel reads `usePeptideSummary`** — administrations actually recorded today, falling back to how many routines are scheduled, with **no progress value**, because VITA has never had a daily peptide goal. The `features/peptides/api.ts` fixture that claimed `1 of 3 logged` to every user was deleted here, as slice 3.5 scheduled.
+
 **Peptide log entries (slice 3.7).** `PeptideLogEntry` is a **historical snapshot, never a derived view.** Everything needed to render it years from now is copied in at save time: the amount as authored and in canonical micrograms, the local calendar day, the exact instant, and a `calculationSnapshot` of the vial, reconstitution volume, graduation density, and the units and volume they produced.
 
 That is the single most important property in the domain. A setup edited next month must not reach back and change what someone drew last week — so nothing on read is ever recomputed from a setup.

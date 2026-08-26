@@ -489,6 +489,7 @@ describe('the inline surface specifically', () => {
           reconstitutionMl: 2,
           preferredDoseUnit: 'mg',
           preferredEntryMode: 'mass',
+          routineState: 'active',
           active: true,
           createdAt: '2026-08-25T10:00:00.000Z',
           updatedAt: '2026-08-25T10:00:00.000Z',
@@ -519,7 +520,9 @@ describe('the inline surface specifically', () => {
     const headings = texts(tree).filter((line) =>
       ['NAME', 'VIAL', 'UNIT CONVERSION', 'PREFERRED UNIT', 'SCHEDULE'].includes(line),
     );
-    expect(headings).toEqual(['NAME', 'VIAL', 'UNIT CONVERSION', 'PREFERRED UNIT', 'SCHEDULE']);
+    // NAME is gone in slice 3.9 — a routine is named by its definition, so
+    // the form opens on the vial, which is the first thing it actually asks.
+    expect(headings).toEqual(['VIAL', 'UNIT CONVERSION', 'PREFERRED UNIT', 'SCHEDULE']);
   });
 });
 

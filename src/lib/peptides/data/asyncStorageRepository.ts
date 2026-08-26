@@ -21,11 +21,16 @@ import { isValidLogDate } from '../../daily/dates';
 import { isNonEmptyString, isPositiveNumber, isRecord } from '../../daily/guards';
 import { readJson, removeKey, writeJson } from '../../daily/storage';
 import { parseLogEntry } from '../model/logs';
+import {
+  isRoutineState,
+  parseRoutineStatus,
+  routineStateFromLegacyActive,
+} from '../model/routine';
 import { isPeptideSchedule } from '../model/schedule';
 import type { MassUnit, PeptideDefinition, PeptideSetup } from '../model/types';
 import { isMassUnit } from '../model/units';
 import type { PeptideRepository } from './PeptideRepository';
-import { PEPTIDE_DOMAIN, PeptideKeys } from './keys';
+import { PEPTIDE_DOMAIN, PeptideKeys, ROUTINE_STATUS_DOMAIN } from './keys';
 
 /* ── validation ─────────────────────────────────────────────────────── */
 
@@ -91,14 +96,38 @@ function parseSetup(value: unknown): PeptideSetup | null {
   const vial = parseVial(value.vial);
   const syringe = parseSyringe(value.syringe);
 
+  /**
+   * Pre-3.9 setups carry no `routineState` and are mapped by `active`.
+   *
+   * **Never to `needs-setup`.** Before 3.9 a setup could only exist by having
+   * been created through the full form, so every stored one is configured by
+   * definition. Telling a user their working routine now "needs setup" would
+   * be a regression wearing a migration's clothes.
+   *
+   * Nothing is rewritten on disk. The mapping happens on every read, so a
+   * store that is still being written by an older build keeps working.
+   */
+  const routineState = isRoutineState(value.routineState)
+    ? value.routineState
+    : routineStateFromLegacyActive(value.active);
+
   return {
     id: value.id,
     definitionId: value.definitionId,
+    routineState,
     active: value.active,
     preferredDoseUnit: value.preferredDoseUnit as MassUnit,
     preferredEntryMode: value.preferredEntryMode,
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
+    /**
+     * Still parsed, no longer shown (slice 3.9).
+     *
+     * The Display Name field is gone from the UI, but silently dropping the
+     * stored value would rewrite what an old setup was called the first time
+     * it was saved again. It is carried through untouched and simply not
+     * read — name resolution goes to the definition now.
+     */
     ...(isNonEmptyString(value.displayName) ? { displayName: value.displayName } : {}),
     ...(vial ? { vial } : {}),
     ...(isPositiveNumber(value.reconstitutionMl) ? { reconstitutionMl: value.reconstitutionMl } : {}),
@@ -144,6 +173,18 @@ async function writeCollection(key: string, records: readonly unknown[]): Promis
  */
 const logStore = createDayKeyedStore(PEPTIDE_DOMAIN, parseLogEntry);
 
+/**
+ * Routine day statuses, day-partitioned on their own domain (slice 3.9).
+ *
+ * A separate store rather than a field on the log, because the two answer
+ * different questions and one exists without the other: a *skipped* day has
+ * no administration at all, and a manual log belongs to no planned day. The
+ * key prefixes are disjoint — `vita:v1:peptides:log:` and
+ * `vita:v1:peptides:routine:log:` — so neither store can enumerate the
+ * other's days.
+ */
+const routineStatusStore = createDayKeyedStore(ROUTINE_STATUS_DOMAIN, parseRoutineStatus);
+
 export const asyncStoragePeptideRepository: PeptideRepository = {
   getSetups() {
     return readCollection(PeptideKeys.setups, parseSetup);
@@ -171,6 +212,19 @@ export const asyncStoragePeptideRepository: PeptideRepository = {
 
   async getRecentLogs(maxDays) {
     const days = await logStore.getRecentDays(maxDays);
+    return days.flatMap((day) => day.records);
+  },
+
+  getRoutineStatuses(logDate) {
+    return routineStatusStore.getDay(logDate);
+  },
+
+  saveRoutineStatuses(logDate, statuses) {
+    return routineStatusStore.saveDay(logDate, statuses);
+  },
+
+  async getRecentRoutineStatuses(maxDays) {
+    const days = await routineStatusStore.getRecentDays(maxDays);
     return days.flatMap((day) => day.records);
   },
 };

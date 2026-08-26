@@ -5,8 +5,8 @@ import { FuelQuickActions } from '../../../features/fuel/components/FuelQuickAct
 import { FuelSummaryCard } from '../../../features/fuel/components/FuelSummaryCard';
 import { FuelTrackerCard } from '../../../features/fuel/components/FuelTrackerCard';
 import { TodayMealsPanel } from '../../../features/fuel/components/TodayMealsPanel';
-import { getPeptideToday } from '../../../features/peptides/api';
-import { formatLogDateLong, progress, useDailyNutrition } from '../../../lib/nutrition';
+import { usePeptideSummary } from '../../../lib/peptides';
+import { formatLogDateLong, useDailyNutrition } from '../../../lib/nutrition';
 import { useWaterToday } from '../../../lib/water';
 import { palette, spacing, typography } from '../../../theme/tokens';
 
@@ -34,7 +34,7 @@ import { palette, spacing, typography } from '../../../theme/tokens';
 export default function Fuel() {
   const today = useDailyNutrition();
   const water = useWaterToday();
-  const peptides = getPeptideToday();
+  const peptides = usePeptideSummary();
 
   return (
     <Screen dockClearance contentGap={spacing.xl}>
@@ -72,12 +72,21 @@ export default function Fuel() {
           actionLabel="+ Add Water"
           onAction={() => router.push('/water')}
         />
+        {/*
+          * Real state since slice 3.9, and no invented target.
+          *
+          * This tile ran on a fixture that told every user `1 of 3 logged`
+          * forever. There is no daily peptide goal in VITA, so there is
+          * nothing to divide by — the bar stays empty and the tile says what
+          * actually happened. The button is a door into the redesigned
+          * Peptides home; Fuel does not grow its own routine widget.
+          */}
         <FuelTrackerCard
           icon="medical-outline"
           color={palette.peptide}
           title="Peptides"
-          value={peptides.logged === 1 ? '1 logged today' : `${peptides.logged} logged today`}
-          progress={progress(peptides.logged, peptides.goal)}
+          value={peptides.label}
+          progress={0}
           actionLabel="View Peptides"
           onAction={() => router.push('/peptides')}
         />

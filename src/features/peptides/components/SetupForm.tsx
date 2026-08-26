@@ -64,7 +64,16 @@ type Props = {
 export function SetupForm({ initial, onChange }: Props) {
   const { surfaces } = useTheme();
 
-  const [displayName, setDisplayName] = useState(initial?.displayName ?? '');
+  /**
+   * Read, never edited, never dropped (slice 3.9).
+   *
+   * The Display Name input is gone, but the value has to survive a save.
+   * `applySetupChanges` deletes any key passed as `undefined`, so emitting
+   * nothing here would quietly erase what an old setup was called the first
+   * time its owner edited anything else. It round-trips instead: invisible,
+   * unread, and intact.
+   */
+  const [displayName] = useState(initial?.displayName ?? '');
   const [vialAmount, setVialAmount] = useState(
     initial?.vial ? String(initial.vial.authored.amount) : '',
   );
@@ -187,17 +196,14 @@ export function SetupForm({ initial, onChange }: Props) {
 
   return (
     <>
-      <SectionHeader title="Name" />
-      <TextField
-        label="Display Name (Optional)"
-        placeholder="Leave blank to use the peptide name"
-        value={displayName}
-        onChangeText={(text) => {
-          setDisplayName(text);
-          emit({ displayName: text });
-        }}
-        accessibilityLabel="Display name, optional"
-      />
+      {/*
+        * No name field (slice 3.9).
+        *
+        * A routine is named by the peptide it tracks — catalog or custom —
+        * and a second place to name it only creates two answers to the same
+        * question. Stored `displayName` values from earlier setups survive on
+        * disk untouched; they are simply no longer read.
+        */}
 
       <SectionHeader title="Vial" />
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>

@@ -27,8 +27,8 @@ import LogPeptide from '../../../app/(vita)/peptides/setup/[id]/log';
 import PeptideHistory from '../../../app/(vita)/peptides/setup/[id]/history';
 import PeptideLogDetail from '../../../app/(vita)/peptides/log/[id]';
 import EditPeptideSetup from '../../../app/(vita)/peptides/setup/[id]';
+import RoutineDetail from '../../../app/(vita)/peptides/routine/[id]';
 import InjectionSites from '../../../app/(vita)/settings/tools/injection-sites';
-import NewPeptideSetup from '../../../app/(vita)/peptides/setup/new';
 import type { PeptideRepository } from '../../../lib/peptides/data/PeptideRepository';
 import {
   PeptideProvider,
@@ -39,6 +39,7 @@ import {
   type InjectionSiteKey,
   type PeptideLogEntry,
   type PeptideSetup,
+  type RoutineDayStatus,
 } from '../../../lib/peptides';
 import { hitAreaFor, visibleZoneFor } from '../components/BodyMap';
 import { ToastProvider } from '../../../components/ui';
@@ -55,6 +56,7 @@ function setupFixture(overrides: Partial<PeptideSetup> = {}): PeptideSetup {
     reconstitutionMl: 2,
     preferredDoseUnit: 'mg',
     preferredEntryMode: 'mass',
+    routineState: 'active',
     active: true,
     createdAt: CREATED,
     updatedAt: CREATED,
@@ -65,6 +67,7 @@ function setupFixture(overrides: Partial<PeptideSetup> = {}): PeptideSetup {
 /** In-memory repository — the injectable seam every provider test uses. */
 function repositoryWith(setups: PeptideSetup[], seedLogs: PeptideLogEntry[] = []) {
   const days = new Map<string, PeptideLogEntry[]>();
+  const statusDays = new Map<string, RoutineDayStatus[]>();
   for (const entry of seedLogs) {
     days.set(entry.logDate, [...(days.get(entry.logDate) ?? []), entry]);
   }
@@ -89,6 +92,16 @@ function repositoryWith(setups: PeptideSetup[], seedLogs: PeptideLogEntry[] = []
     },
     async getRecentLogs() {
       return [...days.values()].flat();
+    },
+    async getRoutineStatuses(logDate: string) {
+      return statusDays.get(logDate) ?? [];
+    },
+    async saveRoutineStatuses(logDate: string, next: RoutineDayStatus[]) {
+      if (next.length === 0) statusDays.delete(logDate);
+      else statusDays.set(logDate, next);
+    },
+    async getRecentRoutineStatuses() {
+      return [...statusDays.values()].flat();
     },
   };
 
@@ -306,16 +319,19 @@ describe('logging an administration', () => {
 });
 
 describe('the setup screen', () => {
-  it('offers Log Peptide and navigates to it', async () => {
+  it('is configuration only — logging moved to the routine screen', async () => {
+    // Slice 3.9. Opening a peptide lands on its routine, and Setup exists for
+    // the occasional act of changing a vial. Offering "Log Peptide" from a
+    // form full of vial inputs was the friction the founder reported.
     mockRouteId = 'setup-1';
     const { repository } = repositoryWith([setupFixture()]);
     const tree = await mount(<EditPeptideSetup />, repository);
 
-    await press(tree, 'Log Peptide');
-    expect(mockPush).toHaveBeenCalledWith('/peptides/setup/setup-1/log');
+    expect(control(tree, 'Log Peptide')).toBeUndefined();
+    expect(texts(tree)).not.toContain('RECENT LOGS');
   });
 
-  it('shows recent logs once there are some', async () => {
+  it('shows recent history on the routine screen once there is some', async () => {
     mockRouteId = 'setup-1';
     const setup = setupFixture();
     const seeded: PeptideLogEntry[] = [
@@ -338,9 +354,9 @@ describe('the setup screen', () => {
       },
     ];
     const { repository } = repositoryWith([setup], seeded);
-    const tree = await mount(<EditPeptideSetup />, repository);
+    const tree = await mount(<RoutineDetail />, repository);
 
-    expect(texts(tree)).toContain('RECENT LOGS');
+    expect(texts(tree)).toContain('RECENT HISTORY');
     expect(screen(tree)).toContain('2 mg');
     expect(screen(tree)).toContain('20 units');
   });
@@ -582,15 +598,15 @@ describe('the founder’s real flow, route by route', () => {
    * the path a person actually walks to reach it, so nothing would have
    * caught it if it had not been. This test walks that path.
    */
-  it('setup screen → Log Peptide → site selector → save → history', async () => {
+  it('routine screen → Add Log → site selector → save → history', async () => {
     mockRouteId = 'setup-1';
     const { repository, days } = repositoryWith([setupFixture()]);
 
-    // 1. The tracked setup offers logging, prominently.
-    const setup = await mount(<EditPeptideSetup />, repository);
-    await press(setup, 'Log Peptide');
+    // 1. Opening the peptide lands on its routine, which offers Add Log.
+    const routine = await mount(<RoutineDetail />, repository);
+    await pressByLabel(routine, 'Add log');
     expect(mockPush).toHaveBeenCalledWith('/peptides/setup/setup-1/log');
-    await act(async () => setup.unmount());
+    await act(async () => routine.unmount());
     mounted = null;
 
     // 2. That href resolves to the log route, and the route shows the site row.
@@ -617,17 +633,11 @@ describe('the founder’s real flow, route by route', () => {
     expect(screen(history)).toContain('Left Abdomen');
   });
 
-  it('puts no site selector on New Setup, where it does not belong', async () => {
-    // A setup says *how* a peptide is tracked; a site describes one
-    // administration. The founder was looking here — which is why creating a
-    // setup now lands on the setup screen, where Log Peptide is the first
-    // action rather than a screen away.
-    mockRouteId = '';
-    const { repository } = repositoryWith([setupFixture()]);
-    const tree = await mount(<NewPeptideSetup />, repository);
-
-    expect(texts(tree)).not.toContain('INJECTION SITE');
-    expect(screen(tree)).not.toContain('Select Site');
+  it('no longer has a standalone New Setup route to bypass the routine flow', () => {
+    // Slice 3.9 removed it. Every path into a routine now goes through
+    // `addToRoutine`, which is where duplicate protection lives — a second
+    // entry point that created setups directly was a hole in that guarantee.
+    expect(() => require('../../../app/(vita)/peptides/setup/new')).toThrow();
   });
 });
 

@@ -16,9 +16,11 @@ import { vialFrom } from '../model/setups';
 import type { PeptideDefinition, PeptideLogEntry, PeptideSetup } from '../model/types';
 import { PeptideProvider, usePeptideContext, type PeptideContextValue } from '../state/PeptideProvider';
 import { usePeptides, type PeptidesView } from '../state/usePeptides';
+import type { RoutineDayStatus } from '../model/routine';
 
 /** In-memory repository — the injectable seam the provider was built with. */
 function fakeRepository(seed: { setups?: PeptideSetup[]; definitions?: PeptideDefinition[] } = {}) {
+  const statusDays = new Map<string, RoutineDayStatus[]>();
   let setups: PeptideSetup[] = [...(seed.setups ?? [])];
   let definitions: PeptideDefinition[] = [...(seed.definitions ?? [])];
   const logs = new Map<string, PeptideLogEntry[]>();
@@ -45,6 +47,16 @@ function fakeRepository(seed: { setups?: PeptideSetup[]; definitions?: PeptideDe
     },
     async getRecentLogs() {
       return [...logs.values()].flat();
+    },
+    async getRoutineStatuses(logDate: string) {
+      return statusDays.get(logDate) ?? [];
+    },
+    async saveRoutineStatuses(logDate: string, next: RoutineDayStatus[]) {
+      if (next.length === 0) statusDays.delete(logDate);
+      else statusDays.set(logDate, next);
+    },
+    async getRecentRoutineStatuses() {
+      return [...statusDays.values()].flat();
     },
   };
 
@@ -157,7 +169,11 @@ describe('creating setups', () => {
     });
 
     const { setup, name, scheduleLabel } = view.active[0];
-    expect(name).toBe('Morning vial'); // display name wins over the definition
+    // Slice 3.9: the definition names the routine. A stored `displayName`
+    // survives on disk untouched but no longer decides what anything is
+    // called — one thing, one name.
+    expect(name).toBe('BPC-157');
+    expect(setup.displayName).toBe('Morning vial');
     expect(setup.vial?.amountMcg).toBe(5000);
     expect(setup.vial?.authored).toEqual({ amount: 5, unit: 'mg' });
     expect(scheduleLabel).toBe('Daily');
@@ -197,18 +213,21 @@ describe('custom definitions', () => {
     expect(view.active[0].name).toBe('My Blend');
   });
 
-  it('is reusable across several setups', async () => {
+  it('names every routine after the definition it points at', async () => {
     const { repository, stored } = fakeRepository();
     await mount(repository);
 
     await act(async () => {
       const definition = await peptides.createCustomDefinition('Shared');
-      await peptides.addSetup(definition.id, { displayName: 'Vial A' });
-      await peptides.addSetup(definition.id, { displayName: 'Vial B' });
+      await peptides.addSetup(definition.id);
+      await peptides.addSetup(definition.id);
     });
 
+    // The definition is stored once and both routines resolve their name
+    // from it. `addSetup` is the low-level primitive and does not dedupe;
+    // `addToRoutine` — the only path a screen uses — does.
     expect(stored.definitions()).toHaveLength(1);
-    expect(view.active.map((item) => item.name)).toEqual(['Vial A', 'Vial B']);
+    expect(view.active.map((item) => item.name)).toEqual(['Shared', 'Shared']);
   });
 });
 
@@ -351,6 +370,7 @@ describe('definition resolution', () => {
     const orphan: PeptideSetup = {
       id: 'orphan',
       definitionId: 'custom_deleted',
+      routineState: 'active',
       active: true,
       preferredDoseUnit: 'mg',
       preferredEntryMode: 'mass',
@@ -380,6 +400,7 @@ describe('loading and failure', () => {
     const stored: PeptideSetup = {
       id: 'p1',
       definitionId: 'custom_1',
+      routineState: 'active',
       active: true,
       preferredDoseUnit: 'mcg',
       preferredEntryMode: 'mass',

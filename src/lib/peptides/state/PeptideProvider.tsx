@@ -37,6 +37,13 @@ import { PEPTIDE_CATALOG, findCatalogDefinition } from '../data/catalog';
 import { asyncStoragePeptideRepository } from '../data/asyncStorageRepository';
 import type { PeptideRepository } from '../data/PeptideRepository';
 import { applyLogChanges, createLogEntry, sortLogsNewestFirst } from '../model/logs';
+import {
+  createRoutineStatus,
+  statusFor,
+  statusesForSetup,
+  type PeptideRoutineState,
+  type RoutineDayStatus,
+} from '../model/routine';
 import { applySetupChanges, createPeptideSetup, type PeptideSetupChanges, type PeptideSetupDraft } from '../model/setups';
 import type { PeptideDefinition, PeptideLogDraft, PeptideLogEntry, PeptideSetup } from '../model/types';
 
@@ -58,6 +65,8 @@ type PeptideState = {
   customDefinitions: PeptideDefinition[];
   /** A bounded window of recent administrations, newest first. */
   logs: PeptideLogEntry[];
+  /** What the user answered about planned days, within the loaded window. */
+  routineStatuses: RoutineDayStatus[];
   /** The local calendar day, refreshed on rollover so "today" stays honest. */
   today: LogDate;
   /** Set when persistence failed, so the UI can say so rather than look empty. */
@@ -70,11 +79,13 @@ type Action =
       setups: PeptideSetup[];
       customDefinitions: PeptideDefinition[];
       logs: PeptideLogEntry[];
+      routineStatuses: RoutineDayStatus[];
     }
   | { type: 'loadFailed'; message: string }
   | { type: 'setSetups'; setups: PeptideSetup[] }
   | { type: 'setCustomDefinitions'; customDefinitions: PeptideDefinition[] }
   | { type: 'setLogs'; logs: PeptideLogEntry[] }
+  | { type: 'setRoutineStatuses'; routineStatuses: RoutineDayStatus[] }
   | { type: 'setToday'; today: LogDate }
   | { type: 'setError'; message: string | null };
 
@@ -87,6 +98,7 @@ function reducer(state: PeptideState, action: Action): PeptideState {
         setups: action.setups,
         customDefinitions: action.customDefinitions,
         logs: action.logs,
+        routineStatuses: action.routineStatuses,
         error: null,
       };
     case 'loadFailed':
@@ -97,6 +109,8 @@ function reducer(state: PeptideState, action: Action): PeptideState {
       return { ...state, customDefinitions: action.customDefinitions };
     case 'setLogs':
       return { ...state, logs: action.logs };
+    case 'setRoutineStatuses':
+      return { ...state, routineStatuses: action.routineStatuses };
     case 'setToday':
       return { ...state, today: action.today };
     case 'setError':
@@ -115,6 +129,40 @@ export type PeptideContextValue = PeptideState & {
   addSetup: (definitionId: string, draft?: PeptideSetupDraft) => Promise<PeptideSetup>;
   updateSetup: (id: string, changes: PeptideSetupChanges) => Promise<void>;
   setSetupActive: (id: string, active: boolean) => Promise<void>;
+
+  /**
+   * ── Routines (slice 3.9) ─────────────────────────────────────────────
+   *
+   * Adding, configuring, pausing and removing are separate acts, because
+   * they are separate decisions. The old flow ran them together and made
+   * "I'm interested in this" cost a full configuration form.
+   */
+  /** Creates a `needs-setup` shell, or returns the routine that already exists. */
+  addToRoutine: (definitionId: string) => Promise<PeptideSetup>;
+  /** Saves configuration and makes the routine active in one step. */
+  completeSetup: (id: string, changes: PeptideSetupChanges) => Promise<void>;
+  setRoutineState: (id: string, state: PeptideRoutineState) => Promise<void>;
+  /** Drops the routine. Logs, sites and day statuses are all left alone. */
+  removeRoutine: (id: string) => Promise<void>;
+
+  /**
+   * ── Routine days ─────────────────────────────────────────────────────
+   *
+   * A day the user answered has a record; a day they did not has nothing.
+   * There is deliberately no way to write "unconfirmed".
+   */
+  /** Records an administration *and* the status linked to it, in that order. */
+  markTaken: (setupId: string, draft: PeptideLogDraft) => Promise<PeptideLogEntry | null>;
+  /** Records a deliberate skip. Never creates an administration. */
+  markSkipped: (setupId: string, logDate: LogDate) => Promise<void>;
+  /** Clears a day's answer, returning what was removed so Undo can replace it. */
+  clearRoutineDay: (
+    setupId: string,
+    logDate: LogDate,
+  ) => Promise<{ status: RoutineDayStatus; log?: PeptideLogEntry } | null>;
+  restoreRoutineDay: (status: RoutineDayStatus, log?: PeptideLogEntry) => Promise<void>;
+  routineStatusFor: (setupId: string, logDate: LogDate) => RoutineDayStatus | undefined;
+  routineStatusesForSetup: (setupId: string) => RoutineDayStatus[];
 
   /**
    * ── Administrations ──────────────────────────────────────────────────
@@ -148,6 +196,7 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
     setups: [],
     customDefinitions: [],
     logs: [],
+    routineStatuses: [],
     today: todayLogDate(),
     error: null,
   });
@@ -160,23 +209,32 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
   const setupsRef = useRef<PeptideSetup[]>([]);
   const definitionsRef = useRef<PeptideDefinition[]>([]);
   const logsRef = useRef<PeptideLogEntry[]>([]);
+  const statusesRef = useRef<RoutineDayStatus[]>([]);
 
   useEffect(() => {
     let active = true;
 
     void (async () => {
       try {
-        const [setups, customDefinitions, logs] = await Promise.all([
+        const [setups, customDefinitions, logs, routineStatuses] = await Promise.all([
           repository.getSetups(),
           repository.getCustomDefinitions(),
           repository.getRecentLogs(RECENT_DAYS),
+          repository.getRecentRoutineStatuses(RECENT_DAYS),
         ]);
         if (!active) return;
         const ordered = sortLogsNewestFirst(logs);
         setupsRef.current = setups;
         definitionsRef.current = customDefinitions;
         logsRef.current = ordered;
-        dispatch({ type: 'loadFinished', setups, customDefinitions, logs: ordered });
+        statusesRef.current = routineStatuses;
+        dispatch({
+          type: 'loadFinished',
+          setups,
+          customDefinitions,
+          logs: ordered,
+          routineStatuses,
+        });
       } catch {
         if (!active) return;
         dispatch({ type: 'loadFailed', message: "We couldn't load your peptides." });
@@ -258,7 +316,7 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
    * of whether the setup is currently active.
    */
   const setSetupActive = useCallback(
-    (id: string, active: boolean) => updateSetup(id, { active }),
+    (id: string, active: boolean) => updateSetup(id, { routineState: active ? 'active' : 'inactive' }),
     [updateSetup],
   );
 
@@ -272,7 +330,7 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
    * would otherwise drop the first.
    */
   const commitDay = useCallback(
-    async (logDate: LogDate, nextForDay: PeptideLogEntry[]) => {
+    async (logDate: LogDate, nextForDay: PeptideLogEntry[]): Promise<boolean> => {
       const others = logsRef.current.filter((entry) => entry.logDate !== logDate);
       const next = sortLogsNewestFirst([...others, ...nextForDay]);
       logsRef.current = next;
@@ -280,8 +338,10 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
 
       try {
         await repository.saveLogs(logDate, nextForDay);
+        return true;
       } catch {
         dispatch({ type: 'setError', message: "We couldn't save that peptide log." });
+        return false;
       }
     },
     [repository],
@@ -370,6 +430,215 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
     [state.logs],
   );
 
+  /* ── routines ──────────────────────────────────────────────────────── */
+
+  /**
+   * Adding a peptide is not configuring one.
+   *
+   * Creates a shell in `needs-setup` and stops. The old flow dropped the user
+   * straight into a long form at the moment they had only decided they were
+   * interested, which is why the founder described the whole path as
+   * friction. Configuring is a separate act, done when they are ready.
+   *
+   * **One current routine per definition.** Tapping *Add to Routine* twice —
+   * or coming back to the page later — returns whatever routine already
+   * exists rather than creating a second one, in any state. Removed routines
+   * are gone from the store and so do not count as current, which is what
+   * makes re-adding work.
+   */
+  const addToRoutine = useCallback(
+    async (definitionId: string) => {
+      const existing = setupsRef.current.find((setup) => setup.definitionId === definitionId);
+      if (existing) return existing;
+
+      const setup = createPeptideSetup(definitionId, {}, new Date(), 'needs-setup');
+      await commitSetups([...setupsRef.current, setup]);
+      return setup;
+    },
+    [commitSetups],
+  );
+
+  /** Saving Setup is what makes a routine active — there is no separate switch. */
+  const completeSetup = useCallback(
+    (id: string, changes: PeptideSetupChanges) =>
+      updateSetup(id, { ...changes, routineState: 'active' }),
+    [updateSetup],
+  );
+
+  const setRoutineState = useCallback(
+    (id: string, routineState: PeptideRoutineState) => updateSetup(id, { routineState }),
+    [updateSetup],
+  );
+
+  /**
+   * Removing a routine removes the routine, and nothing else.
+   *
+   * Logs are day-keyed and independent, statuses likewise; neither is touched
+   * here. That is the entire point — someone stopping a peptide still took
+   * it, and a health app that erases what happened because you stopped
+   * tracking it is destroying the record it exists to keep. Names still
+   * resolve afterwards because a log carries its own `definitionId`.
+   */
+  const removeRoutine = useCallback(
+    (id: string) => commitSetups(setupsRef.current.filter((setup) => setup.id !== id)),
+    [commitSetups],
+  );
+
+  /* ── routine day statuses ──────────────────────────────────────────── */
+
+  const commitStatusDay = useCallback(
+    async (logDate: LogDate, nextForDay: RoutineDayStatus[]): Promise<boolean> => {
+      const others = statusesRef.current.filter((status) => status.logDate !== logDate);
+      const next = [...others, ...nextForDay];
+      statusesRef.current = next;
+      dispatch({ type: 'setRoutineStatuses', routineStatuses: next });
+
+      try {
+        await repository.saveRoutineStatuses(logDate, nextForDay);
+        return true;
+      } catch {
+        dispatch({ type: 'setError', message: "We couldn't save that. Your change may not persist." });
+        return false;
+      }
+    },
+    [repository],
+  );
+
+  const statusDay = useCallback(
+    async (logDate: LogDate): Promise<RoutineDayStatus[]> => {
+      const loaded = statusesRef.current.filter((status) => status.logDate === logDate);
+      if (loaded.length > 0) return loaded;
+      try {
+        return await repository.getRoutineStatuses(logDate);
+      } catch {
+        return [];
+      }
+    },
+    [repository],
+  );
+
+  /**
+   * Recording that a scheduled administration happened.
+   *
+   * **The log is written first, and the status only if that succeeded.** A
+   * status saying *taken* with no administration behind it is the one
+   * genuinely corrupt state this feature can reach: it would show a
+   * confirmed dose in the calendar that appears nowhere in history. If the
+   * log cannot be persisted the optimistic entry is rolled back out of
+   * memory and no status is written, so the day stays unanswered — which is
+   * true, and recoverable.
+   *
+   * `linkedLogId` is what makes the pairing reversible later.
+   */
+  const markTaken = useCallback(
+    async (setupId: string, draft: PeptideLogDraft): Promise<PeptideLogEntry | null> => {
+      const setup = setupsRef.current.find((candidate) => candidate.id === setupId);
+      if (!setup) return null;
+
+      const entry = createLogEntry(setup, draft);
+      const day = await dayEntries(entry.logDate);
+      const logSaved = await commitDay(entry.logDate, [...day, entry]);
+
+      if (!logSaved) {
+        // Undo the optimistic insert rather than leave a log the store never
+        // accepted, and write no status at all.
+        const rolledBack = logsRef.current.filter((candidate) => candidate.id !== entry.id);
+        logsRef.current = rolledBack;
+        dispatch({ type: 'setLogs', logs: rolledBack });
+        return null;
+      }
+
+      const status = createRoutineStatus(setupId, entry.logDate, 'taken', {
+        linkedLogId: entry.id,
+      });
+      const existing = (await statusDay(entry.logDate)).filter(
+        (candidate) => candidate.setupId !== setupId,
+      );
+      await commitStatusDay(entry.logDate, [...existing, status]);
+      return entry;
+    },
+    [commitDay, commitStatusDay, dayEntries, statusDay],
+  );
+
+  /**
+   * Recording that a scheduled day was deliberately skipped.
+   *
+   * **Never writes an administration.** Skipping is the user saying a dose
+   * did not happen; manufacturing a log for it would be the exact inversion
+   * of the truth. No reason is asked for either — VITA has no business
+   * interrogating someone about their own body.
+   */
+  const markSkipped = useCallback(
+    async (setupId: string, logDate: LogDate) => {
+      const status = createRoutineStatus(setupId, logDate, 'skipped');
+      const existing = (await statusDay(logDate)).filter(
+        (candidate) => candidate.setupId !== setupId,
+      );
+      await commitStatusDay(logDate, [...existing, status]);
+    },
+    [commitStatusDay, statusDay],
+  );
+
+  /**
+   * Undoing a day's answer, returning what was removed so it can be put back.
+   *
+   * **Only a log this flow created is removed with it.** The link is followed
+   * by id, so a manual entry — which no status points at — is never swept up
+   * by changing a routine status. Someone who logged three administrations by
+   * hand and then untaps *Taken* keeps all three.
+   */
+  const clearRoutineDay = useCallback(
+    async (
+      setupId: string,
+      logDate: LogDate,
+    ): Promise<{ status: RoutineDayStatus; log?: PeptideLogEntry } | null> => {
+      const existing = (await statusDay(logDate)).find(
+        (candidate) => candidate.setupId === setupId,
+      );
+      if (!existing) return null;
+
+      const remaining = (await statusDay(logDate)).filter(
+        (candidate) => candidate.setupId !== setupId,
+      );
+      await commitStatusDay(logDate, remaining);
+
+      if (!existing.linkedLogId) return { status: existing };
+
+      const linked = logsRef.current.find((entry) => entry.id === existing.linkedLogId);
+      if (!linked) return { status: existing };
+
+      const day = (await dayEntries(linked.logDate)).filter((entry) => entry.id !== linked.id);
+      await commitDay(linked.logDate, day);
+      return { status: existing, log: linked };
+    },
+    [commitDay, commitStatusDay, dayEntries, statusDay],
+  );
+
+  /** Puts a cleared day back exactly as it was, log included, for Undo. */
+  const restoreRoutineDay = useCallback(
+    async (status: RoutineDayStatus, log?: PeptideLogEntry) => {
+      if (log) {
+        const day = (await dayEntries(log.logDate)).filter((entry) => entry.id !== log.id);
+        await commitDay(log.logDate, [...day, log]);
+      }
+      const existing = (await statusDay(status.logDate)).filter(
+        (candidate) => candidate.setupId !== status.setupId,
+      );
+      await commitStatusDay(status.logDate, [...existing, status]);
+    },
+    [commitDay, commitStatusDay, dayEntries, statusDay],
+  );
+
+  const routineStatusFor = useCallback(
+    (setupId: string, logDate: LogDate) => statusFor(state.routineStatuses, setupId, logDate),
+    [state.routineStatuses],
+  );
+
+  const routineStatusesForSetup = useCallback(
+    (setupId: string) => statusesForSetup(state.routineStatuses, setupId),
+    [state.routineStatuses],
+  );
+
   /**
    * Today has to change while the app is open. Without this, an entry logged
    * at 00:05 would land on a date the UI still believes is tomorrow.
@@ -392,6 +661,16 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
       addSetup,
       updateSetup,
       setSetupActive,
+      addToRoutine,
+      completeSetup,
+      setRoutineState,
+      removeRoutine,
+      markTaken,
+      markSkipped,
+      clearRoutineDay,
+      restoreRoutineDay,
+      routineStatusFor,
+      routineStatusesForSetup,
       addLog,
       updateLog,
       deleteLog,

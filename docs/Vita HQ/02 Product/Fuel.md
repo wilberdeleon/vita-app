@@ -22,6 +22,8 @@ The eight-screen flow under `src/app/(vita)/fuel/` and the Fuel hub tab are othe
 
 **Screenshot Food Analysis** ([[Mobile Order Screenshot Import]]) is explicitly **deferred out of Sprint 2's approved scope** and currently has no scheduled sprint — see [[Open Questions]] #14.
 
+**The Peptides tile runs on real data since slice 3.9 (2026-08-26).** It had been showing `1 of 3 logged` to every user since Sprint 0 — a count that was invented and a goal VITA has never had. It now reads how many administrations were actually recorded today, falls back to how many routines are scheduled, and draws **no progress bar**, because there is no target to divide by. It remains a summary and a door into [[Peptides]]; Fuel does not grow a routine widget of its own, and nothing about Fuel's layout, hierarchy or nutrition behaviour changed.
+
 **Fuel's Hydration and Peptides modules belong to Sprint 3.** The redesigned Fuel landing screen is approved and finished; **it is not redesigned again.** [[Water]] + [[Peptides]] — moved ahead of Journey to **Sprint 3** by the founder reorder of 2026-08-21 — turns those two compact modules into real entry points and daily summaries backed by real, persisted data, without re-opening Fuel's layout, hierarchy, or visual system.
 
 ### Fuel Visual Refinement — founder direction, 2026-08-18

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { Button, Screen, ScreenHeader, TextField } from '../../../components/ui';
+import { Button, Screen, ScreenHeader, TextField, useToast } from '../../../components/ui';
 import { usePeptideContext } from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -18,7 +18,8 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * compound can back several setups and survives deleting one.
  */
 export default function CustomPeptide() {
-  const { createCustomDefinition } = usePeptideContext();
+  const { createCustomDefinition, addToRoutine } = usePeptideContext();
+  const { showToast } = useToast();
   const { surfaces } = useTheme();
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -29,9 +30,18 @@ export default function CustomPeptide() {
     if (trimmed.length === 0 || saving) return;
     setSaving(true);
     const definition = await createCustomDefinition(trimmed);
-    // Replace, so backing out of the setup form returns to the catalog rather
-    // than to a naming screen for a peptide that already exists.
-    router.replace(`/peptides/setup/new?definitionId=${encodeURIComponent(definition.id)}`);
+    /**
+     * A custom peptide joins the routine the same way a catalog one does.
+     *
+     * Adding is lightweight here too — the user named the thing, which is not
+     * the same as being ready to describe a vial. The routine appears under
+     * *Needs setup* and is configured whenever they choose. Its name comes
+     * from the definition they just created, so there is no second name to
+     * supply.
+     */
+    await addToRoutine(definition.id);
+    showToast({ message: `${definition.name} added to your routine.` });
+    router.dismissAll();
   };
 
   return (
