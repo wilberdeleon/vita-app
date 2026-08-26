@@ -16,14 +16,16 @@
  * collection is saved again for a real reason.
  */
 
+import { createDayKeyedStore } from '../../daily/dayStore';
 import { isValidLogDate } from '../../daily/dates';
 import { isNonEmptyString, isPositiveNumber, isRecord } from '../../daily/guards';
 import { readJson, removeKey, writeJson } from '../../daily/storage';
+import { parseLogEntry } from '../model/logs';
 import { isPeptideSchedule } from '../model/schedule';
 import type { MassUnit, PeptideDefinition, PeptideSetup } from '../model/types';
 import { isMassUnit } from '../model/units';
 import type { PeptideRepository } from './PeptideRepository';
-import { PeptideKeys } from './keys';
+import { PEPTIDE_DOMAIN, PeptideKeys } from './keys';
 
 /* ── validation ─────────────────────────────────────────────────────── */
 
@@ -133,6 +135,15 @@ async function writeCollection(key: string, records: readonly unknown[]): Promis
   await writeJson(key, records);
 }
 
+/**
+ * Administrations, day-partitioned on the shared store.
+ *
+ * `parseLogEntry` receives the day the record was read from, so an entry
+ * whose own `logDate` contradicts its key is dropped rather than counted
+ * twice — the guarantee the store's `RecordParser` contract exists for.
+ */
+const logStore = createDayKeyedStore(PEPTIDE_DOMAIN, parseLogEntry);
+
 export const asyncStoragePeptideRepository: PeptideRepository = {
   getSetups() {
     return readCollection(PeptideKeys.setups, parseSetup);
@@ -148,5 +159,18 @@ export const asyncStoragePeptideRepository: PeptideRepository = {
 
   saveCustomDefinitions(definitions) {
     return writeCollection(PeptideKeys.customDefinitions, definitions);
+  },
+
+  getLogs(logDate) {
+    return logStore.getDay(logDate);
+  },
+
+  saveLogs(logDate, entries) {
+    return logStore.saveDay(logDate, entries);
+  },
+
+  async getRecentLogs(maxDays) {
+    const days = await logStore.getRecentDays(maxDays);
+    return days.flatMap((day) => day.records);
   },
 };

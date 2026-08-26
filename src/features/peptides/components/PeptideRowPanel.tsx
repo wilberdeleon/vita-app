@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../../../components/ui';
-import type { ResolvedSetup } from '../../../lib/peptides';
-import { spacing, typography } from '../../../theme/tokens';
+import { usePeptideContext, type ResolvedSetup } from '../../../lib/peptides';
+import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { ClassificationChip } from './ClassificationChip';
 
@@ -21,16 +21,26 @@ type Props = {
  * **Scannable, not exhaustive.** A row carries the name, the classification,
  * and the schedule the user chose. Vial contents, reconstitution volume, and
  * syringe configuration live on the detail screen — a list that shows every
- * field is a list nobody reads. There is deliberately no dose anywhere: no
- * dose has been recorded, because administration logging does not exist yet.
+ * field is a list nobody reads.
+ *
+ * **Logged today is shown; scheduled today is not implied by it** (slice
+ * 3.7). A row says how many administrations were actually recorded today,
+ * from real log entries — never that one was expected, missed, or due. The
+ * schedule the user chose is separate context on the same line, and VITA does
+ * not score one against the other.
  */
 export function PeptideRowPanel({ setups }: Props) {
   const { surfaces } = useTheme();
+  const { logsForDate, today } = usePeptideContext();
+  const loggedToday = logsForDate(today);
 
   return (
     <Card style={styles.panel}>
       {setups.map((item, index) => {
         const detail = [item.definition.category, item.scheduleLabel].filter(Boolean).join(' · ');
+        const count = loggedToday.filter((entry) => entry.setupId === item.setup.id).length;
+        // Plain fact, no judgement: what was recorded, never what was owed.
+        const activity = count === 0 ? null : count === 1 ? 'Logged today' : `Logged ${count}× today`;
 
         return (
           <View
@@ -48,6 +58,7 @@ export function PeptideRowPanel({ setups }: Props) {
                     ? 'research compound'
                     : 'custom entry',
                 detail,
+                activity,
                 'Edit setup',
               ]
                 .filter(Boolean)
@@ -64,6 +75,11 @@ export function PeptideRowPanel({ setups }: Props) {
                 {detail ? (
                   <Text style={[styles.detail, { color: surfaces.textTertiary }]} numberOfLines={1}>
                     {detail}
+                  </Text>
+                ) : null}
+                {activity ? (
+                  <Text style={[styles.activity, { color: palette.peptide }]} numberOfLines={1}>
+                    {activity}
                   </Text>
                 ) : null}
               </View>
@@ -103,6 +119,9 @@ const styles = StyleSheet.create({
   name: {
     ...typography.bodyMedium,
     flexShrink: 1,
+  },
+  activity: {
+    ...typography.micro,
   },
   detail: {
     ...typography.caption,

@@ -14,7 +14,10 @@
  */
 
 export {
+  formatClockTime,
   formatLogDateLong,
+  fromDateAndTime,
+  toTimeInput,
   fromLogDate,
   isToday,
   isValidLogDate,

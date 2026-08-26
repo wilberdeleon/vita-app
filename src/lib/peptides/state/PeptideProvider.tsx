@@ -7,12 +7,18 @@
  * different, and a generic built to satisfy all of them would hide what each
  * one does.
  *
- * Deliberately not here: administration logging (slice 3.7), dose calculation
- * (3.6), and injection sites (3.8). This provider owns definitions and setups
- * and nothing else.
+ * Deliberately not here: dose calculation (3.6, a pure module screens call
+ * directly) and injection sites (3.8).
  *
- * There is also no day rollover. Setups are not day-keyed — a configuration
- * does not belong to a calendar day the way a drink or a meal does.
+ * **Administrations joined in slice 3.7**, and they are day-keyed where
+ * setups are not — a configuration does not belong to a calendar day the way
+ * an injection does. Only a bounded window of recent days is held in memory;
+ * a log grows forever and eagerly loading all of it would make every app
+ * start slower for data almost nobody scrolls to. Older days are read on
+ * demand by the history screen.
+ *
+ * That day-keying is also why this provider now has a rollover: today's
+ * entries must become yesterday's while the app is open, without a restart.
  */
 
 import {
@@ -25,12 +31,23 @@ import {
   useRef,
   type PropsWithChildren,
 } from 'react';
+import { todayLogDate, useDayRollover, type LogDate } from '../../daily';
 import { newId } from '../../daily/ids';
 import { PEPTIDE_CATALOG, findCatalogDefinition } from '../data/catalog';
 import { asyncStoragePeptideRepository } from '../data/asyncStorageRepository';
 import type { PeptideRepository } from '../data/PeptideRepository';
+import { applyLogChanges, createLogEntry, sortLogsNewestFirst } from '../model/logs';
 import { applySetupChanges, createPeptideSetup, type PeptideSetupChanges, type PeptideSetupDraft } from '../model/setups';
-import type { PeptideDefinition, PeptideSetup } from '../model/types';
+import type { PeptideDefinition, PeptideLogDraft, PeptideLogEntry, PeptideSetup } from '../model/types';
+
+/**
+ * How much history the provider keeps warm.
+ *
+ * Enough for a setup's "Recent Logs" and a first screen of history without a
+ * read; the full history screen asks the repository for more. Bounded by days
+ * rather than entries because the store enumerates day keys.
+ */
+const RECENT_DAYS = 60;
 
 type Status = 'loading' | 'ready';
 
@@ -39,24 +56,37 @@ type PeptideState = {
   setups: PeptideSetup[];
   /** Definitions the user created. The catalog is compiled, not stored. */
   customDefinitions: PeptideDefinition[];
+  /** A bounded window of recent administrations, newest first. */
+  logs: PeptideLogEntry[];
+  /** The local calendar day, refreshed on rollover so "today" stays honest. */
+  today: LogDate;
   /** Set when persistence failed, so the UI can say so rather than look empty. */
   error: string | null;
 };
 
 type Action =
-  | { type: 'loadFinished'; setups: PeptideSetup[]; customDefinitions: PeptideDefinition[] }
+  | {
+      type: 'loadFinished';
+      setups: PeptideSetup[];
+      customDefinitions: PeptideDefinition[];
+      logs: PeptideLogEntry[];
+    }
   | { type: 'loadFailed'; message: string }
   | { type: 'setSetups'; setups: PeptideSetup[] }
   | { type: 'setCustomDefinitions'; customDefinitions: PeptideDefinition[] }
+  | { type: 'setLogs'; logs: PeptideLogEntry[] }
+  | { type: 'setToday'; today: LogDate }
   | { type: 'setError'; message: string | null };
 
 function reducer(state: PeptideState, action: Action): PeptideState {
   switch (action.type) {
     case 'loadFinished':
       return {
+        ...state,
         status: 'ready',
         setups: action.setups,
         customDefinitions: action.customDefinitions,
+        logs: action.logs,
         error: null,
       };
     case 'loadFailed':
@@ -65,6 +95,10 @@ function reducer(state: PeptideState, action: Action): PeptideState {
       return { ...state, setups: action.setups };
     case 'setCustomDefinitions':
       return { ...state, customDefinitions: action.customDefinitions };
+    case 'setLogs':
+      return { ...state, logs: action.logs };
+    case 'setToday':
+      return { ...state, today: action.today };
     case 'setError':
       return { ...state, error: action.message };
   }
@@ -81,6 +115,24 @@ export type PeptideContextValue = PeptideState & {
   addSetup: (definitionId: string, draft?: PeptideSetupDraft) => Promise<PeptideSetup>;
   updateSetup: (id: string, changes: PeptideSetupChanges) => Promise<void>;
   setSetupActive: (id: string, active: boolean) => Promise<void>;
+
+  /**
+   * ── Administrations ──────────────────────────────────────────────────
+   *
+   * The snapshot is taken here, from the setup as it stands now. Every read
+   * below returns stored entries untouched — no history is ever recomputed
+   * from a setup that may have changed since.
+   */
+  addLog: (setupId: string, draft: PeptideLogDraft) => Promise<PeptideLogEntry | null>;
+  updateLog: (entryId: string, draft: PeptideLogDraft) => Promise<void>;
+  deleteLog: (entryId: string) => Promise<void>;
+  /** Re-inserts a deleted entry exactly as it was, for Undo. */
+  restoreLog: (entry: PeptideLogEntry) => Promise<void>;
+  /** Everything recorded for one setup, newest first, within the loaded window. */
+  logsForSetup: (setupId: string) => PeptideLogEntry[];
+  /** Everything recorded on one day, newest first. */
+  logsForDate: (logDate: LogDate) => PeptideLogEntry[];
+  findLog: (entryId: string) => PeptideLogEntry | undefined;
 };
 
 const PeptideContext = createContext<PeptideContextValue | null>(null);
@@ -95,6 +147,8 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
     status: 'loading',
     setups: [],
     customDefinitions: [],
+    logs: [],
+    today: todayLogDate(),
     error: null,
   });
 
@@ -105,20 +159,24 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
    */
   const setupsRef = useRef<PeptideSetup[]>([]);
   const definitionsRef = useRef<PeptideDefinition[]>([]);
+  const logsRef = useRef<PeptideLogEntry[]>([]);
 
   useEffect(() => {
     let active = true;
 
     void (async () => {
       try {
-        const [setups, customDefinitions] = await Promise.all([
+        const [setups, customDefinitions, logs] = await Promise.all([
           repository.getSetups(),
           repository.getCustomDefinitions(),
+          repository.getRecentLogs(RECENT_DAYS),
         ]);
         if (!active) return;
+        const ordered = sortLogsNewestFirst(logs);
         setupsRef.current = setups;
         definitionsRef.current = customDefinitions;
-        dispatch({ type: 'loadFinished', setups, customDefinitions });
+        logsRef.current = ordered;
+        dispatch({ type: 'loadFinished', setups, customDefinitions, logs: ordered });
       } catch {
         if (!active) return;
         dispatch({ type: 'loadFailed', message: "We couldn't load your peptides." });
@@ -204,6 +262,127 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
     [updateSetup],
   );
 
+  /**
+   * Writes one day back to disk and refreshes the in-memory window.
+   *
+   * The day is the unit of persistence, so a mutation reads the day out of
+   * the loaded window, applies itself, and writes the whole day. Reading from
+   * `logsRef` rather than reducer state is what makes two mutations in the
+   * same tick safe — state has not re-rendered yet, and the second write
+   * would otherwise drop the first.
+   */
+  const commitDay = useCallback(
+    async (logDate: LogDate, nextForDay: PeptideLogEntry[]) => {
+      const others = logsRef.current.filter((entry) => entry.logDate !== logDate);
+      const next = sortLogsNewestFirst([...others, ...nextForDay]);
+      logsRef.current = next;
+      dispatch({ type: 'setLogs', logs: next });
+
+      try {
+        await repository.saveLogs(logDate, nextForDay);
+      } catch {
+        dispatch({ type: 'setError', message: "We couldn't save that peptide log." });
+      }
+    },
+    [repository],
+  );
+
+  /**
+   * The day may not be in the loaded window — someone can edit an entry from
+   * further back than `RECENT_DAYS`. Reading it fresh keeps the write whole
+   * rather than truncating a day to the part that happened to be in memory.
+   */
+  const dayEntries = useCallback(
+    async (logDate: LogDate): Promise<PeptideLogEntry[]> => {
+      const loaded = logsRef.current.filter((entry) => entry.logDate === logDate);
+      if (loaded.length > 0) return loaded;
+      try {
+        return await repository.getLogs(logDate);
+      } catch {
+        return [];
+      }
+    },
+    [repository],
+  );
+
+  const addLog = useCallback(
+    async (setupId: string, draft: PeptideLogDraft): Promise<PeptideLogEntry | null> => {
+      const setup = setupsRef.current.find((candidate) => candidate.id === setupId);
+      if (!setup) return null;
+
+      // The snapshot is taken here, once, from the setup as it stands now.
+      const entry = createLogEntry(setup, draft);
+      const day = await dayEntries(entry.logDate);
+      await commitDay(entry.logDate, [...day, entry]);
+      return entry;
+    },
+    [commitDay, dayEntries],
+  );
+
+  const updateLog = useCallback(
+    async (entryId: string, draft: PeptideLogDraft) => {
+      const existing = logsRef.current.find((entry) => entry.id === entryId);
+      if (!existing) return;
+
+      const updated = applyLogChanges(existing, draft);
+      const fromDay = (await dayEntries(existing.logDate)).filter((entry) => entry.id !== entryId);
+      await commitDay(existing.logDate, fromDay);
+
+      // Editing the time can move an entry to another day, so the destination
+      // is written separately rather than assumed to be the same key.
+      const toDay = (await dayEntries(updated.logDate)).filter((entry) => entry.id !== entryId);
+      await commitDay(updated.logDate, [...toDay, updated]);
+    },
+    [commitDay, dayEntries],
+  );
+
+  const deleteLog = useCallback(
+    async (entryId: string) => {
+      const existing = logsRef.current.find((entry) => entry.id === entryId);
+      if (!existing) return;
+      const day = (await dayEntries(existing.logDate)).filter((entry) => entry.id !== entryId);
+      await commitDay(existing.logDate, day);
+    },
+    [commitDay, dayEntries],
+  );
+
+  /** Puts a deleted entry back exactly as it was — no new id, no new dates. */
+  const restoreLog = useCallback(
+    async (entry: PeptideLogEntry) => {
+      const day = (await dayEntries(entry.logDate)).filter((candidate) => candidate.id !== entry.id);
+      await commitDay(entry.logDate, [...day, entry]);
+    },
+    [commitDay, dayEntries],
+  );
+
+  const logsForSetup = useCallback(
+    (setupId: string) => state.logs.filter((entry) => entry.setupId === setupId),
+    [state.logs],
+  );
+
+  const logsForDate = useCallback(
+    (logDate: LogDate) => state.logs.filter((entry) => entry.logDate === logDate),
+    [state.logs],
+  );
+
+  const findLog = useCallback(
+    (entryId: string) => state.logs.find((entry) => entry.id === entryId),
+    [state.logs],
+  );
+
+  /**
+   * Today has to change while the app is open. Without this, an entry logged
+   * at 00:05 would land on a date the UI still believes is tomorrow.
+   */
+  const todayRef = useRef(state.today);
+  todayRef.current = state.today;
+  useDayRollover({
+    getCurrentDate: useCallback(() => todayRef.current, []),
+    // Peptides has no "browse another day" mode, so it always follows today.
+    getIsFollowingToday: useCallback(() => true, []),
+    onRollover: useCallback((today: LogDate) => dispatch({ type: 'setToday', today }), []),
+  });
+
   const value = useMemo<PeptideContextValue>(
     () => ({
       ...state,
@@ -213,8 +392,29 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
       addSetup,
       updateSetup,
       setSetupActive,
+      addLog,
+      updateLog,
+      deleteLog,
+      restoreLog,
+      logsForSetup,
+      logsForDate,
+      findLog,
     }),
-    [state, findDefinition, createCustomDefinition, addSetup, updateSetup, setSetupActive],
+    [
+      state,
+      findDefinition,
+      createCustomDefinition,
+      addSetup,
+      updateSetup,
+      setSetupActive,
+      addLog,
+      updateLog,
+      deleteLog,
+      restoreLog,
+      logsForSetup,
+      logsForDate,
+      findLog,
+    ],
   );
 
   return <PeptideContext.Provider value={value}>{children}</PeptideContext.Provider>;

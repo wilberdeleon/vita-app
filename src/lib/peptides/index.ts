@@ -26,6 +26,9 @@ export {
   type PeptideSchedule,
   type ResearchArea,
   type PeptideSetup,
+  type PeptideLogEntry,
+  type PeptideLogDraft,
+  type LogCalculationSnapshot,
   type ResearchReference,
 } from './model/types';
 
@@ -82,6 +85,12 @@ export {
   formatEvidenceContext,
   researchAreaLabel,
 } from './model/labels';
+export {
+  applyLogChanges,
+  createLogEntry,
+  parseLogEntry,
+  sortLogsNewestFirst,
+} from './model/logs';
 export { formatLabel, formatLabels } from './model/format';
 export {
   calculateAmountFromUnits,

@@ -14,7 +14,8 @@
  * a networked implementation is a drop-in rather than a signature change.
  */
 
-import type { PeptideDefinition, PeptideSetup } from '../model/types';
+import type { LogDate } from '../../daily';
+import type { PeptideDefinition, PeptideLogEntry, PeptideSetup } from '../model/types';
 
 export interface PeptideRepository {
   /** Every setup, active and inactive. `[]` before the user has made one. */
@@ -29,4 +30,28 @@ export interface PeptideRepository {
   getCustomDefinitions(): Promise<PeptideDefinition[]>;
 
   saveCustomDefinitions(definitions: PeptideDefinition[]): Promise<void>;
+
+  /**
+   * ── Administrations (slice 3.7) ──────────────────────────────────────
+   *
+   * Day-partitioned, unlike setups: a log grows without limit, and the day is
+   * the unit that is read and written together. This is the same shape water
+   * entries and the food log use, so it rides the shared day-keyed store
+   * rather than inventing a third scheme.
+   */
+
+  /** One day's administrations. `[]` for a day that was never written. */
+  getLogs(logDate: LogDate): Promise<PeptideLogEntry[]>;
+
+  /** Replaces the day wholesale. Callers pass the full post-mutation array. */
+  saveLogs(logDate: LogDate, entries: PeptideLogEntry[]): Promise<void>;
+
+  /**
+   * The most recent written days, newest first, flattened.
+   *
+   * Bounded by days rather than by entries because the underlying store
+   * enumerates keys: gaps are normal — nobody logs every day — and counting
+   * backwards from today would read nothing on every skipped one.
+   */
+  getRecentLogs(maxDays: number): Promise<PeptideLogEntry[]>;
 }

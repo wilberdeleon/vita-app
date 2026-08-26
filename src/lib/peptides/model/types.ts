@@ -392,3 +392,95 @@ export type PeptideSetup = {
 export const DEFAULT_UNITS_PER_ML = 100;
 
 export const DEFAULT_DOSE_UNIT: MassUnit = 'mg';
+
+/**
+ * ── Peptide log entries (slice 3.7) ────────────────────────────────────
+ */
+
+/**
+ * The conversion context as it stood **when the entry was saved**.
+ *
+ * This is the whole reason the entry is a snapshot rather than a reference.
+ * A user who logged 2 mg from a 20 mg / 2 mL vial drew 20 units that day. If
+ * they later reconstitute the next vial with 1 mL, the setup changes and the
+ * *same* 2 mg would come to 10 units — but the syringe they actually pushed
+ * last month still held 20. Recomputing history from the current setup would
+ * quietly rewrite what happened.
+ *
+ * Absent when the setup had no vial or no reconstitution volume at the time.
+ * That is a normal state, not a failure: someone using a pre-filled pen has
+ * nothing to reconstitute, and logging must not be blocked on it.
+ */
+export type LogCalculationSnapshot = {
+  vialAmountMcg: number;
+  reconstitutionMl: number;
+  unitsPerMl: number;
+  calculatedUnits: number;
+  calculatedVolumeMl: number;
+};
+
+/**
+ * One recorded administration.
+ *
+ * **A historical fact, not a derived view.** Everything needed to render it
+ * years from now is copied in at save time — the amount as authored, its
+ * canonical micrograms, and the conversion context. Nothing here is looked up
+ * from the setup on read.
+ *
+ * `definitionId` is denormalised alongside `setupId` so an entry can still
+ * name its compound if the setup is ever gone. Deactivating a setup never
+ * deletes it, so that is defensive rather than expected — but history that
+ * cannot say what it was about is not history.
+ *
+ * VITA records what the user chose. There is no field here for a scheduled,
+ * recommended, or expected amount, because the app has no basis for one.
+ */
+export type PeptideLogEntry = {
+  id: string;
+  setupId: string;
+  /** Denormalised so an entry can name its compound independently. */
+  definitionId: string;
+
+  /** Local calendar day, via the shared date model. Never a UTC date string. */
+  logDate: LogDate;
+  /** Exact moment, ISO-8601. Editable — people log after the fact. */
+  loggedAt: string;
+
+  /**
+   * The amount, kept twice: canonical micrograms for arithmetic, and what the
+   * user actually typed. Someone who logged `500 mcg` should keep seeing
+   * 500 mcg, not `0.5 mg`. Same principle as `FoodEntry` and `WaterEntry`.
+   */
+  amount: {
+    authoredAmount: number;
+    authoredUnit: MassUnit;
+    amountMcg: number;
+  };
+
+  /** The conversion as it stood at save time. Absent when none was possible. */
+  calculationSnapshot?: LogCalculationSnapshot;
+
+  /**
+   * About *this administration* — how it felt, where it happened, anything
+   * worth remembering. Deliberately separate from `PeptideSetup.notes`, which
+   * describes the tracking configuration and outlives any single event.
+   */
+  notes?: string;
+
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * What a caller supplies to create or edit an entry.
+ *
+ * Injection sites (slice 3.8) will extend `PeptideLogEntry` with an optional
+ * site field. Nothing is stubbed for it here — a nullable field nobody writes
+ * is speculative weight, and adding one later is a purely additive change.
+ */
+export type PeptideLogDraft = {
+  authoredAmount: number;
+  authoredUnit: MassUnit;
+  loggedAt: string;
+  notes?: string;
+};

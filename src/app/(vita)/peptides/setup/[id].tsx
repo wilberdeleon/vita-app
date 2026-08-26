@@ -1,12 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import { Button, EmptyState, Screen, ScreenHeader, SectionHeader, useToast } from '../../../../components/ui';
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
+import { LogRow } from '../../../../features/peptides/components/LogRow';
 import { SetupForm, type SetupFormValue } from '../../../../features/peptides/components/SetupForm';
 import { usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
+
+/** How many recent administrations the setup screen shows before deferring. */
+const RECENT_LOG_COUNT = 3;
 
 /**
  * Editing one setup.
@@ -24,7 +28,7 @@ export default function EditPeptideSetup() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const setupId = decodeURIComponent(id ?? '');
 
-  const { updateSetup, setSetupActive } = usePeptideContext();
+  const { updateSetup, setSetupActive, logsForSetup } = usePeptideContext();
   const resolved = useResolvedSetup(setupId);
   const { showToast } = useToast();
   const { surfaces } = useTheme();
@@ -60,6 +64,9 @@ export default function EditPeptideSetup() {
 
   const { setup, definition, name } = resolved;
 
+  const allLogs = logsForSetup(setup.id);
+  const recent = allLogs.slice(0, RECENT_LOG_COUNT);
+
   const save = async () => {
     if (!isValid || saving) return;
     setSaving(true);
@@ -89,6 +96,42 @@ export default function EditPeptideSetup() {
         <Text style={[styles.inactive, { color: surfaces.textTertiary }]}>
           This setup is inactive. Its details are kept exactly as you left them.
         </Text>
+      ) : null}
+
+      {/*
+        * Logging comes before configuration, because it is what someone opens
+        * this screen to do. Editing a vial is occasional; recording a dose is
+        * the daily act.
+        */}
+      <Button
+        label="Log Peptide"
+        icon="add"
+        color={palette.peptide}
+        onPress={() => router.push(`/peptides/setup/${encodeURIComponent(setup.id)}/log`)}
+      />
+
+      {recent.length > 0 ? (
+        <>
+          <SectionHeader title="Recent logs" />
+          {recent.map((entry) => (
+            <LogRow
+              key={entry.id}
+              entry={entry}
+              showDate
+              onPress={() => router.push(`/peptides/log/${encodeURIComponent(entry.id)}`)}
+            />
+          ))}
+          {/* The last few, not the whole log — a setup screen is configuration
+              with a glance at activity, not a history viewer. */}
+          {allLogs.length > recent.length ? (
+            <Button
+              label={`View all history (${allLogs.length})`}
+              variant="soft"
+              color={palette.peptide}
+              onPress={() => router.push(`/peptides/setup/${encodeURIComponent(setup.id)}/history`)}
+            />
+          ) : null}
+        </>
       ) : null}
 
       {/* Keyed on the setup so the form's own draft state rebuilds when a

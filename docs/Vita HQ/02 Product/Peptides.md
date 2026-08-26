@@ -56,6 +56,20 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **If a number looks off, VITA says so plainly and still does the maths.** Entering an amount larger than your whole vial gives you the real answer (120 units) plus one neutral line pointing out it exceeds what your setup records — usually a typo. It is a data check, not a health warning, and VITA offers no opinion on what to do about it.
 
+**Slice 3.7 (2026-08-25) turned Peptides into real tracking.** You can now record that you took something, and see it back.
+
+**Logging is fast on purpose.** Open a tracked peptide, tap **Log Peptide**, type the amount, save. Date and time default to now and can be corrected if you are logging something from earlier. Your vial information is already there, so the syringe units appear as you type — you never re-enter it.
+
+**A log is a permanent record, not a live calculation.** This is the part that matters most. If you log 2 mg from a 20 mg / 2 mL vial, that entry says **20 units** forever. Reconstitute your next vial with half the water and today's history does *not* quietly rewrite itself to say 10. Each entry also keeps the vial it came from, so in a year you can still see why 2 mg was 20 units.
+
+**History** groups by day, newest first. Amounts stay in the unit you typed — log 500 mcg and it reads 500 mcg, never "0.5 mg". Tap any entry to read, edit or delete it. Deleting asks first, and then offers **Undo** anyway.
+
+**It works without vial information too.** If you use a pre-filled pen there is nothing to reconstitute, so VITA records the amount and simply shows no unit conversion — rather than blocking you or inventing one.
+
+**Your list shows real activity now** — "Logged 2× today", from actual entries. It never says something is due, missed or overdue, and there is no adherence score, streak or compliance percentage. VITA records what you did; it does not grade you on it.
+
+**Still to come:** injection sites (3.8), then Fuel integration and final polish.
+
 **Slice 3.6E (2026-08-25) polished the calculator and added a custom conversion.** The automatic reference you approved is unchanged and still leads the section. Three things were finished around it.
 
 **Labels read properly now.** *Vial Amount*, *Bacteriostatic Water / Reconstitution*, *Custom Amount* — consistent title case, with the scientific parts (mg, mcg, mL, U-100, GHK-Cu) left exactly as they must be.
@@ -103,6 +117,16 @@ This version is also much harder to break than the last three: with nothing to t
 **New Tools section in Settings**, deliberately not a new tab. It is for small utilities you use once and walk away from, and it is where the injection-site tools will go in slice 3.8. There is nothing fake in it in the meantime.
 
 ⚠️ **Needs your confirmation on a real iPhone.** Engineering still cannot tap or type on a simulator, so typing is proven by automated tests rather than by hand. That gap is exactly what let the previous version pass its tests and still fail for you, so this is not signed off until you have used it.
+
+## Open polish item — remove Display Name from Peptide Setup
+
+**Status: approved by the founder, not yet done. Required in the Peptides final polish pass (3.9/3.10).**
+
+Peptide Setup currently opens with **Display Name (Optional)** — a field almost nobody needs, sitting above the two that actually matter (vial amount and reconstitution volume). It pushes the real work down the screen and asks a question at the moment someone just wants to start tracking.
+
+**The requirement:** the setup should use the peptide's own catalog name automatically, and the field should go.
+
+**Not done in 3.7** because it is not the zero-risk edit it looks like: `displayName` is persisted on `PeptideSetup`, read by `useResolvedSetup`, and shown in list rows, log confirmations and history headers. Removing the input is one line; deciding what happens to setups that already have one — and whether two vials of the same compound still need distinguishing — is a product question worth answering deliberately rather than in passing.
 
 ## Open polish item — tracking CTA discoverability
 

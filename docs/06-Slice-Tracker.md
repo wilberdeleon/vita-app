@@ -752,6 +752,44 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
+### Slice 3.7 — Peptide Logging + History 🟡
+
+**Objective:** turn a peptide setup into real tracking. Record an administration, keep it as a historical fact, and show it back.
+
+**The rule the whole slice is built around: a log entry is a snapshot, never a view.** Someone who logged 2 mg from a 20 mg / 2 mL vial drew 20 units that day. Reconstitute the next vial with 1 mL and the *same* 2 mg becomes 10 units — but the syringe already pushed held 20, and the record must still say so. Recomputing history from the current setup would quietly rewrite what happened, which is the difference between a health record and a spreadsheet formula.
+
+**`PeptideLogEntry`** carries everything needed to render it years from now: the amount as authored *and* in canonical micrograms, the local calendar day, the exact instant, optional notes, and a `calculationSnapshot` holding the vial, water, graduation density and the resulting units and volume. `definitionId` is denormalised beside `setupId` so an entry can still name its compound independently.
+
+**The snapshot is absent when the setup had no vial or water** — a normal state, not a failure. Someone using a pre-filled pen has nothing to reconstitute, and logging is never blocked on calculator information. Those entries simply have no unit line; there is deliberately no `— units` placeholder, which would imply a number went missing.
+
+**Editing keeps the entry's own context.** Correcting 2 mg to 1 mg on a log from a 20 mg / 2 mL vial recomputes against *that* vial, not today's. An entry that never had a snapshot does not acquire one by being edited — gaining a conversion months later, from a vial that may not be the one it came from, would be an invention rather than a correction.
+
+**Persistence** is day-partitioned on the shared `createDayKeyedStore`, the same shape water entries and the food log use: `vita:v1:peptides:log:<YYYY-MM-DD>`. A log grows without limit and the day is the unit that is read and written together. `parseLogEntry` receives the day it was read from, so an entry whose own `logDate` contradicts its key is dropped rather than double-counted.
+
+**The provider keeps a bounded window** — 60 days — rather than eagerly loading all history forever, and reads older days on demand. It also gained a **day rollover**, because administrations are day-keyed where setups never were: an entry made at 00:05 must land on the right day without an app restart.
+
+**Routes:** `/peptides/setup/[id]/log` to record, `/peptides/setup/[id]/history` for the full list, `/peptides/log/[id]` to read, edit or delete one. The entry detail is keyed by the entry rather than nested under its setup, because an entry is a durable record in its own right — it survives deactivation, and any history row can link straight to it.
+
+**Fast by default.** Open a setup, tap **Log Peptide** (first action on the screen, above configuration), type an amount, save. Date and time default to now and are editable in place through VITA's existing text-plus-chip pattern rather than a custom calendar. The amount unit is seeded from `preferredDoseUnit`; **the amount itself is never prefilled** — not a scheduled figure, not the last thing logged, not a typical one.
+
+**Scheduled and logged stay separate concepts.** A row on the Peptides screen now says "Logged today" or "Logged 2× today" from real entries — a plain fact about what was recorded, never that something was due, missed, or expected. There is no adherence percentage, streak, or compliance score anywhere, by design.
+
+**Delete asks, then offers Undo anyway**, reusing Water's toast. Between a confirmation and a reversal, the reversal is what actually protects someone who meant to tap the row above; `restoreLog` puts the record back with its original id and timestamps rather than creating a copy.
+
+**A real defect found in device QA and fixed:** the edit form initialised its date from `loggedAt.slice(0, 10)` — the **UTC** slice of the ISO string. An 8:30 PM administration stores as the next day in UTC, so the editor opened showing tomorrow's date and would have moved the entry on save. Now derived through `toLogDate`, and pinned by two tests. This is exactly the trap the shared date model exists for, and it took a screenshot to see it.
+
+**Shared helpers promoted** to `lib/daily`: `formatClockTime`, `toTimeInput`, `fromDateAndTime`. Features cannot import each other, so Water's local `timeLabel` stays where it is — folding it in belongs to a slice already touching Water.
+
+**80 new tests, 723 total.** The mandatory regression is pinned literally: log 2 mg from 20 mg / 2 mL, change the setup to 1 mL, and the old entry still reads 20 units. Also covered — mg/mcg normalisation, authored-unit preservation, missing snapshots, multiple entries per day, ordering, day filtering, cross-midnight edits, Undo fidelity, and read-time validation dropping malformed records without repairing them.
+
+**Verified on device**, Light and Dark: the setup screen with Log Peptide and Recent Logs, the log form, day-grouped history newest-first with `500 mcg` preserved as written, the entry detail with its Conversion Used block, and "Logged 2× today" on the Peptides list.
+
+**Still open, both recorded and unresolved:** the **Track this peptide** CTA discoverability item, and the approved removal of **Display Name (Optional)** from Peptide Setup — both 3.9/3.10 polish.
+
+**Product decisions taken:** inactive setups keep full history and can still be logged if the user opens them deliberately, but are never surfaced as active logging prompts. Undo was implemented rather than deferred, since the Toast already supported it. `PeptideLogEntry` is left extensible for slice 3.8's injection sites with **no speculative nullable field** — adding one later is purely additive.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog and the calculator core all have a zero-line diff. `lib/daily` gained three additive helpers and nothing else.
+
 ### Slice 3.6E — Calculator Polish + Custom Conversion 🟡
 
 **Objective:** the automatic conversion model is approved; this finishes it. Professional casing, one compact custom converter for amounts the generated table cannot reach, and the vial unit toggle corrected.

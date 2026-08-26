@@ -13,7 +13,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import type { PeptideRepository } from '../data/PeptideRepository';
 import { vialFrom } from '../model/setups';
-import type { PeptideDefinition, PeptideSetup } from '../model/types';
+import type { PeptideDefinition, PeptideLogEntry, PeptideSetup } from '../model/types';
 import { PeptideProvider, usePeptideContext, type PeptideContextValue } from '../state/PeptideProvider';
 import { usePeptides, type PeptidesView } from '../state/usePeptides';
 
@@ -21,6 +21,7 @@ import { usePeptides, type PeptidesView } from '../state/usePeptides';
 function fakeRepository(seed: { setups?: PeptideSetup[]; definitions?: PeptideDefinition[] } = {}) {
   let setups: PeptideSetup[] = [...(seed.setups ?? [])];
   let definitions: PeptideDefinition[] = [...(seed.definitions ?? [])];
+  const logs = new Map<string, PeptideLogEntry[]>();
 
   const repository: PeptideRepository = {
     async getSetups() {
@@ -34,6 +35,16 @@ function fakeRepository(seed: { setups?: PeptideSetup[]; definitions?: PeptideDe
     },
     async saveCustomDefinitions(next) {
       definitions = [...next];
+    },
+    async getLogs(logDate) {
+      return [...(logs.get(logDate) ?? [])];
+    },
+    async saveLogs(logDate, entries) {
+      if (entries.length === 0) logs.delete(logDate);
+      else logs.set(logDate, [...entries]);
+    },
+    async getRecentLogs() {
+      return [...logs.values()].flat();
     },
   };
 

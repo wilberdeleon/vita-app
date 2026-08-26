@@ -195,6 +195,27 @@ The headline scale is chosen, not fixed. One whole authored unit wins whenever t
 
 **Tools** (`/settings/tools`) is a Settings destination for utilities that stand alone: no tracking, no persistence, no feature ownership. Reached from Settings rather than the dock, and intended to host slice 3.8's injection-site tools. **No placeholder rows** — a dead button is worse than a short list.
 
+**Peptide log entries (slice 3.7).** `PeptideLogEntry` is a **historical snapshot, never a derived view.** Everything needed to render it years from now is copied in at save time: the amount as authored and in canonical micrograms, the local calendar day, the exact instant, and a `calculationSnapshot` of the vial, reconstitution volume, graduation density, and the units and volume they produced.
+
+That is the single most important property in the domain. A setup edited next month must not reach back and change what someone drew last week — so nothing on read is ever recomputed from a setup.
+
+| Concern | Where |
+|---|---|
+| Snapshot taken | `createLogEntry`, once, from the setup as it stands |
+| Edit recomputed | `applyLogChanges`, inside the entry's **own** snapshot |
+| Absent snapshot | normal — a pen user has no vial; logging is never blocked |
+| Never invented | an entry without a snapshot does not gain one by being edited |
+
+**Persistence is day-partitioned** on the shared `createDayKeyedStore`: `vita:v1:peptides:log:<YYYY-MM-DD>`. Setups stay a whole-collection key because a configuration is not day-keyed; a log grows without limit and the day is the unit read and written together. `parseLogEntry` receives the day it was read from and drops an entry whose own `logDate` contradicts its key, which is what stops a mis-filed record being counted twice.
+
+`PeptideProvider` holds a bounded window (`RECENT_DAYS = 60`) rather than all history, reads older days on demand, and gained a **day rollover** — administrations are day-keyed where setups never were, so "today" must change while the app is open.
+
+**Scheduled ≠ logged.** A schedule comes from `PeptideSetup`; an administration comes from a log entry. Nothing derives one from the other, and there is no adherence, streak, or compliance concept anywhere in the model.
+
+**Dates are local, always.** `logDate` is derived from `loggedAt` via `toLogDate`, never from "today" and never from an ISO string's UTC slice — device QA caught the latter in the edit form, where an evening administration opened showing the next day. `lib/daily` gained `formatClockTime`, `toTimeInput` and `fromDateAndTime`; the last builds an instant from local parts rather than parsing a composed string, avoiding the `new Date('YYYY-MM-DD')` trap.
+
+**Extensible for slice 3.8** with no speculative field: injection sites will add an optional `site` to `PeptideLogEntry`, which is a purely additive change.
+
 **Storage keys:** `vita:v1:peptides:setups`, `vita:v1:peptides:customdefs`. Custom definitions live apart from setups so one compound can back several and survives deleting any of them.
 
 **Orphaned setups** — a setup whose definition no longer resolves — are omitted from the lists, counted, and left untouched in storage. Re-pointing one at another definition is the only genuinely destructive option and is never done.

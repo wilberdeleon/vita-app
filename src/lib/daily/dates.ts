@@ -139,3 +139,53 @@ export function weekdayName(logDate: LogDate): string {
 export function weekdayInitial(logDate: LogDate): string {
   return weekdayName(logDate).charAt(0);
 }
+
+/**
+ * The clock time of an ISO timestamp, e.g. `2:15 PM`.
+ *
+ * Hand-formatted rather than via `toLocaleTimeString`, for the same reason
+ * `formatLogDateLong` is: Hermes' Intl support varies by platform and engine
+ * build, and VITA is a US-English product today.
+ *
+ * Promoted here in slice 3.7 because peptide administrations need it and
+ * features cannot import from each other. `src/features/water` still has its
+ * own copy — folding it into this one is a tidy-up for a slice that is
+ * already touching Water, not for this one.
+ */
+export function formatClockTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const suffix = hours < 12 ? 'AM' : 'PM';
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${hour12}:${minutes} ${suffix}`;
+}
+
+/** `14:05` — what the editable time field shows and parses. */
+export function toTimeInput(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+/**
+ * Combines an edited local day and `HH:MM` back into an instant.
+ *
+ * Built from local parts rather than by parsing a composed string, so it
+ * never falls into the `new Date('YYYY-MM-DD')` UTC trap the date model
+ * exists to avoid. Returns `null` for anything unparseable, so a caller
+ * cannot mistake a failed edit for midnight.
+ */
+export function fromDateAndTime(logDate: LogDate, time: string): string | null {
+  if (!isValidLogDate(logDate)) return null;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  const [year, month, day] = logDate.split('-').map(Number);
+  return new Date(year, month - 1, day, hours, minutes).toISOString();
+}

@@ -14,8 +14,10 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * which were real. A peptide schedule is per-setup and often weekly, and VITA
  * never had a "daily peptide goal" to be at 1 of 3 of.
  *
- * There is no dose and no count on this screen because nothing has been
- * administered — administration logging arrives in slice 3.7.
+ * **Real activity since slice 3.7.** A row shows how many administrations
+ * were actually recorded today, from the log — never that one was expected,
+ * due, or missed. Scheduled and logged stay separate concepts, and VITA does
+ * not score one against the other.
  */
 export default function Peptides() {
   const peptides = usePeptides();
