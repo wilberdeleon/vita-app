@@ -14,6 +14,8 @@ type Props = {
   days: readonly StripDay[];
   /** The day whose detail is open, if any. Styled apart from any status. */
   selected?: LogDate;
+  /** Today, so it can be marked without implying anything was recorded. */
+  today: LogDate;
   onSelectDay: (day: StripDay) => void;
 };
 
@@ -21,6 +23,11 @@ const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
 
 /**
  * A week of a routine — readable at a glance, and a control surface.
+ *
+ * **A real week, Monday to Sunday.** The first version showed a rolling
+ * seven days ending today, which produced orders like *Friday → Saturday →
+ * Sunday → Monday*: chronologically correct, and unreadable as a calendar,
+ * because no week starts on Friday.
  *
  * **A strip, not a calendar application.** It answers "how has this week
  * gone?" and lets you correct a day. A month grid would be a second screen
@@ -34,9 +41,13 @@ const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
  * **Dates, not just letters.** `F S S M T W T` could describe any week in
  * history. The number under each initial says which one.
  *
- * **Shape and text carry the meaning, never colour alone.** ✓ taken, – skipped,
- * ○ nothing recorded, blank for a day outside the schedule; and every cell
- * announces its full date and state to assistive technology.
+ * **Colour is added, and carries nothing on its own.** Taken is peptide
+ * purple with a tick; skipped is amber with a dash; nothing recorded is a
+ * grey outline. The glyph and the accessible sentence say the same thing, so
+ * the row survives being unreadable as colour.
+ *
+ * **Amber for skipped, never red.** Skipping on purpose is a choice, not a
+ * failure, and red is the colour this app uses for nothing else here.
  *
  * **Selection and status are styled apart.** The day whose detail is open is
  * marked by its ring; whether it was taken is carried by the glyph and fill.
@@ -46,7 +57,7 @@ const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
  * **Nothing here is scored.** No percentage, no streak, no good week. A day
  * the user did not answer says *No response*, which is the whole truth.
  */
-export function RoutineDayStrip({ days, selected, onSelectDay }: Props) {
+export function RoutineDayStrip({ days, selected, today, onSelectDay }: Props) {
   const { surfaces } = useTheme();
 
   return (
@@ -55,8 +66,22 @@ export function RoutineDayStrip({ days, selected, onSelectDay }: Props) {
         const date = fromLogDate(day.logDate);
         const weekday = WEEKDAY_INITIALS[date.getDay()];
         const taken = day.mark === 'taken';
+        const skipped = day.mark === 'skipped';
         const scheduled = day.mark !== 'not-scheduled';
         const isSelected = selected === day.logDate;
+        const isToday = day.logDate === today;
+
+        const ring = taken ? palette.peptide : skipped ? palette.routineSkipped : surfaces.border;
+        const fill = taken
+          ? `${palette.peptide}26`
+          : skipped
+            ? `${palette.routineSkipped}1F`
+            : 'transparent';
+        const glyphColor = taken
+          ? palette.peptide
+          : skipped
+            ? palette.routineSkipped
+            : surfaces.textTertiary;
 
         return (
           <Pressable
@@ -64,9 +89,11 @@ export function RoutineDayStrip({ days, selected, onSelectDay }: Props) {
             onPress={() => onSelectDay(day)}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
-            accessibilityLabel={`${formatLogDateLong(day.logDate)}, ${
-              scheduled ? 'scheduled' : 'not scheduled'
-            }, ${routineDayMarkLabel(day.mark).toLowerCase()}`}
+            accessibilityLabel={`${formatLogDateLong(day.logDate)}${
+              isToday ? ', today' : ''
+            }, ${scheduled ? 'scheduled' : 'not scheduled'}, ${routineDayMarkLabel(
+              day.mark,
+            ).toLowerCase()}`}
             style={[
               styles.cell,
               isSelected && {
@@ -76,10 +103,12 @@ export function RoutineDayStrip({ days, selected, onSelectDay }: Props) {
             ]}
           >
             <Text style={[styles.weekday, { color: surfaces.textTertiary }]}>{weekday}</Text>
+            {/* Today is marked by weight, not by the status palette — using
+                the taken colour here would say something was recorded. */}
             <Text
               style={[
-                styles.date,
-                { color: isSelected ? palette.peptide : surfaces.textSecondary },
+                isToday ? styles.dateToday : styles.date,
+                { color: isToday ? surfaces.text : surfaces.textSecondary },
               ]}
             >
               {date.getDate()}
@@ -88,15 +117,12 @@ export function RoutineDayStrip({ days, selected, onSelectDay }: Props) {
               style={[
                 styles.dot,
                 {
-                  borderColor: scheduled ? surfaces.border : 'transparent',
-                  backgroundColor: taken ? `${palette.peptide}26` : 'transparent',
+                  borderColor: scheduled ? ring : 'transparent',
+                  backgroundColor: fill,
                 },
-                taken && { borderColor: palette.peptide },
               ]}
             >
-              <Text
-                style={[styles.glyph, { color: taken ? palette.peptide : surfaces.textTertiary }]}
-              >
+              <Text style={[styles.glyph, { color: glyphColor }]}>
                 {routineDayMarkSymbol(day.mark)}
               </Text>
             </View>
@@ -128,6 +154,10 @@ const styles = StyleSheet.create({
   },
   date: {
     ...typography.captionMedium,
+  },
+  dateToday: {
+    ...typography.captionMedium,
+    fontWeight: '700',
   },
   dot: {
     width: 26,

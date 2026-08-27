@@ -67,23 +67,44 @@ export function TakenSheet({
 }: Props) {
   const { surfaces } = useTheme();
 
-  const [amount, setAmount] = useState('');
-  const [unit, setUnit] = useState<MassUnit>(setup.preferredDoseUnit);
+  /**
+   * Seeded from the routine, not from a recommendation.
+   *
+   * Slice 3.9B's whole point: the durable facts were configured once, so the
+   * daily flow reads them instead of asking again. This is the number *this
+   * user* told VITA they use — nothing here is derived from the catalog, a
+   * protocol, or what anyone else takes.
+   *
+   * Seeded once via `useState`, never re-read: editing today's amount must
+   * not be undone by a re-render, and must not write back to the routine.
+   */
+  const [amount, setAmount] = useState(
+    setup.routineAmount ? String(setup.routineAmount.authored.amount) : '',
+  );
+  const [unit, setUnit] = useState<MassUnit>(
+    setup.routineAmount?.authored.unit ?? setup.preferredDoseUnit,
+  );
+  /** Collapsed by default when the routine already answered the question. */
+  const [editingAmount, setEditingAmount] = useState(!setup.routineAmount);
   const [site, setSite] = useState<InjectionSiteSnapshot | undefined>();
   /**
-   * Asked for only when correcting an earlier day.
+   * Defaulted to now, and always editable.
    *
-   * Today's time is genuinely known — it is now. A past day's is not, and
-   * stamping one in silently would put a precise claim into a health record
-   * that nobody made. So the field appears exactly when the answer stops
-   * being obvious.
+   * Today's time is genuinely known, so it is filled in rather than asked
+   * for — nobody should type the current time. But someone logging at 5pm
+   * something they took at 9am must be able to say so, so the field is
+   * present and correctable rather than implicit. A past day opens at noon,
+   * because that one really is unknown.
    */
-  const [time, setTime] = useState('12:00');
+  const [time, setTime] = useState(() =>
+    isToday ? toTimeInput(new Date().toISOString()) : '12:00',
+  );
+  const [notes, setNotes] = useState('');
   const timeValid = /^\d{1,2}:\d{2}$/.test(time.trim());
 
   const parsed = Number(amount.trim());
   const amountValid = amount.trim().length > 0 && Number.isFinite(parsed) && parsed > 0;
-  const valid = amountValid && (isToday || timeValid);
+  const valid = amountValid && timeValid;
 
   const conversion = amountValid
     ? calculateSyringeUnits(
@@ -109,15 +130,14 @@ export function TakenSheet({
      * tomorrow, which is the exact defect slice 3.7 shipped and had to fix.
      */
     const now = new Date();
-    const loggedAt =
-      fromDateAndTime(logDate, isToday ? toTimeInput(now.toISOString()) : time.trim()) ??
-      now.toISOString();
+    const loggedAt = fromDateAndTime(logDate, time.trim()) ?? now.toISOString();
 
     onConfirm({
       authoredAmount: parsed,
       authoredUnit: unit,
       loggedAt,
       ...(site ? { site } : {}),
+      ...(notes.trim() ? { notes: notes.trim() } : {}),
     });
   };
 
@@ -138,6 +158,35 @@ export function TakenSheet({
         </View>
 
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          {/*
+           * The amount reads as settled unless the user says otherwise.
+           *
+           * A text field sitting open invites retyping something that is
+           * already correct; a stated value with one way to change it does
+           * not. Changing it here affects today only — the routine is
+           * untouched, which is why this never writes back.
+           */}
+          {!editingAmount ? (
+            <View style={styles.settled}>
+              <View style={styles.settledText}>
+                <Text style={[styles.settledAmount, { color: surfaces.text }]}>
+                  {amount} {unit}
+                  {conversion?.ok ? ` · ${formatSyringeUnits(conversion.syringeUnits)}` : ''}
+                </Text>
+                <Text style={[styles.settledNote, { color: surfaces.textTertiary }]}>
+                  From your routine
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setEditingAmount(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Change amount for today"
+                hitSlop={8}
+              >
+                <Text style={[styles.change, { color: palette.peptide }]}>Change</Text>
+              </Pressable>
+            </View>
+          ) : (
           <View style={styles.amountRow}>
             <View style={styles.amountField}>
               <NumericField
@@ -167,29 +216,39 @@ export function TakenSheet({
               />
             </View>
           </View>
+          )}
 
-          {/* Only when the setup can actually produce a conversion. A
-              pre-filled pen has no vial, and the amount is recorded anyway. */}
-          {conversion?.ok ? (
+          {/* Only when the setup can actually produce a conversion, and only
+              while editing — the settled row already carries it. A pre-filled
+              pen has no vial, and the amount is recorded anyway. */}
+          {editingAmount && conversion?.ok ? (
             <Text style={[styles.units, { color: palette.peptide }]}>
               {formatSyringeUnits(conversion.syringeUnits)}
             </Text>
           ) : null}
 
-          {isToday ? null : (
-            <TextField
-              label="Time (24-hour)"
-              placeholder="e.g. 08:30"
-              value={time}
-              onChangeText={setTime}
-              accessibilityLabel="Time in 24-hour format"
-            />
-          )}
+          <TextField
+            label="Time"
+            placeholder="e.g. 08:30"
+            value={time}
+            onChangeText={setTime}
+            accessibilityLabel="Time in 24-hour format"
+          />
 
           <SiteSelector
             value={site}
             onChange={setSite}
             lastRecordedLabel={previous?.site.label}
+          />
+
+          {/* One optional line. Nothing is required to record that something
+              happened beyond the amount and the time. */}
+          <TextField
+            label="Notes"
+            placeholder="Optional"
+            value={notes}
+            onChangeText={setNotes}
+            accessibilityLabel="Notes, optional"
           />
 
           <Button
@@ -247,5 +306,23 @@ const styles = StyleSheet.create({
   units: {
     ...typography.bodyMedium,
     marginTop: -spacing.xs,
+  },
+  settled: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+  },
+  settledText: {
+    flex: 1,
+    gap: 2,
+  },
+  settledAmount: {
+    ...typography.heading,
+  },
+  settledNote: {
+    ...typography.caption,
+  },
+  change: {
+    ...typography.caption,
   },
 });

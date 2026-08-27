@@ -41,7 +41,8 @@ export default function CustomPeptide() {
      */
     await addToRoutine(definition.id);
     showToast({ message: `${definition.name} added to your routine.` });
-    router.dismissAll();
+    // Named destination, for the same reason the catalog page uses one.
+    router.navigate('/peptides');
   };
 
   return (

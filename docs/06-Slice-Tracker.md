@@ -750,11 +750,56 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | 🟡 Built — pending founder review |
 | 3.9 | Peptides Routine + UX Integration | Add to Routine, needs-setup/active/inactive, routine detail, daily Taken/Skipped, removal preserving history, Fuel on real state | 🟡 Built — pending founder review |
 | 3.9A | Routine UX Simplification + Interactive Schedule + Catalog Expansion | MG-only vial, Preferred Unit removed, interactive week strip, 96-entry catalog, punctuation-insensitive search | 🟡 Built — pending founder review |
+| 3.9B | Daily Peptide UX + Navigation Corrections | Routine Amount, two-tap Taken, Monday–Sunday week, reminder config, PT-141 display fix | 🟡 Built — pending founder review |
 | 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.9B — Daily Peptide UX + Navigation Corrections 🟡
+
+**Objective:** founder device QA rejected 3.9 on two hard defects and several usability problems. The routine architecture is correct and unchanged; this fixes what was reported.
+
+---
+
+**PT-141 was never missing, and the 3.9A fix was only half of it.** The entry has always existed as **Bremelanotide** with `PT-141` as an alias. 3.9A fixed punctuation matching so `PT141` would resolve — genuinely necessary — and shipped 92 passing tests. Every one of those tests called `searchCatalog` directly, a pure function that was working perfectly. **The screen was never exercised.** Searching `PT-141` returned exactly one row, and that row said:
+
+> **Bremelanotide** · Approved · *Melanocortin Agonist*
+
+The words the user typed appeared nowhere. Someone searching a name they know, shown a compound they don't recognise, reasonably concludes it is absent. **The defect was in the result, not the search.**
+
+**The row now shows the alias that matched** — `Bremelanotide` / *PT-141 · Melanocortin Agonist*. General, not a special case: `Ozempic` surfaces Semaglutide, `Mod GRF 1-29` surfaces CJC-1295. With no query the first alias shows, so browsing works too. Exactly one alias, because an earlier version listed every alias beside the category and truncated mid-word — which is why aliases were removed from the row in the first place, and how this defect was created.
+
+**A route-level regression now drives the real screen**: type into the actual field, read the actual list, tap the actual row, confirm the detail page. `searchCatalog` tests can no longer pass while the screen is broken.
+
+**Add to Routine now names its destination.** `dismissAll()` pops to the root of whatever navigator it finds — outside the Peptides stack that meant landing on Fuel. `router.navigate('/peptides')` is deterministic however the catalog was reached.
+
+---
+
+**Routine Setup is the one hard step; the daily flow reads it.** This is the product change. `routineAmount` stores what the user says they usually use — canonical micrograms plus the authored pair, like the vial — and the Taken sheet is seeded from it. **Never prefilled from the catalog, a protocol, or anyone else's number.**
+
+**Taken is now effectively two taps.** The amount reads as settled (`2 mg · 20 units · From your routine`) with a single *Change* affordance; the time is filled with the current local time; site and notes are optional. A text field sitting open invites retyping something already correct.
+
+**Changing today's amount never writes back to the routine**, and **changing the routine never rewrites history**. Both pinned. A log recorded at 1 mg stays 1 mg forever.
+
+**Time defaults to now and stays editable** — nobody should type the current time, but someone logging at 5pm what they took at 9am must be able to say so.
+
+**The week is a real Monday-to-Sunday calendar.** The rolling window produced *Friday → Saturday → Sunday → Monday*: chronologically correct, unreadable as a calendar, and rejected on sight. Monday-first with date numbers, plus `‹ This week ›` navigation — two arrows and a label, not a calendar screen. Forward is disabled at the current week; a week that has not happened is not offered.
+
+**Colour added, carrying nothing alone.** Taken is peptide purple with a tick; skipped is **amber** with a dash; nothing recorded is a grey outline. **Amber, never red** — skipping on purpose is a choice, not a failure, and red is what this app uses for real errors. A named `routineSkipped` token reuses the existing amber hex rather than inventing a colour. Today is marked by weight, never by the status palette, because colouring it purple would say something was recorded.
+
+**Reminder configuration is stored, not scheduled.** Off by default; On exposes a local `HH:MM`. **No OS notification is registered in this slice** — a test asserts no notification dependency exists. Persisting now means a later slice delivers reminders without a migration. Neutral wording: *Reminder*, never *dose reminder*.
+
+**Routine detail re-tiered again** — Amount, Schedule and Reminder lead; vial preparation is a secondary *Preparation* card; **Edit Routine** replaces *Edit Setup* and sits with Pause and Remove under Actions.
+
+**Deviation, flagged for the founder:** §30 asked for "a blue treatment aligned with the Peptides visual language" for Taken. Peptides' established domain colour is **purple** (`#7C3AED`) and blue (`#2F80ED`) is **Water's** domain colour — using it would signal the wrong feature. Taken uses peptide purple. Say the word and it becomes blue.
+
+**14 new tests, 1029 total** — the real-screen PT-141 path, named navigation, routine amount seeding and canonicalisation, today-only override, historical integrity across a routine change, the local-time default and its correction, reminder default/persistence, the absence of notification dependencies, Monday-first ordering, today marking, and week navigation including the disabled forward edge.
+
+**Verified on device, Light and Dark.**
+
+**Boundary audit:** Water, nutrition, Home, `BodyMap`, `SiteSelector`, the site taxonomy, the log model and all catalog *content* have a zero-line diff — the only catalog change is how a row displays. No notifications, no Food Scanner, no Supabase. Slice 3.10 has not started.
 
 ### Slice 3.9A — Routine UX Simplification + Interactive Schedule + Catalog Expansion 🟡
 

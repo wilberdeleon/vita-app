@@ -19,6 +19,23 @@ export type VialInput = { amount: number; unit: MassUnit };
  * Canonical micrograms and the authored pair are inseparable: storing one
  * without the other leaves a setup whose number contradicts its own label.
  */
+/**
+ * The routine's usual amount, in both representations.
+ *
+ * Same shape and same reasoning as `vialFrom`: canonical micrograms for the
+ * arithmetic, the authored pair so what the user typed survives. Storing one
+ * without the other leaves a routine whose number contradicts its own label.
+ */
+export function routineAmountFrom({
+  amount,
+  unit,
+}: VialInput): NonNullable<PeptideSetup['routineAmount']> {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error(`routineAmountFrom: amount must be a positive finite number, got ${amount}`);
+  }
+  return { amountMcg: toMcg(amount, unit), authored: { amount, unit } };
+}
+
 export function vialFrom({ amount, unit }: VialInput): NonNullable<PeptideSetup['vial']> {
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error(`vialFrom: amount must be a positive finite number, got ${amount}`);
@@ -76,6 +93,8 @@ export function createPeptideSetup(
     preferredEntryMode: draft.preferredEntryMode ?? 'mass',
     ...(draft.displayName ? { displayName: draft.displayName } : {}),
     ...(draft.vial ? { vial: draft.vial } : {}),
+    ...(draft.routineAmount ? { routineAmount: draft.routineAmount } : {}),
+    ...(draft.reminder ? { reminder: draft.reminder } : {}),
     ...(draft.reconstitutionMl !== undefined ? { reconstitutionMl: draft.reconstitutionMl } : {}),
     ...(draft.syringe ? { syringe: draft.syringe } : {}),
     ...(draft.schedule ? { schedule: draft.schedule } : {}),

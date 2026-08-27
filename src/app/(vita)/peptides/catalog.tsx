@@ -8,6 +8,7 @@ import { ClassificationChip } from '../../../features/peptides/components/Classi
 import {
   classificationSpoken,
   formatLabel,
+  rowAlias,
   searchCatalog,
   usePeptideContext,
   type AreaFilter,
@@ -120,14 +121,14 @@ export default function PeptideCatalog() {
       {customResults.length > 0 ? (
         <>
           <SectionHeader title="Your peptides" />
-          <DefinitionPanel definitions={customResults} />
+          <DefinitionPanel definitions={customResults} query={query} />
         </>
       ) : null}
 
       {catalogResults.length > 0 ? (
         <>
           <SectionHeader title={`Catalog · ${catalogResults.length}`} />
-          <DefinitionPanel definitions={catalogResults} />
+          <DefinitionPanel definitions={catalogResults} query={query} />
         </>
       ) : null}
 
@@ -146,22 +147,32 @@ export default function PeptideCatalog() {
   );
 }
 
-function DefinitionPanel({ definitions }: { definitions: readonly PeptideDefinition[] }) {
+function DefinitionPanel({
+  definitions,
+  query,
+}: {
+  definitions: readonly PeptideDefinition[];
+  /** Passed down so a row can show the alias the user actually typed. */
+  query: string;
+}) {
   const { surfaces } = useTheme();
 
   return (
     <Card style={styles.panel}>
       {definitions.map((definition, index) => {
         /**
-         * One descriptor, not four.
+         * The name they typed, then what the compound is.
          *
-         * Category plus aliases plus mechanism produced lines like
-         * "Pro-apoptotic peptidomimetic · FTPP · Prohibitin-targeting p…" —
-         * three facts competing for a space that fits one, and truncating
-         * mid-word. The category alone is the identifying line; the detail
-         * page carries aliases and everything else with room to show them.
+         * An earlier version showed category plus every alias plus mechanism
+         * and produced three facts truncating mid-word, so aliases were cut
+         * entirely — which is how "PT-141" came to return a row saying only
+         * "Bremelanotide" and be reported as missing. Exactly one alias comes
+         * back: the one that matched the search, or the first, which is
+         * enough for someone to recognise what they were looking for.
          */
-        const detail = definition.category ? formatLabel(definition.category) : '';
+        const alias = rowAlias(definition, query);
+        const category = definition.category ? formatLabel(definition.category) : '';
+        const detail = [alias, category].filter(Boolean).join(' · ');
 
         return (
           <View
@@ -172,9 +183,9 @@ function DefinitionPanel({ definitions }: { definitions: readonly PeptideDefinit
               onPress={() => router.push(`/peptides/catalog/${encodeURIComponent(definition.id)}`)}
               accessibilityRole="button"
               accessibilityLabel={[
-                definition.name,
+                alias ? `${definition.name}, also known as ${alias}` : definition.name,
                 classificationSpoken(definition.classification),
-                detail,
+                category,
                 'View details',
               ]
                 .filter(Boolean)

@@ -14,14 +14,14 @@ import { LogRow } from '../../../../features/peptides/components/LogRow';
 import { RoutineDaySheet } from '../../../../features/peptides/components/RoutineDaySheet';
 import { RoutineDayStrip, type StripDay } from '../../../../features/peptides/components/RoutineDayStrip';
 import { TakenSheet } from '../../../../features/peptides/components/TakenSheet';
-import { formatClockTime, type LogDate } from '../../../../lib/daily';
+import { formatClockTime, fromLogDate, type LogDate } from '../../../../lib/daily';
 import {
   formatMass,
   routineDayMark,
   routineStateLabel,
   usePeptideContext,
   useResolvedSetup,
-  useRoutineHistory,
+  useRoutineWeek,
 } from '../../../../lib/peptides';
 import { palette, radii, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -69,7 +69,8 @@ export default function RoutineDetail() {
   /** The day being recorded, when the Taken sheet is open. */
   const [taking, setTaking] = useState<LogDate | null>(null);
   const [openDay, setOpenDay] = useState<StripDay | null>(null);
-  const strip = useRoutineHistory(resolved?.setup, 7);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const strip = useRoutineWeek(resolved?.setup, weekOffset);
 
   if (!resolved) {
     return (
@@ -211,21 +212,77 @@ export default function RoutineDetail() {
         </>
       ) : null}
 
+      {/*
+        * What the routine *is*, in the order someone asks it: how much, how
+        * often, and whether they asked to be reminded. Vial preparation is
+        * real but secondary — it belongs with editing, not with the daily
+        * question.
+        */}
       <SectionHeader title="Routine" />
       <Card style={styles.panel}>
+        {setup.routineAmount ? (
+          <SummaryRow
+            label="Amount"
+            value={`${setup.routineAmount.authored.amount} ${setup.routineAmount.authored.unit}`}
+          />
+        ) : null}
         <SummaryRow label="Schedule" value={scheduleLabel ?? 'Not set'} />
+        {setup.reminder?.enabled && setup.reminder.timeLocal ? (
+          <SummaryRow label="Reminder" value={setup.reminder.timeLocal} />
+        ) : null}
         {setup.startDate ? <SummaryRow label="Started" value={setup.startDate} /> : null}
         {/* Seven days, shape and text — never colour alone. */}
-        {setup.schedule ? (
-          <View style={styles.stripWrap}>
+      </Card>
+
+      {/*
+        * A real Monday-to-Sunday week, with a way to step through weeks.
+        *
+        * The rolling window it replaces was chronologically correct and
+        * unreadable — no week starts on Friday. Navigation is two arrows and
+        * a label rather than a calendar screen; seeing last week is a normal
+        * thing to want, and building a month grid to answer it is not.
+        */}
+      {setup.schedule ? (
+        <>
+          <SectionHeader title="This week" />
+          <Card style={styles.weekCard}>
+            <View style={styles.weekNav}>
+              <Pressable
+                onPress={() => setWeekOffset((n) => n - 1)}
+                accessibilityRole="button"
+                accessibilityLabel="Previous week"
+                hitSlop={10}
+                style={styles.weekArrow}
+              >
+                <Ionicons name="chevron-back" size={18} color={surfaces.textSecondary} />
+              </Pressable>
+              <Text style={[styles.weekLabel, { color: surfaces.text }]}>
+                {weekOffset === 0
+                  ? 'This week'
+                  : weekOffset === -1
+                    ? 'Last week'
+                    : weekRangeLabel(strip)}
+              </Text>
+              <Pressable
+                onPress={() => setWeekOffset((n) => Math.min(0, n + 1))}
+                accessibilityRole="button"
+                accessibilityLabel="Next week"
+                disabled={weekOffset >= 0}
+                hitSlop={10}
+                style={[styles.weekArrow, weekOffset >= 0 && styles.weekArrowDisabled]}
+              >
+                <Ionicons name="chevron-forward" size={18} color={surfaces.textSecondary} />
+              </Pressable>
+            </View>
             <RoutineDayStrip
               days={strip}
               selected={openDay?.logDate}
+              today={today}
               onSelectDay={setOpenDay}
             />
-          </View>
-        ) : null}
-      </Card>
+          </Card>
+        </>
+      ) : null}
 
       <SectionHeader title="Recent history" />
       {logs.length === 0 ? (
@@ -274,22 +331,28 @@ export default function RoutineDetail() {
         * answering today is the daily act. Preferred unit is gone from the
         * summary along with its control.
         */}
-      <SectionHeader title="Setup" />
+      {/*
+        * "Preparation", not "Setup" — the vial and water describe how the
+        * thing was made up, which is a different question from what the
+        * routine is. Editing everything lives under Edit Routine below.
+        */}
+      <SectionHeader title="Preparation" />
       <Card style={styles.panel}>
         <SummaryRow label="Vial" value={vialSummary} />
-        <Pressable
-          onPress={() => router.push(`/peptides/setup/${encodeURIComponent(setup.id)}`)}
-          accessibilityRole="button"
-          accessibilityLabel="Edit setup"
-          style={[styles.editRow, { borderTopColor: surfaces.border }]}
-        >
-          <Text style={[styles.editLabel, { color: palette.peptide }]}>Edit Setup</Text>
-          <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
-        </Pressable>
       </Card>
 
       <SectionHeader title="Actions" />
       <Card style={styles.panel}>
+        <Pressable
+          onPress={() => router.push(`/peptides/setup/${encodeURIComponent(setup.id)}`)}
+          accessibilityRole="button"
+          accessibilityLabel="Edit routine"
+          style={styles.actionRow}
+        >
+          <Ionicons name="create-outline" size={18} color={surfaces.textSecondary} />
+          <Text style={[styles.actionLabel, { color: surfaces.text }]}>Edit Routine</Text>
+        </Pressable>
+
         <Pressable
           onPress={async () => {
             const next = setup.routineState === 'active' ? 'inactive' : 'active';
@@ -298,7 +361,7 @@ export default function RoutineDetail() {
           }}
           accessibilityRole="button"
           accessibilityLabel={setup.routineState === 'active' ? 'Pause routine' : 'Resume routine'}
-          style={styles.actionRow}
+          style={[styles.actionRow, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border }]}
         >
           <Ionicons
             name={setup.routineState === 'active' ? 'pause-circle-outline' : 'play-circle-outline'}
@@ -383,6 +446,16 @@ export default function RoutineDetail() {
   );
 }
 
+/** "12 – 18 May", for a week that is neither this one nor last. */
+function weekRangeLabel(days: readonly { logDate: string }[]): string {
+  if (days.length === 0) return '';
+  const short = (value: string) => {
+    const date = fromLogDate(value as never);
+    return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })}`;
+  };
+  return `${short(days[0].logDate)} – ${short(days[days.length - 1].logDate)}`;
+}
+
 /** One label-and-value line. Setup reads as facts here, not as a form. */
 function SummaryRow({ label, value }: { label: string; value: string }) {
   const { surfaces } = useTheme();
@@ -451,6 +524,23 @@ const styles = StyleSheet.create({
     ...typography.body,
     flexShrink: 1,
     textAlign: 'right',
+  },
+  weekCard: {
+    gap: spacing.m,
+  },
+  weekNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  weekArrow: {
+    padding: spacing.xs,
+  },
+  weekArrowDisabled: {
+    opacity: 0.3,
+  },
+  weekLabel: {
+    ...typography.captionMedium,
   },
   editRow: {
     flexDirection: 'row',

@@ -70,6 +70,44 @@ function parseVial(value: unknown): PeptideSetup['vial'] | null {
   };
 }
 
+/**
+ * The routine's usual amount (slice 3.9B).
+ *
+ * Validated exactly as strictly as the vial, and for the same reason: it
+ * feeds the calculator, so a plausible-but-wrong number is worse than a
+ * missing one and invisible either way. A malformed record drops the amount
+ * and keeps the routine — the daily flow then asks, which is the behaviour
+ * for a routine that never had one.
+ */
+function parseRoutineAmount(value: unknown): PeptideSetup['routineAmount'] | null {
+  if (!isRecord(value)) return null;
+  if (!isPositiveNumber(value.amountMcg)) return null;
+  if (!isRecord(value.authored)) return null;
+  if (!isPositiveNumber(value.authored.amount) || !isMassUnit(value.authored.unit)) return null;
+
+  return {
+    amountMcg: value.amountMcg,
+    authored: { amount: value.authored.amount, unit: value.authored.unit as MassUnit },
+  };
+}
+
+/**
+ * A stored reminder preference.
+ *
+ * `enabled` is the only required part. A reminder switched on with a
+ * malformed time is kept as on-with-no-time rather than discarded, because
+ * the user's intent to be reminded is the part worth preserving.
+ */
+function parseReminder(value: unknown): PeptideSetup['reminder'] | null {
+  if (!isRecord(value)) return null;
+  if (typeof value.enabled !== 'boolean') return null;
+  const time =
+    typeof value.timeLocal === 'string' && /^\d{1,2}:\d{2}$/.test(value.timeLocal.trim())
+      ? value.timeLocal.trim()
+      : undefined;
+  return { enabled: value.enabled, ...(time ? { timeLocal: time } : {}) };
+}
+
 function parseSyringe(value: unknown): PeptideSetup['syringe'] | null {
   if (!isRecord(value)) return null;
   if (!isPositiveNumber(value.unitsPerMl)) return null;
@@ -95,6 +133,8 @@ function parseSetup(value: unknown): PeptideSetup | null {
 
   const vial = parseVial(value.vial);
   const syringe = parseSyringe(value.syringe);
+  const routineAmount = parseRoutineAmount(value.routineAmount);
+  const reminder = parseReminder(value.reminder);
 
   /**
    * Pre-3.9 setups carry no `routineState` and are mapped by `active`.
@@ -130,6 +170,8 @@ function parseSetup(value: unknown): PeptideSetup | null {
      */
     ...(isNonEmptyString(value.displayName) ? { displayName: value.displayName } : {}),
     ...(vial ? { vial } : {}),
+    ...(routineAmount ? { routineAmount } : {}),
+    ...(reminder ? { reminder } : {}),
     ...(isPositiveNumber(value.reconstitutionMl) ? { reconstitutionMl: value.reconstitutionMl } : {}),
     ...(syringe ? { syringe } : {}),
     ...(isPeptideSchedule(value.schedule) ? { schedule: value.schedule } : {}),

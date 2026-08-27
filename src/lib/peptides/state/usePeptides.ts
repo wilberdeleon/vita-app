@@ -178,34 +178,51 @@ export function useRoutineForDefinition(definitionId: string): ResolvedSetup | n
 }
 
 /**
- * The last `days` calendar days for one routine, oldest first.
+ * One calendar week for a routine, Monday to Sunday.
  *
- * A compact strip rather than a calendar application: enough to answer "how
- * has this week gone?" without becoming a second screen. Days the schedule
- * does not cover are included and marked `not-scheduled`, so the strip reads
- * as a week rather than as a gapped list.
+ * **A real week, not a rolling window** (slice 3.9B). The previous version
+ * showed the last seven days ending today, which produced orders like
+ * *Friday → Saturday → Sunday → Monday* — chronologically correct and
+ * unreadable as a calendar, because no week starts on Friday. The founder
+ * rejected it on sight. Monday-first is the fixed order now, and the offset
+ * chooses which week.
+ *
+ * Days the schedule does not cover are included and marked `not-scheduled`,
+ * so the row reads as a week rather than as a gapped list.
  */
-export function useRoutineHistory(
+export function useRoutineWeek(
   setup: PeptideSetup | undefined,
-  days = 7,
+  weekOffset = 0,
 ): Array<{ logDate: LogDate; mark: RoutineDayMark }> {
   const { routineStatuses, today } = usePeptideContext();
 
   return useMemo(() => {
     if (!setup) return [];
     const [year, month, day] = today.split('-').map(Number);
-    const strip: Array<{ logDate: LogDate; mark: RoutineDayMark }> = [];
 
-    for (let offset = days - 1; offset >= 0; offset -= 1) {
-      // Local-calendar arithmetic, never `new Date('YYYY-MM-DD')` — that
-      // parses as UTC and shifts the whole strip for anyone west of London.
-      const date = new Date(year, month - 1, day - offset);
+    /**
+     * Local-calendar arithmetic only — never `new Date('YYYY-MM-DD')`, which
+     * parses as UTC and shifts the whole week for anyone west of London.
+     */
+    const anchor = new Date(year, month - 1, day + weekOffset * 7);
+    // getDay() is Sunday-first; this converts to a Monday-first index so
+    // subtracting it lands on Monday rather than on the previous Sunday.
+    const mondayIndex = (anchor.getDay() + 6) % 7;
+    const monday = new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() - mondayIndex,
+    );
+
+    const week: Array<{ logDate: LogDate; mark: RoutineDayMark }> = [];
+    for (let offset = 0; offset < 7; offset += 1) {
+      const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + offset);
       const logDate =
         `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
           date.getDate(),
         ).padStart(2, '0')}` as LogDate;
 
-      strip.push({
+      week.push({
         logDate,
         mark: routineDayMark({
           schedule: setup.schedule,
@@ -216,9 +233,10 @@ export function useRoutineHistory(
       });
     }
 
-    return strip;
-  }, [setup, days, routineStatuses, today]);
+    return week;
+  }, [setup, weekOffset, routineStatuses, today]);
 }
+
 
 /**
  * A one-line summary for Fuel's Peptides tile.

@@ -16,6 +16,9 @@ import {
   WEEKDAY_INDEXES,
   parseAmount,
   fromMcg,
+  MASS_UNITS,
+  convertAuthoredAmount,
+  routineAmountFrom,
   toMcg,
   sortedDays,
   vialFrom,
@@ -113,6 +116,21 @@ export function SetupForm({ initial, onChange }: Props) {
   const [everyN, setEveryN] = useState(
     initial?.schedule?.kind === 'everyNDays' ? initial.schedule.n : 2,
   );
+  /**
+   * What this routine usually uses — configured once, reused every day.
+   *
+   * The whole point of slice 3.9B: the durable facts live here, and the daily
+   * flow reads them rather than asking again. Never prefilled from a catalog
+   * value or a protocol; it is blank until the user types their own number.
+   */
+  const [routineAmount, setRoutineAmount] = useState(
+    initial?.routineAmount ? String(initial.routineAmount.authored.amount) : '',
+  );
+  const [routineUnit, setRoutineUnit] = useState<MassUnit>(
+    initial?.routineAmount?.authored.unit ?? 'mg',
+  );
+  const [reminderOn, setReminderOn] = useState(initial?.reminder?.enabled ?? false);
+  const [reminderTime, setReminderTime] = useState(initial?.reminder?.timeLocal ?? '09:00');
   const [startDate, setStartDate] = useState<LogDate>(initial?.startDate ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
 
@@ -127,6 +145,9 @@ export function SetupForm({ initial, onChange }: Props) {
    */
   const vialInvalid = vialAmount.trim().length > 0 && vialParsed === null;
   const reconInvalid = reconstitution.trim().length > 0 && reconParsed === null;
+  const routineParsed = parseAmount(routineAmount);
+  const routineInvalid = routineAmount.trim().length > 0 && routineParsed === null;
+  const reminderInvalid = reminderOn && !/^\d{1,2}:\d{2}$/.test(reminderTime.trim());
 
   const emit = (overrides: Partial<Record<string, unknown>> = {}) => {
     const state = {
@@ -135,6 +156,10 @@ export function SetupForm({ initial, onChange }: Props) {
       reconstitution,
       unitsPerMl,
       doseUnit,
+      routineAmount,
+      routineUnit,
+      reminderOn,
+      reminderTime,
       scheduleKind,
       days,
       everyN,
@@ -147,6 +172,10 @@ export function SetupForm({ initial, onChange }: Props) {
       reconstitution: string;
       unitsPerMl: number | null;
       doseUnit: MassUnit;
+      routineAmount: string;
+      routineUnit: MassUnit;
+      reminderOn: boolean;
+      reminderTime: string;
       scheduleKind: ScheduleKind | null;
       days: number[];
       everyN: number;
@@ -156,11 +185,15 @@ export function SetupForm({ initial, onChange }: Props) {
 
     const vial = parseAmount(state.vialAmount);
     const recon = parseAmount(state.reconstitution);
+    const routine = parseAmount(state.routineAmount);
     const dateOk = state.startDate.length === 0 || isValidLogDate(state.startDate);
+    const timeOk = !state.reminderOn || /^\d{1,2}:\d{2}$/.test(state.reminderTime.trim());
     const valid =
       !(state.vialAmount.trim().length > 0 && vial === null) &&
       !(state.reconstitution.trim().length > 0 && recon === null) &&
-      dateOk;
+      !(state.routineAmount.trim().length > 0 && routine === null) &&
+      dateOk &&
+      timeOk;
 
     let schedule: PeptideSchedule | undefined;
     switch (state.scheduleKind) {
@@ -186,6 +219,11 @@ export function SetupForm({ initial, onChange }: Props) {
       {
         displayName: state.displayName.trim() || undefined,
         vial: vial !== null ? vialFrom({ amount: vial, unit: 'mg' }) : undefined,
+        routineAmount:
+          routine !== null ? routineAmountFrom({ amount: routine, unit: state.routineUnit }) : undefined,
+        reminder: state.reminderOn
+          ? { enabled: true, timeLocal: state.reminderTime.trim() }
+          : { enabled: false },
         reconstitutionMl: recon ?? undefined,
         syringe: state.unitsPerMl !== null ? { unitsPerMl: state.unitsPerMl } : undefined,
         preferredDoseUnit: state.doseUnit,
@@ -301,6 +339,51 @@ export function SetupForm({ initial, onChange }: Props) {
         How amounts are shown for this peptide. A display preference, not a recommended amount.
       </Text>
 
+      {/*
+        * What this routine usually is — the durable half of the form.
+        *
+        * Configured once so the daily flow can stop asking. Amount sits above
+        * schedule because it is the thing users were retyping every day.
+        */}
+      <SectionHeader title="Routine" />
+      <View style={styles.row}>
+        <View style={styles.grow}>
+          <NumericField
+            label={`Amount (${routineUnit})`}
+            placeholder="e.g. 2"
+            value={routineAmount}
+            onChangeText={(text) => {
+              setRoutineAmount(text);
+              emit({ routineAmount: text });
+            }}
+            accessibilityLabel={`Routine amount in ${routineUnit}, optional`}
+          />
+        </View>
+        <View style={styles.unitControl}>
+          <SegmentedTabs
+            options={MASS_UNITS as readonly string[]}
+            selectedIndex={MASS_UNITS.indexOf(routineUnit)}
+            onChange={(index) => {
+              // Restates rather than reinterprets, exactly as every other
+              // unit toggle in this app does.
+              const next = MASS_UNITS[index];
+              const converted = convertAuthoredAmount(routineAmount, routineUnit, next);
+              setRoutineAmount(converted);
+              setRoutineUnit(next);
+              emit({ routineAmount: converted, routineUnit: next });
+            }}
+            activeColor={palette.peptide}
+            groupLabel="Routine amount unit"
+          />
+        </View>
+      </View>
+      {routineInvalid ? (
+        <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
+      ) : null}
+      <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+        The amount you usually use. Used to fill in your daily log — you can change it any day.
+      </Text>
+
       <SectionHeader title="Schedule" />
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>
         Optional, and entirely yours to choose.
@@ -346,6 +429,47 @@ export function SetupForm({ initial, onChange }: Props) {
               emit({ everyN: next });
             }}
           />
+        </>
+      ) : null}
+
+      {/*
+        * A reminder the user sets for themselves.
+        *
+        * **Stored, not scheduled.** No OS notification is registered in this
+        * slice; persisting the preference now means a later slice can deliver
+        * it without a migration, and means the setting survives in the
+        * meantime. Neutral wording on purpose — "reminder", never "dose
+        * reminder" or "medication reminder".
+        */}
+      <SectionHeader title="Reminder" />
+      <SegmentedTabs
+        options={['Off', 'On']}
+        selectedIndex={reminderOn ? 1 : 0}
+        onChange={(index) => {
+          setReminderOn(index === 1);
+          emit({ reminderOn: index === 1 });
+        }}
+        activeColor={palette.peptide}
+        groupLabel="Reminder"
+      />
+      {reminderOn ? (
+        <>
+          <TextField
+            label="Time"
+            placeholder="e.g. 09:00"
+            value={reminderTime}
+            onChangeText={(text) => {
+              setReminderTime(text);
+              emit({ reminderTime: text });
+            }}
+            accessibilityLabel="Reminder time, 24-hour"
+          />
+          {reminderInvalid ? (
+            <Text style={[styles.error, { color: palette.fat }]}>Enter a time like 09:00.</Text>
+          ) : null}
+          <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+            Saved with your routine. Reminders aren't sent yet.
+          </Text>
         </>
       ) : null}
 

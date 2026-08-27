@@ -150,6 +150,44 @@ export function searchCatalog(
   });
 }
 
+/**
+ * The alias a query matched, if it matched one rather than the name.
+ *
+ * Exists because search working is not the same as search *appearing* to
+ * work. Someone types "PT-141", the catalog correctly returns Bremelanotide,
+ * and the row says only "Bremelanotide" — so the person who typed the name
+ * they know sees a compound they don't recognise and concludes it is missing.
+ * That is precisely what happened in founder QA, twice, with a search
+ * function that was behaving perfectly.
+ *
+ * Returning the matched alias lets a result show the user the words they
+ * typed, which is the difference between finding something and being told it
+ * is somewhere.
+ */
+export function matchedAlias(
+  definition: PeptideDefinition,
+  query: string,
+): string | undefined {
+  const trimmed = normalize(query);
+  if (trimmed.length === 0) return undefined;
+  // A name match needs no explaining — the row already says it.
+  if (normalize(definition.name).includes(trimmed)) return undefined;
+  return (definition.aliases ?? []).find((alias) => normalize(alias).includes(trimmed));
+}
+
+/**
+ * The one alias worth showing on a compact row.
+ *
+ * Prefers whatever the user just searched for; falls back to the first alias
+ * so browsing works too — someone scanning for Ozempic should not have to
+ * know it is Semaglutide. Deliberately **one**: an earlier version listed
+ * every alias beside the category and produced three facts competing for a
+ * space that fits one, truncating mid-word.
+ */
+export function rowAlias(definition: PeptideDefinition, query: string): string | undefined {
+  return matchedAlias(definition, query) ?? definition.aliases?.[0];
+}
+
 /** A blend component, resolved to the definition it names. */
 export type ResolvedComponent = {
   definition: PeptideDefinition;

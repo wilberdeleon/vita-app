@@ -365,6 +365,40 @@ export type PeptideSetup = {
    */
   syringe?: { unitsPerMl: number };
 
+  /**
+   * The amount this routine usually uses (slice 3.9B).
+   *
+   * **User-authored configuration, never a recommendation.** VITA does not
+   * derive it from the catalog, from a protocol, or from what anyone else
+   * takes — it is the number this person told it they use, stored once so
+   * they stop retyping it every single day.
+   *
+   * Both representations, for the same reason the vial keeps both: canonical
+   * micrograms for arithmetic, and what they actually typed so a routine
+   * entered as `500 mcg` never redisplays as `0.5 mg`.
+   *
+   * Optional throughout. Someone who tracks a schedule but not an amount is a
+   * real user, and the daily flow simply asks when this is absent.
+   */
+  routineAmount?: {
+    amountMcg: number;
+    authored: { amount: number; unit: MassUnit };
+  };
+
+  /**
+   * A reminder the user set for themselves (slice 3.9B).
+   *
+   * **Configuration only — nothing is scheduled with the OS in this slice.**
+   * Persisted now so the setting survives, and so a later slice can deliver
+   * notifications without a migration. `timeLocal` is a local wall-clock
+   * `HH:MM`, never an instant: "9:00" means nine in the morning wherever the
+   * user is, which is not a fact a timestamp can carry.
+   */
+  reminder?: {
+    enabled: boolean;
+    timeLocal?: string;
+  };
+
   /** Display preference for masses. A preference, never a recommendation. */
   preferredDoseUnit: MassUnit;
 

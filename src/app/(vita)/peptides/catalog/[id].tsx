@@ -98,18 +98,18 @@ export default function PeptideDetail() {
             return;
           }
           /**
-           * Adding is not configuring, and it ends on the Peptides screen.
+           * Adding is not configuring, and it ends on Peptides — by name.
            *
-           * `back()` returned to the catalog list, which is where the user
-           * had *been* rather than where the thing they just added now lives.
-           * Dismissing the whole catalog stack lands them on Peptides with
-           * Today, Needs setup, Active and Inactive in front of them, and the
-           * new routine visible under Needs setup. Setup happens when they
-           * are ready, not as a consequence of being interested.
+           * `back()` returned to the catalog list, and `dismissAll()` was
+           * worse: it pops to the root of whatever navigator it finds, which
+           * outside the Peptides stack meant landing on Fuel. Naming the
+           * destination makes it deterministic however the catalog was
+           * reached — the user ends on the screen that now contains the thing
+           * they just added, every time.
            */
           await addToRoutine(definition.id);
           showToast({ message: `${definition.name} added to your routine.` });
-          router.dismissAll();
+          router.navigate('/peptides');
         }}
       />
 

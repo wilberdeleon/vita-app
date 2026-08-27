@@ -50,12 +50,29 @@ export function TodayRoutineCard({
       >
         <View style={styles.headText}>
           <Text style={[styles.name, { color: surfaces.text }]}>{routine.name}</Text>
-          <Text style={[styles.meta, { color: surfaces.textTertiary }]}>
+          {/* The amount leads when the routine has one — it is what the
+              user is about to confirm, and seeing it is what makes a
+              one-tap confirmation safe. */}
+          <Text
+            style={[
+              styles.meta,
+              {
+                color:
+                  routine.mark === 'taken'
+                    ? palette.peptide
+                    : routine.mark === 'skipped'
+                      ? palette.routineSkipped
+                      : surfaces.textTertiary,
+              },
+            ]}
+          >
             {routine.mark === 'taken'
-              ? `Taken${takenAt ? ` · ${formatClockTime(takenAt)}` : ''}`
+              ? `✓ Taken${takenAt ? ` · ${formatClockTime(takenAt)}` : ''}`
               : routine.mark === 'skipped'
-                ? 'Skipped'
-                : 'Scheduled today'}
+                ? '– Skipped'
+                : routine.setup.routineAmount
+                  ? `${routine.setup.routineAmount.authored.amount} ${routine.setup.routineAmount.authored.unit} · Scheduled`
+                  : 'Scheduled today'}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />

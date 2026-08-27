@@ -16,12 +16,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 let mockRouteId = '';
 const mockPush = jest.fn();
 const mockBack = jest.fn();
-const mockDismissAll = jest.fn();
+const mockNavigate = jest.fn();
 jest.mock('expo-router', () => ({
   router: {
     push: (...args: unknown[]) => mockPush(...args),
     back: (...args: unknown[]) => mockBack(...args),
-    dismissAll: (...args: unknown[]) => mockDismissAll(...args),
+    navigate: (...args: unknown[]) => mockNavigate(...args),
+    dismissAll: jest.fn(),
   },
   useLocalSearchParams: () => ({ id: mockRouteId }),
 }));
@@ -43,7 +44,7 @@ import {
   type PeptideSetup,
   type RoutineDayStatus,
 } from '../../../lib/peptides';
-import { formatLogDateLong, todayLogDate } from '../../../lib/daily';
+import { formatLogDateLong, todayLogDate, toTimeInput } from '../../../lib/daily';
 import { searchCatalog } from '../../../lib/peptides/data/catalog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { asyncStoragePeptideRepository as realRepository } from '../../../lib/peptides/data/asyncStorageRepository';
@@ -180,7 +181,7 @@ afterEach(async () => {
   mounted = null;
   mockPush.mockClear();
   mockBack.mockClear();
-  mockDismissAll.mockClear();
+  mockNavigate.mockClear();
   if (tree) await act(async () => tree.unmount());
 });
 
@@ -251,10 +252,15 @@ describe('routine state', () => {
 
     await press(tree, 'Add to Routine');
 
-    // Dismissing the catalog stack lands on Peptides, where the thing they
-    // just added now lives — `back()` returned them to the search results.
-    // And no form: deciding to track something must not cost an interrogation.
-    expect(mockDismissAll).toHaveBeenCalled();
+    /**
+     * The destination is named, not inferred.
+     *
+     * `back()` returned to the search results, and `dismissAll()` popped to
+     * whatever navigator root it found — which outside the Peptides stack
+     * meant Fuel. And no form either: deciding to track something must not
+     * cost an interrogation.
+     */
+    expect(mockNavigate).toHaveBeenCalledWith('/peptides');
     expect(mockPush).not.toHaveBeenCalled();
   });
 
@@ -701,15 +707,15 @@ describe('the routine screen', () => {
     expect(rendered).toContain('Scheduled today');
     // The vial reads as a value, not as an editable field.
     expect(rendered).toContain('20 mg vial · 2 mL reconstitution');
-    expect(control(tree, 'Edit Setup')).toBeDefined();
+    expect(control(tree, 'Edit Routine')).toBeDefined();
   });
 
-  it('sends Edit Setup to the setup route', async () => {
+  it('sends Edit Routine to the setup route', async () => {
     mockRouteId = 'setup-1';
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<RoutineDetail />, fake.repository);
 
-    await press(tree, 'Edit Setup');
+    await press(tree, 'Edit Routine');
     expect(mockPush).toHaveBeenCalledWith('/peptides/setup/setup-1');
   });
 
@@ -987,7 +993,7 @@ describe('a compound added by the catalog expansion', () => {
     // The state-aware CTA is present near the top, as on every other page.
     expect(control(detail, 'Add to Routine')).toBeDefined();
     await press(detail, 'Add to Routine');
-    expect(mockDismissAll).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/peptides');
     await act(async () => detail.unmount());
     mounted = null;
 
@@ -1027,6 +1033,234 @@ describe('a compound added by the catalog expansion', () => {
     ] as const) {
       expect(searchCatalog(query).map((entry) => entry.id)).toContain(id);
     }
+  });
+});
+
+/* ── 3.9B: setup once, log fast ─────────────────────────────────────── */
+
+describe('routine amount', () => {
+  const WITH_AMOUNT = () =>
+    setupFixture({
+      routineAmount: { amountMcg: 2000, authored: { amount: 2, unit: 'mg' } },
+    });
+
+  it('fills the daily flow in from the routine, not from a recommendation', async () => {
+    const fake = repositoryWith([WITH_AMOUNT()]);
+    const tree = await mount(<Peptides />, fake.repository);
+    await pressByLabel(tree, 'Record Retatrutide as taken');
+
+    // Stated, not asked for — and the conversion comes with it.
+    expect(screen(tree)).toContain('2 mg');
+    expect(screen(tree)).toContain('20 units');
+    expect(screen(tree)).toContain('From your routine');
+  });
+
+  it('records that amount without the user typing anything', async () => {
+    const fake = repositoryWith([WITH_AMOUNT()]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await press(tree, 'Confirm Taken');
+
+    const log = fake.logs()[0];
+    expect(log.amount.authoredAmount).toBe(2);
+    expect(log.amount.authoredUnit).toBe('mg');
+    expect(log.calculationSnapshot?.calculatedUnits).toBe(20);
+  });
+
+  it('still asks when the routine has no amount', async () => {
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<Peptides />, fake.repository);
+    await pressByLabel(tree, 'Record Retatrutide as taken');
+
+    // Someone who tracks a schedule but not an amount is a real user.
+    expect(screen(tree)).not.toContain('From your routine');
+    const field = tree.root
+      .findAllByType(TextInput)
+      .find((node) => /^Amount in/.test(String(node.props.accessibilityLabel ?? '')));
+    expect(field).toBeDefined();
+  });
+
+  it("changes today's log without touching the routine", async () => {
+    const fake = repositoryWith([WITH_AMOUNT()]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Change amount for today');
+    await type(tree, /^Amount in mg/, '2.5');
+    await press(tree, 'Confirm Taken');
+
+    expect(fake.logs()[0].amount.authoredAmount).toBe(2.5);
+    // The routine is configuration, and today is an event. One does not
+    // rewrite the other.
+    expect(fake.setups()[0].routineAmount?.authored.amount).toBe(2);
+  });
+
+  it('leaves historical logs alone when the routine amount changes', async () => {
+    const old = logFixture({
+      id: 'old',
+      logDate: '2026-08-20',
+      amount: { authoredAmount: 1, authoredUnit: 'mg', amountMcg: 1000 },
+    });
+    const fake = repositoryWith([WITH_AMOUNT()], [old]);
+
+    mockRouteId = 'setup-1';
+    const setup = await mount(<EditPeptideSetup />, fake.repository);
+    await type(setup, /^Routine amount in mg/, '3');
+    await press(setup, 'Save Changes');
+    await act(async () => setup.unmount());
+    mounted = null;
+
+    // Future convenience changed; what happened on the 20th did not.
+    expect(fake.setups()[0].routineAmount?.authored.amount).toBe(3);
+    expect(fake.logs().find((entry) => entry.id === 'old')!.amount.authoredAmount).toBe(1);
+  });
+
+  it('canonicalises the routine amount to micrograms', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    await type(tree, /^Routine amount in mg/, '2');
+    await press(tree, 'Save Changes');
+
+    expect(fake.setups()[0].routineAmount).toEqual({
+      amountMcg: 2000,
+      authored: { amount: 2, unit: 'mg' },
+    });
+  });
+});
+
+describe('the daily time', () => {
+  it('defaults to now and is editable', async () => {
+    const fake = repositoryWith([
+      setupFixture({ routineAmount: { amountMcg: 2000, authored: { amount: 2, unit: 'mg' } } }),
+    ]);
+    const tree = await mount(<Peptides />, fake.repository);
+    await pressByLabel(tree, 'Record Retatrutide as taken');
+
+    const field = tree.root
+      .findAllByType(TextInput)
+      .find((node) => node.props.accessibilityLabel === 'Time in 24-hour format');
+    expect(field).toBeDefined();
+
+    const now = new Date();
+    const expected = `${String(now.getHours()).padStart(2, '0')}:${String(
+      now.getMinutes(),
+    ).padStart(2, '0')}`;
+    // Nobody should have to type the current time.
+    expect(field!.props.value).toBe(expected);
+
+    // But someone logging at 5pm what they took at 9am must be able to say so.
+    await act(async () => field!.props.onChangeText('09:15'));
+    await press(tree, 'Confirm Taken');
+    // Compared as local wall-clock. The stored instant is UTC, so asserting
+    // on the ISO string is the timezone trap this codebase keeps hitting.
+    expect(toTimeInput(fake.logs()[0].loggedAt)).toBe('09:15');
+  });
+});
+
+describe('the reminder', () => {
+  it('is off by default and exposes a time when switched on', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    const timeField = () =>
+      tree.root
+        .findAllByType(TextInput)
+        .find((node) => node.props.accessibilityLabel === 'Reminder time, 24-hour');
+
+    expect(timeField()).toBeUndefined();
+    await pressByLabel(tree, 'Reminder, On');
+    expect(timeField()).toBeDefined();
+  });
+
+  it('persists the preference and the time', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    await pressByLabel(tree, 'Reminder, On');
+    await type(tree, /^Reminder time/, '08:30');
+    await press(tree, 'Save Changes');
+
+    expect(fake.setups()[0].reminder).toEqual({ enabled: true, timeLocal: '08:30' });
+  });
+
+  it('schedules nothing with the operating system', () => {
+    // Configuration only in this slice. If this ever fails, a notification
+    // dependency arrived without the architecture being authorised.
+    const packageJson = require('../../../../package.json');
+    const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+    expect(Object.keys(deps).some((name) => name.includes('notification'))).toBe(false);
+  });
+});
+
+/* ── 3.9B: a real Monday-to-Sunday week ─────────────────────────────── */
+
+describe('the week', () => {
+  function dayCells(tree: ReactTestRenderer) {
+    return tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /, (scheduled|not scheduled), /.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+  }
+
+  it('runs Monday to Sunday, never starting on today', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const labels = dayCells(tree).map((node) => String(node.props.accessibilityLabel));
+    expect(labels).toHaveLength(7);
+    expect(labels[0]).toMatch(/^Monday, /);
+    expect(labels[6]).toMatch(/^Sunday, /);
+    // The rolling window this replaced produced Friday → Saturday → Sunday →
+    // Monday, which is chronologically correct and unreadable as a calendar.
+    const order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    labels.forEach((label, index) => expect(label.startsWith(order[index])).toBe(true));
+  });
+
+  it('marks today without implying anything was recorded', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const todayCell = dayCells(tree).find((node) =>
+      String(node.props.accessibilityLabel).includes(', today,'),
+    );
+    expect(todayCell).toBeDefined();
+    expect(String(todayCell!.props.accessibilityLabel)).toContain('no response');
+  });
+
+  it('steps back a week and forward again', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const first = dayCells(tree)[0].props.accessibilityLabel as string;
+    await pressByLabel(tree, 'Previous week');
+    const previous = dayCells(tree)[0].props.accessibilityLabel as string;
+
+    expect(previous).not.toBe(first);
+    expect(previous).toMatch(/^Monday, /);
+    expect(screen(tree)).toContain('Last week');
+
+    await pressByLabel(tree, 'Next week');
+    expect(dayCells(tree)[0].props.accessibilityLabel).toBe(first);
+  });
+
+  it('does not offer a week that has not happened', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const next = tree.root.findAll(
+      (node) => node.props?.accessibilityLabel === 'Next week' && node.props?.disabled === true,
+    );
+    expect(next.length).toBeGreaterThan(0);
   });
 });
 
