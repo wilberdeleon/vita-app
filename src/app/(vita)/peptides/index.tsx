@@ -218,16 +218,21 @@ export default function Peptides() {
         onPress={() => router.push('/peptides/catalog')}
       />
 
-      <Text style={[styles.footer, { color: surfaces.textTertiary }]}>
-        For tracking what you choose to record. VITA doesn't provide dosing or treatment
-        recommendations.
-      </Text>
+      {/*
+        * The boundary is stated where it is actually load-bearing — on the
+        * catalog pages that describe compounds, and on the Injection Sites
+        * tool. Repeating it under a list of the user's own routines added a
+        * third voice saying the same thing and made the screen read as
+        * nervous about itself.
+        */}
 
       {taking ? (
         <TakenSheet
           visible
           name={taking.name}
           setup={taking.setup}
+          logDate={today}
+          isToday
           history={logsForSetup(taking.setup.id)}
           onCancel={() => setTaking(null)}
           onConfirm={async (draft) => {

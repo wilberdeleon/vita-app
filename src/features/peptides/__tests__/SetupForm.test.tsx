@@ -211,7 +211,7 @@ describe('start date', () => {
 describe('vial', () => {
   it('emits both representations of the amount', async () => {
     const tree = await render();
-    await type(tree, 'Vial amount in mg, optional', '10');
+    await type(tree, 'Vial amount in milligrams, optional', '10');
 
     expect(latest?.value.vial?.amountMcg).toBe(10000);
     expect(latest?.value.vial?.authored).toEqual({ amount: 10, unit: 'mg' });
@@ -224,7 +224,7 @@ describe('vial', () => {
    */
   it('is invalid while a partially typed amount cannot be parsed', async () => {
     const tree = await render();
-    await type(tree, 'Vial amount in mg, optional', '-');
+    await type(tree, 'Vial amount in milligrams, optional', '-');
 
     expect(latest?.isValid).toBe(false);
     expect(texts(tree)).toContain('Enter a number greater than zero.');
@@ -232,10 +232,10 @@ describe('vial', () => {
 
   it('is valid again once the field is cleared', async () => {
     const tree = await render();
-    await type(tree, 'Vial amount in mg, optional', 'abc');
+    await type(tree, 'Vial amount in milligrams, optional', 'abc');
     expect(latest?.isValid).toBe(false);
 
-    await type(tree, 'Vial amount in mg, optional', '');
+    await type(tree, 'Vial amount in milligrams, optional', '');
     expect(latest?.isValid).toBe(true);
     expect(latest?.value.vial).toBeUndefined();
   });
@@ -247,10 +247,31 @@ describe('vial', () => {
     });
     const tree = await render(setup);
 
-    expect(field(tree, 'Vial amount in mg, optional').props.value).toBe('5');
+    expect(field(tree, 'Vial amount in milligrams, optional').props.value).toBe('5');
+    expect(field(tree, 'Reconstitution volume in millilitres, optional').props.value).toBe('2');
+  });
+
+  it('shows a vial authored in mcg at a legible milligram scale', async () => {
+    // Slice 3.9A: the vial field is milligrams only. A setup saved as
+    // 5000 mcg must read as 5, not as 5000 — which on the next save would
+    // silently become a five-gram vial and put every syringe number out by a
+    // factor of a thousand.
+    const setup = createPeptideSetup('catalog:bpc-157', {
+      vial: vialFrom({ amount: 5000, unit: 'mcg' }),
+    });
+    const tree = await render(setup);
+
+    expect(field(tree, 'Vial amount in milligrams, optional').props.value).toBe('5');
+  });
+
+  it('offers no vial unit toggle at all', async () => {
+    // The wrong answer was catastrophic and invisible, so the question is
+    // gone rather than defaulted.
+    const tree = await render();
+    expect(texts(tree)).toContain('Vial Amount (MG)');
     expect(
-      field(tree, 'Bacteriostatic water or reconstitution volume in millilitres, optional').props.value,
-    ).toBe('2');
+      tree.root.findAll((node) => node.props?.accessibilityLabel === 'Vial unit'),
+    ).toHaveLength(0);
   });
 });
 

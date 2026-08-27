@@ -3,7 +3,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
-  Button,
   Card,
   EmptyState,
   Screen,
@@ -12,9 +11,10 @@ import {
   useToast,
 } from '../../../../components/ui';
 import { LogRow } from '../../../../features/peptides/components/LogRow';
-import { RoutineDayStrip } from '../../../../features/peptides/components/RoutineDayStrip';
+import { RoutineDaySheet } from '../../../../features/peptides/components/RoutineDaySheet';
+import { RoutineDayStrip, type StripDay } from '../../../../features/peptides/components/RoutineDayStrip';
 import { TakenSheet } from '../../../../features/peptides/components/TakenSheet';
-import { formatClockTime } from '../../../../lib/daily';
+import { formatClockTime, type LogDate } from '../../../../lib/daily';
 import {
   formatMass,
   routineDayMark,
@@ -66,7 +66,9 @@ export default function RoutineDetail() {
   const { showToast } = useToast();
   const { surfaces } = useTheme();
 
-  const [taking, setTaking] = useState(false);
+  /** The day being recorded, when the Taken sheet is open. */
+  const [taking, setTaking] = useState<LogDate | null>(null);
+  const [openDay, setOpenDay] = useState<StripDay | null>(null);
   const strip = useRoutineHistory(resolved?.setup, 7);
 
   if (!resolved) {
@@ -160,15 +162,21 @@ export default function RoutineDetail() {
                   : 'Scheduled today'}
             </Text>
 
+            {/*
+              * Two available actions, neither pre-selected — the same rule the
+              * Today card follows. A filled Taken button read as *already
+              * taken* before anyone touched it.
+              */}
             {mark === 'unconfirmed' ? (
               <View style={styles.actions}>
                 <Pressable
-                  onPress={() => setTaking(true)}
+                  onPress={() => setTaking(today)}
                   accessibilityRole="button"
                   accessibilityLabel={`Record ${name} as taken`}
-                  style={[styles.action, { backgroundColor: palette.peptide }]}
+                  accessibilityState={{ selected: false }}
+                  style={[styles.action, { borderColor: palette.peptide, borderWidth: 1 }]}
                 >
-                  <Text style={styles.primaryLabel}>Taken</Text>
+                  <Text style={[styles.secondaryLabel, { color: palette.peptide }]}>Taken</Text>
                 </Pressable>
                 <Pressable
                   onPress={async () => {
@@ -177,6 +185,7 @@ export default function RoutineDetail() {
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Record ${name} as skipped`}
+                  accessibilityState={{ selected: false }}
                   style={[
                     styles.action,
                     { borderColor: surfaces.border, borderWidth: StyleSheet.hairlineWidth },
@@ -209,7 +218,11 @@ export default function RoutineDetail() {
         {/* Seven days, shape and text — never colour alone. */}
         {setup.schedule ? (
           <View style={styles.stripWrap}>
-            <RoutineDayStrip days={strip} />
+            <RoutineDayStrip
+              days={strip}
+              selected={openDay?.logDate}
+              onSelectDay={setOpenDay}
+            />
           </View>
         ) : null}
       </Card>
@@ -253,17 +266,27 @@ export default function RoutineDetail() {
         </Pressable>
       </View>
 
+      {/*
+        * Setup reads as reference, and its edit affordance is a row.
+        *
+        * A full-width purple button here competed with Taken and Skipped for
+        * the eye, which inverted the hierarchy: changing a vial is occasional,
+        * answering today is the daily act. Preferred unit is gone from the
+        * summary along with its control.
+        */}
       <SectionHeader title="Setup" />
       <Card style={styles.panel}>
         <SummaryRow label="Vial" value={vialSummary} />
-        <SummaryRow label="Preferred unit" value={setup.preferredDoseUnit} />
+        <Pressable
+          onPress={() => router.push(`/peptides/setup/${encodeURIComponent(setup.id)}`)}
+          accessibilityRole="button"
+          accessibilityLabel="Edit setup"
+          style={[styles.editRow, { borderTopColor: surfaces.border }]}
+        >
+          <Text style={[styles.editLabel, { color: palette.peptide }]}>Edit Setup</Text>
+          <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
+        </Pressable>
       </Card>
-
-      <Button
-        label="Edit Setup"
-        color={palette.peptide}
-        onPress={() => router.push(`/peptides/setup/${encodeURIComponent(setup.id)}`)}
-      />
 
       <SectionHeader title="Actions" />
       <Card style={styles.panel}>
@@ -298,15 +321,57 @@ export default function RoutineDetail() {
         </Pressable>
       </Card>
 
+      {/*
+       * The strip is a control surface over the same routine-day state the
+       * Today card writes — not a second source of truth. Every action here
+       * calls the same provider operations.
+       */}
+      {openDay ? (
+        <RoutineDaySheet
+          visible
+          logDate={openDay.logDate}
+          mark={openDay.mark}
+          when={openDay.logDate === today ? 'today' : openDay.logDate < today ? 'past' : 'future'}
+          logs={logs.filter((entry) => entry.logDate === openDay.logDate)}
+          onClose={() => setOpenDay(null)}
+          onTaken={() => {
+            const day = openDay.logDate;
+            setOpenDay(null);
+            setTaking(day);
+          }}
+          onSkipped={async () => {
+            await markSkipped(setup.id, openDay.logDate);
+            setOpenDay(null);
+            showToast({ message: 'Marked skipped' });
+          }}
+          onClear={async () => {
+            const removed = await clearRoutineDay(setup.id, openDay.logDate);
+            setOpenDay(null);
+            if (!removed) return;
+            showToast({
+              message: 'Status cleared',
+              actionLabel: 'Undo',
+              onAction: () => void restoreRoutineDay(removed.status, removed.log),
+            });
+          }}
+          onOpenLog={(entryId) => {
+            setOpenDay(null);
+            router.push(`/peptides/log/${encodeURIComponent(entryId)}`);
+          }}
+        />
+      ) : null}
+
       {taking ? (
         <TakenSheet
           visible
           name={name}
           setup={setup}
+          logDate={taking}
+          isToday={taking === today}
           history={logs}
-          onCancel={() => setTaking(false)}
+          onCancel={() => setTaking(null)}
           onConfirm={async (draft) => {
-            setTaking(false);
+            setTaking(null);
             const entry = await markTaken(setup.id, draft);
             showToast({
               message: entry ? 'Recorded' : "We couldn't save that. Nothing was recorded.",
@@ -359,10 +424,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.m,
     minHeight: 44,
   },
-  primaryLabel: {
-    ...typography.bodyMedium,
-    color: '#FFFFFF',
-  },
   secondaryLabel: {
     ...typography.bodyMedium,
   },
@@ -390,6 +451,17 @@ const styles = StyleSheet.create({
     ...typography.body,
     flexShrink: 1,
     textAlign: 'right',
+  },
+  editRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: spacing.m,
+    minHeight: 44,
+  },
+  editLabel: {
+    ...typography.body,
   },
   stripWrap: {
     paddingTop: spacing.s,

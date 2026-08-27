@@ -58,11 +58,15 @@ export default function PeptideCatalog() {
     // research area either, so any area filter excludes them too — inventing
     // one for a name the user typed would be guessing on their behalf.
     if (filter === 'approved' || filter === 'research' || area !== 'all') return [];
-    const trimmed = query.trim().toLowerCase();
+    const trimmed = query.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     const sorted = [...customDefinitions].sort((a, b) => a.name.localeCompare(b.name));
     const byBlend = filter === 'blend' ? sorted.filter((d) => d.compoundType === 'blend') : sorted;
     if (trimmed.length === 0) return byBlend;
-    return byBlend.filter((definition) => definition.name.toLowerCase().includes(trimmed));
+    // Same normalisation as the catalog search, so a custom entry named
+    // "PT-141" is found by "pt141" too.
+    return byBlend.filter((definition) =>
+      definition.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(trimmed),
+    );
   }, [customDefinitions, query, filter, area]);
 
   const nothingFound = catalogResults.length === 0 && customResults.length === 0;

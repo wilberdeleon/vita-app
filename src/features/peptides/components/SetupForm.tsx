@@ -13,10 +13,9 @@ import { isValidLogDate, todayLogDate, type LogDate } from '../../../lib/daily';
 import { UnitConversion } from './UnitConversion';
 import {
   DEFAULT_UNITS_PER_ML,
-  MASS_UNITS,
   WEEKDAY_INDEXES,
-  convertAuthoredAmount,
   parseAmount,
+  fromMcg,
   toMcg,
   sortedDays,
   vialFrom,
@@ -74,10 +73,17 @@ export function SetupForm({ initial, onChange }: Props) {
    * unread, and intact.
    */
   const [displayName] = useState(initial?.displayName ?? '');
+  /**
+   * Always shown in milligrams, whatever it was authored in.
+   *
+   * Derived from canonical `amountMcg` rather than from `authored.amount`, so
+   * a setup saved before slice 3.9A as `5000 mcg` displays as `5` — not as
+   * `5000`, which would silently become a five-gram vial the next time it was
+   * saved. Converting is the migration; there is nothing to rewrite on disk.
+   */
   const [vialAmount, setVialAmount] = useState(
-    initial?.vial ? String(initial.vial.authored.amount) : '',
+    initial?.vial ? String(fromMcg(initial.vial.amountMcg, 'mg')) : '',
   );
-  const [vialUnit, setVialUnit] = useState<MassUnit>(initial?.vial?.authored.unit ?? 'mg');
   const [reconstitution, setReconstitution] = useState(
     initial?.reconstitutionMl !== undefined ? String(initial.reconstitutionMl) : '',
   );
@@ -94,7 +100,12 @@ export function SetupForm({ initial, onChange }: Props) {
    * model so another scale can be supported without a migration.
    */
   const [unitsPerMl] = useState<number | null>(initial?.syringe?.unitsPerMl ?? DEFAULT_UNITS_PER_ML);
-  const [doseUnit, setDoseUnit] = useState<MassUnit>(initial?.preferredDoseUnit ?? 'mg');
+  /**
+   * Kept on the model, no longer asked for. Existing setups keep whatever
+   * they had; new ones default to mg. Recording an amount still offers both
+   * units, beside the number being typed, where the choice is meaningful.
+   */
+  const [doseUnit] = useState<MassUnit>(initial?.preferredDoseUnit ?? 'mg');
   const [scheduleKind, setScheduleKind] = useState<ScheduleKind | null>(initial?.schedule?.kind ?? null);
   const [days, setDays] = useState<number[]>(
     initial?.schedule?.kind === 'daysOfWeek' ? initial.schedule.days : [],
@@ -121,7 +132,6 @@ export function SetupForm({ initial, onChange }: Props) {
     const state = {
       displayName,
       vialAmount,
-      vialUnit,
       reconstitution,
       unitsPerMl,
       doseUnit,
@@ -134,7 +144,6 @@ export function SetupForm({ initial, onChange }: Props) {
     } as {
       displayName: string;
       vialAmount: string;
-      vialUnit: MassUnit;
       reconstitution: string;
       unitsPerMl: number | null;
       doseUnit: MassUnit;
@@ -176,7 +185,7 @@ export function SetupForm({ initial, onChange }: Props) {
     onChange(
       {
         displayName: state.displayName.trim() || undefined,
-        vial: vial !== null ? vialFrom({ amount: vial, unit: state.vialUnit }) : undefined,
+        vial: vial !== null ? vialFrom({ amount: vial, unit: 'mg' }) : undefined,
         reconstitutionMl: recon ?? undefined,
         syringe: state.unitsPerMl !== null ? { unitsPerMl: state.unitsPerMl } : undefined,
         preferredDoseUnit: state.doseUnit,
@@ -209,62 +218,55 @@ export function SetupForm({ initial, onChange }: Props) {
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>
         Optional. Add these only if you reconstitute a vial yourself.
       </Text>
-      <View style={styles.row}>
-        <View style={styles.grow}>
-          <NumericField
-            label={`Vial Amount (${vialUnit})`}
-            placeholder="e.g. 10"
-            value={vialAmount}
-            onChangeText={(text) => {
-              setVialAmount(text);
-              emit({ vialAmount: text });
-            }}
-            accessibilityLabel={`Vial amount in ${vialUnit}, optional`}
-          />
-        </View>
-        <View style={styles.unitControl}>
-          <SegmentedTabs
-            options={MASS_UNITS as readonly string[]}
-            selectedIndex={MASS_UNITS.indexOf(vialUnit)}
-            onChange={(index) => {
-              /**
-               * Switching the unit **restates** the vial, it does not
-               * reinterpret it: `20 mg` becomes `20000 mcg`, so the canonical
-               * `amountMcg` that gets saved is identical before and after.
-               * Reinterpreting would silently change a vial by a factor of a
-               * thousand — and unlike the calculator's own fields, this one
-               * persists.
-               */
-              const next = MASS_UNITS[index];
-              const converted = convertAuthoredAmount(vialAmount, vialUnit, next);
-              setVialAmount(converted);
-              setVialUnit(next);
-              emit({ vialAmount: converted, vialUnit: next });
-            }}
-            activeColor={palette.peptide}
-            groupLabel="Vial unit"
-          />
-        </View>
-      </View>
+      {/*
+        * Milligrams only (slice 3.9A).
+        *
+        * Vials are labelled in mg — nobody reads "10000 mcg" off a vial — and
+        * the toggle offered a choice whose wrong answer was catastrophic and
+        * invisible: a vial entered as mcg instead of mg is off by a thousand,
+        * and every syringe number derived from it is wrong in the same
+        * direction. Removing the choice removes the failure.
+        *
+        * Nothing changes underneath: `amountMcg` is still canonical, and a
+        * legacy setup authored in mcg is converted for display rather than
+        * reinterpreted.
+        */}
+      <NumericField
+        label="Vial Amount (MG)"
+        placeholder="e.g. 10"
+        value={vialAmount}
+        onChangeText={(text) => {
+          setVialAmount(text);
+          emit({ vialAmount: text });
+        }}
+        accessibilityLabel="Vial amount in milligrams, optional"
+      />
       {vialInvalid ? (
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
 
       {/*
-        * Familiar language on screen, generic name in the model. Bacteriostatic
-        * water is what most people actually add, but `reconstitutionMl` does
-        * not assume it is the only possible diluent.
+        * One idea in the label, the detail underneath it.
+        *
+        * "Bacteriostatic Water / Reconstitution (mL)" put two names for the
+        * same number in one line and made the form read as technical. The
+        * label now names the measurement; the helper says what it is. The
+        * model keeps the generic `reconstitutionMl`, which does not assume
+        * bacteriostatic water is the only possible diluent.
         */}
       <NumericField
-        label="Bacteriostatic Water / Reconstitution (mL)"
+        label="Reconstitution Volume (ML)"
         placeholder="e.g. 1"
         value={reconstitution}
         onChangeText={(text) => {
           setReconstitution(text);
           emit({ reconstitution: text });
         }}
-        accessibilityLabel="Bacteriostatic water or reconstitution volume in millilitres, optional"
+        accessibilityLabel="Reconstitution volume in millilitres, optional"
       />
+      <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+        Bacteriostatic water added to the vial.
+      </Text>
       {reconInvalid ? (
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
@@ -280,24 +282,21 @@ export function SetupForm({ initial, onChange }: Props) {
         * do arithmetic before VITA would do arithmetic for them.
         */}
       <UnitConversion
-        vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, vialUnit) : undefined}
+        vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined}
         reconstitutionMl={reconParsed ?? undefined}
-        vialUnit={vialUnit}
+        vialUnit="mg"
         unitsPerMl={unitsPerMl ?? undefined}
       />
 
-      <SectionHeader title="Preferred unit" />
-      <SegmentedTabs
-        options={MASS_UNITS as readonly string[]}
-        selectedIndex={MASS_UNITS.indexOf(doseUnit)}
-        onChange={(index) => {
-          const next = MASS_UNITS[index];
-          setDoseUnit(next);
-          emit({ doseUnit: next });
-        }}
-        activeColor={palette.peptide}
-        groupLabel="Preferred unit"
-      />
+      {/*
+        * No Preferred Unit control (slice 3.9A).
+        *
+        * It asked the user to answer, up front and out of context, a question
+        * that only matters at the moment they record an amount — where the
+        * mg/mcg toggle still sits, right beside the number they are typing.
+        * The stored value is kept for backward compatibility and defaults to
+        * mg for new routines.
+        */}
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>
         How amounts are shown for this peptide. A display preference, not a recommended amount.
       </Text>
@@ -403,6 +402,10 @@ export function SetupForm({ initial, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
+  helper: {
+    ...typography.caption,
+    marginTop: -spacing.s,
+  },
   note: {
     ...typography.caption,
     marginTop: -spacing.xs,

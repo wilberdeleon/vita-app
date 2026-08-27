@@ -47,6 +47,7 @@
  */
 
 import type { MassUnit, PeptideDefinition, ResearchArea } from '../model/types';
+import { ADDITIONAL_DEFINITIONS, BIOREGULATOR_DEFINITIONS } from './definitions/bioregulators';
 import { BLEND_DEFINITIONS } from './definitions/blends';
 import { ENDOCRINE_DEFINITIONS } from './definitions/endocrine';
 import { GROWTH_HORMONE_DEFINITIONS } from './definitions/growthHormone';
@@ -66,6 +67,8 @@ export const PEPTIDE_CATALOG: readonly PeptideDefinition[] = [
   ...MITOCHONDRIAL_DEFINITIONS,
   ...NEURO_DEFINITIONS,
   ...ENDOCRINE_DEFINITIONS,
+  ...BIOREGULATOR_DEFINITIONS,
+  ...ADDITIONAL_DEFINITIONS,
   ...BLEND_DEFINITIONS,
 ]
   .map((seed) => ({
@@ -103,6 +106,19 @@ function matchesFilter(definition: PeptideDefinition, filter: CatalogFilter): bo
 }
 
 /**
+ * Punctuation and spacing, removed before comparing.
+ *
+ * Compound names in this field are full of hyphens people do not type.
+ * "PT141", "PT 141" and "pt-141" are one query as far as a user is concerned,
+ * and a store that answers only the third is a store that appears not to
+ * stock the compound — which is exactly how slice 3.9A's catalog gap was
+ * reported. Digits and letters survive; everything else goes.
+ */
+function normalize(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
  * Local, synchronous search across name, aliases, and category.
  *
  * Aliases matter more than they look: someone who knows a compound as "PT-141",
@@ -117,7 +133,7 @@ export function searchCatalog(
   filter: CatalogFilter = 'all',
   area: AreaFilter = 'all',
 ): readonly PeptideDefinition[] {
-  const trimmed = query.trim().toLowerCase();
+  const trimmed = normalize(query);
 
   // The three narrow together: classification AND research area AND query.
   const filtered = PEPTIDE_CATALOG.filter(
@@ -128,9 +144,9 @@ export function searchCatalog(
   if (trimmed.length === 0) return filtered;
 
   return filtered.filter((definition) => {
-    if (definition.name.toLowerCase().includes(trimmed)) return true;
-    if (definition.category?.toLowerCase().includes(trimmed)) return true;
-    return (definition.aliases ?? []).some((alias) => alias.toLowerCase().includes(trimmed));
+    if (normalize(definition.name).includes(trimmed)) return true;
+    if (definition.category && normalize(definition.category).includes(trimmed)) return true;
+    return (definition.aliases ?? []).some((alias) => normalize(alias).includes(trimmed));
   });
 }
 

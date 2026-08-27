@@ -228,8 +228,16 @@ describe('sources', () => {
       (entry.research?.references ?? []).map((reference) => reference.url ?? ''),
     ).join(' ').toLowerCase();
 
+    /**
+     * Whole words, not substrings.
+     *
+     * A bare `includes('cart')` matched the compound *Cartalax* — a real
+     * catalog entry whose name simply contains those four letters. A
+     * storefront check that fires on a compound name is a check that will be
+     * silenced rather than fixed, so it matches word boundaries instead.
+     */
     for (const word of ['shop', 'buy', 'store', 'cart', 'checkout', 'peptidesciences', 'amazon']) {
-      expect(urls).not.toContain(word);
+      expect(urls).not.toMatch(new RegExp(`\\b${word}\\b`));
     }
   });
 });

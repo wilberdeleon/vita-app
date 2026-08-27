@@ -55,6 +55,30 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Slice 3.6 built (2026-08-24) — the dose / unit calculator.** The approved flow, shipped: a 10 mg vial in 1 mL is 10 mg/mL, so 2 mg is 0.2 mL, which is **20 units**. The derivation is shown on the line beneath, and the U-100 assumption sits under it as context rather than a warning. **VITA converts; the user decides** — the vial and water come from their saved setup, the amount from the field in front of them, and the arithmetic lives in a pure module outside every screen precisely so it cannot reach state and quietly acquire an opinion. Nothing in it can produce a recommended amount because nothing in it takes one. **Vial and water are prefilled and re-derived every render**, so editing a setup changes the answer rather than leaving a stale one — reseeding 1 mL to 2 mL moves the result from 20 to 40 units, verified on device. **An incomplete setup is refused, never guessed**: without a vial amount VITA asks for one and offers Edit setup, because inventing a 10 mg / 1 mL default would hand a confident wrong number to someone whose vial is neither. **Nothing is saved** — the amount dies with the screen, and a test asserts zero writes; logging is 3.7. **No syringe-capacity selector**, as agreed in 3.5B. An amount larger than the vial still calculates (120 units, 1.2 mL) and gets one neutral line noting the inconsistency, with no advice on what to do about it. **Reverse conversion (units → amount) is built and tested but has no UI yet** — the primary flow is Amount → Units and a mode switch nobody has asked for would trade one obvious flow for an option; easy to surface later. 605 tests.
 
+**Slice 3.9A built (2026-08-27) — simpler setup, a schedule you can tap, and a much bigger catalog.** You said the routine model is right and listed nine things to fix. All nine are done.
+
+**Add to Routine now takes you back to Peptides**, not to the search results you came through.
+
+**Setup is simpler.** **Vial Amount (MG)** — no unit toggle at all. Vials are labelled in mg, and the old choice had a wrong answer that was both disastrous and invisible: entering a vial as mcg puts it out by a thousand, and every syringe number after it is wrong the same way. Anything you saved before in mcg now reads correctly in MG — a 5000 mcg vial shows as **5**, not 5000. **Reconstitution Volume (ML)** replaces the long slash-heavy label, with *Bacteriostatic water added to the vial* underneath. **Preferred Unit is gone** — it asked you to decide, up front, something that only matters when you are typing an actual amount, where the mg/mcg buttons still are.
+
+**The week strip is now interactive.** Each day shows the weekday **and the date** — `M 24` — so you can tell which week you are looking at. Tap any day and you get that day: whether it was scheduled, what you answered, and buttons to mark it Taken, mark it Skipped, or clear it. Correcting an earlier day asks you for the time, because VITA knows what time it is today and does not know what time it was on Tuesday.
+
+**A schedule still never records a dose for you**, and a day you did not answer still shows **No response**.
+
+**The routine screen is calmer.** Edit Setup is a small row now instead of a big purple button competing with Taken and Skipped.
+
+**Taken no longer looks pre-selected.** It was filled in purple before you had touched it, which read as *already taken*. Both buttons are now outlined.
+
+**On the catalog: PT-141 was never missing.** It has been in there the whole time under its approved name, **Bremelanotide**, with PT-141 listed as an alias — but the search only matched exactly what you typed, so **PT141** without the hyphen found nothing. That is fixed: hyphens and spaces are ignored now. Adding a second PT-141 entry would have created a duplicate and left the actual bug in place.
+
+**The catalog went from 72 to 96 entries.** Of the 38 you listed, **21 were already there** — Melanotan I and II, Sermorelin, GHRP-2 and -6, Hexarelin, IGF-1 LR3, HGH Fragment 176-191, Thymosin Alpha-1, LL-37, ARA-290, Oxytocin, Humanin, Follistatin-344, Tesofensine, Survodutide, Mazdutide, VIP, Gonadorelin and Thymulin. Added: the thirteen Russian bioregulators (Thymalin, Thymogen, Vilon, Cortagen, Cartalax, Vesugen, Bronchogen, Livagen, Pancragen, Prostamax, Testagen, Ovagen, Chonluten), plus PEG-MGF, FOXO4-DRI, AICAR, P21, PE-22-28, Setmelanotide, Eloralintide and Orforglipron, and three blends.
+
+**Not everything new is labelled "Research."** Setmelanotide is an approved medicine and is labelled as one. Orforglipron and Eloralintide are in trials, with the phase and the date shown. AICAR is labelled a small molecule, because it is not a peptide.
+
+**Every new entry was written from scratch.** These compounds have similar names and it would be very easy for one to end up wearing another's description — which would look completely believable and be wrong. Tests now check that no two entries share a description, and check the confusable pairs by name.
+
+998 tests. ⚠️ **Needs your confirmation on a real iPhone** — especially setup, tapping days on the strip, and searching a few of the new compounds.
+
 **Slice 3.9 built (2026-08-26) — Peptides now works as a routine.** This is the flow change you asked for. Instead of *find a peptide → Track this peptide → fill in a long form → save → open it → Log Peptide → fill in another form*, peptides are **added to your routine**, and adding, setting up, tracking day to day, pausing and removing are now separate things you do when you want to.
 
 **Add to Routine is right at the top.** On a peptide's page it sits directly under the name — you no longer scroll past claims, mechanisms, what it's been studied for, targets, status and sources to find it. Tapping it just adds the peptide and takes you back. **No form.** It appears under **Needs setup**, and you configure it whenever you're ready. The button also knows where things stand: **Add to Routine** → **Finish Setup** → **View Routine**.

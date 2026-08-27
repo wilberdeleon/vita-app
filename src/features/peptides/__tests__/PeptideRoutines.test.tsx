@@ -43,7 +43,8 @@ import {
   type PeptideSetup,
   type RoutineDayStatus,
 } from '../../../lib/peptides';
-import { todayLogDate } from '../../../lib/daily';
+import { formatLogDateLong, todayLogDate } from '../../../lib/daily';
+import { searchCatalog } from '../../../lib/peptides/data/catalog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { asyncStoragePeptideRepository as realRepository } from '../../../lib/peptides/data/asyncStorageRepository';
 import { PeptideKeys } from '../../../lib/peptides/data/keys';
@@ -52,6 +53,7 @@ import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 const CREATED = '2026-08-25T10:00:00.000Z';
 const TODAY = todayLogDate();
+const TODAY_LONG = formatLogDateLong(TODAY);
 
 /** A 20 mg vial in 2 mL — 10 mg/mL, so 2 mg is 20 units. */
 function setupFixture(overrides: Partial<PeptideSetup> = {}): PeptideSetup {
@@ -242,17 +244,33 @@ describe('routine state', () => {
     expect(fake.setups()[0].routineState).not.toBe('inactive');
   });
 
-  it('does not open a configuration form on the way in', async () => {
+  it('returns to Peptides, not to the catalog it came through', async () => {
     mockRouteId = encodeURIComponent('catalog:bpc-157');
     const fake = repositoryWith([]);
     const tree = await mount(<PeptideDetail />, fake.repository);
 
     await press(tree, 'Add to Routine');
 
-    // Straight back to the list. Deciding to track something must not cost a
-    // vial interrogation.
-    expect(mockBack).toHaveBeenCalled();
+    // Dismissing the catalog stack lands on Peptides, where the thing they
+    // just added now lives — `back()` returned them to the search results.
+    // And no form: deciding to track something must not cost an interrogation.
+    expect(mockDismissAll).toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('shows the new routine under Needs setup on that screen', async () => {
+    mockRouteId = encodeURIComponent('catalog:bpc-157');
+    const fake = repositoryWith([]);
+    const detail = await mount(<PeptideDetail />, fake.repository);
+    await press(detail, 'Add to Routine');
+    await act(async () => detail.unmount());
+    mounted = null;
+
+    const home = await mount(<Peptides />, fake.repository);
+    const rendered = screen(home);
+    expect(rendered).toContain('NEEDS SETUP');
+    expect(rendered).toContain('BPC-157');
+    expect(rendered).toContain('Setup needed');
   });
 
   it('becomes active when its setup is saved', async () => {
@@ -638,8 +656,8 @@ describe('routine history', () => {
 
     const labelled = tree.root.findAll(
       (node) =>
-        node.props?.accessibilityRole === 'text' &&
-        /No response|Taken|Skipped|Not scheduled/.test(String(node.props?.accessibilityLabel ?? '')),
+        node.props?.accessibilityRole === 'button' &&
+        /no response|taken|skipped|not scheduled/.test(String(node.props?.accessibilityLabel ?? '')),
     );
     expect(labelled.length).toBeGreaterThan(0);
   });
@@ -660,11 +678,13 @@ describe('routine history', () => {
     const tree = await mount(<RoutineDetail />, fake.repository);
 
     const labels = tree.root
-      .findAll((node) => node.props?.accessibilityRole === 'text')
+      .findAll((node) => node.props?.accessibilityRole === 'button')
       .map((node) => String(node.props?.accessibilityLabel ?? ''));
 
-    expect(labels.some((label) => label.includes(`${TODAY}. Skipped`))).toBe(true);
-    expect(labels.some((label) => label.includes('No response'))).toBe(true);
+    // Full date, whether it was scheduled, and what was recorded — never a
+    // bare initial over an unlabelled circle.
+    expect(labels.some((label) => /scheduled, skipped$/.test(label))).toBe(true);
+    expect(labels.some((label) => /scheduled, no response$/.test(label))).toBe(true);
   });
 });
 
@@ -727,6 +747,286 @@ describe('needs setup', () => {
     const home = await mount(<Peptides />, fake.repository);
     expect(screen(home)).not.toContain('Setup needed');
     expect(screen(home)).toContain('ACTIVE');
+  });
+});
+
+/* ── 3.9A: a simpler setup ──────────────────────────────────────────── */
+
+describe('setup simplification', () => {
+  it('offers no Preferred Unit control', async () => {
+    // It asked, up front and out of context, a question that only matters
+    // beside the amount being recorded — where the toggle still is.
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    expect(texts(tree)).not.toContain('PREFERRED UNIT');
+    expect(screen(tree)).not.toContain('Preferred unit');
+    expect(
+      tree.root.findAll((node) => node.props?.accessibilityLabel === 'Preferred unit'),
+    ).toHaveLength(0);
+  });
+
+  it('still saves, and keeps a legacy preferred unit intact', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture({ preferredDoseUnit: 'mcg' })]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    await press(tree, 'Save Changes');
+    expect(fake.setups()[0].preferredDoseUnit).toBe('mcg');
+  });
+
+  it('names the vial field in milligrams and offers no unit choice', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    expect(texts(tree)).toContain('Vial Amount (MG)');
+    expect(
+      tree.root.findAll((node) => node.props?.accessibilityLabel === 'Vial unit'),
+    ).toHaveLength(0);
+  });
+
+  it('labels reconstitution as a volume, with the detail underneath', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    expect(texts(tree)).toContain('Reconstitution Volume (ML)');
+    expect(screen(tree)).toContain('Bacteriostatic water added to the vial.');
+    // The slash-heavy original put two names for one number in a single line.
+    expect(screen(tree)).not.toContain('Bacteriostatic Water / Reconstitution');
+  });
+
+  it('still lets a recorded amount be mg or mcg', async () => {
+    // Removing the vial and preference toggles did not remove unit choice
+    // from the number the user actually records.
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<Peptides />, fake.repository);
+    await pressByLabel(tree, 'Record Retatrutide as taken');
+
+    const units = tree.root.findAll((node) =>
+      /^Amount unit, (mg|mcg)$/.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+    expect(units.length).toBeGreaterThan(0);
+  });
+});
+
+/* ── 3.9A: the week strip is a control ──────────────────────────────── */
+
+describe('the week strip', () => {
+  function dayCells(tree: ReactTestRenderer) {
+    return tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /, (scheduled|not scheduled), /.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+  }
+
+  it('shows seven days, each a button naming its date and state', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const cells = dayCells(tree);
+    expect(cells.length).toBeGreaterThanOrEqual(7);
+    // A full date, not a bare weekday initial over an unlabelled circle.
+    expect(String(cells[0].props.accessibilityLabel)).toMatch(/^[A-Z][a-z]+day, /);
+  });
+
+  it('shows the date number, so a week is identifiable', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const dayOfMonth = String(Number(TODAY.slice(8, 10)));
+    expect(texts(tree)).toContain(dayOfMonth);
+  });
+
+  it('opens a day when the cell — not the icon — is tapped', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const todayCell = dayCells(tree).find((node) =>
+      String(node.props.accessibilityLabel).includes('no response'),
+    );
+    expect(todayCell).toBeDefined();
+    await act(async () => todayCell!.props.onPress());
+
+    expect(screen(tree)).toContain('No response');
+  });
+
+  it('writes through the same routine-day state the Today card uses', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    // Today specifically — every day in an untouched week reads "no
+    // response", so picking the first would open last Thursday.
+    const cell = dayCells(tree).find((node) =>
+      String(node.props.accessibilityLabel).startsWith(TODAY_LONG),
+    );
+    await act(async () => cell!.props.onPress());
+    await pressByLabel(tree, `Mark ${TODAY_LONG} as skipped`);
+
+    // One store, one record — the strip is a view over it, not a copy.
+    expect(fake.statuses()).toHaveLength(1);
+    expect(fake.statuses()[0].state).toBe('skipped');
+    expect(fake.logs()).toHaveLength(0);
+  });
+
+  it('clears a recorded day back to unanswered', async () => {
+    mockRouteId = 'setup-1';
+    const seeded: RoutineDayStatus[] = [
+      {
+        id: 'r1',
+        setupId: 'setup-1',
+        logDate: TODAY,
+        state: 'skipped',
+        createdAt: CREATED,
+        updatedAt: CREATED,
+      },
+    ];
+    const fake = repositoryWith([setupFixture()], [], seeded);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const cell = dayCells(tree).find((node) =>
+      String(node.props.accessibilityLabel).startsWith(TODAY_LONG),
+    );
+    await act(async () => cell!.props.onPress());
+    await pressByLabel(tree, `Clear the status for ${TODAY_LONG}`);
+
+    expect(fake.statuses()).toHaveLength(0);
+  });
+
+  it('never offers to record a day that has not happened', async () => {
+    // A schedule is a plan. Letting someone mark tomorrow taken would let the
+    // app hold a confirmed administration that has not happened.
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const labels = dayCells(tree).map((c) => String(c.props.accessibilityLabel));
+    // The rolling window ends today, so no cell is in the future.
+    expect(labels.length).toBeGreaterThan(0);
+    expect(labels.every((label) => !/future/.test(label))).toBe(true);
+  });
+
+  it('draws no day cells for a routine whose schedule covers nothing', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture({ schedule: { kind: 'asNeeded' } })]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const scheduled = dayCells(tree).filter((node) =>
+      /, scheduled, /.test(String(node.props.accessibilityLabel)),
+    );
+    expect(scheduled).toHaveLength(0);
+  });
+
+  it('marks the open day apart from whether it was taken', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const cell = dayCells(tree).find((node) =>
+      String(node.props.accessibilityLabel).includes('no response'),
+    );
+    await act(async () => cell!.props.onPress());
+
+    const selected = dayCells(tree).filter((node) => node.props.accessibilityState?.selected);
+    // Exactly one day is "open"; none of them is thereby "taken".
+    expect(selected).toHaveLength(1);
+    expect(String(selected[0].props.accessibilityLabel)).toContain('no response');
+  });
+});
+
+/* ── 3.9A: Today's buttons assert nothing ───────────────────────────── */
+
+describe("today's actions", () => {
+  /**
+   * Both surfaces, because there are two.
+   *
+   * The Peptides card and the routine screen each draw their own Taken and
+   * Skipped, and fixing only one is exactly the defect that shipped: the home
+   * card was corrected while the routine screen kept a filled Taken that read
+   * as already-answered.
+   */
+  it.each([
+    ['the peptides screen', () => <Peptides />],
+    ['the routine screen', () => <RoutineDetail />],
+  ])('presents Taken and Skipped as two available choices on %s', async (_name, element) => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(element(), fake.repository);
+
+    for (const label of ['Record Retatrutide as taken', 'Record Retatrutide as skipped']) {
+      const [node] = tree.root.findAll(
+        (n) => typeof n.props?.onPress === 'function' && n.props?.accessibilityLabel === label,
+      );
+      expect(node).toBeDefined();
+      // Neither is pre-selected — a filled Taken button read as "already
+      // taken" before anyone touched it.
+      expect(node.props.accessibilityState?.selected).toBe(false);
+    }
+  });
+});
+
+/* ── 3.9A: a newly added compound goes through the same routine flow ── */
+
+describe('a compound added by the catalog expansion', () => {
+  it('is searchable, opens, and joins the routine like any other', async () => {
+    // The expansion must not have created a second class of catalog entry
+    // that bypasses the routine architecture 3.9 established.
+    expect(searchCatalog('PT141').map((entry) => entry.id)).toContain('catalog:bremelanotide');
+
+    mockRouteId = encodeURIComponent('catalog:setmelanotide');
+    const fake = repositoryWith([]);
+    const detail = await mount(<PeptideDetail />, fake.repository);
+
+    // The state-aware CTA is present near the top, as on every other page.
+    expect(control(detail, 'Add to Routine')).toBeDefined();
+    await press(detail, 'Add to Routine');
+    expect(mockDismissAll).toHaveBeenCalled();
+    await act(async () => detail.unmount());
+    mounted = null;
+
+    expect(fake.setups()).toHaveLength(1);
+    expect(fake.setups()[0].definitionId).toBe('catalog:setmelanotide');
+    expect(fake.setups()[0].routineState).toBe('needs-setup');
+
+    const home = await mount(<Peptides />, fake.repository);
+    const rendered = screen(home);
+    expect(rendered).toContain('NEEDS SETUP');
+    expect(rendered).toContain('Setmelanotide');
+  });
+
+  it('creates no duplicate shell when added twice', async () => {
+    mockRouteId = encodeURIComponent('catalog:thymalin');
+    const fake = repositoryWith([]);
+
+    const first = await mount(<PeptideDetail />, fake.repository);
+    await press(first, 'Add to Routine');
+    await act(async () => first.unmount());
+    mounted = null;
+
+    const second = await mount(<PeptideDetail />, fake.repository);
+    // Already in the routine, so the page offers the next real step instead.
+    expect(control(second, 'Add to Routine')).toBeUndefined();
+    expect(control(second, 'Finish Setup')).toBeDefined();
+    expect(fake.setups()).toHaveLength(1);
+  });
+
+  it('resolves a bioregulator by name in the catalog search', async () => {
+    for (const [query, id] of [
+      ['Cartalax', 'catalog:cartalax'],
+      ['Chonluten', 'catalog:chonluten'],
+      ['Pancragen', 'catalog:pancragen'],
+      ['Vilon', 'catalog:vilon'],
+      ['Thymogen', 'catalog:thymogen'],
+    ] as const) {
+      expect(searchCatalog(query).map((entry) => entry.id)).toContain(id);
+    }
   });
 });
 

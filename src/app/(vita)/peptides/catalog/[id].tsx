@@ -97,11 +97,19 @@ export default function PeptideDetail() {
             );
             return;
           }
-          // Adding is not configuring. A shell is created and the user goes
-          // back to their list; Setup happens when they are ready.
+          /**
+           * Adding is not configuring, and it ends on the Peptides screen.
+           *
+           * `back()` returned to the catalog list, which is where the user
+           * had *been* rather than where the thing they just added now lives.
+           * Dismissing the whole catalog stack lands them on Peptides with
+           * Today, Needs setup, Active and Inactive in front of them, and the
+           * new routine visible under Needs setup. Setup happens when they
+           * are ready, not as a consequence of being interested.
+           */
           await addToRoutine(definition.id);
           showToast({ message: `${definition.name} added to your routine.` });
-          router.back();
+          router.dismissAll();
         }}
       />
 

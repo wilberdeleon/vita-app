@@ -749,11 +749,78 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.8B | Injection Site Visual + Selection Polish | One-tap canonical site list, body model as optional aid, redrawn silhouette, Site Reference rewrite | 🟡 Built — pending founder review |
 | 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | 🟡 Built — pending founder review |
 | 3.9 | Peptides Routine + UX Integration | Add to Routine, needs-setup/active/inactive, routine detail, daily Taken/Skipped, removal preserving history, Fuel on real state | 🟡 Built — pending founder review |
+| 3.9A | Routine UX Simplification + Interactive Schedule + Catalog Expansion | MG-only vial, Preferred Unit removed, interactive week strip, 96-entry catalog, punctuation-insensitive search | 🟡 Built — pending founder review |
 | 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.9A — Routine UX Simplification + Interactive Schedule + Catalog Expansion 🟡
+
+**Objective:** founder QA confirmed the routine mental model is correct and left nine issues. This slice fixes them, and expands the catalog. The routine architecture from 3.9 is untouched.
+
+---
+
+#### Routine UX
+
+**Add to Routine lands on Peptides.** It used to call `back()`, which returned the user to the catalog list — where they had *been*, not where the thing they just added now lives. Dismissing the whole catalog stack puts Today, Needs setup, Active and Inactive in front of them with the new routine visible.
+
+**The vial is milligrams only.** Vials are labelled in mg — nobody reads *10000 mcg* off one — and the toggle offered a choice whose wrong answer was **catastrophic and invisible**: a vial entered as mcg is off by a factor of a thousand, and every syringe number derived from it is wrong in the same direction. Removing the choice removes the failure.
+
+**Nothing changed underneath.** `amountMcg` is still canonical and `authored` still records mg. A **legacy setup authored in mcg is converted for display, not reinterpreted**: the field is derived from canonical micrograms, so `5000 mcg` reads as `5` rather than becoming a five-gram vial on the next save. Pinned by a regression test and verified on device.
+
+**The standalone calculator keeps its mg/mcg toggle**, and that is deliberate. It is a scratch surface where nothing is saved, so a mistaken unit is visible and disposable; Setup is configuration that persists. The tests were re-scoped rather than deleted.
+
+**Reconstitution reads as one idea.** `Bacteriostatic Water / Reconstitution (mL)` put two names for the same number in a single line. Now **Reconstitution Volume (ML)** with *Bacteriostatic water added to the vial.* underneath.
+
+**Preferred Unit is gone from the UI.** It asked, up front and out of context, a question that only matters at the moment an amount is recorded — where the mg/mcg toggle still sits, beside the number being typed. The stored value is preserved for backward compatibility and defaults to mg for new routines.
+
+**Recording an amount still supports mg and mcg.** Removing the vial and preference toggles did not remove unit choice from the number the user actually records, which is a different question.
+
+**The week strip is a control, not decoration.** Every cell is a real button showing **weekday, date number and status** — `F 21 ○` — because `F S S M T W T` could describe any week in history. Tapping opens a compact day sheet stating what the schedule said and what was answered, with Mark Taken, Mark Skipped or Clear Status as appropriate.
+
+**Selection and status are styled apart.** The open day is marked by its ring; whether it was taken is carried by the glyph and fill. Sharing one treatment would make a selected day look taken.
+
+**Future days are informational.** Marking tomorrow taken would let the app hold a confirmed administration that has not happened. The rolling seven-day window ends today, so the case cannot arise; the sheet still handles it explicitly rather than relying on that.
+
+**Correcting a past day asks for the time.** Today's time is genuinely known — it is now. A past day's is not, and stamping one in silently would put a precise claim into a health record that nobody made, so the field appears exactly when the answer stops being obvious.
+
+**One source of truth.** The strip writes through the same provider operations the Today card uses. There is no calendar-specific state.
+
+**Week navigation was deliberately deferred.** A fixed rolling seven-day window answers "how has this week gone?" without becoming a second screen, and §46 permitted deferring it. Reported rather than silently dropped.
+
+**Routine detail re-tiered.** Edit Setup is a row with a chevron inside the Setup card, not a full-width purple button competing with Taken and Skipped for the eye — changing a vial is occasional, answering today is the daily act. Preferred unit is gone from the summary with its control.
+
+**Taken is no longer pre-selected.** A filled Taken button read as *already taken* before anyone touched it — the most consequential possible misreading on the screen. Both actions are outlined; the accent is carried by Taken's label alone. **This was fixed twice**: the first pass corrected the home card and missed the routine screen, which draws its own buttons. Found by inspecting a screenshot, and the test now covers both surfaces.
+
+**Defensive footer removed from Peptides.** The boundary is stated where it is load-bearing — on the catalog pages that describe compounds, and on Injection Sites. A third voice under a list of the user's own routines made the screen read as nervous about itself.
+
+---
+
+#### Catalog
+
+**The reported gap was not a missing entry.** PT-141 was already in the catalog as **Bremelanotide**, with `PT-141` and `Vyleesi` as aliases. Search compared raw strings, so `PT141` matched nothing — a **search defect wearing a catalog defect's clothes**. Queries and aliases are now compared with punctuation and spacing stripped, so `PT-141`, `PT141` and `pt 141` are one query. Adding a second PT-141 entry would have created a duplicate and left the real bug in place.
+
+**72 entries → 96.** Twenty-one definitions and three blends added. Of the founder's 38 high-priority candidates, **21 were already present** — including Melanotan I and II, Sermorelin, GHRP-2, GHRP-6, Hexarelin, IGF-1 LR3, HGH Fragment 176-191, Thymosin Alpha-1, LL-37, ARA-290, Oxytocin, Humanin, Follistatin-344, Tesofensine, Survodutide, Mazdutide, VIP, Gonadorelin and Thymulin. The audit ran first, so nothing was duplicated on the assumption it was missing.
+
+**Added:** the thirteen Khavinson bioregulators (Thymalin, Thymogen, Vilon, Cortagen, Cartalax, Vesugen, Bronchogen, Livagen, Pancragen, Prostamax, Testagen, Ovagen, Chonluten), plus PEG-MGF, FOXO4-DRI, AICAR, P21, PE-22-28, Setmelanotide, Eloralintide and Orforglipron. Three blends: Tesamorelin + Ipamorelin, MOTS-c + NAD+ + 5-Amino-1MQ, and Thymosin Alpha-1 + Thymalin.
+
+**Status is assigned accurately, not defaulted to *Research*.** Setmelanotide is an **approved medication** — saying otherwise would be a factual error in the direction that matters. Orforglipron is phase 3 and Eloralintide phase 2, both dated and sourced because pipeline facts expire. AICAR is recorded as a **small molecule**, not a peptide, as is Orforglipron.
+
+**Every entry was written separately.** This family is the easiest in the catalog to cross-contaminate — short, similarly named, sharing a template — and a copied paragraph with one organ swapped would look completely plausible and be wrong. A test asserts no two catalog overviews are identical, and named pairs (Bronchogen/Chonluten, Cortagen/Cartalax, P21/PE-22-28, MGF/PEG-MGF, Thymalin/Thymogen) are checked individually.
+
+**Accuracy over count.** Where the specific amino-acid sequence or tissue association could not be stated with confidence, the entry describes what the compound *is associated with in its literature* rather than asserting a sequence. Nothing was added purely to raise the number.
+
+**An existing test had a false positive.** The storefront sweep did a substring match for `cart`, which fires on **Cartalax** — a real compound whose name contains those letters. It now matches word boundaries. A check that fails on a legitimate compound name is a check that gets silenced rather than fixed.
+
+**No existing entry received substantive copy changes.** The approved 3.5D content for the original 72 is untouched.
+
+**96 new tests, 998 total** — catalog integrity (unique ids and names, alias collisions in both directions, valid areas, dated and sourced time-sensitive stages, resolvable blend components, no duplicate blend component-sets, no dosing content), punctuation-insensitive search, every added compound reachable and tagged, contamination pairs, and the combined catalog → routine regression proving a newly added compound joins the routine through the same path with no duplicate shell.
+
+**Verified on device, Light and Dark.** Setup showing a legacy mcg vial as `5` MG, the interactive strip with dates, the day sheet, `PT141` resolving to Bremelanotide, and both Taken buttons corrected.
+
+**Boundary audit:** Water, nutrition, Home, `BodyMap`, `SiteSelector`, the injection-site taxonomy, the log model and the calculator core all have a zero-line diff. No reminders, no Food Scanner, no Supabase. Slice 3.10 has not started.
 
 ### Slice 3.9 — Peptides Routine + UX Integration 🟡
 

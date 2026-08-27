@@ -201,6 +201,7 @@ describe.each(SURFACES)('%s', (_name, render) => {
 
   it('reads an mcg-authored vial at a legible scale', async () => {
     const tree = await render();
+    if (!tree.root.findAll((n) => n.props?.accessibilityLabel === 'Vial unit').length) return;
     await selectUnit(tree, 'Vial unit', 'mcg');
     await enterVial(tree, '5000', '2');
 
@@ -379,7 +380,16 @@ describe.each(SURFACES)('%s — custom conversion', (_name, render) => {
   });
 });
 
-describe.each(SURFACES)('%s — vial unit toggle', (_name, render) => {
+/**
+ * The vial unit toggle now belongs to the standalone calculator alone.
+ *
+ * Slice 3.9A removed it from Routine Setup, where the wrong answer persists
+ * and is off by a thousand in every syringe number derived from it. The
+ * calculator is a scratch surface — nothing it holds is saved, so a mistaken
+ * unit is visible and disposable — and mg/mcg flexibility is genuinely useful
+ * for someone holding a vial labelled either way.
+ */
+describe.each([SURFACES[1]])('%s — vial unit toggle', (_name, render) => {
   function vialValue(tree: ReactTestRenderer) {
     return tree.root
       .findAllByType(TextInput)
@@ -431,28 +441,29 @@ describe.each(SURFACES)('%s — vial unit toggle', (_name, render) => {
   });
 });
 
-describe('vial unit switching preserves what gets saved', () => {
-  it('emits an identical canonical amountMcg before and after', async () => {
-    /**
-     * The inline toggle is the one that persists. If it reinterpreted rather
-     * than restated, a saved vial would change by a factor of a thousand —
-     * so the canonical micrograms are compared across the switch.
-     */
+describe('the setup form persists milligrams and nothing else', () => {
+  it('emits canonical micrograms from a milligram vial', async () => {
     const emitted: Array<Record<string, unknown>> = [];
     const tree = await mount(
       <SetupForm onChange={(value) => emitted.push(value as Record<string, unknown>)} />,
     );
 
     await enterVial(tree, '20', '2');
-    const before = (emitted.at(-1)?.vial as { amountMcg: number } | undefined)?.amountMcg;
-    expect(before).toBe(20_000);
+    const vial = emitted.at(-1)?.vial as
+      | { amountMcg: number; authored: { amount: number; unit: string } }
+      | undefined;
 
-    await selectUnit(tree, 'Vial unit', 'mcg');
-    const after = (emitted.at(-1)?.vial as { amountMcg: number } | undefined)?.amountMcg;
-    expect(after).toBe(before);
+    // 20 on screen, 20000 on disk, authored as mg — the UI simplification
+    // never touched the maths.
+    expect(vial?.amountMcg).toBe(20_000);
+    expect(vial?.authored).toEqual({ amount: 20, unit: 'mg' });
+  });
 
-    await selectUnit(tree, 'Vial unit', 'mg');
-    expect((emitted.at(-1)?.vial as { amountMcg: number } | undefined)?.amountMcg).toBe(before);
+  it('has no vial unit control to get wrong', async () => {
+    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    expect(
+      tree.root.findAll((node) => node.props?.accessibilityLabel === 'Vial unit'),
+    ).toHaveLength(0);
   });
 
   it('never emits the custom amount', async () => {
@@ -515,14 +526,18 @@ describe('the inline surface specifically', () => {
     }
   });
 
-  it('sits between the vial and the preferred unit', async () => {
+  it('sits directly beneath the vial it is derived from', async () => {
     const tree = await mount(<SetupForm onChange={() => undefined} />);
     const headings = texts(tree).filter((line) =>
       ['NAME', 'VIAL', 'UNIT CONVERSION', 'PREFERRED UNIT', 'SCHEDULE'].includes(line),
     );
-    // NAME is gone in slice 3.9 — a routine is named by its definition, so
-    // the form opens on the vial, which is the first thing it actually asks.
-    expect(headings).toEqual(['VIAL', 'UNIT CONVERSION', 'PREFERRED UNIT', 'SCHEDULE']);
+    /**
+     * NAME went in 3.9 (a routine is named by its definition) and PREFERRED
+     * UNIT in 3.9A — it asked, out of context and up front, a question that
+     * only matters beside the amount being recorded. What is left is the
+     * vial, what it converts to, and when.
+     */
+    expect(headings).toEqual(['VIAL', 'UNIT CONVERSION', 'SCHEDULE']);
   });
 });
 

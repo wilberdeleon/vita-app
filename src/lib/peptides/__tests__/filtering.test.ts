@@ -37,9 +37,14 @@ describe('classification and area combine', () => {
     expect(results.map((e) => e.id)).not.toContain('catalog:retatrutide');
   });
 
-  it('Blends + Growth Hormone finds the CJC pairing and nothing else', () => {
+  it('Blends + Growth Hormone finds the growth-hormone pairings only', () => {
     const results = searchCatalog('', 'blend', 'growth-hormone');
-    expect(results.map((e) => e.id)).toEqual(['catalog:blend-cjc-ipamorelin']);
+    // Slice 3.9A added a second GH-oriented blend; both belong here, and
+    // nothing outside that area does.
+    expect(results.map((e) => e.id).sort()).toEqual([
+      'catalog:blend-cjc-ipamorelin',
+      'catalog:blend-tesamorelin-ipamorelin',
+    ]);
   });
 
   it('All + Aesthetics spans classifications', () => {

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, NumericField, SegmentedTabs } from '../../../components/ui';
-import { fromDateAndTime, toTimeInput } from '../../../lib/daily';
+import { Button, NumericField, SegmentedTabs, TextField } from '../../../components/ui';
+import { formatLogDateLong, fromDateAndTime, toTimeInput, type LogDate } from '../../../lib/daily';
 import {
   MASS_UNITS,
   calculateSyringeUnits,
@@ -24,6 +24,10 @@ type Props = {
   visible: boolean;
   name: string;
   setup: PeptideSetup;
+  /** The day being recorded. Defaults to today. */
+  logDate: LogDate;
+  /** True when `logDate` is today, which is what lets the time be implicit. */
+  isToday: boolean;
   /** Recent history, only to show what was recorded last. Never a default. */
   history: readonly PeptideLogEntry[];
   onCancel: () => void;
@@ -51,17 +55,37 @@ type Props = {
  * conversion. There is no `— units` placeholder, which would imply a number
  * went missing.
  */
-export function TakenSheet({ visible, name, setup, history, onCancel, onConfirm }: Props) {
+export function TakenSheet({
+  visible,
+  name,
+  setup,
+  logDate,
+  isToday,
+  history,
+  onCancel,
+  onConfirm,
+}: Props) {
   const { surfaces } = useTheme();
 
   const [amount, setAmount] = useState('');
   const [unit, setUnit] = useState<MassUnit>(setup.preferredDoseUnit);
   const [site, setSite] = useState<InjectionSiteSnapshot | undefined>();
+  /**
+   * Asked for only when correcting an earlier day.
+   *
+   * Today's time is genuinely known — it is now. A past day's is not, and
+   * stamping one in silently would put a precise claim into a health record
+   * that nobody made. So the field appears exactly when the answer stops
+   * being obvious.
+   */
+  const [time, setTime] = useState('12:00');
+  const timeValid = /^\d{1,2}:\d{2}$/.test(time.trim());
 
   const parsed = Number(amount.trim());
-  const valid = amount.trim().length > 0 && Number.isFinite(parsed) && parsed > 0;
+  const amountValid = amount.trim().length > 0 && Number.isFinite(parsed) && parsed > 0;
+  const valid = amountValid && (isToday || timeValid);
 
-  const conversion = valid
+  const conversion = amountValid
     ? calculateSyringeUnits(
         {
           vialAmountMcg: setup.vial?.amountMcg,
@@ -85,10 +109,9 @@ export function TakenSheet({ visible, name, setup, history, onCancel, onConfirm 
      * tomorrow, which is the exact defect slice 3.7 shipped and had to fix.
      */
     const now = new Date();
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
-      now.getDate(),
-    ).padStart(2, '0')}`;
-    const loggedAt = fromDateAndTime(today, toTimeInput(now.toISOString())) ?? now.toISOString();
+    const loggedAt =
+      fromDateAndTime(logDate, isToday ? toTimeInput(now.toISOString()) : time.trim()) ??
+      now.toISOString();
 
     onConfirm({
       authoredAmount: parsed,
@@ -106,7 +129,7 @@ export function TakenSheet({ visible, name, setup, history, onCancel, onConfirm 
           <View>
             <Text style={[styles.title, { color: surfaces.text }]}>{name}</Text>
             <Text style={[styles.subtitle, { color: surfaces.textTertiary }]}>
-              Recording today's administration
+              {isToday ? "Recording today's administration" : formatLogDateLong(logDate)}
             </Text>
           </View>
           <Pressable onPress={onCancel} accessibilityRole="button" accessibilityLabel="Cancel" hitSlop={10}>
@@ -152,6 +175,16 @@ export function TakenSheet({ visible, name, setup, history, onCancel, onConfirm 
               {formatSyringeUnits(conversion.syringeUnits)}
             </Text>
           ) : null}
+
+          {isToday ? null : (
+            <TextField
+              label="Time (24-hour)"
+              placeholder="e.g. 08:30"
+              value={time}
+              onChangeText={setTime}
+              accessibilityLabel="Time in 24-hour format"
+            />
+          )}
 
           <SiteSelector
             value={site}

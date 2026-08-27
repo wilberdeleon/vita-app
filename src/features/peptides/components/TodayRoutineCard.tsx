@@ -73,21 +73,32 @@ export function TodayRoutineCard({
         </Pressable>
       ) : (
         <View style={styles.actions}>
+          {/*
+           * Two available actions, neither pre-selected.
+           *
+           * A filled Taken button read as *already taken* before anyone
+           * touched it — the most consequential possible misreading on this
+           * screen. Both are outlined until the user answers; the accent is
+           * carried by Taken's label alone, which marks it as the likely
+           * choice without asserting it is the current state.
+           */}
           <Pressable
             onPress={onTaken}
             accessibilityRole="button"
             accessibilityLabel={`Record ${routine.name} as taken`}
-            style={[styles.action, styles.primary, { backgroundColor: palette.peptide }]}
+            accessibilityState={{ selected: false }}
+            style={[styles.action, { borderColor: palette.peptide, borderWidth: 1 }]}
           >
-            <Text style={styles.primaryLabel}>Taken</Text>
+            <Text style={[styles.actionLabel, { color: palette.peptide }]}>Taken</Text>
           </Pressable>
           <Pressable
             onPress={onSkipped}
             accessibilityRole="button"
             accessibilityLabel={`Record ${routine.name} as skipped`}
+            accessibilityState={{ selected: false }}
             style={[styles.action, { borderColor: surfaces.border, borderWidth: StyleSheet.hairlineWidth }]}
           >
-            <Text style={[styles.secondaryLabel, { color: surfaces.textSecondary }]}>Skipped</Text>
+            <Text style={[styles.actionLabel, { color: surfaces.textSecondary }]}>Skipped</Text>
           </Pressable>
         </View>
       )}
@@ -126,14 +137,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.m,
     minHeight: 44,
   },
-  primary: {
-    borderWidth: 0,
-  },
-  primaryLabel: {
-    ...typography.bodyMedium,
-    color: '#FFFFFF',
-  },
-  secondaryLabel: {
+  actionLabel: {
     ...typography.bodyMedium,
   },
   change: {
