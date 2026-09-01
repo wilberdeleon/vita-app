@@ -398,7 +398,17 @@ export function SetupForm({ initial, onChange }: Props) {
         The amount you usually use. Used to fill in your daily log — you can change it any day.
       </Text>
 
-      <SectionHeader title="Schedule" />
+      {/*
+        * Schedule, Reminder and Start date are **fields of the routine**, not
+        * sections of their own (founder decision, 3.10A).
+        *
+        * Each arrived with the slice that added it, and each brought a full
+        * SectionHeader, so the form ended up with seven equally loud headings
+        * where the founder had specified three groups. They are labelled at
+        * field weight now — the same weight as "Amount (MG)" above — so the
+        * screen reads as one setup form rather than as five stacked modules.
+        */}
+      <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Schedule</Text>
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>
         Optional, and entirely yours to choose.
       </Text>
@@ -459,7 +469,7 @@ export function SetupForm({ initial, onChange }: Props) {
         * meantime. Neutral wording on purpose — "reminder", never "dose
         * reminder" or "medication reminder".
         */}
-      <SectionHeader title="Reminder" />
+      <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Reminder</Text>
       <SegmentedTabs
         options={['Off', 'On']}
         selectedIndex={reminderOn ? 1 : 0}
@@ -491,7 +501,7 @@ export function SetupForm({ initial, onChange }: Props) {
         </>
       ) : null}
 
-      <SectionHeader title="Start date" />
+      <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Start date</Text>
       <View style={styles.row}>
         <View style={styles.grow}>
           <TextField
@@ -544,6 +554,12 @@ export function SetupForm({ initial, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
+  /** Field weight, matching `TextField`'s own label — a field of the group
+      above it, never a section of its own. */
+  fieldLabel: {
+    ...typography.captionMedium,
+    marginTop: spacing.s,
+  },
   helper: {
     ...typography.caption,
     marginTop: -spacing.s,

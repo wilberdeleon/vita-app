@@ -134,16 +134,11 @@ export {
 } from './model/routine';
 export { formatLabel, formatLabels } from './model/format';
 export {
-  calculateAmountFromUnits,
-  calculateConcentration,
   calculateSyringeUnits,
-  calculateSyringeUnitsForMass,
-  doseConsistencyNotes,
   unitConversionReference,
   type DoseCalculation,
   type DoseCalculationError,
   type DoseCalculationResult,
-  type DoseConsistencyNote,
   type ConversionRow,
   type UnitConversion,
   type UnitConversionResult,

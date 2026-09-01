@@ -101,6 +101,26 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 998 tests. ⚠️ **Needs your confirmation on a real iPhone** — especially setup, tapping days on the strip, and searching a few of the new compounds.
 
+**Slice 3.10A built (2026-09-01) — your four decisions, and Sprint 3 closes.**
+
+**The calculator asks for the vial in MG only now**, exactly like Routine Setup. You were right that the two screens should not ask the same question two different ways. The Custom Amount still lets you pick mg or mcg, because that is the amount you are converting, not the size of the vial — `5 MG / 2 ML` with `500 mcg` still comes to 20 units.
+
+Taking that toggle out uncovered something worth telling you: **one of the tests had been passing without testing anything.** It started with a check for the vial-unit control and quietly gave up when it did not find one — which had already been true on the Setup form, and became true everywhere once the toggle went. It ran, asserted nothing, and counted as green. Rewritten so it actually checks the behaviour it was written for.
+
+**The dead safety helper is gone, and three more went with it.** You asked me to prefer deleting dead code over keeping speculative helpers. When I looked properly, the same was true of three of its neighbours — all four were left behind by the same change back in 3.6D, when the calculator stopped asking for a dose. Keeping one and deleting its three siblings would have been arbitrary. Nothing on any screen changed, because none of it was reachable from a screen.
+
+**Routine Setup is three groups now: VIAL, ROUTINE, NOTES.** Schedule, Reminder and Start date sit *inside* Routine as ordinary field labels rather than shouting at the same volume as the groups, and Unit conversion sits inside Vial the same way. Seven headings became three and **nothing was removed** — every field is still there, and there is a test that names all of them so a future tidy-up cannot quietly drop one.
+
+**A peptide scheduled today no longer appears twice.** It shows under Today and nowhere else. Everything else that is running still shows under Active — including As Needed routines, which never appear in Today and would otherwise have become unreachable. A *paused* daily routine stays under Inactive where it belongs. Nothing about this changes what a routine actually *is*: it is still active, still opens the same screen, and comes back under Active tomorrow when it is not scheduled. Worth saying plainly, because the wrong way to fix this would have been to pause things.
+
+One consequence I had to catch: with a single daily peptide, Active is now empty — and the screen would have said **"Nothing active right now"** directly underneath the routine it was asking you to record. Fixed and checked on the device.
+
+**Sprint 3 is complete from an engineering standpoint.** 1093 tests, clean typecheck, clean export, and the diff boundary held on Fuel, Home, Atlas, Journey and Water throughout. I also reconciled the slice table, which had drifted — 3.6, 3.7 and 3.8 still said *Planned* although all three shipped, and several later slices still said *pending* after you had already approved them.
+
+**The one thing still open is not engineering.** The 96 peptide entries have never been reviewed by anyone qualified to review them. The tests check that entries are structurally sound and carry no dosing advice; **that is not a check on whether anything is medically accurate.** Real content, medical and legal review is required before public release. It does not block closing the sprint.
+
+⚠️ **Needs your sign-off. Not merged. Sprint 4 has not started.**
+
 **Slice 3.10 built (2026-08-31) — the Sprint 3 closeout audit.** A deliberate pass over the whole sprint asking whether it makes sense, not whether the tests pass. **Nine things fixed, four handed back to you, one release gate.**
 
 **Two of them the tests could never have found.** The unit conversion table could print the same row twice — `1 mcg = 50 units` sitting directly above `1 mcg = 100 units`, the same amount with two different answers. It only happens with a vial entered in mcg, which is only possible in the standalone calculator, and the rule is now that no two rows may ever read the same whatever they are underneath. And on a brand-new phone with no water goal set, **a blue waterline was drawing across the bottom of the Water card** — the panel is designed never to show an empty glass, because "you haven't picked a goal" is not the same as "you haven't drunk anything", and it was showing one to every first-time user. That one was found by counting pixels in a screenshot; nothing else would have caught it.

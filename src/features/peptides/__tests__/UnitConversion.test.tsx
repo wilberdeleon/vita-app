@@ -165,7 +165,9 @@ describe.each(SURFACES)('%s', (_name, render) => {
 
   it('asks for the vial before it has one, and nothing more', async () => {
     const tree = await render();
-    expect(texts(tree)).toContain('UNIT CONVERSION');
+    // A field-weight label under the vial, not a section header of its own.
+    expect(texts(tree)).toContain('Unit conversion');
+    expect(texts(tree)).not.toContain('UNIT CONVERSION');
     expect(screen(tree)).toContain(
       'Enter vial amount and reconstitution volume to see the unit conversion.',
     );
@@ -199,17 +201,25 @@ describe.each(SURFACES)('%s', (_name, render) => {
     expect(screen(tree)).toContain('CUSTOM CONVERSION');
   });
 
-  it('reads an mcg-authored vial at a legible scale', async () => {
+  it('picks a legible landmark when one whole milligram is off the barrel', async () => {
+    /**
+     * Rewritten in 3.10A. This used to reach the low-concentration case by
+     * toggling the vial to mcg — a control that no longer exists on either
+     * surface — and had been silently early-returning ever since, asserting
+     * nothing at all. The behaviour it was guarding is real and still
+     * reachable: it just takes a genuinely small milligram vial now.
+     *
+     * 0.5 mg in 2 mL is 250 mcg/mL, so one whole milligram would be 400 units
+     * — far off the end of a syringe. The reference drops to a landmark that
+     * can actually be drawn rather than headlining a number nobody can use.
+     */
     const tree = await render();
-    if (!tree.root.findAll((n) => n.props?.accessibilityLabel === 'Vial unit').length) return;
-    await selectUnit(tree, 'Vial unit', 'mcg');
-    await enterVial(tree, '5000', '2');
+    await enterVial(tree, '0.5', '2');
 
-    // 5000 mcg in 2 mL is 2500 mcg/mL. "1 mcg" would be four hundredths of a
-    // unit, so the reference picks a legible landmark instead — 500 mcg reads
-    // as 20 units, comfortably mid-barrel.
-    expect(screen(tree)).toContain('500 mcg = 20 units');
-    expect(texts(tree)).toContain('250 mcg');
+    expect(screen(tree)).toContain('0.05 mg = 20 units');
+    expect(screen(tree)).toContain('Concentration · 0.25 mg/mL');
+    // And every row it offers is drawable.
+    expect(screen(tree)).not.toContain('400 units');
   });
 
   it('never marks a row as recommended', async () => {
@@ -381,63 +391,78 @@ describe.each(SURFACES)('%s — custom conversion', (_name, render) => {
 });
 
 /**
- * The vial unit toggle now belongs to the standalone calculator alone.
+ * The vial is milligrams on **both** surfaces (founder decision, 3.10A).
  *
- * Slice 3.9A removed it from Routine Setup, where the wrong answer persists
- * and is off by a thousand in every syringe number derived from it. The
- * calculator is a scratch surface — nothing it holds is saved, so a mistaken
- * unit is visible and disposable — and mg/mcg flexibility is genuinely useful
- * for someone holding a vial labelled either way.
+ * Slice 3.9A removed the toggle from Routine Setup, where a wrong answer
+ * persists and is out by a factor of a thousand in every syringe number
+ * derived from it. The standalone calculator kept one on the argument that
+ * nothing it holds is saved, so a mistake there was disposable. The Sprint 3
+ * closeout audit disagreed — the mistake is not *visible*, since a mcg vial
+ * produces a table that looks entirely coherent and is wrong by 1000×, and
+ * the user acts on the number rather than on whether it was stored — and the
+ * founder ruled the vial MG-only everywhere.
+ *
+ * **The Custom Amount keeps mg and mcg.** That is the amount being converted,
+ * not the vial size, and micrograms are an ordinary way to state it.
  */
-describe.each([SURFACES[1]])('%s — vial unit toggle', (_name, render) => {
-  function vialValue(tree: ReactTestRenderer) {
-    return tree.root
+describe.each(SURFACES)('%s — the vial is milligrams, and only milligrams', (_name, render) => {
+  it('labels the vial in uppercase MG', async () => {
+    const tree = await render();
+    expect(screen(tree)).toContain('Vial Amount (MG)');
+  });
+
+  it('offers no vial unit control at all', async () => {
+    const tree = await render();
+    const vialUnitControls = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /^Vial unit,/.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+    expect(vialUnitControls).toHaveLength(0);
+    expect(screen(tree)).not.toContain('Vial Amount (MCG)');
+  });
+
+  it('asks for the vial in milligrams for assistive technology too', async () => {
+    const tree = await render();
+    const field = tree.root
       .findAllByType(TextInput)
-      .find((node) => /^Vial amount/.test(String(node.props.accessibilityLabel ?? '')))?.props.value;
-  }
+      .find((node) => /^Vial amount/.test(String(node.props.accessibilityLabel ?? '')));
+    // Setup adds ", optional" because the field genuinely is; the calculator
+    // does not. What both must say is *milligrams*, and never micrograms.
+    expect(field?.props.accessibilityLabel).toMatch(/^Vial amount in milligrams/);
+    expect(field?.props.accessibilityLabel).not.toMatch(/microgram|mcg/i);
+  });
 
-  it('restates 20 mg as 20000 mcg, preserving the ratio', async () => {
+  it('reads a typed vial as milligrams — 20 in 2 mL is 10 mg/mL', async () => {
+    // The whole point of removing the toggle: there is now exactly one way to
+    // read the number in that field.
     const tree = await render();
     await enterVial(tree, '20', '2');
-    expect(screen(tree)).toContain('1 mg = 10 units');
     expect(screen(tree)).toContain('Concentration · 10 mg/mL');
-
-    await selectUnit(tree, 'Vial unit', 'mcg');
-    expect(vialValue(tree)).toBe('20000');
-
-    /**
-     * The reference is written in whatever unit the vial is authored in, so
-     * the headline restates itself at an mcg-appropriate scale. What must not
-     * move is the underlying ratio: 10 mg/mL is 10000 mcg/mL, and 1 mg still
-     * comes to 10 units.
-     */
-    expect(screen(tree)).toContain('Concentration · 10000 mcg/mL');
-
-    // The custom field keeps its own unit — seeded once, then independent, so
-    // toggling the vial cannot silently reinterpret something typed here.
-    await selectUnit(tree, 'Custom amount unit', 'mcg');
-    await type(tree, /^Custom amount,/, '1000');
-    expect(screen(tree)).toContain('= 10 units');
-  });
-
-  it('round-trips back to 20 mg with no drift', async () => {
-    const tree = await render();
-    await enterVial(tree, '20', '2');
-    await selectUnit(tree, 'Vial unit', 'mcg');
-    await selectUnit(tree, 'Vial unit', 'mg');
-
-    expect(vialValue(tree)).toBe('20');
     expect(screen(tree)).toContain('1 mg = 10 units');
   });
 
-  it('leaves a blank or half-typed vial alone', async () => {
+  it('still converts a Custom Amount entered in micrograms', async () => {
+    // 5 mg in 2 mL is 2.5 mg/mL, so 500 mcg is 0.2 mL — 20 units.
     const tree = await render();
-    await selectUnit(tree, 'Vial unit', 'mcg');
-    expect(vialValue(tree)).toBe('');
+    await enterVial(tree, '5', '2');
+    await selectUnit(tree, 'Custom amount unit', 'mcg');
+    await type(tree, /^Custom amount,/, '500');
+    expect(screen(tree)).toContain('= 20 units');
+  });
 
-    await type(tree, /^Vial amount/, '1.');
-    await selectUnit(tree, 'Vial unit', 'mg');
-    expect(vialValue(tree)).toBe('1.');
+  it('keeps mg and mcg on the Custom Amount, which is not the vial', async () => {
+    const tree = await render();
+    await enterVial(tree, '10', '1');
+    const options = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /^Custom amount unit,/.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+    expect(options.map((node) => node.props.accessibilityLabel).sort()).toEqual([
+      'Custom amount unit, mcg',
+      'Custom amount unit, mg',
+    ]);
   });
 });
 
@@ -526,18 +551,39 @@ describe('the inline surface specifically', () => {
     }
   });
 
-  it('sits directly beneath the vial it is derived from', async () => {
-    const tree = await mount(<SetupForm onChange={() => undefined} />);
-    const headings = texts(tree).filter((line) =>
-      ['NAME', 'VIAL', 'UNIT CONVERSION', 'PREFERRED UNIT', 'SCHEDULE'].includes(line),
-    );
+  it('sits inside the vial group rather than beside it', async () => {
     /**
+     * The founder's §9–11 hierarchy, asserted as a shape rather than as a
+     * screenshot: **three** section headers, in order, and nothing else
+     * shouting at that weight.
+     *
      * NAME went in 3.9 (a routine is named by its definition) and PREFERRED
      * UNIT in 3.9A — it asked, out of context and up front, a question that
-     * only matters beside the amount being recorded. What is left is the
-     * vial, what it converts to, and when.
+     * only matters beside the amount being recorded. SCHEDULE, REMINDER and
+     * START DATE were demoted to field labels in 3.10A: they are fields of
+     * the routine, not groups of their own, and seven equally loud headings
+     * made a setup form read like five stacked modules.
      */
-    expect(headings).toEqual(['VIAL', 'UNIT CONVERSION', 'SCHEDULE']);
+    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    const headings = texts(tree).filter((line) => line === line.toUpperCase() && /^[A-Z ]{3,}$/.test(line));
+    expect(headings).toEqual(['VIAL', 'ROUTINE', 'NOTES']);
+  });
+
+  it('keeps every routine control present, just no longer shouting', async () => {
+    // The hierarchy change must not have removed anything (§13).
+    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    const rendered = screen(tree);
+    for (const label of [
+      'Vial Amount (MG)',
+      'Reconstitution Volume (ML)',
+      'Unit conversion',
+      'Amount (MG)',
+      'Schedule',
+      'Reminder',
+      'Start date',
+    ]) {
+      expect(rendered).toContain(label);
+    }
   });
 });
 
@@ -631,5 +677,58 @@ describe('units are cased by role, not by accident', () => {
     expect(rendered).toContain('10 mg/mL');
     // The reference table is values, so it must not shout.
     expect(rendered).not.toContain('1 MG');
+  });
+});
+
+/* ── §6 the founder's canonical examples, on both surfaces ──────────────── */
+
+/**
+ * The four worked examples, asserted through the real screens rather than
+ * through the arithmetic underneath them.
+ *
+ * `dose.test.ts` already proves the maths. This proves the maths reaches the
+ * user — which, after PT-141, is the distinction this codebase takes
+ * seriously. All four are stated in milligrams, because that is now the only
+ * way a vial can be entered on either surface.
+ */
+describe.each(SURFACES)('%s — the canonical conversions', (_name, render) => {
+  it.each([
+    ['10', '1', '1 mg = 10 units', 'Concentration · 10 mg/mL'],
+    ['10', '2', '1 mg = 20 units', 'Concentration · 5 mg/mL'],
+    ['20', '2', '1 mg = 10 units', 'Concentration · 10 mg/mL'],
+  ])('%s MG in %s ML gives %s', async (vial, water, headline, concentration) => {
+    const tree = await render();
+    await enterVial(tree, vial, water);
+    const rendered = screen(tree);
+    expect(rendered).toContain(headline);
+    expect(rendered).toContain(concentration);
+  });
+
+  it('5 MG / 2 ML with a 500 mcg custom amount gives 20 units', async () => {
+    const tree = await render();
+    await enterVial(tree, '5', '2');
+    await selectUnit(tree, 'Custom amount unit', 'mcg');
+    await type(tree, /^Custom amount,/, '500');
+    expect(screen(tree)).toContain('= 20 units');
+  });
+
+  it('states the U-100 assumption it is built on', async () => {
+    // 100 units = 1 mL. Every number above depends on it, so it is said out
+    // loud rather than assumed silently.
+    const tree = await render();
+    await enterVial(tree, '10', '1');
+    expect(screen(tree)).toContain('Using U-100 · 100 units/mL');
+  });
+
+  it('never renders the same amount twice in the reference table', async () => {
+    // The 3.10 duplicate-row guard, checked on the screen rather than in the
+    // model — the mcg path that produced it is gone, and this keeps it gone.
+    for (const [vial, water] of [['10', '1'], ['10', '2'], ['20', '2'], ['5', '2'], ['0.5', '1']]) {
+      const tree = await render();
+      await enterVial(tree, vial, water);
+      const amounts = texts(tree).filter((t) => /^\d+(\.\d+)? (mg|mcg)$/.test(t));
+      expect(new Set(amounts).size).toBe(amounts.length);
+      await act(async () => tree.unmount());
+    }
   });
 });

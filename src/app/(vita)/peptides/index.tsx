@@ -145,6 +145,9 @@ export default function Peptides() {
         </>
       ) : null}
 
+      {/* Everything running that Today is not already asking about. A
+          routine scheduled today appears once, at the top, where it can be
+          answered — not twice on one screen. */}
       {peptides.active.length > 0 ? (
         <>
           <SectionHeader title="Active" />
@@ -173,7 +176,18 @@ export default function Peptides() {
         </>
       ) : null}
 
-      {hasAnything && peptides.active.length === 0 && peptides.needsSetup.length === 0 ? (
+      {/*
+        * `today` counts as active for this empty state (3.10A).
+        *
+        * Since Active now excludes whatever Today is already showing, a user
+        * whose one routine is scheduled today has an empty Active list — and
+        * without this the screen would announce "Nothing active right now"
+        * directly beneath the routine it was asking them to record.
+        */}
+      {hasAnything &&
+      peptides.today.length === 0 &&
+      peptides.active.length === 0 &&
+      peptides.needsSetup.length === 0 ? (
         <EmptyState
           icon="flask-outline"
           title="Nothing active right now"

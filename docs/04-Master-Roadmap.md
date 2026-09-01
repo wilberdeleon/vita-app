@@ -12,17 +12,21 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
-**Sprint 3 — Water + Peptides** · Status: 🟡 Feature-complete, closeout audit built and pending founder review (opened 2026-08-22, branch `sprint-3-water-peptides`)
+**Sprint 3 — Water + Peptides** · Status: ✅ **COMPLETE (engineering)** — closeout resolutions built and pending founder review (opened 2026-08-22, branch `sprint-3-water-peptides`, not merged)
 
 Objective: turn Water and Peptides from the Sprint 0 placeholder logs they still are into real, persisted, date-aware features at the quality bar Sprint 2 set for Fuel.
 
 Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, the App-Wide Visual Consistency Pass, and **Sprint 2 — Fuel** (audited and merged into `main` 2026-08-21, merge commit `44eeae6`, closed by `473cb59`).
 
-Sprint 3's planning and architecture audit is founder-approved and all three entry conditions were met. **All implementation slices, 3.1 through 3.9B, are built; 3.9B is founder-approved on device.** Slice 3.10 — the closeout audit — is built and pending founder review; it fixed nine defects, referred four findings back to the founder as product decisions, and recorded one release gate (peptide reference content requires expert medical/legal review before public release). Slice-by-slice detail is in `docs/06-Slice-Tracker.md`; findings are in `docs/07-Audit-Log.md`.
+Sprint 3's planning and architecture audit is founder-approved and all three entry conditions were met. **Every implementation slice, 3.1 through 3.9B, is founder-approved on device.** Slice 3.10 — the closeout audit — fixed nine defects and referred four findings back to the founders; slice 3.10A implements all four rulings and is the one slice still awaiting review. Slice-by-slice detail is in `docs/06-Slice-Tracker.md`; findings are in `docs/07-Audit-Log.md`.
 
-**Sprint 3 is not marked complete here.** Closure waits on founder review of the 3.10 audit and an explicit closeout approval, per the sprint workflow. Sprint 3 is **feature-complete with its final audit/closeout underway** — not merged, not closed.
+**Sprint 3 is complete from an engineering standpoint.** No engineering blockers remain: 1093 tests pass, typecheck and no-unused are clean, the iOS export succeeds, and the diff boundary held on nutrition, Fuel, Home, Atlas and Journey throughout.
 
-**The next sprint is Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01 recorded below. **No Sprint 4 work has started**, and none starts until the founders close Sprint 3 and separately authorize Sprint 4.
+**That is not the same as being ready to ship.** One **release gate** is open and is deliberately not counted as an engineering blocker: the 96 peptide reference entries require qualified medical, content and legal review before public release. The automated tests enforce structure and internal consistency — unique ids and aliases, no shared prose between similar compounds, no dosing or protocol language, every time-sensitive development stage dated and sourced — and **none of that is a check on whether a sentence is medically accurate.**
+
+**The branch is not merged, and closure still needs an explicit founder sign-off** on slice 3.10A per the sprint workflow.
+
+**The next sprint is Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01 recorded below. **No Sprint 4 work has started**, and none starts until the founders close Sprint 3 and separately authorize Sprint 4. Its candidate Tools — a BMI Calculator, a Food / Product Scanner, a Research Library, and Dashboard discoverability for Tools — all remain Innovation Lab proposals, not committed slices.
 
 ---
 
@@ -130,7 +134,9 @@ Status: ✅ Complete — audited 2026-08-21, merged into `main` as `44eeae6`
 
 ---
 
-# Sprint 3 — Water + Peptides
+# Sprint 3 — Water + Peptides ✅
+
+**Complete (engineering), 2026-09-01.** Pending founder sign-off on slice 3.10A and not yet merged. One release gate remains open and is not an engineering blocker: qualified medical, content and legal review of the 96 peptide reference entries.
 
 Objective: build out VITA's daily health-tracking infrastructure beyond food — turn Water and Peptides from the lightweight logs they are today into real, persisted, date-aware features.
 

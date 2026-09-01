@@ -57,6 +57,19 @@ export type PeptidesView = {
   today: TodayRoutine[];
   /** Added but not yet configured. Not the same as paused — see `routine.ts`. */
   needsSetup: ResolvedSetup[];
+  /**
+   * Active routines **not already shown in `today`** (founder decision, 3.10A).
+   *
+   * A deduplicated *view*, never a change of state: a routine scheduled today
+   * is still `routineState: 'active'` on disk and everywhere else in the app.
+   * The Peptides home screen was listing the same routine twice — once as the
+   * thing to do now, once as a roster entry — which with a single daily
+   * peptide was literally the same name printed twice on one screen.
+   *
+   * Today is the surface for what needs answering; this is everything else
+   * that is running. `asNeeded` routines are never in `today`, so they always
+   * appear here, which is the correct place for them.
+   */
   active: ResolvedSetup[];
   inactive: ResolvedSetup[];
   /** No routines at all — drives the empty state. */
@@ -116,26 +129,39 @@ export function usePeptides(): PeptidesView {
 
     const active = resolved.filter((item) => item.routineState === 'active').sort(byName);
 
+    const todayRoutines = active
+      .filter((item) => isScheduledOn(item.setup.schedule, today, item.setup.startDate))
+      .map((item) => {
+        const dayStatus = statusFor(routineStatuses, item.setup.id, today);
+        return {
+          ...item,
+          status: dayStatus,
+          mark: routineDayMark({
+            schedule: item.setup.schedule,
+            startDate: item.setup.startDate,
+            logDate: today,
+            status: dayStatus,
+          }),
+        };
+      });
+
+    /**
+     * Presentation filtering, and nothing more.
+     *
+     * Membership is decided by setup id against what `today` already shows,
+     * so the two lists cannot disagree about which routine is which. Nothing
+     * here reads or writes `routineState`: a routine scheduled today remains
+     * active in the model, is still reachable, and reappears here tomorrow
+     * when its schedule no longer covers the day.
+     */
+    const shownToday = new Set(todayRoutines.map((item) => item.setup.id));
+
     return {
       isLoading: status === 'loading',
       error,
-      today: active
-        .filter((item) => isScheduledOn(item.setup.schedule, today, item.setup.startDate))
-        .map((item) => {
-          const dayStatus = statusFor(routineStatuses, item.setup.id, today);
-          return {
-            ...item,
-            status: dayStatus,
-            mark: routineDayMark({
-              schedule: item.setup.schedule,
-              startDate: item.setup.startDate,
-              logDate: today,
-              status: dayStatus,
-            }),
-          };
-        }),
+      today: todayRoutines,
       needsSetup: resolved.filter((item) => item.routineState === 'needs-setup').sort(byName),
-      active,
+      active: active.filter((item) => !shownToday.has(item.setup.id)),
       inactive: resolved.filter((item) => item.routineState === 'inactive').sort(byName),
       isEmpty: setups.length === 0,
       orphanedCount,

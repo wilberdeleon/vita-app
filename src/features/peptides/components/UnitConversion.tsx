@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Card, NumericField, SectionHeader, SegmentedTabs } from '../../../components/ui';
+import { Card, NumericField, SegmentedTabs } from '../../../components/ui';
 import {
   MASS_UNITS,
   calculateSyringeUnits,
@@ -87,7 +87,17 @@ export function UnitConversion({ vialAmountMcg, reconstitutionMl, vialUnit, unit
 
   return (
     <>
-      <SectionHeader title="Unit conversion" />
+      {/*
+        * A subordinate label, not a section header (founder decision, 3.10A).
+        *
+        * This used to render a full `SectionHeader`, which made UNIT
+        * CONVERSION a peer of VIAL and ROUTINE — three equally loud headings
+        * competing down the setup form when only two of them name a group the
+        * user has to fill in. The conversion is *derived from* the two fields
+        * directly above it and belongs to them, so it is labelled at
+        * field weight and sits inside the vial group.
+        */}
+      <Text style={[styles.groupLabel, { color: surfaces.textSecondary }]}>Unit conversion</Text>
 
       {!reference.ok ? (
         <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
@@ -202,6 +212,12 @@ export function UnitConversion({ vialAmountMcg, reconstitutionMl, vialUnit, unit
 }
 
 const styles = StyleSheet.create({
+  groupLabel: {
+    // Field weight — the same as "Vial Amount (MG)" above it — so it reads as
+    // part of the vial group rather than as a new section.
+    ...typography.captionMedium,
+    marginTop: spacing.xs,
+  },
   helper: {
     ...typography.caption,
   },

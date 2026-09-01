@@ -168,7 +168,10 @@ describe('creating setups', () => {
       });
     });
 
-    const { setup, name, scheduleLabel } = view.active[0];
+    // A *daily* routine, so 3.10A's deduplication puts it in `today` rather
+    // than in `active`. What this test is about is what got stored, which is
+    // the same object either way.
+    const { setup, name, scheduleLabel } = view.today[0];
     // Slice 3.9: the definition names the routine. A stored `displayName`
     // survives on disk untouched but no longer decides what anything is
     // called — one thing, one name.

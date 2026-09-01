@@ -727,7 +727,7 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 ---
 
-## Sprint 3 — Water + Peptides — 🟡 Feature-complete, in closeout
+## Sprint 3 — Water + Peptides — ✅ COMPLETE (engineering)
 
 **Opened 2026-08-22.** Branch `sprint-3-water-peptides`, cut from `main` at `4ab32c5`. Founder-authorized against the approved Sprint 3 Planning & Architecture Audit; all three entry conditions met (device QA accepted · Sprint 2 merged · branch cut). Scope and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
 
@@ -735,29 +735,66 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
-| 3.1 | Shared Daily Foundation + Test Harness | Promote the shared date/id/key/storage primitives; stand up the first committed test suite. No behavior change | ✅ Built — pending founder review |
-| 3.2 | Water Domain + Persistence | Hydration model, unit normalization, repository, provider; water that actually saves | ✅ Built — pending founder review |
-| 3.3 | Water Goal + Logging Experience | User-set goal, entry-local units, today's editable log, delete + Undo | ✅ Built — pending founder review |
-| 3.4 | Water Visual Refinement + Fuel/Home Integration | Water-level panel, 7-day volume strip, Home water tile and goal pillar on real state | ✅ Built — pending founder review |
+| 3.1 | Shared Daily Foundation + Test Harness | Promote the shared date/id/key/storage primitives; stand up the first committed test suite. No behavior change | ✅ Approved |
+| 3.2 | Water Domain + Persistence | Hydration model, unit normalization, repository, provider; water that actually saves | ✅ Approved |
+| 3.3 | Water Goal + Logging Experience | User-set goal, entry-local units, today's editable log, delete + Undo | ✅ Approved |
+| 3.4 | Water Visual Refinement + Fuel/Home Integration | Water-level panel, 7-day volume strip, Home water tile and goal pillar on real state | ✅ Approved |
 | 3.5 | Peptide Definitions, Catalog + User Setup | Definition/Setup models, catalog, Custom, setup lifecycle | ✅ Approved |
 | 3.5A | Expanded Peptide Library + Research Details | 71-entry catalog, aliases, blends, compound types, research reference pages | ✅ Approved |
-| 3.5B | Final Peptide Catalog + Detail Polish | 72 entries, research-area taxonomy, category selector, structured detail presentation | ✅ Built — pending founder review |
-| 3.6 | Dose / Unit Calculator | Pure bidirectional syringe-units ⇄ mass conversion, fully tested | ⬜ Planned |
-| 3.7 | Peptide Logging + History | Log entry with snapshot fields, history by date, edit/delete | ⬜ Planned |
-| 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ⬜ Planned |
-| 3.8A | Injection Site UX + Interactive Body Map | Flat site taxonomy with Center Abdomen, SVG body map, Tools redesign, 3.8 migration on read | 🟡 Built — pending founder review |
-| 3.8B | Injection Site Visual + Selection Polish | One-tap canonical site list, body model as optional aid, redrawn silhouette, Site Reference rewrite | 🟡 Built — pending founder review |
-| 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | 🟡 Built — pending founder review |
-| 3.9 | Peptides Routine + UX Integration | Add to Routine, needs-setup/active/inactive, routine detail, daily Taken/Skipped, removal preserving history, Fuel on real state | 🟡 Built — pending founder review |
-| 3.9A | Routine UX Simplification + Interactive Schedule + Catalog Expansion | MG-only vial, Preferred Unit removed, interactive week strip, 96-entry catalog, punctuation-insensitive search | 🟡 Built — pending founder review |
+| 3.5B | Final Peptide Catalog + Detail Polish | 72 entries, research-area taxonomy, category selector, structured detail presentation | ✅ Approved |
+| 3.6 | Dose / Unit Calculator | Pure bidirectional syringe-units ⇄ mass conversion, fully tested | ✅ Approved |
+| 3.7 | Peptide Logging + History | Log entry with snapshot fields, history by date, edit/delete | ✅ Approved |
+| 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ✅ Approved |
+| 3.8A | Injection Site UX + Interactive Body Map | Flat site taxonomy with Center Abdomen, SVG body map, Tools redesign, 3.8 migration on read | ✅ Approved |
+| 3.8B | Injection Site Visual + Selection Polish | One-tap canonical site list, body model as optional aid, redrawn silhouette, Site Reference rewrite | ✅ Approved |
+| 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | ✅ Approved |
+| 3.9 | Peptides Routine + UX Integration | Add to Routine, needs-setup/active/inactive, routine detail, daily Taken/Skipped, removal preserving history, Fuel on real state | ✅ Approved |
+| 3.9A | Routine UX Simplification + Interactive Schedule + Catalog Expansion | MG-only vial, Preferred Unit removed, interactive week strip, 96-entry catalog, punctuation-insensitive search | ✅ Approved |
 | 3.9B | Daily Peptide UX + Navigation Corrections | Routine Amount, two-tap Taken, Monday–Sunday week, reminder config, PT-141 display fix | ✅ Approved |
-| 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | 🟡 Built — pending founder review |
+| 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ✅ Approved |
+| 3.10A | Final Audit Resolutions + Closeout | Dead dose helpers removed, MG-only vial everywhere, VIAL/ROUTINE/NOTES hierarchy, Today/Active deduplication | 🟡 Built — pending founder review |
+
+**Statuses reconciled at closeout (slice 3.10A).** The table had drifted: 3.6, 3.7 and 3.8 still read ⬜ Planned although all three shipped, and 3.8A–3.8C and 3.9A still read *pending founder review* after the founders had approved them on device — 3.8C explicitly ("Slice 3.8 is now complete and locked", slice 3.9 authorization) and 3.9A by way of 3.9B, which supersedes it and is approved. Every Sprint 3 slice through 3.10 is now marked to match what the founders actually said. **3.10A is the one slice still awaiting review.**
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Settings (**Sprint 4** since the 2026-09-01 reorder; Sprint 7 when this was decided) will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
 
-### Slice 3.10 — Sprint 3 Audit + Closeout 🟡
+### Slice 3.10A — Final Audit Resolutions + Closeout 🟡
+
+**Objective:** implement the founder's rulings on the four findings slice 3.10 referred rather than decided, verify the separately-approved roadmap is intact, and close Sprint 3 from an engineering standpoint.
+
+---
+
+**Referral #1 — `doseConsistencyNotes`: removed.** The founder's rule was *prefer deleting truly dead code over preserving speculative helpers*, and it applied to more than the one function that was referred. `doseConsistencyNotes` had zero production consumers — but so did `calculateConcentration`, `calculateAmountFromUnits` and `calculateSyringeUnitsForMass`, all orphaned by the same change: slice 3.6D replaced the dose input with the automatic reference and left the forward, reverse and convenience conversions with nothing calling them. Keeping one and deleting its three siblings would have been arbitrary, so all four went, with the `DoseConsistencyNote` type. 80 lines of source and 16 tests. **No UI behaviour changed, because none of it was reachable from a screen** — and nothing is lost: the reverse conversion is four lines against `calculateSyringeUnits` on the day a surface actually needs it. What remains in `dose.ts` is exactly what the app calls: `calculateSyringeUnits` and `unitConversionReference`.
+
+**Referral #2 — the vial is milligrams everywhere.** The standalone calculator's mg/mcg vial toggle is gone; it now reads `Vial Amount (MG)`, the same question in the same words as Routine Setup. The reasoning the old code documented — *nothing here is saved, so a mistaken unit is disposable* — was the thing the audit disputed and the founder ruled on: the mistake is not visible. A vial entered as mcg produces a table that looks entirely coherent and is wrong by a factor of a thousand, and the user acts on the number rather than on whether it was stored.
+
+**The Custom Amount keeps mg and mcg**, deliberately. That is the amount being converted, not the vial size, and micrograms are an ordinary way to state it — `5 MG / 2 ML` with a `500 mcg` custom amount still reads `= 20 units`, which is the founder's own worked example.
+
+Removing a control means removing everything that pretended it still existed: the `vialUnit` state, its conversion callback, the `MassUnit`/`MASS_UNITS`/`convertAuthoredAmount`/`SegmentedTabs`/`View` imports, three unreachable styles, and — the one that mattered — **a test that had been silently passing without testing anything.** `reads an mcg-authored vial at a legible scale` opened with a guard that early-returned when no vial-unit control was present. That was true on the setup form already and became true everywhere once the toggle went, so the test ran, asserted nothing, and counted as green. It is rewritten against a path that still exists: a 0.5 mg vial in 2 mL is 250 mcg/mL, one whole milligram would be 400 units, and the reference correctly drops to `0.05 mg = 20 units`.
+
+**Referral #3 — VIAL / ROUTINE / NOTES.** Seven section headers became three. `Schedule`, `Reminder` and `Start date` are now field-weight labels *inside* ROUTINE, and `Unit conversion` is a field-weight label *inside* VIAL rather than a heading competing with it. The weight difference is the whole mechanism: group headings are uppercase micro-type in tertiary grey; these are sentence-case `captionMedium` in secondary — the same weight as `Vial Amount (MG)` and `Amount (MG)`, so they read as fields of the group above them. **Nothing was removed**, which a test asserts by naming all seven controls; a second test pins the heading list as exactly `['VIAL', 'ROUTINE', 'NOTES']`.
+
+**Referral #4 — Today and Active never show the same routine twice.** A routine surfaced in Today no longer also appears under Active. This is **presentation filtering and nothing else**: membership is decided by setup id against what Today already renders, and `routineState` is neither read nor written — a test asserts the routine is still `active` on disk after being hidden from the Active list, because a screen that deduplicated by pausing something would be a far worse bug than the duplication it set out to fix.
+
+The consequences were checked rather than assumed. As Needed routines are never in Today, so they always appear under Active — the one place they can be reached. Routines with no schedule at all likewise. A *paused* daily routine is not active, so it is never deduplicated against Today and stays under Inactive. Needs Setup is untouched. And the Active empty state now counts Today: without that, a user with a single daily routine would have been told **"Nothing active right now"** directly beneath the routine the screen was asking them to record.
+
+---
+
+**Validation.** `npm test` — **1093/1093** pass across 40 suites (1075 → 1093: 26 added, 16 removed with the dead helpers, 8 net) · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · dead-`StyleSheet`-key sweep — clean · dead-component sweep — clean · stale-reference sweep for the removed toggle, the removed helpers, Preferred Unit, `setup/new` and `peptides/api` — clean · `npx expo export --platform ios` — succeeds · `npx expo install --check` — reports only the `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2 · **no notification dependency exists**, still asserted by test.
+
+**Boundary audit.** Zero-diff against `2c5a2d8` on nutrition, Fuel, Home, Atlas, Journey, `BodyMap`, `SiteSelector`, the site taxonomy, all catalog content, and the whole of Water — this slice touched none of them, so 3.10's Water waterline fix and 3.8C's body map stand exactly as approved.
+
+**Device QA — eight screenshots, all inspected.** Seeded five routines covering every case the deduplication has to get right: one daily (Today), one scheduled Friday (Active), one As Needed (Active), one needs-setup, one paused daily (Inactive). On device: **Retatrutide appears once**, under TODAY; BPC-157 shows `Fri` and Ipamorelin shows `As needed`, both under ACTIVE; Bremelanotide stays under NEEDS SETUP; Tirzepatide stays under INACTIVE despite being a daily routine, because it is paused. Reseeded with a single daily routine — the case the founder objected to — the screen is now one card, no ACTIVE section at all, and **no "Nothing active right now"**. Routine Setup reads VIAL → *Unit conversion* → ROUTINE → *Schedule* → *Reminder*, with the two group headings visibly louder than the field labels. The calculator shows a full-width `Vial Amount (MG)` with no toggle, and the Custom Amount keeps its mg/mcg control. All verified in Light and Dark; no theme regression.
+
+**Founder storage** was backed up before seeding and restored byte-identically; **zero QA keys remain.**
+
+**One visual observation, not changed.** The `1 mg = 10 units` headline is the largest element on Routine Setup. That is the approved slice 3.6D design — *the answer is the only large text on the card* — and it now sits inside VIAL rather than competing with it, which is what §10 asked for. Raised only so it is a noticed choice rather than an unnoticed one.
+
+**Not verified, unchanged limitation:** tap-driven paths on the simulator. Every interaction claim rests on route-level tests that drive the real handlers.
+
+### Slice 3.10 — Sprint 3 Audit + Closeout ✅
 
 **Objective:** inspect the whole of Sprint 3 as if it were about to ship to a real person — not "do the tests pass", but *does this make sense, is anything confusing, ugly, redundant, unfinished, or quietly wrong* — fix what is safely Sprint-3-scoped, and decide whether the sprint can close.
 

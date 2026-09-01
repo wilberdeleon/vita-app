@@ -44,7 +44,7 @@ import {
   type PeptideSetup,
   type RoutineDayStatus,
 } from '../../../lib/peptides';
-import { formatLogDateLong, todayLogDate, toTimeInput } from '../../../lib/daily';
+import { formatLogDateLong, fromLogDate, todayLogDate, toTimeInput } from '../../../lib/daily';
 import { searchCatalog } from '../../../lib/peptides/data/catalog';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { asyncStoragePeptideRepository as realRepository } from '../../../lib/peptides/data/asyncStorageRepository';
@@ -327,17 +327,34 @@ describe('routine state', () => {
   });
 
   it('sorts every routine into exactly one section', async () => {
+    /**
+     * Four routines, four sections, and — since 3.10A — **no routine in two
+     * of them.** `b` is daily, so it belongs to Today; `d` is scheduled on a
+     * day that is not today, so it belongs to Active.
+     */
+    const notToday = (todayIndex: number) => ((todayIndex + 3) % 7);
     const fake = repositoryWith([
       setupFixture({ id: 'a', routineState: 'needs-setup', active: false }),
       setupFixture({ id: 'b', definitionId: 'catalog:bpc-157', routineState: 'active' }),
       setupFixture({ id: 'c', definitionId: 'catalog:ipamorelin', routineState: 'inactive', active: false }),
+      setupFixture({
+        id: 'd',
+        definitionId: 'catalog:tirzepatide',
+        routineState: 'active',
+        schedule: { kind: 'daysOfWeek', days: [notToday(fromLogDate(TODAY).getDay())] },
+      }),
     ]);
     const tree = await mount(<Peptides />, fake.repository);
 
     const rendered = screen(tree);
+    expect(rendered).toContain('TODAY');
     expect(rendered).toContain('NEEDS SETUP');
     expect(rendered).toContain('ACTIVE');
     expect(rendered).toContain('INACTIVE');
+
+    // BPC-157 is today's; it must be named once on the whole screen.
+    expect(texts(tree).filter((line) => line === 'BPC-157')).toHaveLength(1);
+    expect(texts(tree).filter((line) => line === 'Tirzepatide')).toHaveLength(1);
   });
 });
 
@@ -392,7 +409,10 @@ describe('pre-3.9 setups', () => {
     await AsyncStorage.setItem(PeptideKeys.setups, JSON.stringify([legacy]));
 
     const tree = await mount(<Peptides />, realRepository);
-    expect(screen(tree)).toContain('ACTIVE');
+    // The fixture is a daily routine, so a migrated *active* setup surfaces
+    // under Today — which is the whole point: it loaded as running, not as
+    // something still waiting to be configured.
+    expect(screen(tree)).toContain('TODAY');
     expect(screen(tree)).not.toContain('Setup needed');
   });
 });
@@ -752,7 +772,8 @@ describe('needs setup', () => {
 
     const home = await mount(<Peptides />, fake.repository);
     expect(screen(home)).not.toContain('Setup needed');
-    expect(screen(home)).toContain('ACTIVE');
+    // Saving made it a running daily routine, so it appears under Today.
+    expect(screen(home)).toContain('TODAY');
   });
 });
 
@@ -1447,5 +1468,149 @@ describe('the closeout audit', () => {
         node.props?.accessibilityLabel === 'Schedule, Daily',
     );
     expect(named.length).toBeGreaterThan(0);
+  });
+});
+
+/* ── §14–20 Today and Active are one screen, not two copies of it ──────── */
+
+/**
+ * A routine surfaced in Today must not also sit in Active (founder decision,
+ * 3.10A). Today is the immediate-action surface; Active is everything else
+ * that is running.
+ *
+ * **This is presentation only.** Nothing here changes `routineState`, and
+ * each test that hides a routine from Active also asserts it is still active
+ * in the model — because a screen that hid a routine by pausing it would be a
+ * far worse bug than the duplication it set out to fix.
+ */
+describe('Today and Active never show the same routine twice', () => {
+  const weekday = () => fromLogDate(TODAY).getDay();
+  /** A weekday that is definitely not today. */
+  const otherDay = () => (weekday() + 3) % 7;
+
+  const named = (tree: ReactTestRenderer, name: string) =>
+    texts(tree).filter((line) => line === name).length;
+
+  it('shows a routine scheduled today under Today, and only there', async () => {
+    const fake = repositoryWith([setupFixture({ schedule: { kind: 'daily' } })]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('TODAY');
+    expect(rendered).not.toContain('ACTIVE');
+    expect(named(tree, 'Retatrutide')).toBe(1);
+  });
+
+  it('leaves that routine active in the model — this is a view, not a state change', async () => {
+    const fake = repositoryWith([setupFixture({ schedule: { kind: 'daily' } })]);
+    await mount(<Peptides />, fake.repository);
+    expect(fake.setups()[0].routineState).toBe('active');
+    expect(fake.setups()[0].active).toBe(true);
+  });
+
+  it('shows an active routine not scheduled today under Active', async () => {
+    const fake = repositoryWith([
+      setupFixture({ schedule: { kind: 'daysOfWeek', days: [otherDay()] } }),
+    ]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('ACTIVE');
+    expect(rendered).not.toContain('TODAY');
+    expect(named(tree, 'Retatrutide')).toBe(1);
+  });
+
+  it('keeps an As Needed routine under Active rather than hiding it', async () => {
+    // As Needed never generates a scheduled Today event, so Active is the
+    // only place it can appear. Losing it here would make it unreachable.
+    const fake = repositoryWith([setupFixture({ schedule: { kind: 'asNeeded' } })]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    expect(screen(tree)).toContain('ACTIVE');
+    expect(named(tree, 'Retatrutide')).toBe(1);
+  });
+
+  it('keeps a routine with no schedule at all under Active', async () => {
+    const fake = repositoryWith([setupFixture({ schedule: undefined })]);
+    const tree = await mount(<Peptides />, fake.repository);
+    expect(screen(tree)).toContain('ACTIVE');
+    expect(named(tree, 'Retatrutide')).toBe(1);
+  });
+
+  it('splits three routines correctly — scheduled today, not today, as needed', async () => {
+    const fake = repositoryWith([
+      setupFixture({ id: 'a', definitionId: 'catalog:retatrutide', schedule: { kind: 'daily' } }),
+      setupFixture({
+        id: 'b',
+        definitionId: 'catalog:bpc-157',
+        schedule: { kind: 'daysOfWeek', days: [otherDay()] },
+      }),
+      setupFixture({ id: 'c', definitionId: 'catalog:ipamorelin', schedule: { kind: 'asNeeded' } }),
+    ]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    const lines = texts(tree);
+    const todayIndex = lines.indexOf('TODAY');
+    const activeIndex = lines.indexOf('ACTIVE');
+    expect(todayIndex).toBeGreaterThanOrEqual(0);
+    expect(activeIndex).toBeGreaterThan(todayIndex);
+
+    // A is above the Active header; B and C are below it. Each appears once.
+    expect(lines.indexOf('Retatrutide')).toBeGreaterThan(todayIndex);
+    expect(lines.indexOf('Retatrutide')).toBeLessThan(activeIndex);
+    expect(lines.indexOf('BPC-157')).toBeGreaterThan(activeIndex);
+    expect(lines.indexOf('Ipamorelin')).toBeGreaterThan(activeIndex);
+    for (const name of ['Retatrutide', 'BPC-157', 'Ipamorelin']) {
+      expect(named(tree, name)).toBe(1);
+    }
+  });
+
+  it('still opens the full routine from Today', async () => {
+    // Removing the Active duplicate must not make the routine harder to reach.
+    const fake = repositoryWith([setupFixture({ schedule: { kind: 'daily' } })]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    // The Today card names its state; what matters is that it still routes.
+    await pressByLabel(tree, 'Retatrutide. No response. Opens the routine');
+    expect(mockPush).toHaveBeenCalledWith('/peptides/routine/setup-1');
+  });
+
+  it('never claims nothing is active while Today is showing something', async () => {
+    // Active is empty in this case by construction, and the empty state has
+    // to know that Today counts.
+    const fake = repositoryWith([setupFixture({ schedule: { kind: 'daily' } })]);
+    const tree = await mount(<Peptides />, fake.repository);
+    expect(screen(tree)).not.toContain('Nothing active right now');
+  });
+
+  it('leaves Needs setup and Inactive untouched', async () => {
+    const fake = repositoryWith([
+      setupFixture({ id: 'a', routineState: 'needs-setup', active: false }),
+      setupFixture({
+        id: 'b',
+        definitionId: 'catalog:bpc-157',
+        routineState: 'inactive',
+        active: false,
+      }),
+      setupFixture({ id: 'c', definitionId: 'catalog:ipamorelin', schedule: { kind: 'daily' } }),
+    ]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('NEEDS SETUP');
+    expect(rendered).toContain('INACTIVE');
+    expect(rendered).toContain('TODAY');
+    // A paused routine is never deduplicated against Today — it is not active.
+    expect(named(tree, 'BPC-157')).toBe(1);
+  });
+
+  it('shows a paused daily routine under Inactive, not under Today', async () => {
+    const fake = repositoryWith([
+      setupFixture({ routineState: 'inactive', active: false, schedule: { kind: 'daily' } }),
+    ]);
+    const tree = await mount(<Peptides />, fake.repository);
+
+    expect(screen(tree)).toContain('INACTIVE');
+    expect(screen(tree)).not.toContain('TODAY');
   });
 });

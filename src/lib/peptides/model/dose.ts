@@ -114,19 +114,6 @@ function resolveConcentration(
 }
 
 /**
- * Concentration alone — how much compound sits in each millilitre.
- *
- * Exposed separately because the setup summary shows it before the user has
- * entered any amount at all, and that display must not have to invent a
- * placeholder amount to get a number out of the calculator.
- */
-export function calculateConcentration(
-  vial: VialInputs,
-): { ok: true; concentrationMcgPerMl: number; unitsPerMl: number } | { ok: false; reason: DoseCalculationError } {
-  return resolveConcentration(vial);
-}
-
-/**
  * Forward conversion: the amount the user is using → syringe units.
  *
  *   concentration = vialAmountMcg / reconstitutionMl
@@ -157,86 +144,6 @@ export function calculateSyringeUnits(
     syringeUnits,
     unitsPerMl: concentration.unitsPerMl,
   };
-}
-
-/**
- * Reverse conversion: syringe units → the mass they contain.
- *
- *   volumeMl = syringeUnits / unitsPerMl
- *   amountMcg = volumeMl * concentration
- *
- * Answers "what does 15 units come to with this vial?", which is the question
- * a user asks when reading a syringe rather than filling one.
- */
-export function calculateAmountFromUnits(
-  vial: VialInputs,
-  syringeUnits: number | undefined,
-): DoseCalculationResult {
-  const concentration = resolveConcentration(vial);
-  if (!concentration.ok) return concentration;
-
-  if (syringeUnits === undefined) return { ok: false, reason: 'missing-units' };
-  if (!isUsableQuantity(syringeUnits)) return { ok: false, reason: 'invalid-units' };
-
-  const volumeMl = syringeUnits / concentration.unitsPerMl;
-  const amountMcg = volumeMl * concentration.concentrationMcgPerMl;
-
-  return {
-    ok: true,
-    concentrationMcgPerMl: concentration.concentrationMcgPerMl,
-    amountMcg,
-    volumeMl,
-    syringeUnits,
-    unitsPerMl: concentration.unitsPerMl,
-  };
-}
-
-/** Convenience for callers holding an authored `{ amount, unit }` pair. */
-export function calculateSyringeUnitsForMass(
-  vial: VialInputs,
-  amount: number | null,
-  unit: MassUnit,
-): DoseCalculationResult {
-  return calculateSyringeUnits(vial, amount === null ? undefined : toMcg(amount, unit));
-}
-
-/**
- * Data-consistency observations — **not** medical judgements.
- *
- * The only thing being compared is one number the user entered against
- * another number the user entered. An amount larger than the whole vial is
- * arithmetically fine and VITA still calculates it; it is worth mentioning
- * only because it usually means a typo in one of the two fields.
- *
- * Deliberately absent: any notion of a large dose, a safe dose, a maximum, or
- * what to do about a result that exceeds a syringe's capacity. VITA does not
- * know any of those things and must not imply that it does.
- */
-export type DoseConsistencyNote = 'amount-exceeds-vial' | 'volume-exceeds-reconstitution';
-
-export function doseConsistencyNotes(
-  vial: VialInputs,
-  calculation: DoseCalculation,
-): DoseConsistencyNote[] {
-  const notes: DoseConsistencyNote[] = [];
-
-  if (vial.vialAmountMcg !== undefined && calculation.amountMcg > vial.vialAmountMcg) {
-    notes.push('amount-exceeds-vial');
-  }
-  /**
-   * Strictly this follows from the first — same ratio, different units — so it
-   * is only reported when the first is absent, to avoid saying one thing
-   * twice. It can stand alone if a future input path sets volume directly.
-   */
-  if (
-    notes.length === 0 &&
-    vial.reconstitutionMl !== undefined &&
-    calculation.volumeMl > vial.reconstitutionMl
-  ) {
-    notes.push('volume-exceeds-reconstitution');
-  }
-
-  return notes;
 }
 
 /**

@@ -1,22 +1,14 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import {
   NumericField,
   NumericKeyboardAccessory,
   Screen,
   ScreenHeader,
   SectionHeader,
-  SegmentedTabs,
 } from '../../../../components/ui';
 import { UnitConversion } from '../../../../features/peptides/components/UnitConversion';
-import {
-  DEFAULT_UNITS_PER_ML,
-  MASS_UNITS,
-  convertAuthoredAmount,
-  parseAmount,
-  toMcg,
-  type MassUnit,
-} from '../../../../lib/peptides';
+import { DEFAULT_UNITS_PER_ML, parseAmount, toMcg } from '../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
@@ -44,7 +36,6 @@ export default function StandalonePeptideCalculator() {
   const { surfaces } = useTheme();
 
   const [vialAmount, setVialAmount] = useState('');
-  const [vialUnit, setVialUnit] = useState<MassUnit>('mg');
   const [reconstitution, setReconstitution] = useState('');
 
   const vialParsed = parseAmount(vialAmount);
@@ -64,33 +55,29 @@ export default function StandalonePeptideCalculator() {
         here is saved, and no peptide needs to be tracked.
       </Text>
 
+      {/*
+        * Milligrams only, exactly as Routine Setup is (founder decision,
+        * slice 3.10A).
+        *
+        * The toggle that used to sit here was kept on the argument that this
+        * screen saves nothing, so a mistaken unit was disposable. The audit's
+        * counter-argument, which the founder accepted: the mistake is not
+        * *visible*. A vial entered as mcg instead of mg produces a table that
+        * looks entirely coherent and is wrong by a factor of a thousand, and
+        * the user acts on the number, not on whether it was stored.
+        *
+        * Vials are labelled in mg. **The Custom Amount below keeps its
+        * mg/mcg choice** — that is the amount being converted, not the vial,
+        * and micrograms are a perfectly ordinary way to say it.
+        */}
       <SectionHeader title="Vial" />
-      <View style={styles.row}>
-        <View style={styles.grow}>
-          <NumericField
-            label={`Vial Amount (${vialUnit.toUpperCase()})`}
-            placeholder="e.g. 20"
-            value={vialAmount}
-            onChangeText={setVialAmount}
-            accessibilityLabel={`Vial amount in ${vialUnit}`}
-          />
-        </View>
-        <View style={styles.unitControl}>
-          <SegmentedTabs
-            options={MASS_UNITS as readonly string[]}
-            selectedIndex={MASS_UNITS.indexOf(vialUnit)}
-            onChange={(index) => {
-              // Restates the vial rather than reinterpreting it — `20 mg`
-              // becomes `20000 mcg`, and the conversion below is unchanged.
-              const next = MASS_UNITS[index];
-              setVialAmount((text) => convertAuthoredAmount(text, vialUnit, next));
-              setVialUnit(next);
-            }}
-            activeColor={palette.peptide}
-            groupLabel="Vial unit"
-          />
-        </View>
-      </View>
+      <NumericField
+        label="Vial Amount (MG)"
+        placeholder="e.g. 20"
+        value={vialAmount}
+        onChangeText={setVialAmount}
+        accessibilityLabel="Vial amount in milligrams"
+      />
       {vialInvalid ? (
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
@@ -122,9 +109,9 @@ export default function StandalonePeptideCalculator() {
       ) : null}
 
       <UnitConversion
-        vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, vialUnit) : undefined}
+        vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined}
         reconstitutionMl={reconParsed ?? undefined}
-        vialUnit={vialUnit}
+        vialUnit="mg"
         unitsPerMl={DEFAULT_UNITS_PER_ML}
       />
 
@@ -146,17 +133,6 @@ const styles = StyleSheet.create({
   helper: {
     ...typography.caption,
     marginTop: -spacing.s,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.m,
-  },
-  grow: {
-    flex: 1,
-  },
-  unitControl: {
-    width: 128,
   },
   error: {
     ...typography.caption,

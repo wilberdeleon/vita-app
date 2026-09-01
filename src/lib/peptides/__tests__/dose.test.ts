@@ -11,11 +11,7 @@
 
 import {
   DEFAULT_UNITS_PER_ML,
-  calculateAmountFromUnits,
-  calculateConcentration,
   calculateSyringeUnits,
-  calculateSyringeUnitsForMass,
-  doseConsistencyNotes,
   unitConversionReference,
   type DoseCalculationResult,
   type VialInputs,
@@ -76,46 +72,6 @@ describe('the founder’s worked examples', () => {
   });
 });
 
-describe('reverse conversion', () => {
-  it('10 mg vial, 1 mL water, 20 units → 2 mg', () => {
-    const result = expectOk(calculateAmountFromUnits(TEN_MG_IN_ONE_ML, 20));
-
-    expect(result.amountMcg).toBeCloseTo(toMcg(2, 'mg'), 6);
-    expect(result.volumeMl).toBeCloseTo(0.2, 10);
-  });
-
-  it('5 mg vial, 2 mL water, 20 units → 500 mcg', () => {
-    const result = expectOk(
-      calculateAmountFromUnits({ vialAmountMcg: toMcg(5, 'mg'), reconstitutionMl: 2 }, 20),
-    );
-
-    expect(result.amountMcg).toBeCloseTo(500, 6);
-  });
-
-  it('is a true inverse of the forward conversion', () => {
-    /**
-     * Checked as a round-trip rather than against a second literal, so the two
-     * directions cannot drift into agreeing only on the cases someone thought
-     * to write down.
-     */
-    const vials: VialInputs[] = [
-      TEN_MG_IN_ONE_ML,
-      { vialAmountMcg: toMcg(5, 'mg'), reconstitutionMl: 2 },
-      { vialAmountMcg: toMcg(2, 'mg'), reconstitutionMl: 0.5 },
-      { vialAmountMcg: toMcg(15, 'mg'), reconstitutionMl: 3 },
-    ];
-    const amounts = [toMcg(2, 'mg'), toMcg(250, 'mcg'), toMcg(0.5, 'mg'), toMcg(1.25, 'mg')];
-
-    for (const vial of vials) {
-      for (const amountMcg of amounts) {
-        const forward = expectOk(calculateSyringeUnits(vial, amountMcg));
-        const back = expectOk(calculateAmountFromUnits(vial, forward.syringeUnits));
-        expect(back.amountMcg).toBeCloseTo(amountMcg, 6);
-      }
-    }
-  });
-});
-
 describe('mass units', () => {
   it('converts the mg/mcg boundary exactly', () => {
     expect(toMcg(1, 'mg')).toBe(1000);
@@ -127,8 +83,8 @@ describe('mass units', () => {
 
   it('gives the same answer whichever unit the amount was authored in', () => {
     // 2 mg and 2000 mcg are the same quantity and must not differ by a float.
-    const asMg = expectOk(calculateSyringeUnitsForMass(TEN_MG_IN_ONE_ML, 2, 'mg'));
-    const asMcg = expectOk(calculateSyringeUnitsForMass(TEN_MG_IN_ONE_ML, 2000, 'mcg'));
+    const asMg = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(2, 'mg')));
+    const asMcg = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(2000, 'mcg')));
     expect(asMg.syringeUnits).toBe(asMcg.syringeUnits);
   });
 
@@ -142,7 +98,7 @@ describe('mass units', () => {
 
 describe('decimals', () => {
   it('handles realistic fractional input', () => {
-    const result = expectOk(calculateSyringeUnitsForMass(TEN_MG_IN_ONE_ML, 1.25, 'mg'));
+    const result = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(1.25, 'mg')));
     expect(result.syringeUnits).toBeCloseTo(12.5, 10);
   });
 
@@ -194,10 +150,6 @@ describe('invalid input never reaches the screen', () => {
     ['NaN amount', calculateSyringeUnits(TEN_MG_IN_ONE_ML, Number.NaN), 'invalid-amount'],
     ['units per mL of zero', calculateSyringeUnits({ ...TEN_MG_IN_ONE_ML, unitsPerMl: 0 }, 2000), 'invalid-units-per-ml'],
     ['negative units per mL', calculateSyringeUnits({ ...TEN_MG_IN_ONE_ML, unitsPerMl: -100 }, 2000), 'invalid-units-per-ml'],
-    ['no units, reversed', calculateAmountFromUnits(TEN_MG_IN_ONE_ML, undefined), 'missing-units'],
-    ['zero units, reversed', calculateAmountFromUnits(TEN_MG_IN_ONE_ML, 0), 'invalid-units'],
-    ['negative units, reversed', calculateAmountFromUnits(TEN_MG_IN_ONE_ML, -20), 'invalid-units'],
-    ['NaN units, reversed', calculateAmountFromUnits(TEN_MG_IN_ONE_ML, Number.NaN), 'invalid-units'],
   ];
 
   for (const [label, result, reason] of cases) {
@@ -221,20 +173,6 @@ describe('invalid input never reaches the screen', () => {
       if (!result.ok) continue;
       expect(Number.isFinite(result.syringeUnits)).toBe(true);
     }
-  });
-});
-
-describe('concentration on its own', () => {
-  it('is available before any amount has been entered', () => {
-    const result = calculateConcentration(TEN_MG_IN_ONE_ML);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.concentrationMcgPerMl).toBe(10_000);
-  });
-
-  it('refuses the same malformed vials as the full calculation', () => {
-    expect(calculateConcentration({ reconstitutionMl: 1 }).ok).toBe(false);
-    expect(calculateConcentration({ vialAmountMcg: 10_000, reconstitutionMl: 0 }).ok).toBe(false);
   });
 });
 
@@ -276,36 +214,6 @@ describe('display formatting', () => {
   it('formats concentration as a rate in the authored unit', () => {
     expect(formatConcentration(10_000, 'mg')).toBe('10 mg/mL');
     expect(formatConcentration(2_500, 'mcg')).toBe('2500 mcg/mL');
-  });
-});
-
-describe('data-consistency notes', () => {
-  it('says nothing when the numbers are consistent', () => {
-    const result = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(2, 'mg')));
-    expect(doseConsistencyNotes(TEN_MG_IN_ONE_ML, result)).toEqual([]);
-  });
-
-  it('notices an amount larger than the whole vial', () => {
-    const result = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(12, 'mg')));
-    expect(doseConsistencyNotes(TEN_MG_IN_ONE_ML, result)).toEqual(['amount-exceeds-vial']);
-  });
-
-  it('still calculates that amount rather than blocking it', () => {
-    // Arithmetically valid input always gets an answer; the note is advisory.
-    const result = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(12, 'mg')));
-    expect(result.syringeUnits).toBeCloseTo(120, 10);
-  });
-
-  it('does not say the same thing twice', () => {
-    // Exceeding the vial mass and exceeding the volume are one inconsistency.
-    const result = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(12, 'mg')));
-    expect(doseConsistencyNotes(TEN_MG_IN_ONE_ML, result)).toHaveLength(1);
-  });
-
-  it('calculates a result above 100 units without comment on how to use it', () => {
-    const result = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(12, 'mg')));
-    expect(formatSyringeUnits(result.syringeUnits)).toBe('120 units');
-    expect(formatVolume(result.volumeMl)).toBe('1.2 mL');
   });
 });
 

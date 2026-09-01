@@ -176,6 +176,12 @@ Peptide Setup today offers only Active / Inactive. There is no way to remove a s
 
 **Already compatible.** Log entries denormalise `definitionId`, and Tools → Injection Sites resolves compound names from the compiled catalog rather than the setup — so history already renders correctly for a setup that no longer exists. What remains is the removal action itself and deciding where orphaned history is reachable from.
 
+## Closed at Sprint 3 closeout (slice 3.10A, 2026-09-01)
+
+**All four referred findings are resolved.** The vial is **MG-only on every surface** — the standalone calculator no longer offers a mg/mcg vial toggle, while the Custom Amount keeps both because that is the amount being converted rather than the vial size. Routine Setup is **three groups — VIAL, ROUTINE, NOTES** — with Schedule, Reminder, Start date and Unit conversion demoted to field-weight labels inside them; nothing was removed. **A routine scheduled today appears under Today and nowhere else**, as presentation filtering only: it is still `active` in the model, still opens the same routine screen, and returns to the Active list on a day its schedule does not cover. As Needed and unscheduled routines are never in Today, so they always appear under Active. And the orphaned `doseConsistencyNotes` helper was deleted along with three zero-consumer neighbours left behind by the same 3.6D change.
+
+**Sprint 3 is complete from an engineering standpoint.** The catalog release gate below is unchanged and remains open.
+
 ## Audited at Sprint 3 closeout (slice 3.10, 2026-08-31)
 
 **The catalog is 96 entries**, and it has **never had expert review.** The automated tests enforce structure and internal consistency — unique ids and aliases, no two entries sharing prose, no dosing or protocol language anywhere, every time-sensitive development stage dated and sourced. **None of that checks whether a sentence is medically accurate, and it must not be mistaken for one.** Real content, medical and legal review appropriate to a consumer health product is required before public release. Recorded as a **release gate**, not a Sprint 3 blocker.
