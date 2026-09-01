@@ -20,7 +20,9 @@ Built in Slice 0.8 as `src/features/journey/` with three tabs:
 
 **Sprints 4 and 5** of the [[Roadmap]] — **Journey / Weight (4)** and **Journey / Photos (5)**. *Journey was Sprint 2 under the 2026-07-09 plan; the 2026-08-17 restructure split it into two sprints, and the **2026-08-21 founder reorder** moved both one place later, behind [[Water]] + [[Peptides]].*
 
-**⚠️ Deferred, not cancelled or reduced.** Journey remains a major pillar of VITA and the next major experience after Sprint 3. **Every requirement and decision on this page stands unchanged** — weight logging and history, the Journey data architecture, progress views, progress photos, photo comparisons, and the existing visual concepts. Only the scheduling moved; nothing was narrowed because the sprint number changed. Weight (Sprint 4) still precedes Photos (Sprint 5), since it owns the core Journey data architecture Photos builds on.
+**⚠️ Deferred, not cancelled or reduced.** Journey remains a major pillar of VITA and its next major *feature* experience. **Every requirement and decision on this page stands unchanged** — weight logging and history, the Journey data architecture, progress views, progress photos, photo comparisons, and the existing visual concepts. Only the scheduling moved; nothing was narrowed because the sprint number changed. Weight (**Sprint 5**) still precedes Photos (**Sprint 6**), since it owns the core Journey data architecture Photos builds on.
+
+*Renumbered twice: the 2026-08-21 reorder put [[Water]] + [[Peptides]] ahead of Journey (Weight 4, Photos 5), and the **2026-09-01 reorder** put [[Settings]] + Tools & Reference ahead of it too (Weight **5**, Photos **6**). The founders moved Settings ahead precisely because Journey / Weight is expected to be complex — it gets cleaner app architecture and a more focused scope by going second. See [[Roadmap]] and [[Decision Log]].*
 
 Scope: Journey Overview, Timeline, Milestones, Achievements, Streak System, Rewards & Celebrations, Journey Detail Screen, Journey Polish — real weight tracking, weekly photos, a progress timeline, Journey Stages driven by actual consistency.
 

@@ -19,7 +19,9 @@ The nine-slice plan originally defined on [[Roadmap]] was superseded mid-sprint 
 
 The two prerequisite decisions that gated this sprint's UI work resolved 2026-07-09 (VITA supports Light + Dark via semantic tokens; Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]) both shipped as part of the theme system above.
 
-## Sprint 3 — Water + Peptides — 🟡 In Progress (opened 2026-08-22)
+## Sprint 3 — Water + Peptides — 🟡 Final audit / closeout (opened 2026-08-22)
+
+**Where it stands (2026-09-01): implementation is feature-complete and the closeout audit is underway.** Every implementation slice, 3.1 through 3.9B, is built; slice 3.10 — the Sprint 3 audit and closeout — is built and pending founder review. **Sprint 3 is not merged and not marked complete.** Closure waits on founder review of the 3.10 audit and an explicit closeout approval, per the sprint workflow.
 
 **Founder-authorized 2026-08-22** against the approved Sprint 3 Planning & Architecture Audit. Branch: `sprint-3-water-peptides`, cut from `main`. All three entry conditions met — device QA accepted, Sprint 2 merged, branch cut.
 
@@ -211,17 +213,37 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Binding constraints:** do not upgrade the Expo SDK · no provider secrets in the client · verify provider licensing before caching third-party data · [[Water]] and [[Peptides]] preserved but not expanded · the approved visual design stays locked.
 
-## Sprint 3 — Water + Peptides — ⬜ Next, not opened
+## Sprint 3 — Water + Peptides — pre-opening plan *(historical)*
 
-**Roadmap reorder, founder decision 2026-08-21.** Water + Peptides moves ahead of [[My Journey|Journey]] and becomes Sprint 3; Journey / Weight becomes Sprint 4 and Journey / Photos Sprint 5. Reason: establish more of VITA's daily health-tracking infrastructure before beginning the larger Journey experience. **Journey is deferred, not cancelled or reduced.** See [[Roadmap]] and [[Decision Log]].
+*This section is the pre-opening snapshot written before the sprint was authorized. It is kept for the record; the live status is the Sprint 3 section at the top of this page. Its sprint numbers for Journey were superseded by the 2026-09-01 reorder.*
 
-**Objective:** bring both daily logs to real, persisted functionality — [[Water]] and [[Peptides]] as genuinely functional health-tracking features rather than the visual mocks they are today, backing the compact Hydration and Peptides modules on the redesigned [[Fuel]] screen. **Fuel is not redesigned again.**
+**Roadmap reorder, founder decision 2026-08-21.** Water + Peptides moved ahead of [[My Journey|Journey]] and became Sprint 3. Reason: establish more of VITA's daily health-tracking infrastructure before beginning the larger Journey experience. **Journey is deferred, not cancelled or reduced.** See [[Roadmap]] and [[Decision Log]].
 
-**Proposed slices (illustrative, not yet approved):** Sprint Foundation / Shared Daily Tracking Architecture → Water Data Model + Persistence → Water Logging + Goal Experience → Water Visual Polish / Fuel Integration → Peptide Definition + User Setup Architecture → Peptide Logging + History → Dose / Unit Calculator → Injection Site Tracking → Peptide UX / Fuel Integration → Sprint Audit / Polish. Full scope on [[Roadmap]].
+**Objective:** bring both daily logs to real, persisted functionality — [[Water]] and [[Peptides]] as genuinely functional health-tracking features rather than the visual mocks they were, backing the compact Hydration and Peptides modules on the redesigned [[Fuel]] screen. **Fuel is not redesigned again.**
 
-**Entry conditions — two of three met.** Sprint 2's final physical-device QA is accepted and Sprint 2 is merged into `main` (2026-08-21, merge commit `44eeae6`). Remaining: cut a fresh branch (expected `sprint-3-water-peptides`) from `main`. No slice is scoped or approved and no branch exists.
+**Proposed slices (illustrative, superseded by the ten approved slices above):** Sprint Foundation / Shared Daily Tracking Architecture → Water Data Model + Persistence → Water Logging + Goal Experience → Water Visual Polish / Fuel Integration → Peptide Definition + User Setup Architecture → Peptide Logging + History → Dose / Unit Calculator → Injection Site Tracking → Peptide UX / Fuel Integration → Sprint Audit / Polish.
 
-**Open before implementation:** peptide catalog sourcing and the medical/legal boundary ([[Open Questions]] #17) · who owns the hydration goal preference, Water or [[Settings]] ([[Open Questions]] #16) · Peptides sharing purple with [[Atlas]] ([[Color System]]).
+**Open at the time:** peptide catalog sourcing and the medical/legal boundary ([[Open Questions]] #17 — **still open**) · who owns the hydration goal preference ([[Open Questions]] #16 — **closed 2026-08-21**, Water owns it and [[Settings]] reads the same source) · Peptides sharing purple with [[Atlas]] ([[Color System]]).
+
+## Sprint 4 — Settings + Tools & Reference — ⬜ Next, not opened
+
+**Roadmap reorder, founder decision 2026-09-01.** [[Settings]] + Tools & Reference moves ahead of [[My Journey|Journey]] and becomes Sprint 4; Journey / Weight becomes Sprint 5, Journey / Photos Sprint 6, and [[Atlas]] Sprint 7. **Reason:** Journey / Weight is expected to be one of VITA's more complex feature areas, so the founders want the utility/settings architecture organized, the existing Tools built out coherently, and the reference/navigation structure established first. **Journey is deferred to Sprint 5, not cancelled.** See [[Roadmap]] and [[Decision Log]].
+
+**Objective:** organize VITA's utility layer — Settings architecture, a coherent **Tools & Reference** destination, and the navigation structure that makes both discoverable.
+
+**Direction (planning level only — no slices defined or approved):**
+
+- **Settings** — core screen structure, preferences organization (profile, notifications, preferences, units, appearance, privacy), clean navigation, visual consistency, completion of existing placeholders. Water's goal/unit preference is read from `vita:v1:water:prefs`, not duplicated.
+- **Tools that already exist** — the **Peptide Calculator** (slice 3.6) and **Injection Sites / interactive Body Model** (slices 3.8–3.8C). Sprint 4 organizes and polishes them; it is not building them from zero.
+- **Tools that are planned** — [[BMI Calculator]] and the [[Food & Product Scanner]] (Food Score). The scanner is a candidate, not a guarantee, and likely needs its own planning pass.
+- **Reference** — a concept-level [[Research Library]]: storage and handling, reconstitution basics, stability, research/development status, educational compound information.
+- **Discoverability** — Settings → Tools & Reference, plus a possible future Dashboard shortcut **if** product design supports it. No [[Dashboard]] card is authorized now.
+
+**⚠️ Binding product boundary.** VITA does not casually provide "recommended dosage" or prescriptive protocols for unapproved or research compounds; that content needs explicit founder authorization plus medical/legal/content review. VITA helps users understand, calculate, organize and track what they enter — it does not become a treatment recommendation engine. Extends, does not relax, the Sprint 3 safety rules ([[Open Questions]] #17).
+
+**Carried forward from Sprint 3:** reminder preferences and time **persist** on a peptide routine, but **OS notification delivery is not implemented**. Scheduled notifications, Taken/Skipped actions from a notification, and delivery on configured days are future work, unscheduled and not automatically Sprint 4 scope.
+
+**Entry conditions:** Sprint 3 closed and merged, plus explicit founder authorization for Sprint 4. **Neither has happened. No Sprint 4 implementation has started.**
 
 ### Definition of done (from the Build Handbook)
 

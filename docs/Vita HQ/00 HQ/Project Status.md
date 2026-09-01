@@ -6,9 +6,9 @@
 
 ---
 
-## Snapshot — 2026-08-21
+## Snapshot — 2026-09-01
 
-**Sprint 3 — Water + Peptides is 🟡 in progress** (opened 2026-08-22, branch `sprint-3-water-peptides`; slice 3.1 built). **Sprint 2 — Fuel is ✅ complete** (founder-authorized 2026-08-17, branch `sprint-2-fuel`; closeout audit 2026-08-21, founder device QA passed, **merged into `main` 2026-08-21** as `44eeae6` with full slice history preserved; see [[Current Sprint]]). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), and the App-Wide Visual Consistency Pass (2026-08-16). **The official roadmap was restructured 2026-08-17** — Fuel is now formally Sprint 2 (was 3), Journey splits into Sprints 3 and 4, and Water/Peptides and Settings finally get sprints of their own. See [[Roadmap]] and [[Decision Log]].
+**Sprint 3 — Water + Peptides is 🟡 feature-complete and in final audit / closeout** (opened 2026-08-22, branch `sprint-3-water-peptides`). Every implementation slice is built; slice 3.10, the closeout audit, is built and pending founder review. **Sprint 3 is not merged and not marked complete.** **Sprint 2 — Fuel is ✅ complete** (founder-authorized 2026-08-17, branch `sprint-2-fuel`; closeout audit 2026-08-21, founder device QA passed, **merged into `main` 2026-08-21** as `44eeae6` with full slice history preserved; see [[Current Sprint]]). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), and the App-Wide Visual Consistency Pass (2026-08-16). **The roadmap was reordered again 2026-09-01** — [[Settings]] + Tools & Reference becomes Sprint 4, ahead of Journey; see [[Roadmap]] and [[Decision Log]].
 
 **Theming is app-wide.** Light, Dark, and System work across every existing screen; System follows the device appearance live. Home/Dashboard is the documented visual source of truth — see [[Design Bible]], [[Color System]], [[Decision Log]]. The pass was a design-system migration, **not** a feature sprint: no routes, tabs, sections, data, navigation, interactions, or copy changed. Detail lives in the repo's `docs/06-Slice-Tracker.md`; this page does not duplicate it.
 
@@ -35,7 +35,11 @@ The entire application shell exists and runs in the iOS Simulator via Expo Go �
 
 ## What's next
 
-**After Sprint 2: Sprint 3 — Water + Peptides.** The roadmap was **reordered 2026-08-21 by founder decision** — Water + Peptides moves ahead of [[My Journey|Journey]], which becomes Sprints 4 (Weight) and 5 (Photos). The order is now Fuel → Water + Peptides → Journey / Weight → Journey / Photos → Atlas → Settings → Final Polish. Reason: establish more of VITA's daily health-tracking infrastructure before the larger Journey experience. **Journey is deferred, not cancelled or reduced** — every documented Journey requirement stands, and Weight still precedes Photos. **Sprint 3 opened 2026-08-22** — all three entry conditions met, branch `sprint-3-water-peptides` cut from `main`, ten slices approved. See [[Roadmap]], [[Current Sprint]], [[Decision Log]].
+**After Sprint 3: Sprint 4 — [[Settings]] + Tools & Reference.** The roadmap was **reordered 2026-09-01 by founder decision** — Settings + Tools & Reference moves ahead of [[My Journey|Journey]], which becomes Sprints 5 (Weight) and 6 (Photos); [[Atlas]] becomes Sprint 7. The order is now Fuel → Water + Peptides → **Settings + Tools & Reference** → Journey / Weight → Journey / Photos → Atlas → Final Polish. **Reason:** Journey / Weight is expected to be one of VITA's more complex feature areas, so the utility/settings architecture, the existing Tools, and the reference/navigation structure are organized first. **Journey is deferred to Sprint 5, not cancelled or reduced** — every documented Journey requirement stands, and Weight still precedes Photos.
+
+Sprint 4 is documented at a planning level only: Settings structure and preferences · a coherent **Tools** destination built around the **Peptide Calculator** and **Injection Sites / Body Model** that Sprint 3 already shipped · planned [[BMI Calculator]] and [[Food & Product Scanner]] · a concept-level [[Research Library]] · Settings → Tools & Reference discoverability. **No slices are defined and no implementation has started.** See [[Roadmap]], [[Current Sprint]], [[Decision Log]].
+
+*The prior reorder (2026-08-21) that moved Water + Peptides ahead of Journey still stands for Sprint 3; its numbering for Sprints 4–7 is superseded.*
 
 **Sprint 2 — Fuel**, complete and merged. The approved architecture proves the nutrition engine — food entries, daily state, calculated totals, persistence, and one shared domain in `src/lib/nutrition/` driving both [[Fuel]] and [[Dashboard]] — before external food providers (FatSecret, USDA FoodData Central, Open Food Facts) are introduced. Real barcode scanning ships in this sprint too, on the existing Expo Go + physical iPhone workflow. Slice-level detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md`.
 
@@ -56,7 +60,7 @@ Also resolved in the same audit: the repo Slice Tracker's internal contradiction
 ## Known tensions still open
 
 Tracked in [[Open Questions]]:
-1. Where Water and Peptides live in the product hierarchy going forward (#4) — narrowed, not closed: both now have a sprint (**Sprint 3**, moved ahead of Journey 2026-08-21), but their place in the primary navigation is still undecided — and it is now decided *sooner*, since the sprint is next rather than fourth out.
+1. Where Water and Peptides live in the product hierarchy going forward (#4) — narrowed, not closed: both were built in **Sprint 3**, but their place in the primary navigation is still undecided. **Sprint 4 — Settings + Tools & Reference makes this live**, since the Tools destination and its discoverability are exactly that question for the peptide tooling.
 2. **⚠️ New (2026-08-17): Health and Premium are no longer scheduled**, orphaning five Innovation Lab ideas that had been promoted to 📋 Planned — [[Health Age]], [[Biomarker Age]], [[Apple Health Integration]], [[Apple Home Screen Widgets]], [[Voice Atlas]] — plus [[Mobile Order Screenshot Import]]. Their status has deliberately not been reverted. See #14.
 3. Release-readiness work (analytics, crash reporting, App Store prep, launch QA) has no home now that Sprint 7 — Beta is replaced by the narrower Sprint 8 — Final Polish & Animations. See #15.
 
@@ -64,7 +68,7 @@ Tracked in [[Open Questions]]:
 
 ## Major reversal
 
-**Atlas is no longer scoped as a placeholder-only V1 feature.** The roadmap's Atlas sprint (Sprint 6 as of the 2026-08-17 restructure; was Sprint 4) commits to a full AI coach (chat, meal planning, workout planning, health guidance, memory, recommendations) — superseding the prior "Atlas V1 is a polished placeholder only" decision. See [[Atlas]] and the [[Decision Log]].
+**Atlas is no longer scoped as a placeholder-only V1 feature.** The roadmap's Atlas sprint (**Sprint 7** since the 2026-09-01 reorder; 6 under the 2026-08-17 restructure, 4 before that) commits to a full AI coach (chat, meal planning, workout planning, health guidance, memory, recommendations) — superseding the prior "Atlas V1 is a polished placeholder only" decision. See [[Atlas]] and the [[Decision Log]].
 
 ## Sources
 

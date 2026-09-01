@@ -74,14 +74,14 @@ The single most premium-feeling capability Vita could ship — a strong Elite-ti
 
 *Portfolio-review snapshot — distinct from Status above (lifecycle stage). This tracks how close the idea is to a buildable sprint.*
 
-**Current Status:** 🟡 Needs Refinement — voice infrastructure is entirely unexplored and text coaching (**Sprint 6 — Atlas**) has to prove itself first.
+**Current Status:** 🟡 Needs Refinement — voice infrastructure is entirely unexplored and text coaching (**Sprint 7 — Atlas**) has to prove itself first.
 
-**Next Step Required:** Prove Atlas text coaching quality in Sprint 6; separately scope voice infrastructure (provider, latency, on-device vs. cloud).
+**Next Step Required:** Prove Atlas text coaching quality in Sprint 7; separately scope voice infrastructure (provider, latency, on-device vs. cloud).
 
 **Estimated Sprint:** ⚠️ none — Premium, Slice 5 under the old structure; unscheduled today
 
 **Dependencies:**
-- Atlas text coaching maturity (Sprint 6 — Atlas)
+- Atlas text coaching maturity (Sprint 7 — Atlas)
 - Voice infrastructure selection
 - Sensitive-moment tone/copy work ([[Atlas Personality]])
 

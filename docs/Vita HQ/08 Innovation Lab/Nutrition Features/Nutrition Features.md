@@ -15,5 +15,6 @@
 | Idea | Status | Priority | Tier |
 |---|---|---|---|
 | [[Contextual Food Visuals]] | 📝 Defined | Medium | Free |
+| [[Food & Product Scanner]] | 📋 Planned — **Sprint 4 candidate**, may need its own planning pass | High | Free |
 
 **Related:** [[Innovation Lab]] · [[Fuel]] · [[Atlas Features]]

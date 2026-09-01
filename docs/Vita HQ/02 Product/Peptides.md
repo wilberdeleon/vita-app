@@ -235,7 +235,7 @@ Built in Slice 0.7 under `src/app/(vita)/peptides/`:
 
 ## Target state
 
-**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the next sprint after Fuel.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Peptides its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position, which means the catalog sourcing and medical-content questions below are now due sooner.
+**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the current sprint, feature-complete and in final audit / closeout.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Peptides its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position, which means the catalog sourcing and medical-content questions below are now due sooner.
 
 Sprint 2 preserves the existing Peptide log but **deliberately does not extend it**; the real work is Sprint 3. The compact Peptides module on the redesigned [[Fuel]] screen becomes a real entry point and summary backed by that work — Sprint 3 does **not** redesign Fuel.
 
@@ -284,16 +284,36 @@ Three separate concerns, never one record — mirroring the Food Definition ≠ 
 
 Engineering detail in repo `docs/09-Technical-Documentation.md` → "Future architecture considerations".
 
+## Carried into Sprint 4 — Tools & Reference
+
+Sprint 3 built two things that are **Tools**, not Peptides-only screens. **Sprint 4 — Settings + Tools & Reference organises, polishes and expands them into a coherent Tools destination; it does not build them from zero.**
+
+- **Peptide Calculator** — the bidirectional vial/reconstitution ⇄ syringe-units conversion (slice 3.6), surfaced inline and standalone. [[Peptide Dose Calculator]].
+- **Injection Sites and the interactive Body Model** — the site taxonomy, tappable body map and accessible list fallback (slices 3.8–3.8C). [[Injection Site Tracking]].
+
+Sprint 4 also carries the concept-level [[Research Library]] / Reference layer, whose peptide and compound material inherits this page's safety boundary unchanged. **VITA does not casually provide "recommended dosage" or prescriptive protocols for unapproved or research compounds** — that content requires explicit founder authorisation plus medical, legal and content review. See [[Settings]] and [[Roadmap]].
+
+## Reminders — what exists and what does not
+
+**Sprint 3 (slice 3.9B) persists reminder preferences and a reminder time on a routine.** Off by default; On exposes a local `HH:MM`, saved so a later slice can deliver without a data migration. Neutral wording: *Reminder*, never *dose reminder*.
+
+**⚠️ OS notification delivery is NOT implemented.** No notification is registered with the operating system, and a test asserts no notification dependency exists in the app.
+
+Future reminder work — unscheduled, and **not** automatically Sprint 4 scope:
+
+- Scheduled routine notifications
+- Taken / Skipped actions from a notification
+- Reminder delivery on the configured schedule days
+
 ## Future ideas
 
-- Reminders tied to schedules
 - Correlating doses with weight/journey trends — sensitive; needs a careful, trust-first design
 
 ## Dependencies / open questions
 
 - **Placement:** same question as [[Water]] — core area in the Product Bible, absent from primary navigation ([[Open Questions]] #4).
-- **Purple is shared with Atlas.** Fine while peptides is a quiet flow; **revisit before Sprint 3** — this direction makes Peptides substantially less quiet ([[Color System]]).
+- **Purple is shared with Atlas.** Peptides is no longer a quiet flow. The founders decided at Sprint 3 authorisation that **peptides purple stays until Sprint 8** ([[Color System]]).
 - **Health-data sensitivity:** medication data is among the most sensitive data Vita will hold. Storage, encryption, and disclosure posture must be decided before live data ships ([[Supabase & Database]]).
-- **Catalog sourcing and legal boundary** — [[Open Questions]] #17, owner: founders, **before** Sprint 3 implementation — now the next sprint.
+- **Catalog sourcing and legal boundary** — [[Open Questions]] #17, owner: founders. Still open: the catalog and its research content have never had expert medical or legal review, recorded as a release gate in the Sprint 3 closeout audit. This binds any [[Research Library]] work in Sprint 4.
 
 **Related:** [[Product Overview]] · [[Settings]] · [[Future Features]]

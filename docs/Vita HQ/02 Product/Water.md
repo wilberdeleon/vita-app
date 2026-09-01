@@ -35,7 +35,7 @@ Built in Slice 0.6 under `src/app/(vita)/water/`:
 
 ## Target state
 
-**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the next sprint after Fuel.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Water its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position.
+**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the current sprint, feature-complete and in final audit / closeout.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Water its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position.
 
 Water currently exists conceptually inside [[Fuel]] and is **deliberately not a Sprint 2 focus**: Sprint 2 preserves its entry points and necessary integration only, and does **not** remove it. The deep hydration work belongs to Sprint 3.
 
@@ -70,6 +70,6 @@ Water came through the closeout audit with **one defect and no functional proble
 ## Dependencies / open questions
 
 - **Product placement:** Water is a core product area in the repo Product Bible but absent from the founder-stated primary navigation. Where it lives long-term is [[Open Questions]] #4 — narrowed by the sprint existing, but not closed, and now due sooner since it is Sprint 3.
-- **Goal preference ownership.** The unit preference and the long-term daily goal plausibly belong to [[Settings]] — which is **Sprint 7, still after** Sprint 3. Whether Water owns the goal initially and Settings absorbs it later is [[Open Questions]] #16.
+- **Goal preference ownership — resolved.** Water owns its goal and unit preference under `vita:v1:water:prefs`; [[Settings]] reads and writes that same source rather than creating a second one. Settings is now **Sprint 4**, immediately after Sprint 3 ([[Open Questions]] #16, closed 2026-08-21).
 
 **Related:** [[Dashboard]] · [[Fuel]] · [[Product Overview]]
