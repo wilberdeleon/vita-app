@@ -22,7 +22,7 @@
  */
 
 import { DEFAULT_UNITS_PER_ML, type MassUnit } from './types';
-import { toMcg } from './units';
+import { fromMcg, roundForDisplay, toMcg } from './units';
 
 /**
  * V1 assumes the ordinary U-100 insulin scale and says so beside every result.
@@ -339,10 +339,31 @@ export function unitConversionReference(vial: VialInputs, unit: MassUnit): UnitC
     };
   };
 
+  /**
+   * Two rows may never *read* the same, whatever they are underneath.
+   *
+   * Micrograms display as whole numbers, so a `0.5 mcg` row and a `1 mcg`
+   * row both render as "1 mcg" — two adjacent lines with identical amounts
+   * and different syringe values, which is a table that contradicts itself.
+   * Reachable today with a sub-microgram vial: `1 mcg / 1 mL` produced
+   * `1 mcg = 50 units` directly above `1 mcg = 100 units`.
+   *
+   * The collision is in the *rendering*, so that is what is compared. The
+   * lower row is the one dropped, since the ladder climbs and the primary is
+   * never the first entry it would discard. Nothing is rounded away silently:
+   * a row that cannot be told apart from another is simply not shown.
+   */
+  const seen = new Set<number>();
   const rows = ROW_MULTIPLIERS.map((multiplier) => row(primaryAmount * multiplier))
     // A row nobody could draw is noise. The primary always survives, so the
     // reference can never come back empty.
-    .filter((candidate) => candidate.syringeUnits <= READABLE_MAX_UNITS * 2);
+    .filter((candidate) => candidate.syringeUnits <= READABLE_MAX_UNITS * 2)
+    .filter((candidate) => {
+      const displayed = roundForDisplay(fromMcg(candidate.amountMcg, unit), unit);
+      if (seen.has(displayed)) return false;
+      seen.add(displayed);
+      return true;
+    });
 
   return {
     ok: true,

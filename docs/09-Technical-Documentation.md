@@ -43,6 +43,16 @@ All of it was written for nutrition in Sprint 2 and promoted unchanged when Wate
 
 **`NutritionRepository` is not built on `dayStore`,** and that is on purpose. It is merged, approved, and holds real user data; rewriting its storage layer to prove a new abstraction would be regression risk with no user-visible gain. Only `NAMESPACE` moved out of `nutrition/data/keys.ts` — every key string it produces is unchanged and is pinned by test, because those keys name data already on users' devices.
 
+**Formatting helpers live here too, and are hand-written on purpose.** `formatLogDateLong` ("Friday, August 21"), `formatLogDateWithYear` ("24 August 2026"), `formatClockTime` ("2:15 PM"), `formatTimeOfDay` ("09:00" → "9:00 AM"), and `toTimeInput` are all built from local date parts rather than `toLocaleDateString`/`toLocaleTimeString`. Hermes' `Intl` support varies by platform and engine build, and a header that silently falls back to `2026-08-21` — or throws — on one device and not another is not worth the dependency for a handful of strings. Swap them for `Intl` when localization actually ships. The two added in the 3.10 audit exist because the routine screen was rendering storage formats directly: `09:00` for a reminder and `2026-08-24` for a start date. `formatLogDateWithYear` carries the year that `formatLogDateLong` omits, because a routine's start date is often months or years old.
+
+## UI conventions
+
+**Units are cased by role.** A **configuration field label** names its unit in capitals — `Vial Amount (MG)`, `Reconstitution Volume (ML)`, `Amount (MG)` — matching the founder's requested styling on setup surfaces. Every **displayed value** stays lowercase — `2 mg`, `250 mcg`, `20 units`, `1.2 mL`, `10 mg/mL`. Nothing else uppercases a unit; in particular the conversion reference, history rows, and log sheets are all values and stay lowercase.
+
+The rule was written down during the 3.10 audit because the product had drifted into both styles at once: the setup form carried `Amount (mg)` four lines under `Vial Amount (MG)`, and the standalone calculator asked for `Vial Amount (mg)` where Routine Setup asked for `(MG)`. It is pinned by tests in `UnitConversion.test.tsx` so the next surface that asks for a vial cannot pick its own style.
+
+**Storage formats never reach a summary screen.** `LogDate` is `YYYY-MM-DD` and reminder times are `HH:MM`, because those are what the fields parse and what sorts correctly on disk. Both are formatted through `lib/daily` before display. The one remaining exception is the Start Date *input* on Routine Setup, which is still a free-text `YYYY-MM-DD` field pending a real date picker — recorded in the Audit Log.
+
 ## Peptides architecture (Sprint 3 slice 3.5)
 
 `src/lib/peptides/` holds the first two layers of the three-part model:
@@ -279,7 +289,7 @@ Tools → Injection Sites aggregates across setups and resolves compound names t
 
 **Display name is parsed, preserved, and never read** (slice 3.9). The field is gone from Setup — a routine is named by its definition. `SetupForm` still holds the stored value in state and emits it unchanged, because `applySetupChanges` deletes any key passed as `undefined`; emitting nothing would have erased what an old setup was called the first time its owner edited anything else.
 
-**Fuel reads `usePeptideSummary`** — administrations actually recorded today, falling back to how many routines are scheduled, with **no progress value**, because VITA has never had a daily peptide goal. The `features/peptides/api.ts` fixture that claimed `1 of 3 logged` to every user was deleted here, as slice 3.5 scheduled.
+**Fuel reads `usePeptideSummary`** — administrations actually recorded today, falling back to how many routines are scheduled, with **no progress value**, because VITA has never had a daily peptide goal. The `features/peptides/api.ts` fixture that claimed `1 of 3 logged` to every user was **deleted** here, as slice 3.5 scheduled — the file no longer exists.
 
 **Peptide log entries (slice 3.7).** `PeptideLogEntry` is a **historical snapshot, never a derived view.** Everything needed to render it years from now is copied in at save time: the amount as authored and in canonical micrograms, the local calendar day, the exact instant, and a `calculationSnapshot` of the vial, reconstitution volume, graduation density, and the units and volume they produced.
 

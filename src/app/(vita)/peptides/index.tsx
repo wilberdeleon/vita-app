@@ -281,8 +281,4 @@ const styles = StyleSheet.create({
   error: {
     ...typography.caption,
   },
-  footer: {
-    ...typography.caption,
-    marginTop: spacing.s,
-  },
 });

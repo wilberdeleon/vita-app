@@ -11,13 +11,17 @@
  */
 
 import {
+  formatClockTime,
   formatLogDateLong,
+  formatLogDateWithYear,
+  formatTimeOfDay,
   fromLogDate,
   isToday,
   isValidLogDate,
   logDateRange,
   shiftLogDate,
   toLogDate,
+  toTimeInput,
   todayLogDate,
   weekdayInitial,
   weekdayName,
@@ -326,5 +330,49 @@ describe('weekday helpers', () => {
 
   it('agrees with the long format for the same date', () => {
     expect(formatLogDateLong('2026-08-22').startsWith(weekdayName('2026-08-22'))).toBe(true);
+  });
+});
+
+describe('formatLogDateWithYear', () => {
+  /**
+   * A routine's start date is often months or years back, and the year is
+   * exactly the part `formatLogDateLong` leaves out. The routine screen was
+   * rendering the stored `2026-08-24` verbatim before the 3.10 audit.
+   */
+  it('reads as a date a person would write', () => {
+    expect(formatLogDateWithYear('2026-08-24')).toBe('24 August 2026');
+  });
+
+  it('keeps the year that distinguishes one August from another', () => {
+    expect(formatLogDateWithYear('2024-08-24')).toBe('24 August 2024');
+  });
+
+  it('does not drift across a month boundary in a negative timezone', () => {
+    // The UTC trap this codebase documents: `new Date('2026-03-01')` is the
+    // last day of February west of Greenwich.
+    expect(formatLogDateWithYear('2026-03-01')).toBe('1 March 2026');
+  });
+});
+
+describe('formatTimeOfDay', () => {
+  it.each([
+    ['09:00', '9:00 AM'],
+    ['00:30', '12:30 AM'],
+    ['12:00', '12:00 PM'],
+    ['13:45', '1:45 PM'],
+    ['23:59', '11:59 PM'],
+  ])('reads %s as %s', (stored, spoken) => {
+    expect(formatTimeOfDay(stored)).toBe(spoken);
+  });
+
+  it('agrees with the clock formatter for the same wall-clock minute', () => {
+    const iso = new Date(2026, 7, 24, 9, 5).toISOString();
+    expect(formatTimeOfDay(toTimeInput(iso))).toBe(formatClockTime(iso));
+  });
+
+  it('returns the input unchanged rather than inventing a time', () => {
+    for (const bad of ['', 'soon', '9', '25:00', '09:70']) {
+      expect(formatTimeOfDay(bad)).toBe(bad);
+    }
   });
 });

@@ -12,13 +12,15 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
-**Sprint 3 — Water + Peptides** · Status: 🟡 In Progress (opened 2026-08-22, branch `sprint-3-water-peptides`)
+**Sprint 3 — Water + Peptides** · Status: 🟡 Feature-complete, closeout audit built and pending founder review (opened 2026-08-22, branch `sprint-3-water-peptides`)
 
 Objective: turn Water and Peptides from the Sprint 0 placeholder logs they still are into real, persisted, date-aware features at the quality bar Sprint 2 set for Fuel.
 
 Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, the App-Wide Visual Consistency Pass, and **Sprint 2 — Fuel** (audited and merged into `main` 2026-08-21, merge commit `44eeae6`, closed by `473cb59`).
 
-Sprint 3's planning and architecture audit is founder-approved and all three entry conditions are met. Slice 3.1 (Shared Daily Foundation + Test Harness) is built and pending founder review.
+Sprint 3's planning and architecture audit is founder-approved and all three entry conditions were met. **All implementation slices, 3.1 through 3.9B, are built; 3.9B is founder-approved on device.** Slice 3.10 — the closeout audit — is built and pending founder review; it fixed nine defects, referred four findings back to the founder as product decisions, and recorded one release gate (peptide reference content requires expert medical/legal review before public release). Slice-by-slice detail is in `docs/06-Slice-Tracker.md`; findings are in `docs/07-Audit-Log.md`.
+
+**Sprint 3 is not marked complete here.** Closure waits on founder review of the 3.10 audit and an explicit closeout approval, per the sprint workflow. **The next sprint is Sprint 4 — Journey / Weight**, unchanged from the 2026-08-21 reorder recorded below. No Sprint 4 work has started.
 
 ---
 

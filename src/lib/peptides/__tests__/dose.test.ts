@@ -16,10 +16,18 @@ import {
   calculateSyringeUnits,
   calculateSyringeUnitsForMass,
   doseConsistencyNotes,
+  unitConversionReference,
   type DoseCalculationResult,
   type VialInputs,
 } from '../model/dose';
-import { formatConcentration, formatSyringeUnits, formatVolume, toMcg } from '../model/units';
+import {
+  formatConcentration,
+  formatMcg,
+  formatSyringeUnits,
+  formatVolume,
+  toMcg,
+} from '../model/units';
+import type { MassUnit } from '../model/types';
 
 /** A 10 mg vial reconstituted with 1 mL — the founder's reference setup. */
 const TEN_MG_IN_ONE_ML: VialInputs = { vialAmountMcg: toMcg(10, 'mg'), reconstitutionMl: 1 };
@@ -298,5 +306,58 @@ describe('data-consistency notes', () => {
     const result = expectOk(calculateSyringeUnits(TEN_MG_IN_ONE_ML, toMcg(12, 'mg')));
     expect(formatSyringeUnits(result.syringeUnits)).toBe('120 units');
     expect(formatVolume(result.volumeMl)).toBe('1.2 mL');
+  });
+});
+
+/* ── every row must be distinguishable ──────────────────────────────────── */
+
+/**
+ * The founder's §15 audit question, answered with a test rather than a look.
+ *
+ * Micrograms display as whole numbers, so a row whose true amount is 0.5 mcg
+ * rendered as "1 mcg" — directly above the row that genuinely is 1 mcg, with
+ * a different syringe value beside it. Two lines, the same amount, different
+ * answers: a table that contradicts itself, and reachable through the
+ * standalone calculator's mcg vial toggle.
+ */
+describe('no two reference rows may read the same', () => {
+  const rendered = (vialMcg: number, ml: number, unit: MassUnit) => {
+    const reference = unitConversionReference(
+      { vialAmountMcg: vialMcg, reconstitutionMl: ml, unitsPerMl: 100 },
+      unit,
+    );
+    if (!reference.ok) return null;
+    return reference.rows.map((row) => formatMcg(row.amountMcg, unit));
+  };
+
+  it('no longer renders 1 mcg twice for the vial that used to', () => {
+    // 1 mcg in 1 mL was the founder's example, exactly.
+    const rows = rendered(1, 1, 'mcg')!;
+    expect(rows).toEqual([...new Set(rows)]);
+  });
+
+  it('never repeats an amount, across every vial and volume worth trying', () => {
+    const collisions: string[] = [];
+    for (const unit of ['mcg', 'mg'] as const) {
+      for (const vial of [0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 500, 1000]) {
+        for (const ml of [0.25, 0.5, 1, 1.5, 2, 3, 5, 10]) {
+          const rows = rendered(unit === 'mg' ? vial * 1000 : vial, ml, unit);
+          if (!rows) continue;
+          if (new Set(rows).size !== rows.length) {
+            collisions.push(`${vial} ${unit} / ${ml} mL :: ${rows.join(' | ')}`);
+          }
+        }
+      }
+    }
+    expect(collisions).toEqual([]);
+  });
+
+  it('keeps the milligram reference exactly as the founder approved it', () => {
+    // The guard must not quietly drop a row from the path people actually use.
+    expect(rendered(10_000, 1, 'mg')).toEqual(['0.5 mg', '1 mg', '2 mg', '3 mg', '4 mg', '5 mg']);
+  });
+
+  it('still returns a reference rather than an empty table', () => {
+    expect(rendered(1, 1, 'mcg')!.length).toBeGreaterThan(0);
   });
 });

@@ -327,17 +327,22 @@ export function SetupForm({ initial, onChange }: Props) {
       />
 
       {/*
-        * No Preferred Unit control (slice 3.9A).
+        * No Preferred Unit control, and no sentence about one (slice 3.9A,
+        * finished in the 3.10 audit).
         *
-        * It asked the user to answer, up front and out of context, a question
-        * that only matters at the moment they record an amount — where the
-        * mg/mcg toggle still sits, right beside the number they are typing.
-        * The stored value is kept for backward compatibility and defaults to
-        * mg for new routines.
+        * The control asked the user to answer, up front and out of context, a
+        * question that only matters at the moment they record an amount —
+        * where the mg/mcg toggle still sits, right beside the number they are
+        * typing. The stored value is kept for backward compatibility and
+        * defaults to mg for new routines.
+        *
+        * Its explanatory line outlived it by two slices: "How amounts are
+        * shown for this peptide. A display preference, not a recommended
+        * amount." sat here on its own, describing a control nobody could see,
+        * between the conversion table and the Routine header. A test asserted
+        * on it, which is how it survived — a green suite pinning a sentence
+        * that had stopped meaning anything.
         */}
-      <Text style={[styles.note, { color: surfaces.textTertiary }]}>
-        How amounts are shown for this peptide. A display preference, not a recommended amount.
-      </Text>
 
       {/*
         * What this routine usually is — the durable half of the form.
@@ -348,8 +353,17 @@ export function SetupForm({ initial, onChange }: Props) {
       <SectionHeader title="Routine" />
       <View style={styles.row}>
         <View style={styles.grow}>
+          {/*
+            * Uppercase, like the two vial labels above it (3.10 audit).
+            *
+            * The convention across the product: a **configuration field** on
+            * this form names its unit in caps — `(MG)`, `(ML)` — while every
+            * displayed *value* stays lowercase — `2 mg`, `20 units`, `1.2 mL`.
+            * This label was the one exception, so the form read "Vial Amount
+            * (MG)" and "Amount (mg)" four lines apart.
+            */}
           <NumericField
-            label={`Amount (${routineUnit})`}
+            label={`Amount (${routineUnit.toUpperCase()})`}
             placeholder="e.g. 2"
             value={routineAmount}
             onChangeText={(text) => {
@@ -388,6 +402,9 @@ export function SetupForm({ initial, onChange }: Props) {
       <Text style={[styles.note, { color: surfaces.textTertiary }]}>
         Optional, and entirely yours to choose.
       </Text>
+      {/* Every other segmented control on this form names its group for
+          assistive technology; this one did not, so it read as four
+          unattached buttons. */}
       <SegmentedTabs
         options={SCHEDULE_LABELS}
         selectedIndex={scheduleKind ? SCHEDULE_KINDS.indexOf(scheduleKind) : -1}
@@ -398,6 +415,7 @@ export function SetupForm({ initial, onChange }: Props) {
           emit({ scheduleKind: cleared });
         }}
         activeColor={palette.peptide}
+        groupLabel="Schedule"
       />
 
       {scheduleKind === 'daysOfWeek' ? (

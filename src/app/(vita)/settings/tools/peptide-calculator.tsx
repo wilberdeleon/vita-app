@@ -34,10 +34,11 @@ import { useTheme } from '../../../../theme/ThemeProvider';
  * default — this is a scratch pad, and anything it kept would start to look
  * like a plan VITA was proposing.
  *
- * The calculation, validation, result and copy all come from the same
- * `DoseCalculatorPanel` the setup form uses. The only thing this screen owns
- * that the inline surface does not is the vial fields, because there is no
- * setup to read them from.
+ * The conversion, its validation and its copy all come from the same
+ * `UnitConversion` component the setup form uses, under the same field labels
+ * (3.10 audit — the two surfaces had drifted apart). The only thing this
+ * screen owns that the inline surface does not is the vial fields themselves,
+ * because there is no setup to read them from.
  */
 export default function StandalonePeptideCalculator() {
   const { surfaces } = useTheme();
@@ -67,7 +68,7 @@ export default function StandalonePeptideCalculator() {
       <View style={styles.row}>
         <View style={styles.grow}>
           <NumericField
-            label={`Vial Amount (${vialUnit})`}
+            label={`Vial Amount (${vialUnit.toUpperCase()})`}
             placeholder="e.g. 20"
             value={vialAmount}
             onChangeText={setVialAmount}
@@ -94,15 +95,28 @@ export default function StandalonePeptideCalculator() {
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
 
-      {/* Familiar words on screen; the model's name for it stays generic,
-          since bacteriostatic water is the usual diluent but not the only one. */}
+      {/*
+        * The same label and helper as Routine Setup (3.10 audit).
+        *
+        * "Bacteriostatic Water / Reconstitution (mL)" named one number twice
+        * in a single line and made the screen read as technical. That was
+        * rewritten on the setup form in slice 3.9A and never reached here, so
+        * the two surfaces asked for the same measurement under two different
+        * names — and in two different casings. The label names the
+        * measurement; the helper says what it is. The model keeps the generic
+        * `reconstitutionMl`, which does not assume bacteriostatic water is the
+        * only possible diluent.
+        */}
       <NumericField
-        label="Bacteriostatic Water / Reconstitution (mL)"
+        label="Reconstitution Volume (ML)"
         placeholder="e.g. 2"
         value={reconstitution}
         onChangeText={setReconstitution}
-        accessibilityLabel="Bacteriostatic water or reconstitution volume in millilitres"
+        accessibilityLabel="Reconstitution volume in millilitres"
       />
+      <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+        Bacteriostatic water added to the vial.
+      </Text>
       {reconInvalid ? (
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
@@ -128,6 +142,10 @@ export default function StandalonePeptideCalculator() {
 const styles = StyleSheet.create({
   intro: {
     ...typography.caption,
+  },
+  helper: {
+    ...typography.caption,
+    marginTop: -spacing.s,
   },
   row: {
     flexDirection: 'row',

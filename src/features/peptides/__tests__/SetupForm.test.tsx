@@ -113,7 +113,7 @@ describe('schedule', () => {
   it('emits a daily schedule when Daily is chosen', async () => {
     const tree = await render();
     await act(async () => {
-      control(tree, 'Daily').props.onPress();
+      control(tree, 'Schedule, Daily').props.onPress();
     });
     expect(latest?.value.schedule).toEqual({ kind: 'daily' });
   });
@@ -123,7 +123,7 @@ describe('schedule', () => {
     expect(texts(tree)).not.toContain('Mon');
 
     await act(async () => {
-      control(tree, 'Selected days').props.onPress();
+      control(tree, 'Schedule, Selected days').props.onPress();
     });
 
     expect(texts(tree)).toContain('Mon');
@@ -135,7 +135,7 @@ describe('schedule', () => {
   it('emits chosen weekdays in week order regardless of tap order', async () => {
     const tree = await render();
     await act(async () => {
-      control(tree, 'Selected days').props.onPress();
+      control(tree, 'Schedule, Selected days').props.onPress();
     });
     await act(async () => {
       control(tree, 'Friday').props.onPress();
@@ -150,7 +150,7 @@ describe('schedule', () => {
   it('treats "Selected days" with nothing chosen as no schedule rather than an empty set', async () => {
     const tree = await render();
     await act(async () => {
-      control(tree, 'Selected days').props.onPress();
+      control(tree, 'Schedule, Selected days').props.onPress();
     });
     expect(latest?.value.schedule).toBeUndefined();
   });
@@ -276,9 +276,20 @@ describe('vial', () => {
 });
 
 describe('framing', () => {
-  it('says the preferred unit is a display preference, not a recommendation', async () => {
+  /**
+   * Slice 3.9A removed the Preferred Unit control and left its explanatory
+   * sentence behind — and *this test* is why it survived two slices: it
+   * asserted the copy was present, so a form carrying a line about a control
+   * nobody could see stayed green all the way to the 3.10 audit.
+   *
+   * The assertion is inverted rather than deleted. What the form must not do
+   * is explain a control it does not have.
+   */
+  it('carries no leftover explanation of a control it no longer offers', async () => {
     const tree = await render();
-    expect(texts(tree).join(' ')).toContain('not a recommended amount');
+    const rendered = texts(tree).join(' ');
+    expect(rendered).not.toContain('not a recommended amount');
+    expect(rendered).not.toContain('How amounts are shown');
   });
 
   /**

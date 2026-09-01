@@ -176,9 +176,17 @@ Peptide Setup today offers only Active / Inactive. There is no way to remove a s
 
 **Already compatible.** Log entries denormalise `definitionId`, and Tools → Injection Sites resolves compound names from the compiled catalog rather than the setup — so history already renders correctly for a setup that no longer exists. What remains is the removal action itself and deciding where orphaned history is reachable from.
 
-## Open polish item — remove Display Name from Peptide Setup
+## Audited at Sprint 3 closeout (slice 3.10, 2026-08-31)
 
-**Status: approved by the founder, not yet done. Required in the Peptides final polish pass (3.9/3.10).**
+**The catalog is 96 entries**, and it has **never had expert review.** The automated tests enforce structure and internal consistency — unique ids and aliases, no two entries sharing prose, no dosing or protocol language anywhere, every time-sensitive development stage dated and sourced. **None of that checks whether a sentence is medically accurate, and it must not be mistaken for one.** Real content, medical and legal review appropriate to a consumer health product is required before public release. Recorded as a **release gate**, not a Sprint 3 blocker.
+
+**What the audit fixed.** The unit-conversion reference could print two rows that read identically — `1 mcg = 50 units` above `1 mcg = 100 units` — reachable only with a vial entered in mcg, which is only possible in the standalone calculator; the rule is now that no two rows may read the same whatever they are underneath. Setup was carrying a leftover sentence explaining the Preferred Unit control that 3.9A deleted, held in place by a test asserting it was present. The routine screen showed `09:00` and `2026-08-24` where the rest of the app says `9:00 AM` and `24 August 2026`. *Edit Routine* opened a screen titled *Setup*; it is now **Routine Setup**. The standalone calculator still asked for *Bacteriostatic Water / Reconstitution (mL)*, the label replaced on the setup form in 3.9A. Two components orphaned by the 3.9 redesign were deleted. And the Schedule control was the only segmented control on the form without a group name for assistive technology.
+
+**Four findings referred to the founder rather than changed.** `doseConsistencyNotes` — which spots an amount larger than the whole vial, the signature of a typo in one of the two numbers every syringe figure derives from — is written, documented, tested, and wired to nothing since 3.6D replaced the dose input. The standalone calculator still offers the mg/mcg vial toggle that Routine Setup deliberately lost in 3.9A; the existing reasoning is that nothing there is saved, and the audit's disagreement is that the mistake is not visible either way. Routine Setup shows seven section headers where three were specified. And a single active routine appears twice on the Peptides home screen — once under Today, once under Active — which reads correctly with five routines and looks like duplication with one. All four are product or design decisions.
+
+## Closed — Display Name removed from Peptide Setup
+
+**Status: ✅ done in slice 3.9. Kept here for the reasoning, which is still the reason the field is gone.**
 
 Peptide Setup currently opens with **Display Name (Optional)** — a field almost nobody needs, sitting above the two that actually matter (vial amount and reconstitution volume). It pushes the real work down the screen and asks a question at the moment someone just wants to start tracking.
 
@@ -186,9 +194,11 @@ Peptide Setup currently opens with **Display Name (Optional)** — a field almos
 
 **Not done in 3.7** because it is not the zero-risk edit it looks like: `displayName` is persisted on `PeptideSetup`, read by `useResolvedSetup`, and shown in list rows, log confirmations and history headers. Removing the input is one line; deciding what happens to setups that already have one — and whether two vials of the same compound still need distinguishing — is a product question worth answering deliberately rather than in passing.
 
-## Open polish item — tracking CTA discoverability
+**How 3.9 answered it.** The input is gone and a routine is named by its definition. The stored value is **parsed, preserved, and never read**: `SetupForm` holds it in state and emits it back unchanged, because `applySetupChanges` deletes any key passed as `undefined` — emitting nothing would have erased what an old setup was called the first time its owner edited anything else. Nothing on disk was rewritten.
 
-**Status: open. Not addressed in 3.6A. Must be resolved in the Peptides final polish pass.**
+## Closed — tracking CTA discoverability
+
+**Status: ✅ done in slice 3.9. Kept here for the reasoning behind where the action now sits.**
 
 Founder review (2026-08-25) identified friction on long research-detail pages. On a compound like Tirzepatide, **Track this peptide** sits at the very bottom, after About, Research claims, How it works, Studied for, Targets, Approval status, Research status and Sources. A user who opens the page and wants to start tracking has to scroll past everything first.
 
@@ -206,7 +216,9 @@ The bottom-only CTA is fine on a short page. On an information-heavy one it buri
 
 **Also evaluate state-aware copy** once the tracked state is available to the detail page: `Track this peptide` when untracked, `View setup` (or equivalent) when a setup already exists. Deliberately not implemented in 3.6A — the detail page does not currently read setup state, so this is not the trivial change it looks like.
 
-**Not feature-complete.** Slice 3.9 (UX polish, final safety copy, [[Fuel]] integration) remains. Fuel's Peptides card still runs on a marked temporary shim until 3.9.
+**How 3.9 answered it.** The action moved directly under the compound's name and classification — first thing on the page, above all the research — and it is state-aware: **Add to Routine** when untracked, **Finish Setup** when added but not yet configured, **View Routine** once it is running or paused. All research content stayed; nothing was trimmed. The bottom CTA is gone rather than duplicated, because two of the same action on one page is the clutter the constraint warned against.
+
+**Sprint 3 is feature-complete** as of slice 3.9B, with slice 3.10 the closeout audit. Fuel's Peptides card no longer runs on a shim: it reads `usePeptideSummary`, showing what was actually recorded today with no invented progress value.
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Peptides architecture", and `docs/06-Slice-Tracker.md` → slices 3.5 through 3.6.
 

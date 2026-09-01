@@ -1382,3 +1382,70 @@ describe('removing a routine', () => {
     expect(fake.logs()).toHaveLength(2);
   });
 });
+
+/* ── §3.10 audit — what the screens say about themselves ────────────── */
+
+/**
+ * Findings from the Sprint 3 closeout audit, each pinned so it cannot come
+ * back. None of these were caught by the domain suites, because none of them
+ * are domain behaviour — they are what a person reads on a screen.
+ */
+describe('the closeout audit', () => {
+  it('names the setup screen the same thing the row that opens it does', async () => {
+    // "Edit Routine" opened a screen titled "Setup", so the destination
+    // answered to a different name than the door.
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+    expect(screen(tree)).toContain('Routine Setup');
+  });
+
+  it('reads a start date rather than showing how it is stored', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture({ startDate: '2026-08-24' })]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('24 August 2026');
+    expect(rendered).not.toContain('2026-08-24');
+  });
+
+  it('reads a reminder in the same clock the rest of the app speaks', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([
+      setupFixture({ reminder: { enabled: true, timeLocal: '09:00' } }),
+    ]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('9:00 AM');
+    // The 24-hour form is what the field parses, not what a summary shows.
+    expect(rendered).not.toMatch(/(?<![:\d])09:00(?!\s*AM)/);
+  });
+
+  it('title-cases the compound category the same way the catalog does', async () => {
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture({ definitionId: 'catalog:bremelanotide' })]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('Melanocortin Agonist');
+    expect(rendered).not.toContain('Melanocortin agonist');
+  });
+
+  it('names the schedule control for assistive technology', async () => {
+    // Every other segmented control on the form names its group; this one
+    // announced four unattached buttons.
+    mockRouteId = 'setup-1';
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+    // `control` matches on visible text; the group name lives on the
+    // accessible label, which is exactly the thing being asserted.
+    const named = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        node.props?.accessibilityLabel === 'Schedule, Daily',
+    );
+    expect(named.length).toBeGreaterThan(0);
+  });
+});

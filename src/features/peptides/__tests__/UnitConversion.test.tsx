@@ -568,3 +568,68 @@ describe('Tools destination', () => {
     expect(mockPush).toHaveBeenCalledWith('/settings/tools/peptide-calculator');
   });
 });
+
+/* ── §3.10 audit — one question, one wording ────────────────────────────── */
+
+/**
+ * The two surfaces ask for the same two numbers, so they must ask in the same
+ * words.
+ *
+ * Slice 3.9A rewrote the setup form's reconstitution label — "Bacteriostatic
+ * Water / Reconstitution (mL)" named one number twice in a line and made the
+ * form read as technical — and moved the detail into a helper underneath. The
+ * standalone calculator kept the old label for two slices, so the same
+ * measurement had two names and two casings depending on where you asked.
+ */
+describe.each(SURFACES)('%s — asks in the product’s own words', (_name, render) => {
+  it('names the vial in uppercase MG, as the founder specified', async () => {
+    const tree = await render();
+    expect(screen(tree)).toContain('Vial Amount (MG)');
+  });
+
+  it('names the water as a volume, in uppercase ML', async () => {
+    const tree = await render();
+    expect(screen(tree)).toContain('Reconstitution Volume (ML)');
+  });
+
+  it('puts the diluent in a helper line rather than in the label', async () => {
+    const tree = await render();
+    const rendered = screen(tree);
+    expect(rendered).toContain('Bacteriostatic water added to the vial.');
+    expect(rendered).not.toContain('Bacteriostatic Water / Reconstitution');
+  });
+
+  it('carries no slash-joined double name anywhere on the screen', async () => {
+    const tree = await render();
+    expect(screen(tree)).not.toMatch(/\w+ \/ \w+ \(m[lL]\)/);
+  });
+});
+
+/**
+ * The unit-casing convention, stated once and pinned.
+ *
+ * A **configuration field label** names its unit in caps — `(MG)`, `(ML)` —
+ * and every **displayed value** stays lowercase — `2 mg`, `20 units`,
+ * `1.2 mL`. Setup carried both styles four lines apart before the audit:
+ * "Vial Amount (MG)" above "Amount (mg)".
+ */
+describe('units are cased by role, not by accident', () => {
+  it('caps the unit in every configuration label on the setup form', async () => {
+    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    const rendered = screen(tree);
+    expect(rendered).toContain('Vial Amount (MG)');
+    expect(rendered).toContain('Reconstitution Volume (ML)');
+    expect(rendered).toContain('Amount (MG)');
+    expect(rendered).not.toContain('Amount (mg)');
+  });
+
+  it('leaves displayed values in lowercase, where they belong', async () => {
+    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    await enterVial(tree, '10', '1');
+    const rendered = screen(tree);
+    expect(rendered).toContain('1 mg = 10 units');
+    expect(rendered).toContain('10 mg/mL');
+    // The reference table is values, so it must not shout.
+    expect(rendered).not.toContain('1 MG');
+  });
+});

@@ -38,17 +38,18 @@ type Props = {
  * Confirming that today's scheduled administration happened.
  *
  * **Compact on purpose.** The whole point of the Today card is that daily
- * tracking takes seconds; routing it through the full log form would have
- * put a date picker and a notes field between the user and one tap. Amount,
- * optionally a site, confirm. Date is not asked at all — this flow only ever
- * describes today, and offering to change it would invite exactly the
- * mistake it cannot detect.
+ * tracking takes seconds; routing it through the full log form would have put
+ * a date picker between the user and one tap. The day is not asked at all —
+ * this flow only ever describes the day it was opened on, and offering to
+ * change it would invite exactly the mistake it cannot detect.
  *
- * **Nothing is prefilled.** No typical dose, no recommended amount, no "same
- * as last time". VITA has no basis for any of them, and a number sitting in
- * the field is a suggestion whatever the label above it says. The last
- * recorded *site* appears as a line of context under the picker — a memory
- * aid the user asked for — while the field itself stays empty.
+ * **The only thing prefilled is what the user already told us.** The amount
+ * comes from their own Routine Amount and says so on the row — *From your
+ * routine* — and the time comes from the clock. Neither is a suggestion:
+ * VITA still has no typical dose, no recommended amount, and no "same as last
+ * time", because it has no basis for any of them. The last recorded *site*
+ * stays a line of context under the picker rather than a default, since a
+ * site VITA chose would be VITA answering for the user.
  *
  * **Units appear only when the setup can produce them.** A pre-filled pen has
  * no vial to convert against; the amount is still recorded, simply without a

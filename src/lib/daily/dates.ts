@@ -101,6 +101,39 @@ export function formatLogDateLong(logDate: LogDate): string {
 }
 
 /**
+ * A calendar date with its year — "24 August 2026".
+ *
+ * The year is the whole reason this exists alongside `formatLogDateLong`. A
+ * routine's start date is often months or years old, and "Sat, Aug 24" is
+ * ambiguous the moment a year has passed. Written out by hand for the same
+ * reason as its sibling: Hermes' Intl support is not uniform enough to risk a
+ * silent fallback to `2026-08-24` on somebody's phone.
+ */
+export function formatLogDateWithYear(logDate: LogDate): string {
+  const date = fromLogDate(logDate);
+  return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+/**
+ * A stored `HH:MM` preference as a person reads it — `09:00` → `9:00 AM`.
+ *
+ * Reminder times are persisted in 24-hour form because that is what the field
+ * parses; showing that same string back on a summary screen made one line of
+ * the app speak in 24-hour time while every timestamp beside it spoke in 12.
+ * Invalid input returns the original text rather than inventing a time.
+ */
+export function formatTimeOfDay(time: string): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+  if (!match) return time;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return time;
+  const suffix = hours < 12 ? 'AM' : 'PM';
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${hour12}:${match[2]} ${suffix}`;
+}
+
+/**
  * The same calendar day shifted by whole days, staying in local time.
  *
  * Goes through `Date` rather than arithmetic on the string because month

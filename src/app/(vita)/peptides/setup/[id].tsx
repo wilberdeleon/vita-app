@@ -4,7 +4,7 @@ import { StyleSheet, Text } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
 import { SetupForm, type SetupFormValue } from '../../../../features/peptides/components/SetupForm';
-import { usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
+import { formatLabel, usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
@@ -54,7 +54,7 @@ export default function EditPeptideSetup() {
   if (!resolved) {
     return (
       <Screen>
-        <ScreenHeader title="Setup" back />
+        <ScreenHeader title="Routine Setup" back />
         <EmptyState
           icon="help-circle-outline"
           title="This setup is no longer available"
@@ -94,12 +94,18 @@ export default function EditPeptideSetup() {
 
   return (
     <Screen keyboardAware>
-      <ScreenHeader title="Setup" back />
+      <ScreenHeader title="Routine Setup" back />
 
       <Text style={[styles.name, { color: surfaces.text }]}>{definition.name}</Text>
       <ClassificationChip classification={definition.classification} />
+      {/* Title-cased like every other place the catalog's category is shown.
+          This one rendered the stored string exactly as authored, so the same
+          compound read "Melanocortin agonist" here and "Melanocortin Agonist"
+          one screen back. */}
       {definition.category ? (
-        <Text style={[styles.category, { color: surfaces.textTertiary }]}>{definition.category}</Text>
+        <Text style={[styles.category, { color: surfaces.textTertiary }]}>
+          {formatLabel(definition.category)}
+        </Text>
       ) : null}
 
       {needsSetup ? (
@@ -143,9 +149,5 @@ const styles = StyleSheet.create({
   },
   inactive: {
     ...typography.caption,
-  },
-  lastSite: {
-    ...typography.caption,
-    marginTop: -spacing.xs,
   },
 });

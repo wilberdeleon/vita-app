@@ -107,15 +107,26 @@ export function WaterLevelPanel({ today, onEditGoal }: Props) {
         {/*
           * Decorative: every figure it encodes is stated in the text above it,
           * so assistive technology reads the numbers rather than a shape.
+          *
+          * **Not rendered at all without a goal** (3.10 audit). The fill was
+          * already animating to a height of zero, but its surface line is a
+          * fixed 2pt child anchored to the top of that zero-height box — so a
+          * solid blue waterline still drew across the bottom of the card for
+          * every user who had not set a goal yet. That is precisely the empty
+          * vessel this panel is designed never to show: a level of zero is a
+          * statement about how much you have drunk, and "you have not chosen
+          * a goal" is not that statement.
           */}
-        <Animated.View
-          pointerEvents="none"
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={[styles.fill, { height, backgroundColor: fillColor }]}
-        >
-          <View style={[styles.surfaceLine, { backgroundColor: palette.water }]} />
-        </Animated.View>
+        {today.hasGoal ? (
+          <Animated.View
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.fill, { height, backgroundColor: fillColor }]}
+          >
+            <View style={[styles.surfaceLine, { backgroundColor: palette.water }]} />
+          </Animated.View>
+        ) : null}
 
         <View style={styles.content}>
           <View style={styles.headline}>

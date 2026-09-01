@@ -16,6 +16,8 @@
 export {
   formatClockTime,
   formatLogDateLong,
+  formatLogDateWithYear,
+  formatTimeOfDay,
   fromDateAndTime,
   toTimeInput,
   fromLogDate,

@@ -1400,3 +1400,81 @@ describe('no adherence, anywhere', () => {
     }
   });
 });
+
+/* ── §26 the historical snapshot, stated as the founder states it ───────── */
+
+/**
+ * The founder's mandatory regression, written out literally.
+ *
+ * Setup is 20 MG in 2 ML, so 2 mg is 20 units, and that is what gets logged.
+ * The vial is then reconstituted differently — 20 MG in 1 ML — which changes
+ * what 2 mg means *from now on*. What it must never change is what happened
+ * on August 25th.
+ *
+ * This is the single most load-bearing promise in the feature: a health
+ * record that silently rewrites itself when a setting changes is worse than
+ * no record, because the user has no way to know it happened.
+ */
+describe('changing a setup never rewrites what was already recorded', () => {
+  const SNAPSHOT: PeptideLogEntry = {
+    id: 'plog-snap',
+    setupId: 'setup-1',
+    definitionId: 'catalog:retatrutide',
+    logDate: '2026-08-25',
+    loggedAt: new Date(2026, 7, 25, 9, 10).toISOString(),
+    amount: { authoredAmount: 2, authoredUnit: 'mg', amountMcg: 2000 },
+    calculationSnapshot: {
+      vialAmountMcg: 20_000,
+      reconstitutionMl: 2,
+      unitsPerMl: 100,
+      calculatedUnits: 20,
+      calculatedVolumeMl: 0.2,
+    },
+    site: createSiteSnapshot('abdomen-left'),
+    createdAt: CREATED,
+    updatedAt: CREATED,
+  };
+
+  /** The same vial in half the water: 20 mg/mL, so 2 mg would now be 10 units. */
+  const REDILUTED = setupFixture({ reconstitutionMl: 1 });
+
+  it('still reads 2 mg · 20 units after the vial is reconstituted differently', async () => {
+    mockRouteId = 'setup-1';
+    const { repository } = repositoryWith([REDILUTED], [SNAPSHOT]);
+    const tree = await mount(<PeptideHistory />, repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('2 mg');
+    expect(rendered).toContain('20 units');
+    // 10 units is what the *new* setup would produce. It must not appear.
+    expect(rendered).not.toContain('10 units');
+  });
+
+  it('keeps the site it was recorded at, whatever the setup says now', async () => {
+    mockRouteId = 'setup-1';
+    const { repository } = repositoryWith([REDILUTED], [SNAPSHOT]);
+    const tree = await mount(<PeptideHistory />, repository);
+    expect(screen(tree)).toContain('Left Abdomen');
+  });
+
+  it('leaves the stored record byte-for-byte alone', async () => {
+    // Reading history is not a write. Nothing about opening the screen may
+    // migrate, recompute, or "correct" what is on disk.
+    mockRouteId = 'setup-1';
+    const { repository, days } = repositoryWith([REDILUTED], [SNAPSHOT]);
+    await mount(<PeptideHistory />, repository);
+
+    const stored = [...days.values()].flat();
+    expect(stored).toEqual([SNAPSHOT]);
+  });
+
+  it('shows the new relationship on the setup, so the change did take effect', async () => {
+    // The counterpart guarantee: history is frozen, configuration is not.
+    mockRouteId = 'setup-1';
+    const { repository } = repositoryWith([REDILUTED], [SNAPSHOT]);
+    const tree = await mount(<EditPeptideSetup />, repository);
+    // 20 mg in 1 mL is 20 mg/mL, so one milligram is now five units.
+    expect(screen(tree)).toContain('1 mg = 5 units');
+    expect(screen(tree)).toContain('Concentration · 20 mg/mL');
+  });
+});

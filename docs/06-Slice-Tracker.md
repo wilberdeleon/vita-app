@@ -727,7 +727,7 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 ---
 
-## Sprint 3 — Water + Peptides — 🟡 In Progress
+## Sprint 3 — Water + Peptides — 🟡 Feature-complete, in closeout
 
 **Opened 2026-08-22.** Branch `sprint-3-water-peptides`, cut from `main` at `4ab32c5`. Founder-authorized against the approved Sprint 3 Planning & Architecture Audit; all three entry conditions met (device QA accepted · Sprint 2 merged · branch cut). Scope and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
 
@@ -750,12 +750,74 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | 🟡 Built — pending founder review |
 | 3.9 | Peptides Routine + UX Integration | Add to Routine, needs-setup/active/inactive, routine detail, daily Taken/Skipped, removal preserving history, Fuel on real state | 🟡 Built — pending founder review |
 | 3.9A | Routine UX Simplification + Interactive Schedule + Catalog Expansion | MG-only vial, Preferred Unit removed, interactive week strip, 96-entry catalog, punctuation-insensitive search | 🟡 Built — pending founder review |
-| 3.9B | Daily Peptide UX + Navigation Corrections | Routine Amount, two-tap Taken, Monday–Sunday week, reminder config, PT-141 display fix | 🟡 Built — pending founder review |
-| 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ⬜ Planned |
+| 3.9B | Daily Peptide UX + Navigation Corrections | Routine Amount, two-tap Taken, Monday–Sunday week, reminder config, PT-141 display fix | ✅ Approved |
+| 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | 🟡 Built — pending founder review |
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Sprint 7 Settings will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 
 **Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.10 — Sprint 3 Audit + Closeout 🟡
+
+**Objective:** inspect the whole of Sprint 3 as if it were about to ship to a real person — not "do the tests pass", but *does this make sense, is anything confusing, ugly, redundant, unfinished, or quietly wrong* — fix what is safely Sprint-3-scoped, and decide whether the sprint can close.
+
+**Nine defects fixed, four findings referred to the founder, one release gate recorded.** Full detail for every one is in `docs/07-Audit-Log.md`; this entry records what changed and why the audit found it when the suites did not.
+
+---
+
+**The two findings the test suite could not have caught.**
+
+The first was arithmetic that only misbehaves when *rendered*. `unitConversionReference` could emit two rows that display identically — `1 mcg = 50 units` sitting directly above `1 mcg = 100 units` — because micrograms round to whole numbers and the row ladder starts at half the primary amount. A sweep across realistic vial and volume pairs found 38 reachable cases. Every one of them is behind the standalone calculator's mcg vial toggle; the milligram path that every setup form uses has none. The fix is a display-integrity rule in the model rather than a patch in the view: **no two rows may read the same**, whatever they are underneath. The founder's approved `0.5 / 1 / 2 / 3 / 4 / 5 mg` ladder is pinned by a test so the guard can never quietly drop a row from the path people actually use.
+
+The second was found by sampling pixels. On a brand-new device with no goal set, a **solid blue waterline drew across the bottom of the Water panel**. The fill animates to a height of zero correctly, but its 2pt surface line is anchored to the top of that zero-height box, so it painted at the card's edge. The component's own documentation says the panel must never show an empty vessel, because *"you have not chosen a goal"* is not a statement about how much you have drunk — and it was showing one to every first-time user. No test rendered it; code review would not see it. It took a screenshot and a pixel scan.
+
+---
+
+**A test was holding a defect in place.** Slice 3.9A removed the Preferred Unit control and left its explanatory sentence on screen — *"How amounts are shown for this peptide. A display preference, not a recommended amount."* — floating between the conversion table and the Routine header, describing a control nobody could see. `SetupForm.test.tsx` asserted that copy was **present**. Written when the control existed, never revisited, and green ever since. The sentence is gone and the assertion is inverted: what the form must not do is explain a control it does not have.
+
+**Storage formats had leaked onto a summary screen.** The routine detail rendered the reminder as `09:00` and the start date as `2026-08-24` — the strings they are persisted as, in an app that otherwise speaks `9:15 AM` and written dates. Two shared formatters now sit in `lib/daily`: `formatTimeOfDay` and `formatLogDateWithYear`. Both are hand-written for the same reason their siblings are — Hermes' `Intl` support varies by platform and engine build, and a header that silently falls back to `2026-08-24` on one device is not worth the dependency. The year is the point of the second one: a routine's start date is often months old, and `formatLogDateLong` omits it.
+
+**Three surfaces disagreed about how to name the same things.** "Edit Routine" opened a screen titled *Setup*. The standalone calculator asked for `Vial Amount (mg)` and `Bacteriostatic Water / Reconstitution (mL)` while Routine Setup asked for `Vial Amount (MG)` and `Reconstitution Volume (ML)` — the 3.9A copy fix landed on one surface and never reached the other. And the setup form itself carried `Amount (mg)` four lines beneath `Vial Amount (MG)`. The convention is now stated rather than assumed, and pinned by tests: **a configuration field label caps its unit — `(MG)`, `(ML)` — and every displayed value stays lowercase — `2 mg`, `20 units`, `1.2 mL`.** The screen is retitled *Routine Setup*, which is what the row that opens it promises.
+
+**Dead code from the 3.9 redesign.** `PeptideRowPanel.tsx` and `VialSummary.tsx` had zero references anywhere, tests included — both orphaned when the routine screens replaced the old Active/Inactive lists. Four files carried unused `StyleSheet` keys, which `--noUnusedLocals` cannot see. Both sweeps are now scripted and run as part of validation.
+
+**Two smaller corrections.** The setup screen rendered the catalog category exactly as authored while every other surface title-cased it, so one compound read *Melanocortin agonist* here and *Melanocortin Agonist* one screen back. And the Schedule segmented control was the only one on the form without a `groupLabel`, so assistive technology announced four unattached buttons instead of four choices of schedule.
+
+---
+
+**Water finally has route-level tests.** Its units, totals, goals, entries, week and provider were all thoroughly covered, and **no test had ever rendered a Water screen.** That is precisely the gap that let PT-141 ship broken in 3.9A: `searchCatalog` was correct, had 92 passing tests, and the screen showed users a compound they did not recognise. `src/features/water/__tests__/WaterRoutes.test.tsx` drives the real routes — add a drink, set a goal, two taps recording two drinks, save disabled with nothing entered, a load failure surfacing rather than reading as an empty day, and the midnight boundary leaving yesterday alone. It is also what caught the waterline bug.
+
+**The founder's §26 snapshot regression is now written out literally.** Setup at 20 MG in 2 ML, log 2 mg → 20 units, then reconstitute the same vial in 1 ML. The old record must still read `2 mg · 20 units`, must keep the site it was recorded at, and must not be rewritten on disk merely by opening the history screen — with the counterpart assertion that the setup *does* now show the new relationship, so the change took effect where it should. This existed for the edit path; it did not exist for the plain display path.
+
+**Test total: 1029 → 1075.**
+
+---
+
+**Four findings referred rather than fixed, deliberately.**
+
+`doseConsistencyNotes` is written, documented, tested — and wired to nothing. It detects an amount larger than the whole vial, which is the signature of a typo in one of the two numbers every syringe figure is derived from. It was orphaned by 3.6D when the dose input became an automatic reference. Wiring it would be useful; doing so during a closeout would be adding new visible behaviour to a form the founder has just approved, which is the scope creep §48 warns against.
+
+The standalone calculator still offers a mg/mcg vial toggle that Routine Setup deliberately lost in 3.9A. The code documents a considered counter-argument — the calculator persists nothing, so a mistaken unit is "visible and disposable". The audit's disagreement is that it is *not* visible: the table looks coherent either way, and the user acts on the number rather than on the saved state. But reversing a documented deliberate decision inside a closeout is the founder's call, not the auditor's. The duplicate-row defect it enabled is closed independently, at the model level.
+
+Routine Setup presents **seven** section headers where §13 describes three. Each arrived with the slice that added its field; nothing is wrong individually, and together the form reads longer and more administrative than it is. Folding Schedule, Reminder and Start Date under ROUTINE is a form redesign, and the standing rule is not to redesign without approval.
+
+A single active routine **appears twice on the Peptides home screen** — once under TODAY, once under ACTIVE. By design: TODAY answers *what do I do now*, ACTIVE is the roster. With five routines it reads correctly; with one it is the same name twice. §7 asked directly whether these lists are too repetitive, so it is raised with a recommendation rather than changed unilaterally.
+
+---
+
+**One release gate, recorded explicitly.** The 96 peptide entries have never had expert review. The automated tests enforce *structure and internal consistency* — unique ids and aliases, no shared prose between similar compounds, no dosing or protocol language anywhere, every time-sensitive development stage dated and sourced. **None of that is a check on whether a sentence is medically accurate, and it must not be mistaken for one.** Before public release this content requires real content, medical and legal review appropriate to a consumer health product. It is not a Sprint 3 blocker.
+
+---
+
+**Boundary audit.** Zero-diff held on nutrition, Fuel, Home, Atlas and Journey. `BodyMap`, `SiteSelector` and the site taxonomy are untouched — 3.8C stands as approved, and its light-mode contrast was re-verified on device. The 3.5D catalog content lock held: `src/lib/peptides/data/definitions` has no diff. Water's only source change is the waterline fix, which is an audit finding rather than a feature.
+
+**Validation.** `npm test` — 1075/1075 pass across 40 suites · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · dead-`StyleSheet`-key sweep — clean · dead-component sweep — clean · `npx expo export --platform ios` — succeeds · `npx expo install --check` — reports only the pre-existing `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2, unchanged and still awaiting a founder decision.
+
+**Device QA.** Nineteen screenshots captured on a booted iPhone 17 Pro against seeded state — three routines in three different states, four administrations with site snapshots, five routine-day statuses including a deliberate skip and two days left unanswered, and six days of water — then re-captured with all Sprint 3 keys cleared for the empty-state pass, in both Light and Dark. Every one was inspected. The founder's storage manifest was backed up before seeding and restored byte-identically afterwards; **zero QA keys remain**.
+
+**What device QA actually proved.** The reminder now reads `9:00 AM` and the start date `24 August 2026`. The setup screen is titled *Routine Setup*, its category reads *Melanocortin Agonist*, and the orphaned Preferred Unit sentence is gone. The calculator asks for the vial in the same words Routine Setup does. The catalog header reads `CATALOG · 96`. History preserves authored units — the 2.5 mg override day still says `2.5 mg · 25 units`. Light-mode body-map contrast from 3.8C holds. And the Water panel draws no waterline without a goal, while still drawing it at 44% with one.
+
+**Not verified, unchanged limitation:** tap-driven paths on the simulator. Every interaction claim in this slice rests on route-level tests that drive the real `onPress` and `onChangeText` handlers, not on device taps.
 
 ### Slice 3.9B — Daily Peptide UX + Navigation Corrections 🟡
 

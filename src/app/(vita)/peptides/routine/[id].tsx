@@ -14,7 +14,13 @@ import { LogRow } from '../../../../features/peptides/components/LogRow';
 import { RoutineDaySheet } from '../../../../features/peptides/components/RoutineDaySheet';
 import { RoutineDayStrip, type StripDay } from '../../../../features/peptides/components/RoutineDayStrip';
 import { TakenSheet } from '../../../../features/peptides/components/TakenSheet';
-import { formatClockTime, fromLogDate, type LogDate } from '../../../../lib/daily';
+import {
+  formatClockTime,
+  formatLogDateWithYear,
+  formatTimeOfDay,
+  fromLogDate,
+  type LogDate,
+} from '../../../../lib/daily';
 import {
   formatMass,
   routineDayMark,
@@ -35,7 +41,7 @@ const RECENT_LIMIT = 3;
  * **Opening a routine no longer opens a form** (slice 3.9). It used to land
  * directly inside the full editable Setup screen, which meant the most common
  * reason to tap a peptide — checking on it — was served by the surface
- * designed for the rarest one. Configuration now lives behind *Edit Setup*,
+ * designed for the rarest one. Configuration now lives behind *Edit Routine*,
  * and this screen answers the questions people actually arrive with.
  *
  * **Setup is shown as values, not inputs.** `20 mg vial · 2 mL` is what
@@ -227,11 +233,15 @@ export default function RoutineDetail() {
           />
         ) : null}
         <SummaryRow label="Schedule" value={scheduleLabel ?? 'Not set'} />
+        {/* Both were rendered as the strings they are stored as — `09:00`
+            and `2026-08-24` — which is the storage format leaking onto a
+            summary screen. Read back the way the rest of the app speaks. */}
         {setup.reminder?.enabled && setup.reminder.timeLocal ? (
-          <SummaryRow label="Reminder" value={setup.reminder.timeLocal} />
+          <SummaryRow label="Reminder" value={formatTimeOfDay(setup.reminder.timeLocal)} />
         ) : null}
-        {setup.startDate ? <SummaryRow label="Started" value={setup.startDate} /> : null}
-        {/* Seven days, shape and text — never colour alone. */}
+        {setup.startDate ? (
+          <SummaryRow label="Started" value={formatLogDateWithYear(setup.startDate)} />
+        ) : null}
       </Card>
 
       {/*
@@ -541,21 +551,6 @@ const styles = StyleSheet.create({
   },
   weekLabel: {
     ...typography.captionMedium,
-  },
-  editRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingVertical: spacing.m,
-    minHeight: 44,
-  },
-  editLabel: {
-    ...typography.body,
-  },
-  stripWrap: {
-    paddingTop: spacing.s,
-    paddingBottom: spacing.xs,
   },
   stack: {
     gap: spacing.s,

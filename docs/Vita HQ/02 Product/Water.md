@@ -52,6 +52,16 @@ The goal is to turn Water from a static counter — `5 of 8 cups` — into a sma
 
 Architecture note: hydration should reuse the local-calendar date model and repository boundary that Sprint 2's nutrition engine established, rather than inventing a second date model — repo `docs/09-Technical-Documentation.md` → "Future architecture considerations".
 
+## Audited at Sprint 3 closeout (slice 3.10, 2026-08-31)
+
+Water came through the closeout audit with **one defect and no functional problems.** On a phone with no goal set, a solid blue waterline was drawing across the bottom of the Water card — the panel's fill correctly animates to zero height, but its 2pt surface line is anchored to the top of that zero-height box, so it painted at the card's edge anyway. The panel is deliberately designed never to show an empty vessel, because *"you have not chosen a goal"* is not a statement about how much you have drunk. It was showing one to every first-time user. Fixed, and re-verified on device in both states.
+
+**Everything else held.** The goal persists and suggests nothing. A drink logged in one unit never changes the display preference. Repeated adds record as separate drinks. A day with nothing logged reads as empty rather than broken. Yesterday's water does not survive into today, and logging today does not disturb yesterday. A storage failure surfaces rather than silently rendering an empty day. Light and Dark are equally finished, and nothing on the screen scores the day — no streak, no average, no judgement about drinking too little or too much.
+
+**Water now has route-level tests.** Its units, totals, goals, entries, week and provider were all thoroughly covered — and no test had ever rendered a Water screen. That is the same gap that let PT-141 appear missing in Peptides: a correct function with passing tests behind a screen nobody had exercised. The new suite drives the real routes, and it is what caught the waterline.
+
+**One consistency note, not a defect.** Water's strip is a *"Last 7 days"* rolling bar chart while the Peptides routine strip is a Monday-to-Sunday calendar. The two are different objects doing different jobs — a volume trend versus a week you can mark days on — and Water's label says exactly what it shows. Recorded so the difference reads as deliberate rather than as drift.
+
 ## Future ideas
 
 - Smart daily goals (weight/activity-adjusted) — candidate Atlas insight ([[Atlas Capabilities]])
