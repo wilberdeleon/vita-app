@@ -58,6 +58,14 @@ export type QuickStat = {
   label: string;
   /** 0..1 — drives the thin progress accent under each Health Metric tile. */
   progress: number;
+  /**
+   * Optional destination. A tile is tappable only when it has somewhere real
+   * to go — Water does, since slice 3.4; Steps, Sleep, Workouts, and Streak
+   * have no feature behind them yet and stay inert rather than navigating
+   * nowhere for the sake of consistency. Unset on every other tile, which
+   * renders exactly as before.
+   */
+  onPress?: () => void;
 };
 
 /**

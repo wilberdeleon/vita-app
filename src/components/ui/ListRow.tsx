@@ -10,10 +10,12 @@ type Props = {
   iconColor?: string;
   title: string;
   subtitle?: string;
-  /** Trailing text, e.g. "300 cal" or "5 / 8 cups". */
+  /** Trailing text, e.g. "300 cal" or "24 fl oz". */
   value?: string;
   chevron?: boolean;
   onPress?: () => void;
+  /** Spoken after the title — e.g. what opening the row does. */
+  accessibilityHint?: string;
   /** Trailing element overriding value/chevron (e.g. a heart icon). */
   trailing?: React.ReactNode;
   /**
@@ -33,6 +35,7 @@ export function ListRow({
   value,
   chevron = false,
   onPress,
+  accessibilityHint,
   trailing,
   leading,
 }: Props) {
@@ -42,6 +45,7 @@ export function ListRow({
     <PressableScale
       onPress={onPress}
       disabled={!onPress}
+      accessibilityHint={accessibilityHint}
       style={[styles.row, { backgroundColor: surfaces.card, borderColor: surfaces.border }]}
       pressedScale={0.98}
     >

@@ -1,91 +1,298 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, Card, ProgressBar, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
-import { getPeptideToday } from '../../../features/peptides/api';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Button,
+  Card,
+  EmptyState,
+  Screen,
+  ScreenHeader,
+  SectionHeader,
+  useToast,
+} from '../../../components/ui';
+import { TakenSheet } from '../../../features/peptides/components/TakenSheet';
+import { TodayRoutineCard } from '../../../features/peptides/components/TodayRoutineCard';
+import {
+  usePeptideContext,
+  usePeptides,
+  type ResolvedSetup,
+  type TodayRoutine,
+} from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
-export default function PeptideLog() {
-  const today = getPeptideToday();
-  const progress = today.logged / today.goal;
+/**
+ * Peptides — the user's routines.
+ *
+ * **Rebuilt around routine states** (slice 3.9). The screen used to be two
+ * lists, Active and Inactive, and the daily question — *am I doing this
+ * today?* — could only be answered by opening a setup and reading a schedule.
+ * Now the top of the screen is today, and everything else is ordered by how
+ * much attention it wants: unfinished setup, running routines, paused ones.
+ *
+ * **Sections vanish when empty** rather than sitting there as headings over
+ * nothing. A screen of empty labels reads as broken; a screen that shows only
+ * what exists reads as calm.
+ *
+ * **Nothing is scored.** No adherence, no streak, no percentage, no "missed".
+ * A scheduled day the user has not answered says exactly that.
+ */
+export default function Peptides() {
+  const peptides = usePeptides();
+  const { today, markTaken, markSkipped, clearRoutineDay, restoreRoutineDay, logsForSetup } =
+    usePeptideContext();
+  const { showToast } = useToast();
   const { surfaces } = useTheme();
+
+  const [taking, setTaking] = useState<TodayRoutine | null>(null);
+
+  const openRoutine = (item: ResolvedSetup) =>
+    router.push(`/peptides/routine/${encodeURIComponent(item.setup.id)}`);
+
+  const skip = async (item: TodayRoutine) => {
+    await markSkipped(item.setup.id, today);
+    showToast({ message: `${item.name} · skipped today` });
+  };
+
+  /**
+   * Undoing a day's answer.
+   *
+   * Offers Undo rather than asking first: the action is one tap, so a
+   * confirmation would cost more than the mistake. `clearRoutineDay` hands
+   * back what it removed — including the administration a *Taken* created —
+   * so restoring puts the whole thing back exactly as it was.
+   */
+  const change = async (item: TodayRoutine) => {
+    const removed = await clearRoutineDay(item.setup.id, today);
+    if (!removed) return;
+    showToast({
+      message: `${item.name} · today cleared`,
+      actionLabel: 'Undo',
+      onAction: () => void restoreRoutineDay(removed.status, removed.log),
+    });
+  };
+
+  const hasAnything = !peptides.isEmpty && !peptides.isLoading;
 
   return (
     <Screen>
-      <ScreenHeader title="Peptide Log" back />
+      <ScreenHeader title="Peptides" back />
 
-      <Card>
-        <Text style={[styles.count, { color: surfaces.text }]}>
-          {today.logged} / {today.goal} logged
-        </Text>
-        <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
-          Track your peptides and stay consistent.
-        </Text>
-      </Card>
+      {peptides.error ? (
+        <Text style={[styles.error, { color: palette.fat }]}>{peptides.error}</Text>
+      ) : null}
 
-      <SectionHeader title="Today's Goal" />
-      <Card style={styles.goalCard}>
-        <View style={styles.goalRow}>
-          <Text style={[styles.goalLabel, { color: surfaces.text }]}>
-            {today.logged} / {today.goal}
-          </Text>
-          <Text style={[styles.percent, { color: surfaces.textSecondary }]}>{Math.round(progress * 100)}%</Text>
-        </View>
-        <ProgressBar progress={progress} color={palette.peptide} />
-      </Card>
+      {peptides.isEmpty && !peptides.isLoading ? (
+        <EmptyState
+          icon="flask-outline"
+          title="No peptides in your routine"
+          body="Add one to start tracking it."
+        />
+      ) : null}
 
-      <SectionHeader title="Today" />
-      {today.slots.map((slot) => (
-        <Card key={slot.id} style={styles.slotRow}>
-          <Ionicons
-            name={slot.logged > 0 ? 'checkmark-circle' : 'ellipse-outline'}
-            size={22}
-            color={slot.logged > 0 ? palette.peptide : surfaces.textTertiary}
-          />
-          <Text style={[styles.slotLabel, { color: surfaces.text }]}>{slot.label}</Text>
-          <Text style={[styles.slotValue, { color: surfaces.textTertiary }]}>{slot.logged} logged</Text>
-        </Card>
-      ))}
+      {peptides.today.length > 0 ? (
+        <>
+          <SectionHeader title="Today" />
+          <View style={styles.stack}>
+            {peptides.today.map((item) => (
+              <TodayRoutineCard
+                key={item.setup.id}
+                routine={item}
+                takenAt={
+                  item.status?.linkedLogId
+                    ? logsForSetup(item.setup.id).find(
+                        (entry) => entry.id === item.status?.linkedLogId,
+                      )?.loggedAt
+                    : undefined
+                }
+                onTaken={() => setTaking(item)}
+                onSkipped={() => void skip(item)}
+                onChange={() => void change(item)}
+                onOpen={() => openRoutine(item)}
+              />
+            ))}
+          </View>
+        </>
+      ) : null}
 
-      <Button label="+ Add Peptide" color={palette.peptide} onPress={() => router.push('/peptides/add')} />
+      {peptides.needsSetup.length > 0 ? (
+        <>
+          <SectionHeader title="Needs setup" />
+          <Card style={styles.panel}>
+            {peptides.needsSetup.map((item, index) => (
+              <Pressable
+                key={item.setup.id}
+                onPress={() => router.push(`/peptides/setup/${encodeURIComponent(item.setup.id)}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name}. Setup needed. Opens setup`}
+                style={[
+                  styles.row,
+                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border },
+                ]}
+              >
+                <View style={styles.rowText}>
+                  <Text style={[styles.rowName, { color: surfaces.text }]}>{item.name}</Text>
+                  {/* Unfinished, not wrong — stated plainly rather than as a
+                      warning, because nothing has gone bad here. */}
+                  <Text style={[styles.rowMeta, { color: surfaces.textTertiary }]}>Setup needed</Text>
+                </View>
+                <Text style={[styles.rowAction, { color: palette.peptide }]}>Finish Setup</Text>
+                <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
+              </Pressable>
+            ))}
+          </Card>
+        </>
+      ) : null}
+
+      {/* Everything running that Today is not already asking about. A
+          routine scheduled today appears once, at the top, where it can be
+          answered — not twice on one screen. */}
+      {peptides.active.length > 0 ? (
+        <>
+          <SectionHeader title="Active" />
+          <Card style={styles.panel}>
+            {peptides.active.map((item, index) => (
+              <Pressable
+                key={item.setup.id}
+                onPress={() => openRoutine(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name}. ${item.scheduleLabel ?? 'No schedule set'}. Opens the routine`}
+                style={[
+                  styles.row,
+                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border },
+                ]}
+              >
+                <View style={styles.rowText}>
+                  <Text style={[styles.rowName, { color: surfaces.text }]}>{item.name}</Text>
+                  <Text style={[styles.rowMeta, { color: surfaces.textTertiary }]}>
+                    {item.scheduleLabel ?? 'No schedule set'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
+              </Pressable>
+            ))}
+          </Card>
+        </>
+      ) : null}
+
+      {/*
+        * `today` counts as active for this empty state (3.10A).
+        *
+        * Since Active now excludes whatever Today is already showing, a user
+        * whose one routine is scheduled today has an empty Active list — and
+        * without this the screen would announce "Nothing active right now"
+        * directly beneath the routine it was asking them to record.
+        */}
+      {hasAnything &&
+      peptides.today.length === 0 &&
+      peptides.active.length === 0 &&
+      peptides.needsSetup.length === 0 ? (
+        <EmptyState
+          icon="flask-outline"
+          title="Nothing active right now"
+          body="Your paused routines are below, ready when you are."
+        />
+      ) : null}
+
+      {/* Secondary by design: a long list of paused routines should never be
+          the thing this screen is mostly about. */}
+      {peptides.inactive.length > 0 ? (
+        <>
+          <SectionHeader title="Inactive" />
+          <Card style={styles.panel}>
+            {peptides.inactive.map((item, index) => (
+              <Pressable
+                key={item.setup.id}
+                onPress={() => openRoutine(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name}. Paused. Opens the routine`}
+                style={[
+                  styles.row,
+                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border },
+                ]}
+              >
+                <View style={styles.rowText}>
+                  <Text style={[styles.rowName, { color: surfaces.textSecondary }]}>{item.name}</Text>
+                  <Text style={[styles.rowMeta, { color: surfaces.textTertiary }]}>Paused</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
+              </Pressable>
+            ))}
+          </Card>
+        </>
+      ) : null}
+
+      {/* After the lists, not between them. A full-width button wedged
+          between Active and Inactive broke the scan down the routines. */}
+      <Button
+        label="Add Peptide"
+        icon="add"
+        color={palette.peptide}
+        onPress={() => router.push('/peptides/catalog')}
+      />
+
+      {/*
+        * The boundary is stated where it is actually load-bearing — on the
+        * catalog pages that describe compounds, and on the Injection Sites
+        * tool. Repeating it under a list of the user's own routines added a
+        * third voice saying the same thing and made the screen read as
+        * nervous about itself.
+        */}
+
+      {taking ? (
+        <TakenSheet
+          visible
+          name={taking.name}
+          setup={taking.setup}
+          logDate={today}
+          isToday
+          history={logsForSetup(taking.setup.id)}
+          onCancel={() => setTaking(null)}
+          onConfirm={async (draft) => {
+            const routine = taking;
+            setTaking(null);
+            const entry = await markTaken(routine.setup.id, draft);
+            showToast({
+              message: entry
+                ? `${routine.name} · recorded`
+                : "We couldn't save that. Nothing was recorded.",
+            });
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  count: {
-    ...typography.heading,
-    marginBottom: spacing.xs,
+  stack: {
+    gap: spacing.s,
   },
-  hint: {
-    ...typography.caption,
+  panel: {
+    paddingVertical: spacing.xs,
   },
-  goalCard: {
-    gap: spacing.m,
-  },
-  goalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  goalLabel: {
-    ...typography.heading,
-  },
-  percent: {
-    ...typography.captionMedium,
-  },
-  slotRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.m,
+    gap: spacing.s,
     paddingVertical: spacing.m,
+    minHeight: 44,
   },
-  slotLabel: {
-    ...typography.bodyMedium,
+  rowText: {
     flex: 1,
+    gap: 2,
   },
-  slotValue: {
+  rowName: {
+    ...typography.bodyMedium,
+  },
+  rowMeta: {
+    ...typography.caption,
+  },
+  rowAction: {
+    ...typography.caption,
+  },
+  error: {
     ...typography.caption,
   },
 });

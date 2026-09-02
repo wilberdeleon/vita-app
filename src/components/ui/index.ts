@@ -19,3 +19,4 @@ export { StatBar } from './StatBar';
 export { Stepper } from './Stepper';
 export { TextField } from './TextField';
 export { ToastProvider, useToast, type ToastOptions } from './Toast';
+export { NumericField, NumericKeyboardAccessory, NUMERIC_ACCESSORY_ID } from './NumericField';

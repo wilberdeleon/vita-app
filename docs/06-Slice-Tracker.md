@@ -727,8 +727,1125 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 ---
 
-## Sprint 3 — Water + Peptides — ⬜ Not started
+## Sprint 3 — Water + Peptides — ✅ COMPLETE (engineering)
 
-**Next sprint, per the founder roadmap reorder of 2026-08-21** (Water + Peptides moved ahead of Journey; Journey becomes Sprints 4 and 5). Scope, the ten proposed slices, and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
+**Opened 2026-08-22.** Branch `sprint-3-water-peptides`, cut from `main` at `4ab32c5`. Founder-authorized against the approved Sprint 3 Planning & Architecture Audit; all three entry conditions met (device QA accepted · Sprint 2 merged · branch cut). Scope and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
 
-**Not opened.** No slice is scoped or approved, no branch exists, and no implementation has begun. Sprint 2's device QA is accepted and Sprint 2 is merged into `main` (2026-08-21); the one remaining entry condition is cutting a fresh `sprint-3-water-peptides` branch from `main`. Slice-by-slice progress will be tracked here once the sprint is formally opened under the normal workflow.
+**Slice plan approved by the founders 2026-08-21.** Two changes from the illustrative plan recorded in the roadmap: the test harness folds into 3.1 rather than being deferred, and **the calculator moves ahead of peptide logging** — logging records a dose, so building it before the dose math exists would mean building it twice.
+
+| # | Slice | Objective | Status |
+|---|-------|-----------|--------|
+| 3.1 | Shared Daily Foundation + Test Harness | Promote the shared date/id/key/storage primitives; stand up the first committed test suite. No behavior change | ✅ Approved |
+| 3.2 | Water Domain + Persistence | Hydration model, unit normalization, repository, provider; water that actually saves | ✅ Approved |
+| 3.3 | Water Goal + Logging Experience | User-set goal, entry-local units, today's editable log, delete + Undo | ✅ Approved |
+| 3.4 | Water Visual Refinement + Fuel/Home Integration | Water-level panel, 7-day volume strip, Home water tile and goal pillar on real state | ✅ Approved |
+| 3.5 | Peptide Definitions, Catalog + User Setup | Definition/Setup models, catalog, Custom, setup lifecycle | ✅ Approved |
+| 3.5A | Expanded Peptide Library + Research Details | 71-entry catalog, aliases, blends, compound types, research reference pages | ✅ Approved |
+| 3.5B | Final Peptide Catalog + Detail Polish | 72 entries, research-area taxonomy, category selector, structured detail presentation | ✅ Approved |
+| 3.6 | Dose / Unit Calculator | Pure bidirectional syringe-units ⇄ mass conversion, fully tested | ✅ Approved |
+| 3.7 | Peptide Logging + History | Log entry with snapshot fields, history by date, edit/delete | ✅ Approved |
+| 3.8 | Injection Site Tracking | Site taxonomy, body-outline picker, accessible fallback, recency from the user's own log | ✅ Approved |
+| 3.8A | Injection Site UX + Interactive Body Map | Flat site taxonomy with Center Abdomen, SVG body map, Tools redesign, 3.8 migration on read | ✅ Approved |
+| 3.8B | Injection Site Visual + Selection Polish | One-tap canonical site list, body model as optional aid, redrawn silhouette, Site Reference rewrite | ✅ Approved |
+| 3.8C | Body Map Tapability + Light Mode Contrast | Non-overlapping touch partition, 9/8 scale-up, three-level Light-mode contrast | ✅ Approved |
+| 3.9 | Peptides Routine + UX Integration | Add to Routine, needs-setup/active/inactive, routine detail, daily Taken/Skipped, removal preserving history, Fuel on real state | ✅ Approved |
+| 3.9A | Routine UX Simplification + Interactive Schedule + Catalog Expansion | MG-only vial, Preferred Unit removed, interactive week strip, 96-entry catalog, punctuation-insensitive search | ✅ Approved |
+| 3.9B | Daily Peptide UX + Navigation Corrections | Routine Amount, two-tap Taken, Monday–Sunday week, reminder config, PT-141 display fix | ✅ Approved |
+| 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ✅ Approved |
+| 3.10A | Final Audit Resolutions + Closeout | Dead dose helpers removed, MG-only vial everywhere, VIAL/ROUTINE/NOTES hierarchy, Today/Active deduplication | 🟡 Built — pending founder review |
+
+**Statuses reconciled at closeout (slice 3.10A).** The table had drifted: 3.6, 3.7 and 3.8 still read ⬜ Planned although all three shipped, and 3.8A–3.8C and 3.9A still read *pending founder review* after the founders had approved them on device — 3.8C explicitly ("Slice 3.8 is now complete and locked", slice 3.9 authorization) and 3.9A by way of 3.9B, which supersedes it and is approved. Every Sprint 3 slice through 3.10 is now marked to match what the founders actually said. **3.10A is the one slice still awaiting review.**
+
+**Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Settings (**Sprint 4** since the 2026-09-01 reorder; Sprint 7 when this was decided) will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
+
+**Two language rules the founders set for this sprint.** The model must not carry a field named `typicalDose` or anything else implying VITA supplies a medically appropriate amount — if repeat-logging convenience is ever needed, it uses neutral user-owned framing such as *last logged amount*, and only when a slice actually requires it. And schedules read **"Scheduled today"**, never "Due today": VITA reflects what the user entered. No missed-dose language, no adherence percentages, no streak punishment, no treatment recommendations.
+
+### Slice 3.10A — Final Audit Resolutions + Closeout 🟡
+
+**Objective:** implement the founder's rulings on the four findings slice 3.10 referred rather than decided, verify the separately-approved roadmap is intact, and close Sprint 3 from an engineering standpoint.
+
+---
+
+**Referral #1 — `doseConsistencyNotes`: removed.** The founder's rule was *prefer deleting truly dead code over preserving speculative helpers*, and it applied to more than the one function that was referred. `doseConsistencyNotes` had zero production consumers — but so did `calculateConcentration`, `calculateAmountFromUnits` and `calculateSyringeUnitsForMass`, all orphaned by the same change: slice 3.6D replaced the dose input with the automatic reference and left the forward, reverse and convenience conversions with nothing calling them. Keeping one and deleting its three siblings would have been arbitrary, so all four went, with the `DoseConsistencyNote` type. 80 lines of source and 16 tests. **No UI behaviour changed, because none of it was reachable from a screen** — and nothing is lost: the reverse conversion is four lines against `calculateSyringeUnits` on the day a surface actually needs it. What remains in `dose.ts` is exactly what the app calls: `calculateSyringeUnits` and `unitConversionReference`.
+
+**Referral #2 — the vial is milligrams everywhere.** The standalone calculator's mg/mcg vial toggle is gone; it now reads `Vial Amount (MG)`, the same question in the same words as Routine Setup. The reasoning the old code documented — *nothing here is saved, so a mistaken unit is disposable* — was the thing the audit disputed and the founder ruled on: the mistake is not visible. A vial entered as mcg produces a table that looks entirely coherent and is wrong by a factor of a thousand, and the user acts on the number rather than on whether it was stored.
+
+**The Custom Amount keeps mg and mcg**, deliberately. That is the amount being converted, not the vial size, and micrograms are an ordinary way to state it — `5 MG / 2 ML` with a `500 mcg` custom amount still reads `= 20 units`, which is the founder's own worked example.
+
+Removing a control means removing everything that pretended it still existed: the `vialUnit` state, its conversion callback, the `MassUnit`/`MASS_UNITS`/`convertAuthoredAmount`/`SegmentedTabs`/`View` imports, three unreachable styles, and — the one that mattered — **a test that had been silently passing without testing anything.** `reads an mcg-authored vial at a legible scale` opened with a guard that early-returned when no vial-unit control was present. That was true on the setup form already and became true everywhere once the toggle went, so the test ran, asserted nothing, and counted as green. It is rewritten against a path that still exists: a 0.5 mg vial in 2 mL is 250 mcg/mL, one whole milligram would be 400 units, and the reference correctly drops to `0.05 mg = 20 units`.
+
+**Referral #3 — VIAL / ROUTINE / NOTES.** Seven section headers became three. `Schedule`, `Reminder` and `Start date` are now field-weight labels *inside* ROUTINE, and `Unit conversion` is a field-weight label *inside* VIAL rather than a heading competing with it. The weight difference is the whole mechanism: group headings are uppercase micro-type in tertiary grey; these are sentence-case `captionMedium` in secondary — the same weight as `Vial Amount (MG)` and `Amount (MG)`, so they read as fields of the group above them. **Nothing was removed**, which a test asserts by naming all seven controls; a second test pins the heading list as exactly `['VIAL', 'ROUTINE', 'NOTES']`.
+
+**Referral #4 — Today and Active never show the same routine twice.** A routine surfaced in Today no longer also appears under Active. This is **presentation filtering and nothing else**: membership is decided by setup id against what Today already renders, and `routineState` is neither read nor written — a test asserts the routine is still `active` on disk after being hidden from the Active list, because a screen that deduplicated by pausing something would be a far worse bug than the duplication it set out to fix.
+
+The consequences were checked rather than assumed. As Needed routines are never in Today, so they always appear under Active — the one place they can be reached. Routines with no schedule at all likewise. A *paused* daily routine is not active, so it is never deduplicated against Today and stays under Inactive. Needs Setup is untouched. And the Active empty state now counts Today: without that, a user with a single daily routine would have been told **"Nothing active right now"** directly beneath the routine the screen was asking them to record.
+
+---
+
+**Validation.** `npm test` — **1093/1093** pass across 40 suites (1075 → 1093: 26 added, 16 removed with the dead helpers, 8 net) · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · dead-`StyleSheet`-key sweep — clean · dead-component sweep — clean · stale-reference sweep for the removed toggle, the removed helpers, Preferred Unit, `setup/new` and `peptides/api` — clean · `npx expo export --platform ios` — succeeds · `npx expo install --check` — reports only the `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2 · **no notification dependency exists**, still asserted by test.
+
+**Boundary audit.** Zero-diff against `2c5a2d8` on nutrition, Fuel, Home, Atlas, Journey, `BodyMap`, `SiteSelector`, the site taxonomy, all catalog content, and the whole of Water — this slice touched none of them, so 3.10's Water waterline fix and 3.8C's body map stand exactly as approved.
+
+**Device QA — eight screenshots, all inspected.** Seeded five routines covering every case the deduplication has to get right: one daily (Today), one scheduled Friday (Active), one As Needed (Active), one needs-setup, one paused daily (Inactive). On device: **Retatrutide appears once**, under TODAY; BPC-157 shows `Fri` and Ipamorelin shows `As needed`, both under ACTIVE; Bremelanotide stays under NEEDS SETUP; Tirzepatide stays under INACTIVE despite being a daily routine, because it is paused. Reseeded with a single daily routine — the case the founder objected to — the screen is now one card, no ACTIVE section at all, and **no "Nothing active right now"**. Routine Setup reads VIAL → *Unit conversion* → ROUTINE → *Schedule* → *Reminder*, with the two group headings visibly louder than the field labels. The calculator shows a full-width `Vial Amount (MG)` with no toggle, and the Custom Amount keeps its mg/mcg control. All verified in Light and Dark; no theme regression.
+
+**Founder storage** was backed up before seeding and restored byte-identically; **zero QA keys remain.**
+
+**One visual observation, not changed.** The `1 mg = 10 units` headline is the largest element on Routine Setup. That is the approved slice 3.6D design — *the answer is the only large text on the card* — and it now sits inside VIAL rather than competing with it, which is what §10 asked for. Raised only so it is a noticed choice rather than an unnoticed one.
+
+**Not verified, unchanged limitation:** tap-driven paths on the simulator. Every interaction claim rests on route-level tests that drive the real handlers.
+
+### Slice 3.10 — Sprint 3 Audit + Closeout ✅
+
+**Objective:** inspect the whole of Sprint 3 as if it were about to ship to a real person — not "do the tests pass", but *does this make sense, is anything confusing, ugly, redundant, unfinished, or quietly wrong* — fix what is safely Sprint-3-scoped, and decide whether the sprint can close.
+
+**Nine defects fixed, four findings referred to the founder, one release gate recorded.** Full detail for every one is in `docs/07-Audit-Log.md`; this entry records what changed and why the audit found it when the suites did not.
+
+---
+
+**The two findings the test suite could not have caught.**
+
+The first was arithmetic that only misbehaves when *rendered*. `unitConversionReference` could emit two rows that display identically — `1 mcg = 50 units` sitting directly above `1 mcg = 100 units` — because micrograms round to whole numbers and the row ladder starts at half the primary amount. A sweep across realistic vial and volume pairs found 38 reachable cases. Every one of them is behind the standalone calculator's mcg vial toggle; the milligram path that every setup form uses has none. The fix is a display-integrity rule in the model rather than a patch in the view: **no two rows may read the same**, whatever they are underneath. The founder's approved `0.5 / 1 / 2 / 3 / 4 / 5 mg` ladder is pinned by a test so the guard can never quietly drop a row from the path people actually use.
+
+The second was found by sampling pixels. On a brand-new device with no goal set, a **solid blue waterline drew across the bottom of the Water panel**. The fill animates to a height of zero correctly, but its 2pt surface line is anchored to the top of that zero-height box, so it painted at the card's edge. The component's own documentation says the panel must never show an empty vessel, because *"you have not chosen a goal"* is not a statement about how much you have drunk — and it was showing one to every first-time user. No test rendered it; code review would not see it. It took a screenshot and a pixel scan.
+
+---
+
+**A test was holding a defect in place.** Slice 3.9A removed the Preferred Unit control and left its explanatory sentence on screen — *"How amounts are shown for this peptide. A display preference, not a recommended amount."* — floating between the conversion table and the Routine header, describing a control nobody could see. `SetupForm.test.tsx` asserted that copy was **present**. Written when the control existed, never revisited, and green ever since. The sentence is gone and the assertion is inverted: what the form must not do is explain a control it does not have.
+
+**Storage formats had leaked onto a summary screen.** The routine detail rendered the reminder as `09:00` and the start date as `2026-08-24` — the strings they are persisted as, in an app that otherwise speaks `9:15 AM` and written dates. Two shared formatters now sit in `lib/daily`: `formatTimeOfDay` and `formatLogDateWithYear`. Both are hand-written for the same reason their siblings are — Hermes' `Intl` support varies by platform and engine build, and a header that silently falls back to `2026-08-24` on one device is not worth the dependency. The year is the point of the second one: a routine's start date is often months old, and `formatLogDateLong` omits it.
+
+**Three surfaces disagreed about how to name the same things.** "Edit Routine" opened a screen titled *Setup*. The standalone calculator asked for `Vial Amount (mg)` and `Bacteriostatic Water / Reconstitution (mL)` while Routine Setup asked for `Vial Amount (MG)` and `Reconstitution Volume (ML)` — the 3.9A copy fix landed on one surface and never reached the other. And the setup form itself carried `Amount (mg)` four lines beneath `Vial Amount (MG)`. The convention is now stated rather than assumed, and pinned by tests: **a configuration field label caps its unit — `(MG)`, `(ML)` — and every displayed value stays lowercase — `2 mg`, `20 units`, `1.2 mL`.** The screen is retitled *Routine Setup*, which is what the row that opens it promises.
+
+**Dead code from the 3.9 redesign.** `PeptideRowPanel.tsx` and `VialSummary.tsx` had zero references anywhere, tests included — both orphaned when the routine screens replaced the old Active/Inactive lists. Four files carried unused `StyleSheet` keys, which `--noUnusedLocals` cannot see. Both sweeps are now scripted and run as part of validation.
+
+**Two smaller corrections.** The setup screen rendered the catalog category exactly as authored while every other surface title-cased it, so one compound read *Melanocortin agonist* here and *Melanocortin Agonist* one screen back. And the Schedule segmented control was the only one on the form without a `groupLabel`, so assistive technology announced four unattached buttons instead of four choices of schedule.
+
+---
+
+**Water finally has route-level tests.** Its units, totals, goals, entries, week and provider were all thoroughly covered, and **no test had ever rendered a Water screen.** That is precisely the gap that let PT-141 ship broken in 3.9A: `searchCatalog` was correct, had 92 passing tests, and the screen showed users a compound they did not recognise. `src/features/water/__tests__/WaterRoutes.test.tsx` drives the real routes — add a drink, set a goal, two taps recording two drinks, save disabled with nothing entered, a load failure surfacing rather than reading as an empty day, and the midnight boundary leaving yesterday alone. It is also what caught the waterline bug.
+
+**The founder's §26 snapshot regression is now written out literally.** Setup at 20 MG in 2 ML, log 2 mg → 20 units, then reconstitute the same vial in 1 ML. The old record must still read `2 mg · 20 units`, must keep the site it was recorded at, and must not be rewritten on disk merely by opening the history screen — with the counterpart assertion that the setup *does* now show the new relationship, so the change took effect where it should. This existed for the edit path; it did not exist for the plain display path.
+
+**Test total: 1029 → 1075.**
+
+---
+
+**Four findings referred rather than fixed, deliberately.**
+
+`doseConsistencyNotes` is written, documented, tested — and wired to nothing. It detects an amount larger than the whole vial, which is the signature of a typo in one of the two numbers every syringe figure is derived from. It was orphaned by 3.6D when the dose input became an automatic reference. Wiring it would be useful; doing so during a closeout would be adding new visible behaviour to a form the founder has just approved, which is the scope creep §48 warns against.
+
+The standalone calculator still offers a mg/mcg vial toggle that Routine Setup deliberately lost in 3.9A. The code documents a considered counter-argument — the calculator persists nothing, so a mistaken unit is "visible and disposable". The audit's disagreement is that it is *not* visible: the table looks coherent either way, and the user acts on the number rather than on the saved state. But reversing a documented deliberate decision inside a closeout is the founder's call, not the auditor's. The duplicate-row defect it enabled is closed independently, at the model level.
+
+Routine Setup presents **seven** section headers where §13 describes three. Each arrived with the slice that added its field; nothing is wrong individually, and together the form reads longer and more administrative than it is. Folding Schedule, Reminder and Start Date under ROUTINE is a form redesign, and the standing rule is not to redesign without approval.
+
+A single active routine **appears twice on the Peptides home screen** — once under TODAY, once under ACTIVE. By design: TODAY answers *what do I do now*, ACTIVE is the roster. With five routines it reads correctly; with one it is the same name twice. §7 asked directly whether these lists are too repetitive, so it is raised with a recommendation rather than changed unilaterally.
+
+---
+
+**One release gate, recorded explicitly.** The 96 peptide entries have never had expert review. The automated tests enforce *structure and internal consistency* — unique ids and aliases, no shared prose between similar compounds, no dosing or protocol language anywhere, every time-sensitive development stage dated and sourced. **None of that is a check on whether a sentence is medically accurate, and it must not be mistaken for one.** Before public release this content requires real content, medical and legal review appropriate to a consumer health product. It is not a Sprint 3 blocker.
+
+---
+
+**Boundary audit.** Zero-diff held on nutrition, Fuel, Home, Atlas and Journey. `BodyMap`, `SiteSelector` and the site taxonomy are untouched — 3.8C stands as approved, and its light-mode contrast was re-verified on device. The 3.5D catalog content lock held: `src/lib/peptides/data/definitions` has no diff. Water's only source change is the waterline fix, which is an audit finding rather than a feature.
+
+**Validation.** `npm test` — 1075/1075 pass across 40 suites · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · dead-`StyleSheet`-key sweep — clean · dead-component sweep — clean · `npx expo export --platform ios` — succeeds · `npx expo install --check` — reports only the pre-existing `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2, unchanged and still awaiting a founder decision.
+
+**Device QA.** Nineteen screenshots captured on a booted iPhone 17 Pro against seeded state — three routines in three different states, four administrations with site snapshots, five routine-day statuses including a deliberate skip and two days left unanswered, and six days of water — then re-captured with all Sprint 3 keys cleared for the empty-state pass, in both Light and Dark. Every one was inspected. The founder's storage manifest was backed up before seeding and restored byte-identically afterwards; **zero QA keys remain**.
+
+**What device QA actually proved.** The reminder now reads `9:00 AM` and the start date `24 August 2026`. The setup screen is titled *Routine Setup*, its category reads *Melanocortin Agonist*, and the orphaned Preferred Unit sentence is gone. The calculator asks for the vial in the same words Routine Setup does. The catalog header reads `CATALOG · 96`. History preserves authored units — the 2.5 mg override day still says `2.5 mg · 25 units`. Light-mode body-map contrast from 3.8C holds. And the Water panel draws no waterline without a goal, while still drawing it at 44% with one.
+
+**Not verified, unchanged limitation:** tap-driven paths on the simulator. Every interaction claim in this slice rests on route-level tests that drive the real `onPress` and `onChangeText` handlers, not on device taps.
+
+### Slice 3.9B — Daily Peptide UX + Navigation Corrections 🟡
+
+**Objective:** founder device QA rejected 3.9 on two hard defects and several usability problems. The routine architecture is correct and unchanged; this fixes what was reported.
+
+---
+
+**PT-141 was never missing, and the 3.9A fix was only half of it.** The entry has always existed as **Bremelanotide** with `PT-141` as an alias. 3.9A fixed punctuation matching so `PT141` would resolve — genuinely necessary — and shipped 92 passing tests. Every one of those tests called `searchCatalog` directly, a pure function that was working perfectly. **The screen was never exercised.** Searching `PT-141` returned exactly one row, and that row said:
+
+> **Bremelanotide** · Approved · *Melanocortin Agonist*
+
+The words the user typed appeared nowhere. Someone searching a name they know, shown a compound they don't recognise, reasonably concludes it is absent. **The defect was in the result, not the search.**
+
+**The row now shows the alias that matched** — `Bremelanotide` / *PT-141 · Melanocortin Agonist*. General, not a special case: `Ozempic` surfaces Semaglutide, `Mod GRF 1-29` surfaces CJC-1295. With no query the first alias shows, so browsing works too. Exactly one alias, because an earlier version listed every alias beside the category and truncated mid-word — which is why aliases were removed from the row in the first place, and how this defect was created.
+
+**A route-level regression now drives the real screen**: type into the actual field, read the actual list, tap the actual row, confirm the detail page. `searchCatalog` tests can no longer pass while the screen is broken.
+
+**Add to Routine now names its destination.** `dismissAll()` pops to the root of whatever navigator it finds — outside the Peptides stack that meant landing on Fuel. `router.navigate('/peptides')` is deterministic however the catalog was reached.
+
+---
+
+**Routine Setup is the one hard step; the daily flow reads it.** This is the product change. `routineAmount` stores what the user says they usually use — canonical micrograms plus the authored pair, like the vial — and the Taken sheet is seeded from it. **Never prefilled from the catalog, a protocol, or anyone else's number.**
+
+**Taken is now effectively two taps.** The amount reads as settled (`2 mg · 20 units · From your routine`) with a single *Change* affordance; the time is filled with the current local time; site and notes are optional. A text field sitting open invites retyping something already correct.
+
+**Changing today's amount never writes back to the routine**, and **changing the routine never rewrites history**. Both pinned. A log recorded at 1 mg stays 1 mg forever.
+
+**Time defaults to now and stays editable** — nobody should type the current time, but someone logging at 5pm what they took at 9am must be able to say so.
+
+**The week is a real Monday-to-Sunday calendar.** The rolling window produced *Friday → Saturday → Sunday → Monday*: chronologically correct, unreadable as a calendar, and rejected on sight. Monday-first with date numbers, plus `‹ This week ›` navigation — two arrows and a label, not a calendar screen. Forward is disabled at the current week; a week that has not happened is not offered.
+
+**Colour added, carrying nothing alone.** Taken is peptide purple with a tick; skipped is **amber** with a dash; nothing recorded is a grey outline. **Amber, never red** — skipping on purpose is a choice, not a failure, and red is what this app uses for real errors. A named `routineSkipped` token reuses the existing amber hex rather than inventing a colour. Today is marked by weight, never by the status palette, because colouring it purple would say something was recorded.
+
+**Reminder configuration is stored, not scheduled.** Off by default; On exposes a local `HH:MM`. **No OS notification is registered in this slice** — a test asserts no notification dependency exists. Persisting now means a later slice delivers reminders without a migration. Neutral wording: *Reminder*, never *dose reminder*.
+
+**Routine detail re-tiered again** — Amount, Schedule and Reminder lead; vial preparation is a secondary *Preparation* card; **Edit Routine** replaces *Edit Setup* and sits with Pause and Remove under Actions.
+
+**Deviation, flagged for the founder:** §30 asked for "a blue treatment aligned with the Peptides visual language" for Taken. Peptides' established domain colour is **purple** (`#7C3AED`) and blue (`#2F80ED`) is **Water's** domain colour — using it would signal the wrong feature. Taken uses peptide purple. Say the word and it becomes blue.
+
+**14 new tests, 1029 total** — the real-screen PT-141 path, named navigation, routine amount seeding and canonicalisation, today-only override, historical integrity across a routine change, the local-time default and its correction, reminder default/persistence, the absence of notification dependencies, Monday-first ordering, today marking, and week navigation including the disabled forward edge.
+
+**Verified on device, Light and Dark.**
+
+**Boundary audit:** Water, nutrition, Home, `BodyMap`, `SiteSelector`, the site taxonomy, the log model and all catalog *content* have a zero-line diff — the only catalog change is how a row displays. No notifications, no Food Scanner, no Supabase. Slice 3.10 has not started.
+
+### Slice 3.9A — Routine UX Simplification + Interactive Schedule + Catalog Expansion 🟡
+
+**Objective:** founder QA confirmed the routine mental model is correct and left nine issues. This slice fixes them, and expands the catalog. The routine architecture from 3.9 is untouched.
+
+---
+
+#### Routine UX
+
+**Add to Routine lands on Peptides.** It used to call `back()`, which returned the user to the catalog list — where they had *been*, not where the thing they just added now lives. Dismissing the whole catalog stack puts Today, Needs setup, Active and Inactive in front of them with the new routine visible.
+
+**The vial is milligrams only.** Vials are labelled in mg — nobody reads *10000 mcg* off one — and the toggle offered a choice whose wrong answer was **catastrophic and invisible**: a vial entered as mcg is off by a factor of a thousand, and every syringe number derived from it is wrong in the same direction. Removing the choice removes the failure.
+
+**Nothing changed underneath.** `amountMcg` is still canonical and `authored` still records mg. A **legacy setup authored in mcg is converted for display, not reinterpreted**: the field is derived from canonical micrograms, so `5000 mcg` reads as `5` rather than becoming a five-gram vial on the next save. Pinned by a regression test and verified on device.
+
+**The standalone calculator keeps its mg/mcg toggle**, and that is deliberate. It is a scratch surface where nothing is saved, so a mistaken unit is visible and disposable; Setup is configuration that persists. The tests were re-scoped rather than deleted.
+
+**Reconstitution reads as one idea.** `Bacteriostatic Water / Reconstitution (mL)` put two names for the same number in a single line. Now **Reconstitution Volume (ML)** with *Bacteriostatic water added to the vial.* underneath.
+
+**Preferred Unit is gone from the UI.** It asked, up front and out of context, a question that only matters at the moment an amount is recorded — where the mg/mcg toggle still sits, beside the number being typed. The stored value is preserved for backward compatibility and defaults to mg for new routines.
+
+**Recording an amount still supports mg and mcg.** Removing the vial and preference toggles did not remove unit choice from the number the user actually records, which is a different question.
+
+**The week strip is a control, not decoration.** Every cell is a real button showing **weekday, date number and status** — `F 21 ○` — because `F S S M T W T` could describe any week in history. Tapping opens a compact day sheet stating what the schedule said and what was answered, with Mark Taken, Mark Skipped or Clear Status as appropriate.
+
+**Selection and status are styled apart.** The open day is marked by its ring; whether it was taken is carried by the glyph and fill. Sharing one treatment would make a selected day look taken.
+
+**Future days are informational.** Marking tomorrow taken would let the app hold a confirmed administration that has not happened. The rolling seven-day window ends today, so the case cannot arise; the sheet still handles it explicitly rather than relying on that.
+
+**Correcting a past day asks for the time.** Today's time is genuinely known — it is now. A past day's is not, and stamping one in silently would put a precise claim into a health record that nobody made, so the field appears exactly when the answer stops being obvious.
+
+**One source of truth.** The strip writes through the same provider operations the Today card uses. There is no calendar-specific state.
+
+**Week navigation was deliberately deferred.** A fixed rolling seven-day window answers "how has this week gone?" without becoming a second screen, and §46 permitted deferring it. Reported rather than silently dropped.
+
+**Routine detail re-tiered.** Edit Setup is a row with a chevron inside the Setup card, not a full-width purple button competing with Taken and Skipped for the eye — changing a vial is occasional, answering today is the daily act. Preferred unit is gone from the summary with its control.
+
+**Taken is no longer pre-selected.** A filled Taken button read as *already taken* before anyone touched it — the most consequential possible misreading on the screen. Both actions are outlined; the accent is carried by Taken's label alone. **This was fixed twice**: the first pass corrected the home card and missed the routine screen, which draws its own buttons. Found by inspecting a screenshot, and the test now covers both surfaces.
+
+**Defensive footer removed from Peptides.** The boundary is stated where it is load-bearing — on the catalog pages that describe compounds, and on Injection Sites. A third voice under a list of the user's own routines made the screen read as nervous about itself.
+
+---
+
+#### Catalog
+
+**The reported gap was not a missing entry.** PT-141 was already in the catalog as **Bremelanotide**, with `PT-141` and `Vyleesi` as aliases. Search compared raw strings, so `PT141` matched nothing — a **search defect wearing a catalog defect's clothes**. Queries and aliases are now compared with punctuation and spacing stripped, so `PT-141`, `PT141` and `pt 141` are one query. Adding a second PT-141 entry would have created a duplicate and left the real bug in place.
+
+**72 entries → 96.** Twenty-one definitions and three blends added. Of the founder's 38 high-priority candidates, **21 were already present** — including Melanotan I and II, Sermorelin, GHRP-2, GHRP-6, Hexarelin, IGF-1 LR3, HGH Fragment 176-191, Thymosin Alpha-1, LL-37, ARA-290, Oxytocin, Humanin, Follistatin-344, Tesofensine, Survodutide, Mazdutide, VIP, Gonadorelin and Thymulin. The audit ran first, so nothing was duplicated on the assumption it was missing.
+
+**Added:** the thirteen Khavinson bioregulators (Thymalin, Thymogen, Vilon, Cortagen, Cartalax, Vesugen, Bronchogen, Livagen, Pancragen, Prostamax, Testagen, Ovagen, Chonluten), plus PEG-MGF, FOXO4-DRI, AICAR, P21, PE-22-28, Setmelanotide, Eloralintide and Orforglipron. Three blends: Tesamorelin + Ipamorelin, MOTS-c + NAD+ + 5-Amino-1MQ, and Thymosin Alpha-1 + Thymalin.
+
+**Status is assigned accurately, not defaulted to *Research*.** Setmelanotide is an **approved medication** — saying otherwise would be a factual error in the direction that matters. Orforglipron is phase 3 and Eloralintide phase 2, both dated and sourced because pipeline facts expire. AICAR is recorded as a **small molecule**, not a peptide, as is Orforglipron.
+
+**Every entry was written separately.** This family is the easiest in the catalog to cross-contaminate — short, similarly named, sharing a template — and a copied paragraph with one organ swapped would look completely plausible and be wrong. A test asserts no two catalog overviews are identical, and named pairs (Bronchogen/Chonluten, Cortagen/Cartalax, P21/PE-22-28, MGF/PEG-MGF, Thymalin/Thymogen) are checked individually.
+
+**Accuracy over count.** Where the specific amino-acid sequence or tissue association could not be stated with confidence, the entry describes what the compound *is associated with in its literature* rather than asserting a sequence. Nothing was added purely to raise the number.
+
+**An existing test had a false positive.** The storefront sweep did a substring match for `cart`, which fires on **Cartalax** — a real compound whose name contains those letters. It now matches word boundaries. A check that fails on a legitimate compound name is a check that gets silenced rather than fixed.
+
+**No existing entry received substantive copy changes.** The approved 3.5D content for the original 72 is untouched.
+
+**96 new tests, 998 total** — catalog integrity (unique ids and names, alias collisions in both directions, valid areas, dated and sourced time-sensitive stages, resolvable blend components, no duplicate blend component-sets, no dosing content), punctuation-insensitive search, every added compound reachable and tagged, contamination pairs, and the combined catalog → routine regression proving a newly added compound joins the routine through the same path with no duplicate shell.
+
+**Verified on device, Light and Dark.** Setup showing a legacy mcg vial as `5` MG, the interactive strip with dates, the day sheet, `PT141` resolving to Bremelanotide, and both Taken buttons corrected.
+
+**Boundary audit:** Water, nutrition, Home, `BodyMap`, `SiteSelector`, the injection-site taxonomy, the log model and the calculator core all have a zero-line diff. No reminders, no Food Scanner, no Supabase. Slice 3.10 has not started.
+
+### Slice 3.9 — Peptides Routine + UX Integration 🟡
+
+**Objective:** replace *browse → Track this peptide → long Setup form → Save → open → Log Peptide → another form* with a model people already hold: peptides are **added to a routine**, and adding, configuring, tracking daily, pausing and removing are separate acts.
+
+**Three saved founder requirements close here** — CTA discoverability, Display Name removal, and Remove from Routine.
+
+---
+
+**Routine state is persisted, not inferred.** `PeptideSetup.routineState` is `needs-setup | active | inactive`. The old `active: boolean` could not express *added but not configured yet*, which is the whole reason the old flow forced a form up front. It survives as a derived legacy mirror — written on every save so a pre-3.9 build still reads the store, never branched on.
+
+**`needs-setup` and `inactive` are not merged**, and that was the point of separating them: one means "I added this and haven't configured it", the other "I configured this and deliberately paused it". A list that conflates them tells someone their brand-new peptide is switched off.
+
+**Removed is not a state.** A removed routine is simply no longer in the store. A tombstone would mean every list, count and lookup had to remember to exclude it, and the one that forgot would resurrect it.
+
+**Legacy migration is by `active`, never to `needs-setup`.** Before 3.9 the only way a setup could exist was to have been created through the full form, so every stored one is configured *by definition* — including a pre-filled-pen user with no vial, whose missing vial data is a legitimate setup rather than an incomplete one. Nothing is rewritten on disk; the mapping happens on read, so a store still being written by an older build keeps working. Pinned by tests against the real parser rather than an in-memory double, which would have proved nothing.
+
+---
+
+**The daily model, and the one rule it exists to protect.** A schedule is a plan; a `PeptideLogEntry` is a fact; a **routine day status** is the user's answer about a planned day. Nothing converts a plan into an administration, in either direction.
+
+**`unconfirmed` is the absence of a record, not a value.** This is the load-bearing design decision. If "no response" were storable, something would eventually have to decide *when* to write it — midnight, on read, on app open — and every one of those answers quietly converts silence into an assertion. Instead: a day the user answered has a record, a day they did not has nothing. `ROUTINE_DAY_STATES` is `['taken', 'skipped']` and a test asserts `isRoutineDayState('unconfirmed')` is false, so the state cannot be reintroduced by accident.
+
+**Taken writes the log first and the status only if that succeeded.** A status saying *taken* with no administration behind it is the only genuinely corrupt state this feature can reach — a confirmed dose in the calendar that appears nowhere in history. If the write fails, the optimistic entry is rolled back out of memory and no status is written, so the day stays honestly unanswered.
+
+**`linkedLogId` is what makes undo safe.** Only the administration a *Taken* created is removed with it, by id. A manual log has no status pointing at it and can never be swept up — someone who typed three entries by hand and then untaps Taken keeps all three. Pinned by tests.
+
+**Skipped never creates an administration**, and never asks why.
+
+**Persistence:** `vita:v1:peptides:routine:log:<YYYY-MM-DD>` on the shared day-keyed store, a sibling domain of the log store. The prefixes are disjoint — neither store can enumerate the other's days. Parsing is defensive in the same way logs are: a status whose own date contradicts its storage key is dropped rather than trusted, and a malformed `linkedLogId` drops the link while keeping the answer.
+
+---
+
+**Add to Routine is lightweight and immediately visible.** Tapping it creates a shell in `needs-setup`, toasts, and returns — no form. The CTA sits directly under the compound's name, above claims, mechanisms, studied-for, targets, status and sources; a test asserts its index precedes the first research heading, because *position* was the entire defect. It is state-aware: **Add to Routine** → **Finish Setup** → **View Routine**, so a tap always names the next real step.
+
+**One current routine per definition.** `addToRoutine` returns the existing routine in any state rather than creating a second. The `setup/new` route was **deleted**: a second entry point that created setups directly was a hole in that guarantee.
+
+**Saving Setup is what activates a routine** — no separate Activate button. Editing an already-configured routine keeps whatever state it had, so saving never quietly un-pauses something.
+
+**Opening a routine no longer opens a form.** The new routine screen answers what people actually arrive with: today's status and actions, a human-readable schedule (`Mon, Wed, Fri`), a seven-day strip, recent history, a compact setup *summary* (`20 mg vial · 2 mL reconstitution`), then Edit Setup, Pause and Remove. The full form lives behind **Edit Setup**.
+
+**Removing preserves everything.** Logs, injection-site history and recorded day statuses are all untouched — history resolves names through each log's own `definitionId` against the compiled catalog, so nothing becomes an *Unknown Peptide*. The confirmation says so out loud, because "remove" in a health app reads as "delete my records", and someone who believes that keeps a routine they no longer want just to be safe. Re-adding creates a fresh shell; the old history stays as separate historical records rather than being silently resurrected.
+
+**The status strip carries shape and text, never colour alone** — ✓ taken, – skipped, ○ nothing recorded, blank for a day the schedule does not cover. Deliberately not a tick-and-cross: a cross reads as *wrong*, and skipping on purpose is not wrong. Every cell has an accessible sentence naming the date and state.
+
+**No scoring of any kind.** No adherence, no compliance, no streak, no percentage, no "missed". A test sweeps the rendered home screen for all of them, and another sweeps the domain's exported names.
+
+---
+
+**Display Name is gone from the UI and preserved on disk.** A routine is named by its definition — one thing, one name. The stored value round-trips through the form invisibly: `applySetupChanges` deletes any key passed as `undefined`, so emitting nothing would have erased what an old setup was called the first time its owner edited anything else.
+
+**Fuel now runs on real state.** The `getPeptideToday` shim — which told every user `1 of 3 logged` forever, describing a feature that did not exist and a goal VITA has never had — is **deleted**. The tile reads administrations actually recorded today, falls back to how many routines are scheduled, and draws no progress, because there is no target to divide by. It remains a summary and a door; Fuel grows no routine widget of its own.
+
+**Manual logging is untouched** and reachable from the routine screen as *Add Log* — backdated entries, unscheduled administrations, As Needed routines, corrections and multiple administrations in a day all still need it. The 3.8C injection-site UX is reused verbatim in the Taken flow.
+
+**66 new tests, 887 total**, across routine state and its transitions, legacy migration through the real parser, the state-aware CTA and its position, Display Name removal and preservation, daily status in every combination, Taken/log transaction integrity including a forced storage failure, undo semantics against manual logs, the strip's states, the routine screen, needs-setup, and the full eleven-step removal-preservation flow.
+
+**Verified on device, Light and Dark.** One visual defect found by inspecting screenshots and fixed: the Taken sheet's amount field was collapsed to a sliver because the unit toggle had no width constraint. Add Peptide was also moved below the routine lists, where it no longer interrupts the scan.
+
+**Boundary audit:** Water, nutrition, Home, the 72-entry catalog content, the calculator domain, `BodyMap` and `SiteSelector` all have a zero-line diff. No Supabase work. Slice 3.10 has not begun.
+
+### Slice 3.8C — Body Map Tapability + Light Mode Contrast 🟡
+
+**Objective:** founder QA on 3.8B was positive overall — **the body model is approved as a visual direction** — with two usability faults left: zones were hard to tap reliably, and in Light mode they were too faint against the silhouette. A narrow corrective slice. The site model, silhouette, taxonomy, fast list and copy are untouched.
+
+**The tapping problem was a defect, not ergonomics.** Every zone was padded to 44pt *independently* — `max(rx, 22)` — which sounds correct and is wrong the moment two zones are closer together than 44pt. The three abdominal zones sit 19 units apart, so their boxes overlapped by 25pt and the later sibling won the tap:
+
+| tap | selected |
+|---|---|
+| dead centre of **Left Abdomen** | Center Abdomen |
+| dead centre of **Center Abdomen** | Right Abdomen |
+
+**Left Abdomen could not be reached from the figure at all.** Upper arms also overlapped the abdomen, and the two glutes overlapped each other. Enlarging the targets further would have made it worse, not better.
+
+**Touch areas are now authored as a partition.** Explicit rectangles, laid out together, that never overlap in either view. Vertical bands separate arms from abdomen from thighs; inside a band, boundaries sit at the midpoint between neighbouring zone centres — where a tap genuinely becomes ambiguous. Mirrored for the back view by the same rule as the art, so a back-view tap cannot land on the wrong glute.
+
+**Where anatomy forbids 44pt, height compensates for width.** Three abdominal targets cannot each be 44pt wide across a 64-unit torso without colliding, and **a collision is worse than a narrow target** — a narrow target is fiddly, a colliding one records the wrong site. Those are 23–32pt wide by 79pt tall. Arms (52×113) and thighs (51×97) clear 44 in both axes; glutes are 37×54.
+
+**The figure is drawn 9/8 larger**, which grows every target by the same eighth without making the body broad — the founder explicitly did not want a cartoonishly wide figure, so the invisible rectangles do most of the work. **1.125 rather than a rounder 1.15 because it is exact in binary**: at 1.15, two rectangles authored to share a boundary landed 1.4e-14pt apart — invisible on screen, and a real overlap as far as the collision test was concerned.
+
+**Small silhouette spacing, as permitted:** arms moved 2 units further from the torso. Nothing else about the figure changed.
+
+**Light mode contrast rebuilt as three levels.** A zone at 0.11 ink over a body at 0.14 is a step of about four percent — it survives review on a bright screen and vanishes on a real one. Now silhouette 0.13 → zone 0.24 → selected purple at 0.50 alpha, so unselected zones are plainly visible and the selection is unmistakable. **Dark mode is unchanged** apart from its selected-purple constant being pulled into the same theme-aware pair; its silhouette and zone values are byte-identical.
+
+**No colour that means anything**, still: no green, no red, no scale, no ordering, nothing marked due, spent or safe.
+
+**Accessibility unchanged in shape:** one `Pressable` per zone, so assistive technology sees exactly one element per site — the rectangle is bigger than the art, not a second thing to land on. A test counts host elements per label and fails on duplicates.
+
+**10 new tests, 821 total** — pairwise non-collision in both views, every zone centre resolving to itself and nothing else, the three abdominal targets adjacent with no gap and no overlap, arms and thighs ≥44 in both axes, the anatomy-bound zones documented as narrow-but-tall, every target strictly larger than the art it covers, mirroring, and one accessible node per zone.
+
+**Verified on device, Light and Dark:** front and back in both themes, Left Abdomen selected in Light, Right Thigh selected in Dark, and the selector sheet confirming that the taller figure did not push **Use Right Thigh** below the fold.
+
+**Untouched:** taxonomy, log model, history behaviour, Site Reference copy, the fast site list, the calculator, Water, Fuel, Home, and all 3.9 scope.
+
+**Boundary audit:** everything outside `BodyMap.tsx` and its tests has a zero-line diff.
+
+### Slice 3.8B — Injection Site Visual + Selection Polish 🟡
+
+**Objective:** founder QA found 3.8A's functionality substantially improved but did not approve it. This is the corrective polish pass — make everyday selection much faster, keep the figure as an optional aid, raise its visual quality, and rewrite the reference copy so it reads like product rather than notes. **Slice 3.8 remains unapproved until 3.8B passes founder device QA.**
+
+**The list is the fast path; the figure is the optional one.** 3.8A put a full anatomical model between the user and a choice they already knew. Logging is done in a hurry, standing up, several times a week. Tapping the row now opens a flat list of all ten canonical sites and **one tap records it** — no region-then-side, no confirm step, no figure in the way. Two taps total from the log form.
+
+**The region → laterality workflow is gone.** Asking for *Abdomen* and then *Left* is a reasonable way to model a body and a poor way to choose from ten known places. `SITE_PICKER_ORDER` lists every site as its own row, ordered top-of-body down and grouped by region so it scans without headings. The order carries **no preference** — it is anatomy, not a ranking — and `custom` sits last because it is the escape hatch, not the least advisable choice. A test asserts the bare region headings no longer appear anywhere in the picker.
+
+**`View Body Model` sits under the list**, reachable from both New Log and Edit Log — never only through Settings → Tools. It answers a genuinely different question, *which one is that?*, and someone who wants it should not have to leave the form.
+
+**One component, two contexts.** `BodyMap` is unchanged between logging and Tools; only what wraps it differs. From a log it is a picker that returns a site; from Tools it is a lens onto history that records nothing. There is no second implementation.
+
+**Nobody wonders whether the tap registered.** Selecting a zone highlights it, names it under the figure, and the confirm button reads **Use Left Abdomen** rather than a bare *Done*. Opening the model from a log that already has a site opens on that site's view with it already highlighted and already confirmable.
+
+**The silhouette was redrawn.** Roughly seven-and-a-half heads, a real shoulder line, a waist that narrows, hips that flare, and arms held clear of the torso so an upper-arm zone is visibly on an arm. The straight-edged limbs of 3.8A were what made it read as a developer's SVG demo.
+
+**Three rendering defects found by inspecting screenshots, not by tests:**
+
+1. **`ClipPath` did not apply on device.** Zones were meant to be clipped to the silhouette so each took the shape of its limb. It rendered unclipped — ellipse outlines crossing the body edges. Replaced with geometry: each zone is sized to sit inside the limb it marks, verified on screen.
+2. **Translucent overlapping shapes accumulated alpha**, drawing a bright band across the hips where the legs met the torso and a notch under the chin. Fixed by filling with solid ink inside a group that carries the opacity — the group composites once, so joins are invisible.
+3. **The arms sat almost inside the torso**, leaving a sliver of gap, and the arm zones bled across the boundary. Torso narrowed, arms moved outward; the gap is now unambiguous at a glance.
+
+**Zones are unstroked fills.** An outlined ellipse reads as a sticker on a drawing; a soft patch of lighter fill reads as part of the body. The selected zone adds a purple fill and a centre marker, because on a narrow limb the patch alone is too subtle a change.
+
+**Still no colour that means anything.** No green, no red, no scale, no ordering, nothing marked due, spent, or safe. The only visual state a zone has is *selected*, in peptides purple.
+
+**Front / back mirroring is unchanged and still pinned.** The figure remains a self-view — your left on the left of the screen — with the back view derived as a mirror.
+
+**Tools → Injection Sites re-tiered**: title, one-line subtitle, the body as the focal point, per-zone history only when a zone is selected, compact Recent Sites, then Site Reference. It no longer reads as a text page with a diagram inserted into it.
+
+**Site Guide → Site Reference**, rewritten flat and clinical: *Front abdominal area.* · *Upper portion of the leg.* · *Upper portion of the arm.* · *Gluteal area on the back of the body.* · *Use a custom label for another location.* **Other** gained an entry, so the custom option is no longer the one choice with nothing explaining it.
+
+**Safety copy reduced to one line, stated once:** *For tracking and anatomical reference only.* A test asserts it appears exactly once. The boundary is real and is stated — repeating it under every block made the screen read as nervous, and nothing on it offers advice to disclaim.
+
+**Removed as dead:** `SITE_GROUPS` and `siteShortLabel`, both of which existed only for the two-step chip picker.
+
+**12 net new tests, 811 total** — several 3.8A tests were rewritten rather than added, since the interaction they drove no longer exists. New coverage: every canonical site listed and recordable in one tap, no region headings, single-tap commit with no confirmation, the current value marked on reopen, clear, custom, the mandatory log → body model → confirm → save → persisted route flow, editing through the model with the existing value highlighted, and the boundary line appearing exactly once.
+
+**Verified on device, Light and Dark:** the fast list, the log form with a site recorded in §20's order, the body model on Front and Back with a selection, Tools unselected, Tools with a zone selected showing its history, and Site Reference. Migrated 3.8 records still read *Left Abdomen* and *Right Glute*, and the authored *Left Hip* is unchanged.
+
+**Still prohibited, and still absent:** recommended next site, rotation schedule, site-rest timers, over-use warnings, adherence.
+
+**Untouched 3.9 scope:** Add to Routine, Needs Setup, Taken / Skipped, routine calendar, Track CTA discoverability, Display Name removal, Remove Setup.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog, the calculator core (`dose.ts`, `units.ts`, `UnitConversion.tsx`) and the log snapshot model (`logs.ts`) all have a zero-line diff.
+
+### Slice 3.8A — Injection Site UX + Interactive Body Map 🟡
+
+**Objective:** fix the two things founder QA rejected in 3.8 — injection-site selection that never appeared in the Log Peptide flow actually being used, and a standalone Injection Sites tool that was mostly text where a body was wanted. **Slice 3.8 remains unapproved until this passes founder device QA.**
+
+**The reported defect, and what it actually was.** The founder's screenshot showed **New Setup**, not Log Peptide. Site selection was never on New Setup and does not belong there — a setup is configuration, a site is something that happened — so nothing was added to that screen. What was missing was a way to *reach* the log form after creating a setup: New Setup dismissed back to the list, leaving the new peptide's Log screen several taps away. Creating a setup now routes straight to it, and the exact founder path is pinned by a route-level test rather than a component test, because a component test would have passed on the broken build.
+
+**A flat taxonomy replaces region-plus-side.** 3.8 modelled a broad region and a side, which could not express **Center Abdomen** — a site the founder uses — and left `abdomen` + `none` ambiguous between *the middle* and *I didn't say*. Every site is now one canonical key: three abdominal, two thigh, two upper arm, two glute, plus `custom`.
+
+**3.8 records are migrated on read, never rewritten on disk.** A log stored as `abdomen` + `left` resolves to *Left Abdomen* exactly as a new one does. The one place a stored label is deliberately overridden is here: 3.8 generated labels in a format that no longer exists (`Abdomen · Left`), and leaving them verbatim put two spellings of one place side by side in the same list. **Authored** text is still sacred — a custom site typed as *Left Hip* stays *Left Hip* forever. Confirmed on device against seeded legacy records.
+
+**New — `BodyMap`.** An original SVG figure drawn as primitives: head, torso, arms, legs, deliberately neutral, no gender, no musculature, no medical-textbook detail. **No external or copyrighted artwork, and no traced illustration.** Zones are ellipses rather than traced anatomy, because the claim being made is *roughly here on your body* and a precise outline would imply a precision about placement VITA has no business implying.
+
+**Every zone is styled identically.** No colour scale, no green or red, no ordering, no marking of a site as due, spent or safe. The only visual state a zone has is *selected*, in peptides purple — a colour that carries no safety meaning anywhere else in the app. A body map is the easiest surface in this feature to accidentally imply a recommendation.
+
+**The figure is a self-view, and this is a deliberate decision.** *Your left* sits on the **left of the screen** — the side your left hand is on when you look down at yourself. Medical illustration uses the opposite convention because its reader stands opposite the patient; VITA's reader is the person being injected. The back view is the front **mirrored**, derived rather than authored, so the two cannot drift apart.
+
+**A real defect found by comparing screenshots, not by a test:** before that mirroring, Left Abdomen and Left Glute both rendered on the same side of the screen — wrong under *either* convention. Now pinned by two tests asserting relative zone positions, so a future refactor cannot silently flip it.
+
+**Touch targets are real views over the drawing**, not pressable SVG shapes. SVG primitives cannot carry an accessibility role or selected state, and every zone gets at least a 44pt box whatever the ellipse beneath it looks like, so nobody pixel-hunts an arm.
+
+**The map never becomes the only path.** The selector pairs the figure with the same choices as text chips, and either records the identical canonical site. That list is not an accessibility afterthought — it is faster for someone who already knows the site they want, and it is the path VoiceOver can use with confidence.
+
+**Still never preselected.** The field starts empty every time, including when a previous site exists. The last site is shown as a line of context — *Last recorded · Center Abdomen* — because filling the field in with it would turn a record into a suggestion.
+
+**Tools → Injection Sites, rebuilt around the figure.** The map is the hero; tapping a zone reports that zone's history (*Last recorded {date} · N logs*, or *No history recorded here* — plainly, never styled as available). Recent sites aggregate across every peptide, because that is how sites are actually used. The site guide is four lines, not four paragraphs. Tapping a zone here records nothing; the screen is a lens onto history, not a logging surface.
+
+**31 new tests, 799 total.** Covering the expanded taxonomy, 3.8 records migrating on read with generated labels restated and authored labels preserved, the route-level regression for the founder's exact path, per-zone history, the empty-zone case, the front/back mirror convention, and the existing prose and export sweeps extended to the new surfaces.
+
+**Verified on device, Light and Dark:** the Log Peptide screen showing the Injection Site row with last-recorded context, the selector sheet on Front with Left Abdomen selected on the figure and in the chips simultaneously, the sheet on Back with Left Glute correctly mirrored, and Tools → Injection Sites both unselected and with a zone selected showing its history — including migrated legacy records reading *Left Abdomen* and a preserved custom *Left Hip*. Three visual defects were found by inspecting those screenshots and fixed: the legacy label format, colliding abdomen zones on a poorly proportioned figure, and the front/back mirror.
+
+**Still prohibited, and still absent:** recommended next site, rotation schedule, site-rest timers, over-use warnings, adherence. The export-name sweep still fails on *recommend*, *suggest*, *next*, *rotate*, *avoid*, *due* or *safe*.
+
+**Still open, unchanged and untouched by this slice:** the **Track this peptide** CTA discoverability item, the approved removal of **Display Name (Optional)** from Peptide Setup, and **Remove Setup preserving history** — all 3.9.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog, the calculator core and the log snapshot model all have a zero-line diff.
+
+### Slice 3.8 — Injection Site Tracking 🟡
+
+**Objective:** let a user record where an administration happened, see what they have used recently, and stop having to remember it. **Not** to tell anyone where to inject.
+
+**The line this slice does not cross.** There is no recommended site, no next site, no rotation algorithm, no colour coding of good and bad, and no "safe to use again". VITA stores what the user says and can tell them what they did before; deciding where to inject is theirs. A test enumerates the domain's exports and fails on any name containing *recommend*, *suggest*, *next*, *rotate*, *avoid*, *due* or *safe* — the guarantee is structural, not a habit.
+
+**Taxonomy, deliberately shallow.** Abdomen · Thigh · Upper Arm · Glute · Other, with Left / Right / Center where sides mean anything. Subdividing the abdomen into quadrants would be precision nobody asked for and a selector nobody wants to scroll.
+
+**The site is a snapshot on the log entry**, like the dose conversion beside it. `label` is written once at record time, so a custom site typed as "Left Hip" still reads "Left Hip" years later rather than being re-derived into "Custom · Left". A custom label wins outright and forces `side: 'none'` — "Left Hip · Right" would be nonsense.
+
+**Additive, with no migration.** Entries written before 3.8 have no site and load unchanged. A **malformed** site drops the site and keeps the entry: a log whose amount and time are intact is still a true record, and discarding it because one optional field rotted would destroy more than it protects.
+
+**Optional at every step.** Saving is never blocked on a site. The picker sits after the amount so anyone who does not track sites scrolls straight past, and logging stays open → type → save.
+
+**Never preselected — the decision this slice turns on.** A previous site is shown as `Last recorded · Abdomen · Left` and the field itself stays empty. Prefilling it would turn a record into a suggestion: the user would be accepting VITA's answer rather than stating their own. Pinned by test, on the picker and after save.
+
+**Two-step picker** (region, then side) built on React Native's own `Modal`, matching `CategorySelector`. Five options then three, rather than a combinatorial grid. Every option is styled identically, on purpose.
+
+**History integration** keeps rows two lines whether or not a site exists — the site shares the time line rather than adding a third, because a list that grows taller for every optional field becomes a table. Editing prefills the site, can change it, and can clear it; **changing where it happened never touches what was drawn**, since those are independent facts about one event. Undo restores the site with the rest of the record.
+
+**Tools → Injection Sites** aggregates across every peptide, because that is how sites are actually used — someone rotating locations does it across whatever they are taking, not per compound. Recent records name their own compound, resolved from the compiled catalog rather than the setup, so history stays readable for inactive setups and survives the Remove Setup action planned for 3.9. A plain **Sites used** tally follows, and a **Site guide** explains the four anatomical words in one sentence each, with no needle angle, depth, technique or compound-specific guidance.
+
+**Body diagram: deferred, deliberately.** §26 makes it optional and secondary, and the founder did not require one. A stylized silhouette with tappable regions is a real graphics project, and its only advantage over a five-item list is aesthetic — while its risk (regions reading as recommended or discouraged) runs directly against this slice's central constraint. Reliable tracking, a clean selector, history and Tools were the stated priorities and all four shipped. Recorded as a candidate if selection ever proves to be the friction.
+
+**45 new tests, 768 total.** Covering labels and laterality, custom labels surviving storage, pre-3.8 entries loading, malformed sites dropping without taking the log, edit/clear/Undo, several sites in one day, last-recorded skipping entries that recorded none, cross-peptide aggregation ordering, inactive-setup history, and two prose sweeps asserting no recommendation language reaches the screen.
+
+**Verified on device**, Light and Dark: the picker sheet, an optional and empty site field with last-recorded context beneath, history rows with and without sites, and the Tools screen showing cross-peptide history, counts and the guide.
+
+**Carried forward to 3.9/3.10, all three still open and unimplemented:** (A) **Track this peptide** CTA discoverability on long detail pages; (B) removal of **Display Name (Optional)** from Peptide Setup; (C) a deliberate **Remove Setup** action that preserves historical log entries.
+
+**Tools is a growing utility destination** — Peptide Calculator, Injection Sites, and a recorded future candidate for food/product scanning. Not surfaced on Dashboard; that remains a separate roadmap idea.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `lib/daily`, `package.json`, `supabase/`, the 72-entry catalog and the calculator all have a zero-line diff.
+
+### Slice 3.7 — Peptide Logging + History 🟡
+
+**Objective:** turn a peptide setup into real tracking. Record an administration, keep it as a historical fact, and show it back.
+
+**The rule the whole slice is built around: a log entry is a snapshot, never a view.** Someone who logged 2 mg from a 20 mg / 2 mL vial drew 20 units that day. Reconstitute the next vial with 1 mL and the *same* 2 mg becomes 10 units — but the syringe already pushed held 20, and the record must still say so. Recomputing history from the current setup would quietly rewrite what happened, which is the difference between a health record and a spreadsheet formula.
+
+**`PeptideLogEntry`** carries everything needed to render it years from now: the amount as authored *and* in canonical micrograms, the local calendar day, the exact instant, optional notes, and a `calculationSnapshot` holding the vial, water, graduation density and the resulting units and volume. `definitionId` is denormalised beside `setupId` so an entry can still name its compound independently.
+
+**The snapshot is absent when the setup had no vial or water** — a normal state, not a failure. Someone using a pre-filled pen has nothing to reconstitute, and logging is never blocked on calculator information. Those entries simply have no unit line; there is deliberately no `— units` placeholder, which would imply a number went missing.
+
+**Editing keeps the entry's own context.** Correcting 2 mg to 1 mg on a log from a 20 mg / 2 mL vial recomputes against *that* vial, not today's. An entry that never had a snapshot does not acquire one by being edited — gaining a conversion months later, from a vial that may not be the one it came from, would be an invention rather than a correction.
+
+**Persistence** is day-partitioned on the shared `createDayKeyedStore`, the same shape water entries and the food log use: `vita:v1:peptides:log:<YYYY-MM-DD>`. A log grows without limit and the day is the unit that is read and written together. `parseLogEntry` receives the day it was read from, so an entry whose own `logDate` contradicts its key is dropped rather than double-counted.
+
+**The provider keeps a bounded window** — 60 days — rather than eagerly loading all history forever, and reads older days on demand. It also gained a **day rollover**, because administrations are day-keyed where setups never were: an entry made at 00:05 must land on the right day without an app restart.
+
+**Routes:** `/peptides/setup/[id]/log` to record, `/peptides/setup/[id]/history` for the full list, `/peptides/log/[id]` to read, edit or delete one. The entry detail is keyed by the entry rather than nested under its setup, because an entry is a durable record in its own right — it survives deactivation, and any history row can link straight to it.
+
+**Fast by default.** Open a setup, tap **Log Peptide** (first action on the screen, above configuration), type an amount, save. Date and time default to now and are editable in place through VITA's existing text-plus-chip pattern rather than a custom calendar. The amount unit is seeded from `preferredDoseUnit`; **the amount itself is never prefilled** — not a scheduled figure, not the last thing logged, not a typical one.
+
+**Scheduled and logged stay separate concepts.** A row on the Peptides screen now says "Logged today" or "Logged 2× today" from real entries — a plain fact about what was recorded, never that something was due, missed, or expected. There is no adherence percentage, streak, or compliance score anywhere, by design.
+
+**Delete asks, then offers Undo anyway**, reusing Water's toast. Between a confirmation and a reversal, the reversal is what actually protects someone who meant to tap the row above; `restoreLog` puts the record back with its original id and timestamps rather than creating a copy.
+
+**A real defect found in device QA and fixed:** the edit form initialised its date from `loggedAt.slice(0, 10)` — the **UTC** slice of the ISO string. An 8:30 PM administration stores as the next day in UTC, so the editor opened showing tomorrow's date and would have moved the entry on save. Now derived through `toLogDate`, and pinned by two tests. This is exactly the trap the shared date model exists for, and it took a screenshot to see it.
+
+**Shared helpers promoted** to `lib/daily`: `formatClockTime`, `toTimeInput`, `fromDateAndTime`. Features cannot import each other, so Water's local `timeLabel` stays where it is — folding it in belongs to a slice already touching Water.
+
+**80 new tests, 723 total.** The mandatory regression is pinned literally: log 2 mg from 20 mg / 2 mL, change the setup to 1 mL, and the old entry still reads 20 units. Also covered — mg/mcg normalisation, authored-unit preservation, missing snapshots, multiple entries per day, ordering, day filtering, cross-midnight edits, Undo fidelity, and read-time validation dropping malformed records without repairing them.
+
+**Verified on device**, Light and Dark: the setup screen with Log Peptide and Recent Logs, the log form, day-grouped history newest-first with `500 mcg` preserved as written, the entry detail with its Conversion Used block, and "Logged 2× today" on the Peptides list.
+
+**Still open, both recorded and unresolved:** the **Track this peptide** CTA discoverability item, and the approved removal of **Display Name (Optional)** from Peptide Setup — both 3.9/3.10 polish.
+
+**Product decisions taken:** inactive setups keep full history and can still be logged if the user opens them deliberately, but are never surfaced as active logging prompts. Undo was implemented rather than deferred, since the Toast already supported it. `PeptideLogEntry` is left extensible for slice 3.8's injection sites with **no speculative nullable field** — adding one later is purely additive.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog and the calculator core all have a zero-line diff. `lib/daily` gained three additive helpers and nothing else.
+
+### Slice 3.6E — Calculator Polish + Custom Conversion 🟡
+
+**Objective:** the automatic conversion model is approved; this finishes it. Professional casing, one compact custom converter for amounts the generated table cannot reach, and the vial unit toggle corrected.
+
+**Field labels are Title Case; section metadata stays uppercase.** `Vial Amount (mg)`, `Bacteriostatic Water / Reconstitution (mL)`, `Display Name (Optional)`, `Custom Amount`, `Date (YYYY-MM-DD)` — against the established `VIAL` / `UNIT CONVERSION` / `PREFERRED UNIT` metadata style. Sentence case and title case no longer mix inside one form. Scientific casing is untouched: `mg`, `mcg`, `mL`, `U-100`, `GHK-Cu`, `MOTS-c` all render exactly as authored, protected by `formatLabel`'s existing rule.
+
+**The automatic reference is unchanged and remains primary.** 20 mg / 2 mL still shows `1 mg = 10 units` with its table, before anything else is entered.
+
+**Custom Conversion**, for what the table cannot cover. A generated reference around a low-mass vial lists single micrograms while a user may be thinking in hundreds; sending them to a second calculator for that would be absurd. One field plus a mg/mcg toggle, and the answer inline: `= 20 units`.
+
+It is deliberately **subordinate**: inside the same card, below a hairline, under a micro heading matching the table's own column labels — not a second card and not a peer section. The founder's objection to three previous designs was an input taking over the page.
+
+| Property | Behaviour |
+|---|---|
+| Starts | blank; nothing pre-filled, nothing suggested |
+| Optional | blank shows no error, and the reference above is unaffected |
+| Output | syringe units only — no second mass card |
+| Persistence | none; state is local to the component, so `Save setup` cannot see it |
+
+**The vial unit toggle now converts instead of reinterpreting** — the defect flagged at the end of 3.6C. `20 mg` becomes `20000 mcg`, not `20 mcg`. This one **persists**, so a test asserts the emitted canonical `amountMcg` is byte-identical across a switch and a round trip: reinterpreting would have changed a saved vial by a factor of a thousand.
+
+**One shared helper**, `convertAuthoredAmount()` in `model/units.ts`, now serves all three toggles (vial inline, vial standalone, custom amount). It rewrites only a *complete* number — `Number('1.')` is `1`, so parsing alone would turn someone half-way through typing "1.5" into "1000" — and runs only on an explicit toggle press, never while typing.
+
+**The custom unit is seeded from the vial once, then independent.** Toggling the vial cannot silently reinterpret something already typed below it, the same separation applied to preferred unit in 3.6C.
+
+**Helper copy tightened**: the standalone intro now reads *"Enter your vial amount and reconstitution volume to view the U-100 unit conversion."*
+
+**28 new tests, 643 total.** Both surfaces run the same parameterised suite: automatic reference regression, custom mg and mcg conversion, an amount the table never reaches, custom unit round-trip, vial toggle round-trip with no drift, half-typed text preserved, blank staying silent, invalid input never producing NaN, fractional units, results past a full barrel with no advice, Done accessory on all three fields, and canonical-persistence equivalence.
+
+**Verified on device**, Light and Dark: standalone 20 mg / 2 mL with `2 mg → 20 units` and `200 mcg → 2 units`, and inline on a 50 mg / 5 mL GHK-Cu setup with its compound name casing intact.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/`, the 72-entry catalog and the research components all untouched. No logging, no injection sites.
+
+### Slice 3.6D — Automatic Unit Conversion 🟡
+
+**Objective:** delete the amount input. The vial and the water already determine the entire relationship between mass and syringe units, so asking for a third number made the user do arithmetic before VITA would do arithmetic for them.
+
+**What was wrong with 3.6/3.6B/3.6C.** All three kept a target-amount field, and each revision refined a question that should not have been asked. A user holding a reconstituted vial does not want to be interrogated; they want to know what the marks on the syringe are worth. That is a property of the vial, not of an intention.
+
+**The whole interaction is now two numbers in, a reference out.**
+
+```
+Vial amount        10 mg
+Reconstitution      1 mL
+──────────────────────────
+UNIT CONVERSION
+1 mg = 10 units
+Concentration · 10 mg/mL
+
+AMOUNT      SYRINGE UNITS
+0.5 mg              5 units
+1 mg               10 units
+2 mg               20 units
+3 mg               30 units
+4 mg               40 units
+5 mg               50 units
+Using U-100 · 100 units/mL
+```
+
+No Amount field, no mg/mcg toggle inside the conversion, no Calculate button, no result waiting on a third input.
+
+**`unitConversionReference()` is a new pure function** in `model/dose.ts`, built on the existing `resolveConcentration` so there is still exactly one place the arithmetic lives. Values are always derived; nothing in the founder's examples is hard-coded.
+
+**The headline picks its own scale.** One whole authored unit wins whenever it is legible — "1 mg = 10 units" is the sentence people repeat to themselves, and opening on "0.5 mg = 5 units" would be equivalent and harder to carry. Only when that lands outside a readable band (1–100 units) does it fall back to a ladder and choose the candidate nearest a comfortable mid-barrel reading. A 5000 mcg vial in 2 mL headlines **500 mcg = 20 units**, because "1 mcg" there is four hundredths of a syringe mark.
+
+**Rows are the primary amount × 0.5, 1, 2, 3, 4, 5**, which reproduces the founder's worked table exactly for 10 mg / 1 mL and stays sensible elsewhere. Rows that would exceed twice a full barrel are dropped; the primary always survives, so the reference can never come back empty.
+
+**No row is recommended, and none can be.** Nothing is highlighted, reordered by desirability, or described as typical, standard or starting. The table is a ruler — the user reads the line they need, and VITA does not point at one. A test sweeps the rendered screen for that vocabulary.
+
+**Deleted:** `DoseCalculatorPanel`, `DoseResult`, their tests, and every trace of *Amount* / *Amount being used* / *Amount to convert* and the amount unit selector. `calculateSyringeUnits` and `calculateAmountFromUnits` stay in the domain — the reference is built from the former, and the latter is the inverse that keeps the forward maths honest.
+
+**Unchanged:** inline placement directly beneath the Vial section, derivation from live draft state with no Save required, the standalone Tools calculator (now two inputs, not three), the U-100 assumption with no capacity selector, the Done accessory on both numeric fields, and `Save setup` persisting nothing from the conversion.
+
+**37 tests, 615 total.** Both surfaces run the same parameterised suite, and the founder's mandatory sequence is pinned: type `10` and `1` → **1 mg = 10 units**; change water to `2` → **1 mg = 20 units**; change vial to `20` → **1 mg = 10 units**, with nothing else ever entered.
+
+**Verified on device**, Light and Dark: inline at 10 mg / 1 mL and 10 mg / 2 mL, and the standalone tool at 20 mg / 2 mL, each matching the founder's expected output exactly.
+
+**This design is materially easier to trust than its predecessors**, because there is nothing to type beyond the vial — the failure mode that broke 3.6 (a keyboard hiding a result the user was mid-way through producing) no longer has an input to hide behind. Founder confirmation on a real iPhone is still the acceptance gate.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `package.json`, `supabase/` and the 72-entry catalog untouched. No logging, no injection sites.
+
+### Slice 3.6C — Final Unit Calculator UX Correction 🟡
+
+**Objective:** one simplification, from founder device review of 3.6B. The calculator answers a single question — *given this concentration and this amount, how many syringe units is that?* — and the interface should say nothing more than that.
+
+**Syringe units are the only output.** The domain still normalises to micrograms internally, but micrograms never surface as a *result*. No second mcg figure, no `1 unit = X mcg`, no units → mass converter, no quick-reference table. Every extra output would be another number competing to be the one the user acts on, and only one of them is drawn into a syringe. `calculateAmountFromUnits` stays in the domain, tested and unused by any screen — it is the inverse that keeps the forward maths honest, not a feature.
+
+**Result hierarchy rebuilt** so units are the only large number. Volume moved out from under the headline into the supporting block:
+
+```
+CALCULATED SYRINGE AMOUNT
+20 units                        ← the only display-size text
+─────────────────────────
+Equivalent volume · 0.2 mL
+Concentration · 10 mg/mL
+2 mg = 0.2 mL = 20 units        ← quieter still
+Using U-100 · 100 units/mL
+```
+
+**Renamed.** *Amount being used* → **Amount**; section header *Calculator* → **Unit calculator**. Shorter, neutral, and it still says whose number it is: the user supplies it, VITA converts it.
+
+**Switching mg ⇄ mcg now converts rather than reinterprets.** `2 mg` becomes `2000 mcg` and the answer does not move; `500 mcg` becomes `0.5 mg`. This is the single most dangerous thing the screen could get wrong — reinterpreting would shift the amount by a factor of a thousand while the digits sat still — so it is pinned by a round-trip test in both directions.
+
+Two guards on that conversion:
+
+- **Only a complete number is rewritten.** `Number('1.')` is `1`, so parsing alone would turn someone half-way through typing "1.5" into "1000". A `/^\d*\.?\d+$/` check means blank or mid-typing text is left exactly as it is.
+- **It is a single explicit action on press**, not an effect reacting to state, so there is no loop, no bouncing value, and no cursor fighting the user.
+
+**Preferred unit now seeds the calculator once and then lets go.** Previously the amount unit read the setup's display preference on every render, so changing *Preferred unit* lower down the form silently reinterpreted an amount already typed above it. They are separate concepts — the same correction the founder made about Water's display unit in slice 3.3 — and a test pins it.
+
+**Unchanged and re-verified:** inline placement directly under the Vial section; calculation from live draft state with no Save required; the section staying visible with a helper line when the vial is incomplete; blank staying quiet; the U-100 assumption with no capacity selector; the Done accessory on all three numeric fields; the standalone Tools calculator; the removed setup-specific route; and `Save setup` persisting no calculator state.
+
+**10 new tests, 625 total.** The additions cover unit-switch conversion in both directions, the round trip, blank and half-typed text, preferred-unit independence, clearing and re-entering the amount, and three assertions that no mcg output or reverse conversion exists on screen.
+
+**Verified on device**, Light and Dark: standalone 20 mg / 2 mL / 2 mg → **20 units**, standalone 5 mg / 2 mL / 500 mcg → **20 units** with concentration correctly shown as `2.5 mg/mL` in the vial's own unit, and the inline surface reading NAME → VIAL → **UNIT CALCULATOR** → PREFERRED UNIT.
+
+⚠️ **Typing is still proven by tests rather than by hand** — engineering has no tap or type access to a simulator, so founder confirmation on a real iPhone remains the acceptance gate.
+
+**Observation, not changed:** the *vial* unit toggle still reinterprets rather than converts, because it feeds a value that gets **saved**, and changing that touches 3.5 persistence behaviour the founder did not ask to revisit. Worth a decision in the Peptides polish pass.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item.
+
+**Boundary audit:** three files changed, all under `src/features/peptides`. `model/dose.ts` has a zero-line diff. Water, Fuel, Home, nutrition, `package.json`, `supabase/` and the 72-entry catalog untouched. No logging, no injection sites.
+
+### Slice 3.6B — Inline + Standalone Peptide Calculator 🟡
+
+**Objective:** put the calculator where people actually need it, and make the number pad dismissible. Founder device QA on 3.6 showed the design was wrong, not just the implementation — the only way to reach a calculator was through a peptide setup you had already created, and iOS's decimal pad has no return key, so the keyboard could not be put away.
+
+**The design error 3.6 made.** A calculator that requires you to first create and save a tracked peptide is a calculator you cannot use with a vial in your hand. Working out how many units to draw is a *question*, not a *record*.
+
+**Two surfaces, one calculator.**
+
+| Surface | Where the vial comes from |
+|---|---|
+| **Inline**, in the peptide setup form | the live draft text in the fields above it |
+| **Standalone**, Settings → Tools → Peptide Calculator | its own fields; no peptide, definition or setup involved |
+
+`DoseCalculatorPanel` is the single component behind both, so they cannot drift in arithmetic, wording, validation or layout. The surfaces differ *only* in where the vial numbers originate.
+
+**The inline calculator works before anything is saved.** It reads the draft values in the form — type `20 mg`, `2 mL`, `2 mg` and the answer appears, with no Save, no navigation and no persisted setup. Changing the vial, the water or the unit recalculates immediately.
+
+**Placement** follows the founder's hierarchy exactly: NAME → VIAL → **CALCULATOR** → PREFERRED UNIT → SCHEDULE → START DATE → NOTES → Save. Directly under the vial it depends on, not buried at the bottom.
+
+**The amount is owned by the panel and never leaves it.** Neither host can read it, which makes "the calculator persists nothing" a structural fact rather than a rule to remember: `Save setup` cannot capture the amount because it cannot see it. A test asserts the form's `onChange` payload never contains it.
+
+**The section stays visible when the vial is incomplete**, with one line — *"Add vial amount and reconstitution volume above to calculate syringe units."* Hiding it would leave a user unaware the calculator exists.
+
+**Keyboard, the defect that broke 3.6.** iOS's `decimal-pad` has no return key. New `NumericField` + `NumericKeyboardAccessory` put a **Done** bar above the pad via `InputAccessoryView` (iOS-only, guarded; Android's pad has its own dismiss). One accessory per screen, shared by every numeric field through a single `nativeID`. `Screen` gained an **opt-in** `keyboardAware` prop — taps outside a field dismiss instead of being swallowed, dragging dismisses, and extra bottom padding lets the foot of a form clear the keyboard. Opt-in on purpose: no existing screen changes behaviour.
+
+**Old surface removed.** `/peptides/setup/[id]/calculator` and its "Dose / unit calculator" button are gone. Inline covers the in-context case and Tools covers the standalone one; a third destination would have been duplicate navigation for no gain. Deleting the route also removes the `[id]/` directory that sat beside `[id].tsx`.
+
+**Tools** is a new Settings destination for utilities that stand on their own — things you use once and walk away from, without tracking or saving anything. Deliberately not a fifth dock tab. **Built to grow, not padded**: slice 3.8's injection-site work is the obvious next tenant, and there are no placeholder rows in the meantime, because a dead button is worse than a short list.
+
+**Accessibility.** `PressableScale` now announces `accessibilityRole="button"` whenever it has an `onPress` — the app-wide gap recorded in 3.6A, fixed here because §36 needed it. `SegmentedTabs` gained an optional `groupLabel`: a screen with three identical mg/mcg toggles gave a screen-reader user three indistinguishable "mg" buttons, and they now read "Vial unit, mg" and "Amount unit, mg". `ListRow` passes an `accessibilityHint`.
+
+**37 new interaction tests, 615 total.** These are the coverage that was missing: they start from an empty form and type into fields located by accessibility label in the rendered tree, rather than handing a component values the UI would have had to produce. Both surfaces are driven through the same suite — the founder's four pinned cases, live recomputation, validation, the consistency note, keyboard wiring, and the Tools route.
+
+**Verified on device**, Light and Dark: standalone blank state, standalone 20 mg / 2 mL / 2 mg → **20 units**, inline in a saved setup → **20 units**, and the Tools list. **The remaining gap is honest**: typing itself is proven by the interaction tests, not by a device, because tapping and typing are still unavailable from the engineering environment. Founder confirmation on a real iPhone is the acceptance gate.
+
+**Still open:** the peptide detail **Track this peptide** CTA discoverability item, unchanged from 3.6A.
+
+**Boundary audit:** Water, Fuel, Home, nutrition, `src/lib/daily`, `package.json`, `supabase/` and the 72-entry catalog content all have a zero-line diff. No logging, no injection sites.
+
+### Slice 3.6A — Calculator Real-Interaction Hotfix 🔴 BLOCKED
+
+**Slice 3.6 is not approved.** Founder device QA (2026-08-25): the calculator does not work through the real app.
+
+**Blocked on reproduction, not on effort.** The authorization requires the defect to be reproduced through real interaction (§3) and makes real-interaction acceptance QA mandatory (§13). Neither is currently possible from the engineering environment:
+
+| Path | Result |
+|---|---|
+| `Claude_Code_iOS_Simulator` control | Returns "Xcode is installed but not selected" — **spurious**: `xcode-select -p` already resolves to `/Applications/Xcode.app/Contents/Developer`. A known false failure in this project. |
+| Screen control of the Simulator app | Access requested and **declined**. |
+| `autoFocus` to raise the keyboard without a tap | Software keyboard never appeared — the simulator has a hardware keyboard attached. |
+
+No fix was committed. Guessing at a repair for an unreproduced defect is what §4 forbids, and shipping one would risk a second failed review.
+
+**What was ruled out**, tap-free, before stopping:
+
+- **Route registration.** Both `/(vita)/peptides/setup/[id].tsx` and `/(vita)/peptides/setup/[id]/calculator.tsx` are present in the compiled iOS bundle. `[id].tsx` and the `[id]/` directory coexisting is *not* a collision.
+- **Setup screen reachability.** `/peptides/setup/<id>` renders the full edit form on device.
+- **Calculator route reachability.** `/peptides/setup/<id>/calculator` renders correctly on device with a seeded setup.
+- **Provider scope.** `PeptideProvider` is mounted at `app/_layout.tsx`, above every peptide route.
+- **Entry-point href.** `router.push(\`/peptides/setup/${encodeURIComponent(setup.id)}/calculator\`)`; `newId()` produces `setup_<base36>` with no characters that affect path segmentation.
+- **Persistence.** `SetupForm.emit()` always emits the complete object, so a partial edit cannot drop the vial; `applySetupChanges` only deletes keys actually present in the patch, so saving an untouched form is a no-op.
+
+**The real process failure, and it is mine.** Slice 3.6 reported "verified on device" for six cases. Every one of those screenshots was taken with the amount **hardcoded into `useState`**. The single screenshot taken with the real empty initial state showed no result, correctly, and was read as the pristine state. **Typing was never exercised on a device — only `onChangeText` called directly from a test, which is the same call React Native makes and therefore proves nothing about whether a user can reach it.** That is the coverage blind spot that let 605 passing tests coexist with a non-functional feature.
+
+**Leading hypothesis, unconfirmed: keyboard handling.** The app has **no keyboard handling anywhere** — no `KeyboardAvoidingView`, no `keyboardShouldPersistTaps`, no dismiss affordance, in any screen. Every other input screen in VITA is *type, then tap a button*, where a covered lower half is an annoyance. The calculator is the only screen where the thing you need to read appears **below** the field you are typing into and **only while** you are typing. On a shorter device than the test simulator, the result card would sit under the keyboard, and the feature would read as completely dead. This is consistent with every piece of evidence — a real user fails, tests pass, hardcoded values render fine — but it is a hypothesis, not a diagnosis, and it was not committed as a fix.
+
+**What is needed to close this:** either device-interaction access for engineering, or, from the founder — what appeared on screen after typing (a wrong number, no result, an error, a blank screen, or the "Add your vial details first" state), which device, and whether the tracked setup had a vial amount and reconstitution volume saved.
+
+**Recorded this slice:** the peptide detail **CTA discoverability** item (§21–24) — on long compound pages *Track this peptide* is only reachable after scrolling past all research content. Documented in Vita HQ as an open Peptides final-polish requirement, deliberately not resolved here.
+
+**No source code changed.** Diagnostic instrumentation used during investigation was reverted; 605 tests and both typechecks are green at `c073da8`.
+
+### Slice 3.6 — Dose / Unit Calculator 🟡
+
+**Objective:** convert an amount the user has chosen into the number of units they draw into a syringe. Deterministic arithmetic and nothing else. No logging, no injection sites, no catalog changes.
+
+**The boundary, stated once and enforced structurally.** VITA converts; the user decides. Every mass on this screen originates from something the user typed — the vial and water from their saved setup, the amount from the field in front of them. `model/dose.ts` is pure and lives outside every screen precisely because arithmetic that cannot reach state cannot quietly acquire an opinion, and no function in it has a "recommended" or "typical" input to supply one.
+
+**Canonical arithmetic**, micrograms throughout, matching the rest of the peptide domain:
+
+```
+concentrationMcgPerMl = vialAmountMcg / reconstitutionMl
+volumeMl              = amountMcg / concentrationMcgPerMl
+syringeUnits          = volumeMl * unitsPerMl
+
+amountMcgFromUnits    = (syringeUnits / unitsPerMl) * concentrationMcgPerMl
+```
+
+Both directions share one `resolveConcentration()`, which is what makes the inverse a genuine inverse rather than a second hand-written formula that agrees by coincidence — asserted by a round-trip test over sixteen vial/amount combinations rather than against restated literals.
+
+**`DoseCalculationResult` is a discriminated union**: either every field is meaningful or none is. A failure carries no numbers at all to misread. Nine typed reasons distinguish *missing* from *invalid*, because a blank field is a normal first-open state and a negative vial amount is not.
+
+**Full precision internally, rounded once at the edge.** `formatSyringeUnits` shows `20 units`, `2.5 units`, and `13.3 units` for a third of a vial — never `13.333333333333`. `formatVolume` allows three decimals because `0.025 mL` is a real quantity in this domain and two would flatten it. Formatting never mutates the calculation, which is pinned by test. Rounding earlier is how a calculator ends up disagreeing with itself between two screens.
+
+**V1 assumes U-100 · 100 units/mL** and says so beside every result, as context rather than a warning. **No syringe-capacity selector** — 0.3 mL, 0.5 mL and 1 mL syringes are all U-100, and the control conflating the two was removed in 3.5B and does not come back. `unitsPerMl` stays on the setup model, defaulted to 100, so another graduation density needs no migration; a test proves a `unitsPerMl: 50` setup changes the *reading* (10 units) while the volume stays 0.2 mL.
+
+**Route:** `/peptides/setup/[id]/calculator`, reached from a "Dose / unit calculator" button on the setup screen. Its own route rather than another section on the form, because editing a setup and converting an amount are different jobs with different lifetimes — one persists, one does not — and folding the second in would make Save feel like it saved the amount too.
+
+**Setup-prefilled, derived every render.** Vial, water and graduation density come from `useResolvedSetup`; concentration is recomputed rather than cached, so changing the water volume and reopening gives the new answer. Verified on device: 10 mg / 1 mL → **20 units**, reseeded to 10 mg / 2 mL → **40 units** with the concentration line moving 10 → 5 mg/mL.
+
+**Incomplete setups are refused, never guessed.** Without a vial amount or a reconstitution volume the screen shows a neutral state and an Edit setup action. A fabricated "10 mg / 1 mL" default would produce a confident, wrong number for someone whose vial is neither — the single worst thing this screen could do — and a test asserts no units or concentration render in that state.
+
+**Result hierarchy:** setup summary → Amount Being Used → the answer → the working → U-100 context. One number dominates, because the syringe units are the only figure anyone acts on. The working is shown from the same `DoseCalculation` object the headline uses, so the explanation cannot drift from the answer: `10 mg/mL · 2 mg = 0.2 mL = 20 units`.
+
+**Nothing is persisted.** The amount lives in component state and dies with the screen. A test asserts the repository receives zero writes across typing, switching units, and retyping. Storing it would turn an ephemeral conversion into something that looks like a saved plan.
+
+**Reverse conversion — function and tests now, UI deferred.** `calculateAmountFromUnits` is implemented and tested, including the two founder examples (20 units → 2 mg; 20 units → 500 mcg on a 5 mg / 2 mL vial). A mode switch is **not** in the V1 UI: the founder's primary flow is Amount → Units and the authorization explicitly permits deferring the surface if it would bloat the slice. Adding a second mode to a screen nobody has asked to reverse yet would trade the clarity of one obvious flow for an option.
+
+**Data-consistency notes, not medical judgements.** An amount larger than the whole vial is arithmetically fine and is still calculated — `12 mg` on a 10 mg vial gives `120 units = 1.2 mL`. It gets one neutral line saying the amount exceeds what the setup records, because that usually means a typo in one of two fields the user entered. Deliberately absent: any notion of a large dose, a safe dose, a maximum, or splitting an injection. A test asserts none of *split*, *two injections*, *divide the dose*, *too much* or *maximum* appears.
+
+**A real defect found while testing.** The shared `parseAmount` returns `null` for an empty field, `"0"` and `"abc"` alike — right for a form that only asks whether it has a usable number, wrong here, where a blank field must stay silent and a typed zero must say something. The screen now classifies the text before the domain sees it.
+
+**Accessibility:** the result is one accessible node announcing "Calculated syringe amount: 20 units. Equivalent to 0.2 mL" rather than four disconnected stops; each summary row reads as "Vial, 10 mg"; the amount input names its current unit; the mg/mcg control announces selected state via `SegmentedTabs`; the U-100 line is ordinary text. The value is never carried by colour alone.
+
+**Motion:** a 180 ms fade as the answer changes, through the shared `useReducedMotion()` added in Water, which lands on the final value directly. No number rolling.
+
+**77 new tests, 605 total.** **Verified on device** in Light and Dark: 20 units, 40 units after a reconstitution change, 20 units from an mcg-authored vial, 2.5 units from 250 mcg (`0.025 mL`), 120 units with the over-vial note, and both incomplete states.
+
+**Found and recorded, not fixed here:** the shared `Button` / `PressableScale` set no `accessibilityRole="button"`, so VoiceOver reads their label without announcing they are actionable. App-wide and pre-existing — out of this slice's boundary.
+
+**Boundary audit:** every changed source file is under `src/lib/peptides`, `src/features/peptides`, or the peptide setup routes. Water, Fuel, Home, nutrition, `src/lib/daily`, `package.json`, `supabase/` and the **72-entry catalog content** all have a zero-line diff.
+
+### Slice 3.5D — Plain-English Peptide Content Normalization 🟡
+
+**Objective:** make every one of the 72 pages answer the question an ordinary person actually arrives with — *what is this supposed to do?* — within a few seconds. A content pass, not a redesign. No architecture reopened, no calculator, no logging, no injection sites.
+
+**Why it exists.** 3.5C added the right sections; founder review on a real device found the copy inside them had overcorrected into defensiveness. The example given:
+
+> **Body Composition** — *Animal research has examined whether it affects fat accumulation and body weight. There is no meaningful human evidence.*
+
+Technically careful, and it never tells the reader what 5-Amino-1MQ is actually claimed to do. The limitation had become the sentence.
+
+**The claim now leads; the qualifier follows — in the copy and on the page.** The evidence label moved out of the claim's title row and onto a quiet line under the summary, rendered by a new `formatEvidenceContext()` helper as `Evidence · Primarily preclinical`. Two changes, one principle: a heading that shares its line with "Mainly Preclinical Research" reads as a disclaimer with a title attached, and a summary that opens with what the evidence lacks never gets round to the claim.
+
+| Before | After |
+|---|---|
+| *Body Composition* — Animal research has examined whether it affects fat accumulation and body weight. There is no meaningful human evidence. | **Fat & Body Composition** — Researchers have studied whether 5-Amino-1MQ can reduce fat accumulation and support a leaner body composition by changing how the body stores and burns energy. · *Evidence · Primarily preclinical* |
+
+**The guardrails were inverted, not removed.** 3.5C's tests *required* every limited or preclinical claim to restate its own weakness in prose — which is what produced the copy above. Those two tests were replaced with their opposites: a claim may not **open** with what the evidence lacks, and it must contain at least one word of real effect vocabulary rather than only describing research activity. Prohibitions on recommendations, guarantees, dosing, protocols and hype are untouched.
+
+**Evidence qualification is now a field, stated once.** A page already carries the level under every claim, in Research status, and in Development status. A test caps repeated limitation formulas at one per page and bans five retired phrases outright — *there is no meaningful human evidence*, *direct human evidence is limited*, *only animal studies exist*, *this has not been proven*, *more research is needed*.
+
+**All 72 entries reviewed. 72 overviews rewritten or verified, ~40 claim sections written or rewritten, 6 mechanisms added, 58 of 72 entries now carry claims.** Jargon-first openings were replaced throughout — Adipotide, AOD-9604, ARA-290, Cerebrolysin, Dihexa, Epitalon, Follistatin-344, Gonadorelin, hCG, Humanin, IGF-1 DES/LR3, Kisspeptin-10, KPV, Larazotide, LL-37, MGF, Oxytocin, Pinealon, SS-31, Thymulin, Triptorelin, VIP and the rest.
+
+**A new automated content audit** (`__tests__/consumerContent.test.ts`) enforces the floor rather than the style: every entry has an overview; it is at least 120 characters and at most 560; it must say why the compound is **tracked, researched or used**, not only what it is made of; claim titles may not be generic ("Metabolic Effects") or named after a receptor or enzyme; mechanisms must actually explain their own acronyms; and a compound with mechanisms must also have a plain claim, so jargon is never the only description.
+
+**That audit found nine real content gaps** the eye had missed — CagriSema, CJC-1295 with DAC, IGF-1 DES, IGF-1 LR3, Oxytocin, Semax + Selank, Sermorelin, Thymosin Beta-4 and Thymulin all described *what they were* without ever saying what they were for. **Pentadeca Arginate had no overview at all** and had been shipping as a title with a regulatory line under it.
+
+**Required rewrites delivered.** 5-Amino-1MQ now opens on fat metabolism and body composition and explains NNMT as "an enzyme that helps decide how cells process energy and nutrients" — a reader no longer needs to search for the term. Glutathione moved from "a naturally occurring tripeptide… central to cellular redox balance" to an antioxidant the body makes for itself, with four claims covering antioxidant protection, liver function, cellular balance and skin, and oxidative stress explained as reactive molecules building up faster than the body clears them.
+
+**Technical accuracy is layered, not lost.** Claims are plain; How It Works keeps the scientific terms and explains them; Targets keeps the receptor and enzyme names verbatim. Both audiences are served by different sections rather than one compromise register.
+
+**Blends explain why they are grouped without inventing blend-level evidence.** GLOW now says it combines compounds researched around skin quality, collagen and tissue repair, and states once that evidence for the named blend is limited because the research concerns its components. No blend gained a claim.
+
+**Development-status styling confirmed neutral.** Discontinued, Phase 3 and FDA Approved all render in the same Peptides accent. No red, no green, no celebration — the text says what the status is; colour does not judge it. Nothing in 3.5C's status architecture changed: `lastUpdated`, source-backed time-sensitive stages, and the ban on predicted approval all stand.
+
+**Contamination protection expanded** — Tirzepatide may not be described as Retatrutide or carry triple-agonist language, GHK-Cu may not carry pigmentation content, 5-Amino-1MQ must state it is not a peptide, and Glutathione must explain itself beyond "oxidative stress". The general sweep gained a fourth legitimate relationship: an entry whose own **aliases** declare the link (Pentadeca Arginate is sold as "BPC-157 arginate").
+
+**Page length was held.** Overviews are capped by test at 560 characters, claims at 300, mechanisms at 400. Longer was not the goal; clearer was.
+
+**Also fixed:** three definition files carried a literal `\u2019` escape left over from 3.5C tooling. They rendered correctly but were inconsistent source, and are normalised to the real character.
+
+**17 new tests, 528 total.** **Verified on device** across 5-Amino-1MQ, Glutathione, Retatrutide, Semaglutide, Tirzepatide, Semax, Selank, GHK-Cu, BPC-157, MOTS-c, Melanotan II, Bremelanotide, GLOW and IGF-1 DES, in Light and Dark.
+
+⚠️ **All research content remains engineering-authored and has not had medical or legal review.** Open Question #17 stays open, and plain-English effect language raises rather than lowers the value of that review.
+
+**Boundary audit:** every changed source file is under `src/lib/peptides` or `src/features/peptides`. Water, Fuel, Home, nutrition, `src/lib/daily`, `package.json` and `supabase/` have a zero-line diff.
+
+### Slice 3.5C — Plain-English Claims, Mechanisms + Development Status 🟡
+
+**Objective:** make the detail pages answer the question an ordinary reader actually arrives with — *what is this supposed to do, and how far along is it?* — without VITA ever recommending anything. 3.5B fixed how the pages looked; this fixes what they say. No calculator, no logging, no injection sites.
+
+**Why it exists.** After 3.5B a page could be simultaneously accurate and useless. "Inhibits nicotinamide N-methyltransferase" is correct and answers nothing; "Not FDA-approved" is true of roughly the whole catalog and says nothing about whether a compound is in Phase 3 or was abandoned in 2008. Both were founder observations from real-device review.
+
+**Two new content sections.**
+
+| Section | Answers | Shape |
+|---|---|---|
+| **Research claims** | *what* is it researched or commonly claimed to do | short labelled blocks, each with **its own** evidence label |
+| **How it works** | *how* — the pathway, explained rather than recited | plain title, quiet target subtitle, one or two sentences |
+
+**The evidence label sits on each claim, not on the page.** One compound can have strong human evidence for one effect and vendor folklore for another. A single page-level badge would launder the second into the first, so `ResearchClaim` carries its own `evidenceLevel` and a test rejects any claim without one. A claim marked `limited` must additionally qualify itself *in words* — "commonly discussed… although direct human evidence is limited" — because a reader who skips a small grey badge should still not be misled. Preclinical claims must attribute themselves to animal or laboratory work, and `approved-use` is reserved by test for compounds that actually hold an approval.
+
+**Development status replaces the regulatory binary.** A new `DevelopmentStatus` records a typed `stage` (approved · submitted · phase 3/2/1 · early human · preclinical · not in clinical development · discontinued · unknown), a display `label`, a `summary`, an optional `nextMilestone`, `lastUpdated`, and its own `references`. The section heading switches to **Approval status** for approved medications. Sermorelin now reads *Discontinued — withdrawn from the US market in 2008 by the manufacturer; a commercial withdrawal, not an FDA safety action and not a rejected application*, which is the distinction the old one-line status could not make.
+
+**A stated plan is rendered as a plan.** "Lilly has said it plans to submit retatrutide to the U.S. FDA in Q1 2027" is a fact about a company's announcement. "Approval expected Q1 2027" would be a prediction VITA has no standing to make, and a content test fails the build on *will be approved*, *approval expected*, *awaiting approval*, *guaranteed*, *FDA denied*, *FDA rejected*, and *refused approval*.
+
+**Time-sensitive facts were researched, not recalled, and carry a date.** Pipeline claims for compounds in active development were verified against current sources rather than authored from model memory, and every stage that can change (submitted, phase 1–3, discontinued) is required by test to carry both `lastUpdated` and references. **This is maintenance debt by design** — a phase stated without a date asserts permanent truth about something that changes, and these entries need periodic re-checking. Approved medications are additionally forbidden from carrying a clinical phase, and `stage: 'approved'` is reserved for `approved-medication`.
+
+**Cross-compound contamination is now caught by test, not by eye.** The founder flagged Semax being described with Semaglutide's content — an error invisible to anyone who does not already know both compounds. Pinned: Semaglutide must contain GLP-1/metabolic content and **must not** contain BDNF, cognitive, nootropic or Semax content; Semax must contain cognitive/stroke content and **must not** contain GLP-1, incretin, obesity or type-2-diabetes content; Retatrutide must describe agonism at all three receptors; Cagrilintide must be an amylin analog and must not name Retatrutide; GLOW must remain a blend of GHK-Cu, BPC-157 and TB-500. Above those specifics sits a **general sweep**: no entry's overview may name an unrelated catalog compound, with three legitimate relationships excluded — itself, a blend naming its own components, and a derivative whose name already contains the parent's (N-Acetyl Selank Amidate). Anything else must explicitly distinguish the two, as Thymosin Beta-4 does from TB-500.
+
+**Blends still do not inherit their components' claims.** Summing component effects would manufacture a claim about the *blend* out of evidence that exists only for its parts. GLOW, KLOW, BPC-157 + TB-500, Semax + Selank and CJC-1295 + Ipamorelin carry no claims at all, asserted by test; CagriSema does, being a manufacturer combination evaluated as one formulation.
+
+**Two rendering defects found in device QA and fixed.** Tesamorelin headed a mechanism **"GHRH receptor"** with **"GHRH Receptor"** repeated directly beneath it, and the incretin pages headed theirs **"GLP-1"** over **"GLP-1 Receptor"** — the exact recitation this slice exists to remove. Both were fixed at the content level (*"Prompting your own growth hormone"*, *"Feeling full after a meal"*, *"Energy burn and the liver"*, *"Knowing you have eaten enough"*, *"Supporting neuron growth"*) **and** structurally: `Mechanisms` now drops a subtitle that only repeats its title, and a content test forbids any mechanism title that is contained in its own target. The reverse direction stays legal — "Blocking the NNMT enzyme" over "NNMT" is a sentence, not a recitation.
+
+**Sections appear only when populated.** A compound with nothing to say renders no heading, not an empty one. N-Acetyl Selank Amidate is verified on device as a deliberately short page: About, Research status, Sources, Track. Padding it with confident filler would be worse than the gap.
+
+**50 new tests, 510 total.** Including the first tests to render the detail route itself — `expo-router` mocked, real `PeptideProvider`, real `ThemeProvider` — because every one of these sections sits below the fold and the simulator cannot be scrolled without taps.
+
+⚠️ **All research content remains engineering-authored and has not had medical or legal review** — Open Question #17 stays open, and the time-sensitive pipeline entries add a recurring maintenance obligation on top of it.
+
+**Verified on device** across Retatrutide, Sermorelin, Tesamorelin, Semax, 5-Amino-1MQ and N-Acetyl Selank Amidate, in Light and Dark. **Boundary audit:** every changed file is under `src/lib/peptides`, `src/features/peptides`, or the peptide detail route. Water, Fuel, Home, nutrition, `src/lib/daily` and `package.json` have a zero-line diff.
+
+### Slice 3.5B — Final Peptide Catalog + Detail Polish 🟡
+
+**Objective:** the last catalog/detail refinement before the calculator, from founder review on a real device. The verdict was that the structure is right but the detail pages read like raw database output rather than a consumer health product. Visual bones kept intact; presentation professionalised.
+
+**Professional casing, one layer not 71 edits.** `formatLabel()` applies title casing at render time — `type 2 diabetes` → **Type 2 Diabetes**, `other cardiometabolic conditions` → **Other Cardiometabolic Conditions**. **The rule is inverted from an ordinary title-caser**: a token that already contains a capital is scientifically cased on purpose and is left exactly as written. That single rule protects GLP-1, GIP, MC1R, hCG, MOTS-c, c-Met, GHS-R1a, NAD+, GHK-Cu and every future one — where a generic `toTitleCase()` would have produced "Glp-1 Receptor" and "Mots-C" and needed an exception list nobody would maintain. Minor words stay lowercase mid-phrase ("Diagnostic Assessment of Growth Hormone Secretion"); hyphenated words capitalize both halves. Evidence labels were re-cased to match: **Approved for Clinical Use · Studied in Human Clinical Trials · Early Human Research · Mainly Preclinical Research · Limited Direct Research**.
+
+**Structured Studied For / Targets / Aliases.** The dot-separated run — `obesity and weight management · type 2 diabetes · other cardiometabolic conditions` — is now compact informational tags. **Deliberately not buttons**: these are facts, and exposing five static values as five controls would make a screen reader announce a do-nothing button five times. Each group is **one** accessible element reading "Studied for: Obesity & Weight Management, Type 2 Diabetes, …". Visually quiet — hairline border and surface fill rather than filled pills, so informational content never carries the weight of a primary action.
+
+**Blend page restructured** to Components → About → **Formulation** → Research Status → **Research Context** → Sources. The formulation caveat is a fact about the *name* and the evidence caveat is a fact about the *research*; merging them into one paragraph was part of what made these pages long. **A real duplication was found and removed in review**: the About paragraph still restated "formulations vary between suppliers" directly above the new Formulation section that says exactly that. All four vendor blends had that sentence trimmed.
+
+**Research-area taxonomy** — twelve areas: Weight & Metabolic · Cognitive · Sleep · Growth Hormone · Recovery · Sexual Health · Aesthetics · Mitochondrial · Longevity & Aging Research · Immune & Inflammation · Endocrine · Other. Typed, structured, never parsed from prose. **Assigned in one auditable table** (`data/definitions/researchAreas.ts`) rather than inline across six files, because a taxonomy is only useful if it is consistent and consistency cannot be reviewed when the assignments are scattered. A test asserts every catalog id appears exactly once, so nothing can be added untagged.
+
+**Counts** (72 entries, 25 multi-tagged): Weight & Metabolic 21 · Growth Hormone 17 · Endocrine 13 · Recovery 11 · Immune & Inflammation 9 · Cognitive 8 · Aesthetics 5 · Longevity & Aging 5 · Mitochondrial 4 · Sexual Health 4 · Sleep 1 · **Other 0**. Nothing was dumped into Other, and the largest bucket is 29% of the catalog — tests assert both (Other ≤ 2 entries, no area above 40%).
+
+**Multi-tagging where several areas are genuinely true** — GHK-Cu is Recovery *and* Aesthetics, MOTS-c is Mitochondrial *and* Weight & Metabolic, Kisspeptin-10 is Sexual Health *and* Endocrine. Forcing one would make discovery worse and quietly assert a primary purpose the compound does not have.
+
+**Category selector: one compact control, not a second chip row.** Twelve areas as chips would have doubled the header height and pushed the list off the first screen — the founder was explicit. The control is a single quiet pill stating the current selection ("All Categories" / "Cognitive"), turning purple when filtered, with a **one-tap Clear** beside it — without which clearing means reopening the sheet and hunting for "All Categories", three interactions to undo one. Options live in a bottom sheet built from React Native's own `Modal`; no dependency was added for one selector.
+
+**Filtering composes** as `classification AND research area AND query`. Blends + Growth Hormone returns exactly the CJC pairing; Approved + Weight & Metabolic excludes Retatrutide because it is investigational; searching "ozempic" inside Cognitive correctly returns nothing. Custom definitions are excluded when any area filter is active — inventing an area for a name the user typed would be guessing on their behalf.
+
+**Catalog rows carry one descriptor.** Category + aliases + mechanism produced `Pro-apoptotic peptidomimetic · FTPP · Prohibitin-targeting p…` — three facts competing for a space that fits one, truncating mid-word. Now just the formatted category: **Pro-apoptotic Peptidomimetic**. The detail page carries aliases with room to show them.
+
+**New blend: CJC-1295 without DAC + Ipamorelin** — a GHRH analog alongside a ghrelin-receptor secretagogue, two different mechanisms. **The DAC-free variant is named explicitly**; a test asserts the blend references `catalog:cjc-1295-no-dac` and *not* the DAC form, because the two have very different durations and are never interchangeable. No amounts asserted, `blendCaveat` set, tagged Growth Hormone. Catalog is now **72 entries**.
+
+**Syringe selection removed from setup** (founder decision). Users were being asked to choose U-100 / U-50 / U-40 when what they see on the box is a *capacity* — 0.3 mL, 0.5 mL, 1 mL — and those are different things: a 0.5 mL syringe marked to 50 units is still U-100. **V1 assumes the ordinary U-100 scale, 100 units per mL**, which slice 3.6 will state beside its result. The `unitsPerMl` field stays on the model, defaulted to 100 and preserved on existing setups, so another scale needs no migration. The concept was **not** removed — units are not a universal volume, and conflating them with capacity is what corrupts syringe arithmetic.
+
+**A rendering defect found and fixed.** Four slice-3.5A summaries used markdown emphasis (`**not a peptide**`), which a React Native `<Text>` renders as literal asterisks. Removed, with a test asserting no markdown appears in any editorial string.
+
+**Recorded for slice 3.6 (not implemented):** Vial Amount `10 mg` → Bacteriostatic Water / Reconstitution `1 mL` → **Amount Being Used** `2 mg` → Calculated Syringe Amount `20 units`, with context `10 mg/mL · 2 mg = 0.2 mL = 20 units` and the U-100 assumption stated. The amount **originates from the user**; VITA returns the arithmetic equivalent and never selects it. "Amount to Convert" remains acceptable if it reads better in the calculator itself.
+
+**Schedule wording verified** — Daily · Selected days · Every X days · As needed, with "Repeat every [3] days" when selected. Model still `everyNDays`.
+
+**Tests: 54 new, 460 total across 24 suites, all passing, zero warnings.** New `researchAreas` (13) — exhaustive assignment, valid values, no duplicates, the Other-is-empty and no-bucket-too-large checks, founder-named placements, and that area labels name research fields rather than outcomes. New `filtering` (13) — every combination of classification, area and query, plus clearing. New `format` (17) — casing rules and every scientific token that would break a naive title-caser. New `CategorySelector` (11, component) — the sheet, options, selected state, clear, and accessibility, **because none of it exists until a tap and the simulator cannot tap**. `catalogIntegrity` gained the CJC-blend and markdown checks.
+
+**Validation.** `npm test` 460/460 · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo export --platform ios` succeeds · `expo install --check` reports only the pre-existing Sprint 2 patch drift · **zero changes** under `src/lib/nutrition/`, `src/lib/water/`, `src/features/water/`, `src/app/(vita)/(tabs)/`, `src/features/dashboard/`, `src/features/fuel/`, or `supabase/`. Calculator audit: no `dose.ts`, no concentration or syringe math anywhere.
+
+**Device QA:** Retatrutide (tags, casing, "Triple Agonist · GIP / GLP-1 / Glucagon") · Semaglutide in Light mode · GLOW's restructured sections · the new CJC + Ipamorelin blend · the 72-entry catalog with the compact category control and untruncated rows · Light and Dark. **Not physically exercised:** every tap — opening the category sheet, choosing an area, clearing it, searching, and tapping a source link. The sheet and filters are covered by the 24 component and filtering tests instead.
+
+**Catalog, detail, and setup are now considered locked for Sprint 3**, ready for slice 3.6.
+
+### Slice 3.5A — Expanded Peptide Library + Research Detail Refinement 🟡
+
+**Objective:** a founder-directed refinement of 3.5, before the calculator. Substantially expand the catalog, support blends properly, make categories human-readable, add factual research-detail pages, and fix setup and schedule wording.
+
+**Catalog: 18 → 71 entries**, assembled from six grouped definition files. The founder direction replaced the "12–20" cap: if a compound is commonly encountered in this ecosystem and its identity can be verified, VITA should be able to represent it — being investigational is a reason to *label* something accurately, not to leave it out.
+
+**Compound type, separate from classification.** `CompoundType` (`peptide` · `protein` · `small-molecule` · `blend` · `other`) states what something **is chemically**; `classification` states what a regulator says. MK-677, 5-Amino-1MQ and Tesofensine are typed `small-molecule`; NAD+, Dihexa and Cerebrolysin are `other`; somatropin, hCG, dulaglutide and the IGF analogs are `protein`. **VITA lists them because people track them, and does not call them peptides because the tab is named Peptides.** The `peptide-drug` member from the founder's sketch was deliberately dropped — it would mix chemistry with regulatory standing, which `classification` already carries.
+
+**Three previously-omitted compounds are now included.** Slice 3.5 left out Sermorelin, Bremelanotide/PT-141 and Thymosin Alpha-1 because one molecule carried both an approved-product name and a research-chemical name and there was no field to hold the nuance. `researchStatus` is that field: Sermorelin is `research-compound` with "previously FDA-approved as Geref and withdrawn from the US market in 2008"; Bremelanotide is `approved-medication` with "material sold as PT-141 by research suppliers is not the approved product"; Melanotan I is likewise approved as afamelanotide (Scenesse) with the same distinction stated. A test asserts each still carries its nuance.
+
+**Aliases.** Brand names (Ozempic, Mounjaro, Vyleesi, Scenesse), development codes (LY3437943, MK-6024, BI 456906) and ecosystem synonyms (Mod GRF 1-29, Elamipretide, Epithalon, Ibutamoren). Searchable and displayed, because seeing "Ozempic" under "Semaglutide" is how someone confirms they found the right entry. Tests assert an alias never shadows another entry's primary name, is never shared between two entries, and never repeats its own.
+
+**Compounds that are commonly conflated stay separate.** TB-500 and Thymosin Beta-4, and AOD-9604 and HGH Fragment 176-191, are distinct definitions whose summaries say "not the same molecule". Aliasing them together would erase a real chemical difference — the opposite of what a reference library is for.
+
+**Blends are first-class.** Five: **GLOW** (GHK-Cu / BPC-157 / TB-500), **KLOW** (the same plus KPV), **BPC-157 + TB-500**, **Semax + Selank**, and **CagriSema**. Each carries a resolvable component list. **No vendor blend asserts amounts** — a test enforces `amount` and `unit` are undefined on all of them, because two suppliers selling "GLOW" may put quite different amounts in the vial and stating one ratio as the definition would invent a standard that does not exist. The detail page says so, and points the user at their own setup: *"Your own setup records what's in your vial."*
+
+**Blend evidence is handled honestly.** `blendCaveat` renders "Research context here comes from the individual components. The combination itself may not have been studied as a single formulation." CagriSema deliberately omits it — a manufacturer combination evaluated as one formulation — and a test asserts the caveat is present on the vendor blends and absent there, so the flag keeps meaning something.
+
+**"CLOW" was researched and deliberately not added.** GLOW and KLOW have transparent, self-consistent naming (G for GHK-Cu; K for KPV added to the same base) and no comparable established meaning for CLOW could be verified. It is most plausibly a variant spelling or mishearing of KLOW. Inventing a component list to fit a name is exactly what the blend rules forbid, and Custom already covers vendor-specific blends. A test asserts no CLOW entry exists.
+
+**Human-readable categories.** Retatrutide now reads **"Triple agonist · GIP / GLP-1 / glucagon"** rather than "Investigational incretin agonist" — its regulatory standing is already carried by classification. Others: "Dual GIP / GLP-1 agonist", "GHRH analog", "Growth hormone secretagogue", "Copper peptide", "Mitochondrial peptide", "Melanocortin agonist", "Thymosin beta-4 fragment". **Both CJC-1295 variants were corrected from "Growth hormone secretagogue" to "GHRH analog"** — they act at the GHRH receptor, not the ghrelin receptor. A test pins that correction and confirms the genuine secretagogues still say so.
+
+**Research detail pages** at `/peptides/catalog/[id]`. Hierarchy: name → classification chip and "Not FDA-approved" line for research compounds → category → Also known as → Components (for blends, each tappable through to its own page) → About → **Studied for** → Targets → Research status (evidence level plus plain-language status) → Sources → Track this peptide. **Regulatory status is one line, not the whole page** — the user's questions are what is this, what does it target, what has been studied, and how solid is the evidence.
+
+**"Studied for", never "used for".** The distinction is the posture of the whole feature: the app reports what research has examined, not what people do with a compound or should.
+
+**Evidence levels** — `approved-use` · `human-clinical` · `early-human` · `preclinical` · `limited` — described as facts about the *literature*, never verdicts on the compound. Tests assert no label contains "good", "safe", "effective", "recommended" or "risky"; that `approved-use` is reserved for approved medications; and that a caveated blend can never claim more than `limited`.
+
+**Sources are pointers, not citations.** Every reference is a search URL into PubMed, ClinicalTrials.gov or Drugs@FDA. **A hand-written PMID or DOI naming the wrong paper is worse than no citation and would be undetectable from inside the app**, so none were written. A test restricts reference URLs to those three hosts and asserts none points at a vendor or storefront.
+
+**Recommendation language is prevented mechanically.** `research.test.ts` fails the build on 23 forbidden phrases (recommended/starting/typical/standard/ideal/safest/optimal dose, "you should take", "best for", "stack with", "protocol", "cycle length"), on sales language, and — via regex over every string — on **any concrete dosing amount** (`\d+ ?(mg|mcg|iu|ml)`). A companion test asserts the amount rule did not accidentally ban describing what a molecule *is*, by confirming composition language ("amino-acid", "residues") still appears.
+
+**⚠️ Content review is still owed.** All 71 entries and every summary are **engineering-authored and have not been through medical or legal review**. The content is written conservatively, sourced by pointer, and mechanically guarded — but Open Question #17 (b) and (c) remain open, and this is flagged in the code itself.
+
+**Setup wording.** Reconstitution now reads **"Bacteriostatic water / reconstitution (mL)"** on screen while the model stays the generic `reconstitutionMl` — familiar language without assuming bacteriostatic water is the only possible diluent. Everything the founder reviewed and liked is unchanged: vial amount, reconstitution, syringe, preferred unit, schedule, start date, notes.
+
+**"Every N days" → "Every X days".** Programmer language that had leaked onto a screen. The selected state now reads "Repeat every [3] days"; the model still says `{ kind: 'everyNDays', n: 3 }`, because internal code does not have to mirror the copy. "Days" also became "Selected days".
+
+**Calculator preparation, without the calculator.** The setup inputs the arithmetic needs — vial amount (canonical mcg + authored pair), `reconstitutionMl`, and `syringe.unitsPerMl` — are clean and labelled, with the copy still explaining that syringe choice is graduation density and not capacity. **Recorded for 3.6: the user-supplied field is "Amount to convert", never "recommended dose"** — VITA returns the mathematical equivalent of a number the user supplied. No `dose.ts`, no conversion, no calculator route exists.
+
+**Catalog discovery.** Search matches **name, aliases, and category** — "PT-141", "Ozempic", "Mod GRF 1-29" and "GLP-1" all find what they should. Filters are **All · Approved · Research · Blends**: regulatory and chemical, deliberately not goal-based, because "weight loss" or "muscle" as a primary taxonomy would turn browsing into a recommendation. Local and synchronous; no network, no dependency.
+
+**Tests: 88 new, 405 total across 20 suites, all passing, zero warnings.** New `catalogIntegrity` (25) — compound types, alias collisions, alias searchability, conflated-compound separation, blend component resolution, no self- or blend-referencing components, no duplicate components, the no-amounts rule, filter behaviour, and group coverage. New `research` (19) — the content guardrails above. `catalog` (23) updated for the expanded library. `SetupForm` updated for the new wording.
+
+**Validation.** `npm test` 405/405 · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo export --platform ios` succeeds · `npx expo install --check` reports only the pre-existing Sprint 2 patch drift · **zero changes** under `src/lib/nutrition/`, `src/lib/water/`, `src/features/water/`, `src/app/(vita)/(tabs)/`, `src/features/dashboard/`, `src/features/fuel/`, or `supabase/`.
+
+**Device QA** by deep link and seeded storage: the 71-entry catalog with filters and alias lines · **Retatrutide** rendering exactly the founder's specified presentation · **GLOW** with tappable components, the amounts-vary note and the blend caveat · **Semaglutide** as an approved medication with brand-name aliases and no research-compound status line · **Pentadeca Arginate** as the no-summary case, stating plainly that no reviewed summary exists rather than filling the space · Light and Dark.
+
+**Not verified:** the tap path — searching, filtering, opening a detail page by touch, or tapping a source link.
+
+**Peptides is still not feature-complete.** 3.6 (calculator), 3.7 (logging and history), 3.8 (injection sites) and 3.9 (polish, safety copy, Fuel integration) all remain.
+
+### Slice 3.5 — Peptide Definitions, Catalog + User Setup 🟡
+
+**Objective:** replace the Sprint 0 Peptides placeholder with a real persisted setup system — the first two layers of the approved three-part model. Administration logging (3.7), the dose calculator (3.6), and injection sites (3.8) are explicitly not in this slice.
+
+**What the placeholder actually was.** `1 / 3 logged`, a "goal", and fixed Morning/Midday/Evening slots — none of which were real concepts. A peptide schedule is per-setup and often weekly; VITA never had a daily peptide goal to be at 1 of 3 of. `add.tsx` discarded everything typed, and `examples.tsx`'s rows called `router.back()` without selecting anything. All three screens are gone.
+
+**Three concerns, three types.** `PeptideDefinition` (what the compound is) carries a name, a classification, a broad class label, and nothing else — no dosing, schedule, vial, or history fields. `PeptideSetup` (how this user tracks it) carries the configuration. `PeptideLogEntry` is deliberately absent; nothing was stubbed for it.
+
+**There is no `typicalDose` and no equivalent.** Removed from the planning model by founder decision before implementation, and a provider test asserts a serialized setup contains none of *typical*, *recommended*, *standard*, *suggested*, or *dosage*. VITA has no basis for knowing an appropriate amount, and a field with that name would imply it did.
+
+**The catalog: 18 entries, alphabetical.** Six approved medications (Dulaglutide, Liraglutide, Semaglutide, Somatropin, Tesamorelin, Tirzepatide) and twelve research compounds (AOD-9604, BPC-157, CJC-1295 with DAC, CJC-1295 without DAC, GHRP-2, GHRP-6, Ipamorelin, Melanotan II, Retatrutide, Selank, Semax, TB-500). Each carries only a name, a classification, and a compound-class label.
+
+**The classification rule, applied conservatively.** `approved-medication` means the active ingredient has an FDA-approved product in the United States; everything else here is `research-compound`, including compounds in active trials and compounds approved abroad but not in the US. **Where US status could not be stated with confidence, the compound was omitted rather than guessed at** — Sermorelin (a withdrawn approval now supplied through compounding), Bremelanotide / PT-141 (one molecule sold both as an approved product and as a research chemical), and Thymosin Alpha-1 (approved elsewhere, not the US). Omission is not a judgement about a compound; it means the file will not assert a status it cannot support. All three remain addable through Custom, which carries no regulatory claim at all. A test pins those omissions so they are not quietly added back.
+
+**Categories are compound-class labels, not effect claims** — "GLP-1 receptor agonist", "Growth hormone secretagogue", "Research peptide". Standard nomenclature used to tell similar entries apart (the two CJC-1295 variants). **Flagged for founder review:** if even a class label reads as too close to mechanism, it is a one-line change to drop the field. A test forbids 24 substrings including *dose*, *recommend*, *typical*, *protocol*, *popular*, *best*, *fat loss*, *muscle*, *benefit*, and *helps*, and caps category length at 40 characters with no sentences.
+
+**Custom** definitions are stored separately from setups under their own key, so one custom compound can back several setups and survives deleting any of them. They are always `classification: 'custom'` — and the repository **refuses to read back any stored definition claiming another classification**, so a hand-edited store cannot relabel a research compound as approved. Approval status is asserted by the compiled catalog and nowhere else.
+
+**Setup: only the compound is required.** Display name, vial amount and unit, reconstitution volume, syringe density, preferred dose unit, schedule, start date, and notes are all optional. A GLP-1 pen user reconstitutes nothing and is not made to answer vial questions to record that they track something. Nothing is pre-filled with a plausible number, because a pre-filled vial size would be VITA suggesting an answer.
+
+**Vial amounts store both representations** — canonical micrograms plus the authored `{amount, unit}` pair, on the same principle as water entries. **Syringes are modelled as `unitsPerMl`, not capacity**, with a caption saying so in words: a 0.5 mL syringe marked to 50 units is still U-100, and modelling capacity is the classic way to get syringe arithmetic wrong before the calculator ever sees it.
+
+**Schedules** support daily · selected weekdays · every N days · as needed, all optional, all user-owned. Labels read "Daily", "Mon, Wed, Fri", "Every 3 days", "As needed" — **and a test asserts no label can contain *due*, *missed*, *overdue*, *adherence*, *streak*, or *skipped***. `isScheduledOn` returns `false` for an every-N-days schedule with no start date rather than inventing an anchor. No notifications, no scoring.
+
+**Active and inactive.** Deactivation is a state change that keeps every field; a test confirms notes and start date survive it. Inactive setups leave the primary list and appear in their own section, reactivatable in one tap. "Nothing active right now" is a distinct state from "No peptides added yet" — having only inactive setups is not the same as having none.
+
+**Orphaned setups** — a setup whose definition no longer resolves — are kept out of both lists, counted internally, and **left untouched in storage**. Silently re-pointing one at another compound would be the single genuinely destructive option available, since the setup would then claim to track something the user never chose.
+
+**Read-time validation** follows the philosophy nutrition and water established, and is stricter here because these values feed the dose calculator in 3.6 where a plausible-but-wrong number is worse than a missing one. Identity fields (id, definitionId, both preferences, active, timestamps) void the whole record; malformed optional fields are dropped individually so losing a notes field does not lose the configuration. Zero and negative vial amounts, reconstitution volumes, and syringe densities are rejected, as are impossible start dates. Reading never rewrites storage.
+
+**Deferred, and documented rather than silently skipped:** the `preferredEntryMode` control. The value is stored (defaulting to `'mass'`) so slice 3.6 has real data, but exposing a mass-versus-syringe-units choice before a calculator exists would offer a mode that cannot be expressed for a setup with no vial data. Slice 3.6 surfaces it.
+
+**Start date is a validated text field**, not a native picker. No date-picker dependency exists in the project, and adding a native one for one optional field in one slice is not a trade worth making — the field is validated with the hardened `isValidLogDate` (so `2026-02-30` is refused) and paired with a "Today" shortcut. A polished picker is a reasonable later refinement.
+
+**Fuel was deliberately not wired.** Slice 3.9 owns that integration. The three Sprint 0 fixture files were collapsed into one clearly-marked compatibility shim (`src/features/peptides/api.ts`) with its unused exports removed and its values left byte-identical, so **`fuel.tsx` has a zero-line diff**. The shim's `1 of 3 logged` describes a feature that does not exist and is recorded as known, scheduled debt — the same way Home's water fixture was carried between slices 3.2 and 3.4.
+
+**Accessibility.** Classification is spelled out as a word, never encoded in colour alone, and the chip announces the full form ("Research compound", not "Research"). **Research is not styled as a warning** — it is a factual category, and alarm-red would both misrepresent it and train users to ignore the colour. Rows announce name, classification, category, and schedule together. Weekday chips carry the full weekday name, because "Mon" is fine to read and poor to hear — `Chip` gained an optional `accessibilityLabel` for it. Search, every form field, and every unit control name their purpose and units. No icon-only unlabelled controls.
+
+**Tests: 119 new, 360 total across 18 suites, all passing, zero warnings.** `catalog` (22) — mostly negative assertions: no dosing or effect language anywhere, only permitted fields, stable semantic ids, no duplicates, alphabetical ordering, no `custom` classification in a built-in, and the deliberate omissions. `units` (17) — exact power-of-ten conversion, round-trips, and the prototype-chain guard that bit the water domain. `schedule` (26) — all four shapes, rejection of empty day sets, out-of-range days, duplicates, and intervals below two, plus the no-obligation-language assertion. `repository` (26) — round-trips, restart, key isolation from Water and Nutrition, and one case per corruption class. `provider` (19) — empty state, catalog and custom setups, optional-field absence, editing in place, clearing a field, deactivate/reactivate, alphabetical ordering, orphan handling, and failure messaging. `SetupForm` (19, component) — the schedule, start-date, vial, and framing controls, **because they sit below the fold on a scrolling screen the simulator cannot scroll**.
+
+**Validation.** `npm test` 360/360 · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo export --platform ios` succeeds · `npx expo install --check` reports only the pre-existing Sprint 2 patch drift · **zero changes** under `src/lib/nutrition/`, `src/lib/water/`, `src/app/(vita)/water/`, `src/features/water/`, `fuel.tsx`, `dashboard.tsx`, `src/features/dashboard/`, or `supabase/`.
+
+**Device QA by seeded storage and deep links**, since the simulator still cannot be driven. Verified: the empty state · four setups across catalog, custom, and inactive, with all three classification chips rendering distinctly and the custom definition resolving · the catalog with search, the Custom row, "Your peptides", and the alphabetical list · a fully configured setup seeding its form correctly (5 mg vial, 2 mL, U-100 selected, mcg preferred) · "Nothing active right now" with only inactive setups · Light and Dark · Fuel still rendering through the shim.
+
+**Not verified:** the tap path — searching, selecting a catalog entry, creating a custom definition, saving a setup, editing one, or deactivating. Every transition is covered by provider and component tests, and every rendered state above is confirmed on device, but no human or tool has tapped these controls.
+
+**Peptides is not feature-complete.** Slice 3.6 (calculator), 3.7 (logging and history), 3.8 (injection sites), and 3.9 (UX polish, safety copy, and Fuel integration) all remain.
+
+### Slice 3.4 — Water Visual Refinement + Fuel/Home Integration 🟡
+
+**Objective:** give the working Water system from 3.2–3.3 the visual intentionality VITA expects, add a compact recent-days view, and put Home on the same real state as Water and Fuel. The last Water-focused slice before Sprint 3 turns to Peptides.
+
+**The primary visual: a water level, not a container.** The summary panel fills from the bottom as the day progresses — a low-alpha wash of the Water blue with a brighter 2px line at the surface. A bottle, a glass, or eight cup icons all imply a vessel of fixed size, and VITA's goal is whatever the user chose in whichever of four units they think in; a *level* has no implied capacity. Keeping the fill faint is what lets the text sit on top at normal contrast in both themes instead of needing its own treatment at every fill height, and the surface line is what makes a 5% day legible. A floor of ~4.5% fill means "I did drink something" never looks identical to "I drank nothing."
+
+**One fact, one place.** The total is the only large figure on the screen. The remainder, the goal, and the percentage share one quiet line and one small control beneath it. There is no progress card, remaining card, goal card, or percentage card — the Design System's density rule (*size communicates importance, not availability*) is the whole argument.
+
+**Motion.** The fill eases to its new height over 700ms (`Easing.out(Easing.cubic)`, matching `ProgressBar`'s existing vocabulary). Nothing loops, floats, bubbles, or celebrates. **Reduced Motion lands on the value directly** rather than playing a shorter animation, via a new shared `useReducedMotion()` in `src/theme/` — placed there because motion belongs to the design system and Sprint 8 will own the rest of it. `ProgressBar` now honors it too, which was a pre-existing gap that also benefits Fuel and Home.
+
+**The seven-day strip shows volume, not goal attainment — a data-integrity decision, not a design one.** VITA stores one *current* goal as a preference and never snapshots what it was on a past day, so "you hit your goal on Tuesday" would be a claim the app cannot support. Columns are therefore scaled against the week's own biggest day. Days with nothing logged keep a flat trace rather than vanishing, because a gap is information and dropping it would silently compress the axis. Today is the full Water blue; past days are the same hue at 45% alpha — **not** `palette.waterSoft`, which is nearly invisible on a light card and *brighter* than today's column on a dark one, inverting the hierarchy in exactly one theme. No average, no streak, no trend, no interpretation.
+
+**Home is on real state.** `dashboard.tsx` reads `useWaterToday()` and derives two things: the Health Metrics Water tile (the day's total in the user's own unit, with its accent bar showing progress only when a goal exists) and the Water goal pillar (`complete` only when the user has a goal *and* has reached it). The dependency runs one way — Water domain → Home; nothing in `src/lib/water` knows Home exists.
+
+**`GoalPillar` was left alone deliberately.** It has no "unset" state, and adding one would have meant changing `HomeSummaryCard`'s rendering and the "N of 4" denominator — beyond the smallest compatible adjustment. An unset goal is simply not a met goal, so the pillar reads incomplete without inventing a target and without telling the user they failed something they never chose.
+
+**Home navigation.** The Water tile now opens `/water`. `QuickStat` gained an optional `onPress` and `MetricTile` renders a labelled `Pressable` only when one is present — Steps, Sleep, Workouts, and Streak have no feature behind them and stay inert rather than navigating nowhere for the sake of visual consistency. `style` carries the grid's `flexBasis`, so it stays on the `Pressable` itself; putting it on an inner wrapper would leave the flex item with no basis and collapse the Health Metrics grid, which is also why this is a plain `Pressable` rather than `PressableScale`. A test pins that.
+
+**No Water fixture data remains anywhere.** `DASHBOARD_FIXTURE`'s water quick-stat kept its presentation metadata (id, icon, color, label, position) but its `value` and `progress` are now an em dash and zero — deliberately implausible, so a failed override reads as "unknown" rather than quietly inventing a hydration figure. The water goal pillar's `complete` is `false` as a placeholder, the same treatment nutrition has had since slice 2.5. A repo grep confirms no live `5 / 8`, `goalCups`, or `WATER_TODAY` anywhere; the only remaining mentions are historical comments, and two stale doc examples in `FuelTrackerCard` and `ListRow` were updated.
+
+**Two visual defects found and fixed during device QA.** The over-goal line read *"16 fl oz over Goal 64 fl oz"*, stacking two senses of "goal" into one phrase; the three states are now parallel — `23.1 fl oz to go · Goal 64 fl oz` / `Goal reached · 64 fl oz` / `16 fl oz over · Goal 64 fl oz`. And the panel reserved its full fill height even with no goal set, leaving a band of empty card that will never fill — the reserved height is now conditional.
+
+**Accessibility.** The fill is marked decorative (`accessibilityElementsHidden`) because every figure it encodes is stated in the text beside it — assistive technology reads numbers, not a shape. The percentage control announces the full readout (`Daily goal 64 fl oz, 64 percent reached. Edit goal`). Each of the seven columns is one accessible element carrying **the full weekday name and the real amount** (`Today, Saturday, 40.9 fl oz`) — the single letters are ambiguous by construction (Tue/Thu, Sat/Sun), so seven unlabelled bars would be meaningless without sight. The Home tile announces `Water, 40.9 fl oz`.
+
+**Dynamic Type.** Verified at `accessibility-extra-extra-extra-large`: the total shrink-fits to one line, "TODAY" wraps rather than clipping, the context line wraps freely, and the panel grows because its height is a minimum rather than a fixed value. Nothing clips.
+
+**Tests: 30 new, 241 total across 12 suites, all passing — and the suite now runs with zero warnings.** `week.test.ts` (18) covers the seven-date window across month, year, and leap boundaries, gap retention, live-today override, relative share including the all-empty and corrupted-negative cases, label ambiguity, non-mutation, and an explicit assertion that **no goal-attainment field exists on the model**. `dates.test.ts` gained 12 for `shiftLogDate`/`logDateRange`/weekday helpers. The provider suite gained eight for exactly the fields Home consumes — empty day, preferred unit, never-complete-without-a-goal, unmet, exactly met, over, mixed units — plus the history window excluding today. A new `MetricTile.test.tsx` (6) verifies the Home tile itself, **because it sits below the fold on a scrolling Dashboard and the simulator cannot be scrolled without taps**. Teardown moved into `act`-wrapped `afterEach` hooks, eliminating 35 "not wrapped in act" warnings that would otherwise have trained people to stop reading test output.
+
+**Validation.** `npm test` 241/241 · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo export --platform ios` succeeds · `npx expo install --check` reports only the pre-existing Sprint 2 patch drift · zero changes under `src/lib/nutrition/`, `src/features/peptides/`, `src/app/(vita)/peptides/`, `fuel.tsx`, or `supabase/`; the only `src/features/fuel/` change is a one-line doc comment.
+
+**Device QA by seeded storage and deep links**, since the simulator still cannot be driven. Verified: no goal + no logs · no goal + logs (total shown, no fill, no fabricated percentage) · goal + zero logs (`0 fl oz`, `64 fl oz to go`, `0%`, empty panel) · partial (`40.9 fl oz`, 64%, fill at 64%) · goal met · over goal (full fill, `122%`) · six mixed-unit entries still reading calm · a seven-day week with real gaps · Light and Dark · Home with water incomplete and with water complete · Fuel showing `64%`, matching Water exactly. **All three surfaces agree numerically on the same state.**
+
+**Not verified:** the tap path — pressing Add Water, the goal row, a log row, delete, Undo, or the Home Water tile on a running build. Every one is covered by tests, and every rendered state above is confirmed on device, but no human or tool has tapped these controls. That needs the founder's iPhone.
+
+**Water is feature-complete for Sprint 3**, pending the Sprint 3 audit in slice 3.10. That is a statement about this sprint's scope, not a claim that Water will never be refined again.
+
+### Slice 3.3 — Water Goal + Logging Experience 🟡
+
+**Objective:** turn slice 3.2's working engine into a complete workflow — set a goal, change it, choose a unit, log quickly, correct a mistake, delete with Undo. Functionality and interaction quality; the premium visualization, motion, the seven-day view, and Home integration remain slice 3.4's.
+
+**Founder correction from 3.2, implemented.** Slice 3.2 temporarily made saving an entry in a different unit update the user's preferred unit. The founders separated the two concepts: **the unit a drink is logged in belongs to that drink; the display preference belongs to the user.** Logging 500 mL while your preference is fl oz now records 500 mL and leaves your preference at fl oz. `setUnit` is called from exactly one place — the explicit unit control on the goal screen — and `addEntry` never touches preferences. Pinned by four provider tests, including the founders' own scenario verbatim.
+
+**A real defect this fix exposed and removed.** With `createWaterEntry`, `logDate` defaulted to *today* rather than to the calendar day of the entry's own `loggedAt`. Identical for a drink logged now — which is every drink the app logs — but incoherent for any other call: a timestamp from yesterday would be filed under today, and the repository rejects exactly that shape on read, so the entry would have been silently dropped later rather than refused at creation. `logDate` now derives from `loggedAt`. **Found by the test suite when the date rolled over mid-slice**, which is the second time the harness has caught something reasoning did not.
+
+**First-use goal — VITA suggests nothing.** There is no default goal, no preset chips, and no placeholder number that could be read as a recommendation. A user with no goal sees `0 fl oz today`, *"Set a daily goal to track progress. Logging works either way,"* and a soft **Set a daily goal** button. **Logging is never gated on the goal** — a user can log for a week and decide their target afterwards, and the empty-goal state says so explicitly.
+
+**Goal editing** is one restrained control: a `Daily goal · 64 fl oz ›` row inside the summary card, present only once a goal exists. It states the current value, which is what makes it discoverable, and it is a row rather than a settings panel because changing a goal is occasional.
+
+**`/water/goal`** owns both the goal and the unit preference, because they are one thought — "my goal is 64 fl oz" decides the number and the unit together — and because a separate screen for one segmented control would be the settings panel this slice was told not to build. The unit control is the **explicit** preference control; a caption states that already-logged entries keep the unit they were entered in. The field is empty for a new user and pre-filled with their own previous goal for an existing one.
+
+**Add Water** opens in the preferred unit and may be switched for that entry alone. Fixed per-unit quick-adds (fl oz 8/12/16/24 · cups 0.5/1/2/3 · mL 250/500/750/1000 · L 0.25/0.5/1/1.5), a custom field, a live preview, and a save button disabled until the amount parses. Changing the unit clears the amount — `16` means something very different in ounces and litres, and reinterpreting the digits would log a drink the user never chose. Validation rejects empty, zero, negative, non-numeric, and `Infinity`; it rejects nothing for being *large*, because this is a logging product, not a hydration prescription.
+
+**Today's log** is rows in one panel with hairline dividers, per the Design System's conclusion from Fuel — a card per entry would be almost entirely padding around one short line. Each row shows **what the user typed** (`500 mL`, `1 cup`, `16 fl oz` side by side) and the time; the canonical millilitres are implementation detail and never appear. Newest first. The row body opens the editor; delete is an explicit trailing control, matching the Food Log.
+
+**Editing** lives at `/water/entry/[id]` and reuses the same `AmountEditor` as Add, so the two cannot drift apart on parsing or unit behavior — the reasoning behind Fuel's single `PortionEditor`. `id`, `logDate`, and `loggedAt` are never touched: correcting an amount does not make it a different drink at a different time, and preserving the id keeps the entry in place instead of jumping to the end of the day. Amount and unit are recomputed **together** through `waterAmountChanges`, so the canonical value can never contradict its own label. Moving an entry to another day is deliberately not offered — that is a history editor, and nothing here needs one.
+
+**Delete and Undo** use the existing Toast: the entry disappears, the total updates immediately, and `Removed · 16 fl oz` offers Undo for six seconds, restoring the exact entry to its original index. No confirm dialog — the action is reversible, so it does not need a gate in front of it.
+
+**A second defect, found in device QA.** Opening `/water/goal` on a cold start showed an **empty** goal field for a user who already had a goal — the `useState` initializer captured `goal === null` because the provider was still reading storage, and never re-ran. "Edit my goal" silently became "retype my goal". Now seeded by effect once the goal arrives, with a `touched` flag so a late load cannot overwrite something the user has started typing.
+
+**New files.** Routes: `water/goal.tsx`, `water/entry/[id].tsx`. Components (`src/features/water/components/`, recreated after 3.2 deleted the fixture layer): `AmountEditor`, `UnitSelector`, `WaterSummaryCard`, `WaterLogPanel`. Domain: `model/goals.ts` (`createWaterGoal`) and `waterAmountChanges` in `model/entries.ts`.
+
+**Accessibility.** `Chip` and `SegmentedTabs` gained `accessibilityRole` and `accessibilityState.selected` — both signalled selection by fill color alone, which a screen reader cannot see; the change is additive and visually identical, and it benefits Fuel and Peptides too. `ProgressBar` gained an **optional** `accessibilityLabel` (unset everywhere it already existed) that also emits `accessibilityRole="progressbar"` and a 0–100 `accessibilityValue`; Water passes the full readout, and the card's text line carries the same figure so progress is never visual-only. Every icon-only control — delete, the goal row — has an explicit label naming its target (`Remove 16 fl oz`, `Daily goal 64 fl oz. Edit`). Entry rows announce amount and time together. `Chip` gained `hitSlop`, and the log row body carries a minimum height so short text still yields a comfortable target. The amount preview is exposed as text rather than as a decorative number.
+
+**Theme.** All new surfaces resolve through `useTheme().surfaces`; the only fixed colors are `palette.water` (domain) and `palette.fat` (the destructive action and the error line). Verified in both Light and Dark on device.
+
+**Tests: 32 new, 198 total across 10 suites, all passing.** A new `provider.test.tsx` (21) exercises `WaterProvider` through a real React render using **`react-test-renderer`, which `jest-expo` already provides** — no UI-testing stack was installed. It covers the preference/entry-unit separation four ways, goal create/edit/authored-pair/no-goal-is-valid/over-goal, update-in-place (same id, no duplicate, position preserved), delete → total → restore-to-index, and load/save failure messaging. `goals.test.ts` (6) pins that the factory has no default, no suggestion, and no rounding. `entries.test.ts` gained `waterAmountChanges` coverage plus the timestamp/log-date invariant.
+
+**One dependency added:** `@types/react-test-renderer`, types-only and dev-only. `react-test-renderer` itself was already present.
+
+**Validation.** `npm test` 198/198 · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo export --platform ios` succeeds · `npx expo install --check` reports only the pre-existing Sprint 2 patch drift · zero changes under `src/lib/nutrition/`, `src/features/peptides/`, `src/app/(vita)/peptides/`, `src/features/dashboard/`, `dashboard.tsx`, or `supabase/`.
+
+**Device QA across every required state**, by seeding storage and deep-linking, since the simulator still cannot be driven. No goal + no logs → empty state, goal invitation, Add Water available, no fabricated percentage. Goal + no logs → `0 fl oz`, `64 fl oz to go of 64 fl oz`, **empty track** reading honestly as zero. Goal + logs → `40.9 fl oz`, `23.1 fl oz to go`, three rows showing `500 mL` · `1 cup` · `16 fl oz`. Preference switched to mL → total became `1210 mL` and the goal displayed `1893 mL`, while **the same three rows still read `500 mL`, `1 cup`, and `16 fl oz`** — the authored snapshots untouched. Edit Entry opened on the cup entry seeded to **cups**, not the fl oz preference, with cup-appropriate quick-adds. Fuel showed `40.9 fl oz · 64%`, matching Water exactly. Light and Dark both verified.
+
+**Not verified:** the tap path — pressing a quick-add, typing, saving, deleting, and pressing Undo on a running build. Every one of those transitions is covered by provider tests against a real React render, and every rendered state above is confirmed on device, but **no human or tool has tapped these controls.** That needs the founder's iPhone.
+
+### Slice 3.2 — Water Domain + Persistence 🟡
+
+**Objective:** replace Water's Sprint 0 fixture with a real, persisted, date-aware hydration domain. An engine slice — the goal experience is 3.3 and the progress visualization is 3.4, so the screens change only as much as proving the engine requires.
+
+**What Water actually was.** Not "basic" — non-functional. `getWaterToday()` returned a frozen `{ cups: 5, goalCups: 8 }`, the Cups/Ounces toggle only swapped which array of chips rendered (no conversion existed anywhere), and **"+ Add Water" called `router.back()`**, discarding whatever the user had entered. Fuel's Hydration card and Home's water tile agreed with each other only because both read the same frozen constant.
+
+**Shared-date hardening, folded into this slice.** `isValidLogDate` checked the shape of a `YYYY-MM-DD` string but not the calendar, so `2026-02-29`, `2026-04-31`, and `2026-13-01` all passed. Survivable while nothing produced such a value — `toLogDate` only emits real dates — but useless as a boundary against a corrupted record, which is the only job it has. It now round-trips the date through local component construction (`toLogDate(fromLogDate(v)) === v`), deliberately **not** `new Date('YYYY-MM-DD')`, which would reintroduce the UTC trap. **Compatibility is proven, not assumed:** a test asserts the hardened validator accepts every date `toLogDate` can produce across four years and two leap days, so no existing nutrition entry or storage key was invalidated. It also correctly rejects `1900-02-29` while accepting `2000-02-29`.
+
+**New — `src/lib/water/`.**
+
+| Module | What it is |
+|---|---|
+| `model/types.ts` | `VolumeUnit`, `WaterEntry`, `WaterGoal`, `WaterPreferences` |
+| `model/units.ts` | Conversion constants, `toMl`/`fromMl`, display rounding, labels, `parseAmount` |
+| `model/totals.ts` | `totalMl`, `goalMl`, `ratio`/`progress`/`percent`, `remainingMl`, `overMl`, `isGoalMet`, `sortByLoggedAt` |
+| `model/entries.ts` | `createWaterEntry` — the one place both representations of an amount are written |
+| `data/keys.ts` | Water's keys, built from the shared helpers |
+| `data/WaterRepository.ts` | The persistence interface — the Supabase swap point |
+| `data/asyncStorageRepository.ts` | AsyncStorage implementation, built on `createDayKeyedStore`, with read-time validation |
+| `state/WaterProvider.tsx` | Context + reducer + shadow refs + optimistic commit + day rollover |
+| `state/useWaterToday.ts` | The derived read model |
+
+**Canonical unit: millilitres.** Conversion constants are exact by definition — 1 US fl oz = 29.5735295625 mL, 1 US cup = 8 fl oz, 1 L = 1000 mL — and `floz`/`cup` are explicitly **US customary**, so a future non-US locale adds members rather than silently changing what these mean. Arithmetic happens in mL; rounding happens only at the display boundary, and a rounded display value is never converted back into storage.
+
+**Both representations are stored.** `amountMl` is canonical; `enteredAmount` + `enteredUnit` snapshot what the user actually typed, on the same principle as `FoodEntry.nutrition`. Someone who logs "16 oz" and later switches to millilitres still sees that they logged 16 oz, not a reconstructed 473 mL they never entered.
+
+**The goal is stored as the pair the user authored,** not as millilitres — "8 cups" converted to 1892.7 mL and read back in cups risks displaying 8.0000001, and the goal is the one number a user set deliberately. **There is no default goal.** A missing goal is `null`, and every derived value (`progress`, `percent`, `remaining`) is honest about it. Inventing 64 oz to make the numbers non-null would be VITA issuing a hydration recommendation, which it does not do.
+
+**Storage keys** — `vita:v1:water:log:YYYY-MM-DD`, `vita:v1:water:goal`, `vita:v1:water:prefs`, built through the shared `dayKey`/`singletonKey` helpers so they cannot drift from the rest of the app or collide with `vita:v1:foodlog:…`.
+
+**Read-time validation** follows nutrition's philosophy exactly: malformed JSON and non-array payloads read as an empty day rather than crashing; a record is **dropped, never repaired**; `NaN`, `Infinity`, zero, and negative amounts are rejected; an unusable authored pair is rejected; an impossible calendar date is rejected; and an entry whose own `logDate` contradicts the key it was read from is rejected, which is what stops it being double-counted the moment its real day is opened. Reading is never a write — corrupt data stays on disk untouched rather than being silently rewritten.
+
+**A real defect the tests caught before it shipped.** `isVolumeUnit` used `value in ML_PER_UNIT`, and `in` walks the prototype chain — so `'toString'` and `'constructor'` passed validation, then indexed the conversion table to a function and made `toMl` return `NaN`, poisoning the whole day's total. Now `Object.prototype.hasOwnProperty.call`. This is precisely the class of bug the slice 3.1 harness was introduced to catch.
+
+**UI changes were kept to engine binding only.** Water's index shows the real total, the day's entries (read-only), and either goal progress or an honest "you haven't set a daily goal yet"; Add Water offers the four real units, fixed per-unit quick-adds, a bound custom field, and a save button that is disabled until the amount is valid. `CupsRow` was **deleted** rather than kept — an icon per cup cannot honestly represent a 500 mL or 16.9 oz entry, and it is already approved for replacement.
+
+**Temporary behaviour, both resolved in slice 3.3 — retained here only as history.** (1) There was no way to set a goal in the app, so a real user saw the goal-not-set state; 3.3 ships the goal screen. (2) Saving an entry in a unit other than the current preference updated the display preference; **the founders rejected this as final behavior and 3.3 separated the two concepts.** Neither describes current behavior.
+
+**Fuel integration.** `fuel.tsx` reads `useWaterToday()` instead of the deleted fixture. `FuelTrackerCard` was not touched — only the data flowing into it. With a goal set the card shows the total and a percentage; **without one it shows the total and omits the percentage entirely**, which is why that prop was already optional. `None logged` on an empty day. **Home was deliberately not wired — that is slice 3.4**, so Home's water tile and water goal pillar still read their Dashboard fixture.
+
+**Fixtures removed:** `src/features/water/{types,mock,api}.ts` and `components/CupsRow.tsx`, after grep confirmed nothing imported them. **Peptide fixtures untouched** — they belong to slice 3.5.
+
+**Tests: 100 new, 166 total across 8 suites, all passing.** `units` (31) — exact constants, every conversion pair, cross-unit equivalence, round trips across all four units, display precision per unit, label inflection, `parseAmount` rejecting empty/zero/negative/`NaN`/`Infinity`, and the prototype-chain case. `totals` (30) — empty day, no goal, zero and negative goals, over-goal, clamping, and an exhaustive check that `progress` never returns `NaN`/`Infinity` for any combination of total and goal. `repository` (31) — round trip, authored-pair preservation, restart, wholesale replacement, key removal on an emptied day, date isolation, entry/key date mismatch, unparseable JSON, non-array payloads, malformed records, `NaN`/`Infinity`/zero/negative amounts, impossible dates, malformed goal and prefs, no-rewrite-on-read, and isolation from the nutrition food log. `entries` (8) — both representations written, local-day derivation including a late-night drink, id uniqueness across 200 entries, and refusal to build an entry from a non-drink.
+
+**Validation.** `npm test` 166/166 · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo export --platform ios` succeeds (3.45 MB) · `npx expo install --check` reports only the pre-existing Sprint 2 patch drift · `git diff` confirms **zero changes** under `src/lib/nutrition/`, `src/features/peptides/`, `src/app/(vita)/peptides/`, `src/features/dashboard/`, `dashboard.tsx`, or `supabase/`.
+
+**Verified on device, including the persistence paths taps cannot reach.** Because the simulator still cannot be driven — `xcode-select -p` resolves correctly yet the simulator integration reports it does not, the same false negative recorded since Sprint 2 — the app's real AsyncStorage store was seeded in the documented on-disk format (as a previous session would have written it) and the app relaunched. Results: a 16 fl oz entry and a 1 cup entry summed **cross-unit to `24 fl oz`**, with `40 fl oz to go of 64 fl oz` — correct to the millilitre. Entries rendered as **`16 fl oz` and `1 cup`**, their authored values, not converted millilitres. A deliberately corrupt `-250 mL` record and a record whose `logDate` claimed the previous day were **both dropped** — either surviving would have changed the visible total. Yesterday's seeded entry stayed intact under its own key while today was read repeatedly, and inspecting the store afterwards confirmed **the corrupt records were still on disk untouched** — read-time validation drops without repairing, on a real device. Removing the goal key produced `Logged today. You haven't set a daily goal yet.` with no progress bar, and Fuel's card dropped its percentage while keeping `24 fl oz`. A deliberately corrupted `{"unit":"gallons"}` preference fell back to fl oz without crashing. The simulator's storage was restored to its pre-test state afterwards.
+
+**Not verified:** the tap path — choosing a quick-add, typing a custom amount, and pressing Add Water. The write side is covered by repository tests against a real AsyncStorage mock, and the read side is proven on device above, but **nobody has yet tapped Add Water on a running build**. That needs the founder's iPhone.
+
+### Slice 3.1 — Shared Daily Foundation + Test Harness 🟡
+
+**Objective:** promote the genuinely reusable daily/date infrastructure out of the nutrition domain and stand up VITA's first committed automated test suite — with the app behaving identically before and after. An enabling slice; nothing a user can see changes.
+
+**Why it exists.** Two things were true after Sprint 2: the only correct local-calendar date model in the codebase lived inside `src/lib/nutrition`, where Water and Peptides could not reach it without importing the nutrition domain; and the Sprint 2 closeout audit's open finding — no committed tests — was about to be inherited by a sprint containing safety-adjacent dose arithmetic. Both are cheaper to fix before two new domains are built on top than after.
+
+**New — `src/lib/daily/`.** The shared substrate for every date-keyed feature:
+
+| Module | What it is |
+|---|---|
+| `dates.ts` | `LogDate` and the local-calendar date model — **moved from `nutrition/model/dates.ts`, logic byte-identical** |
+| `ids.ts` | `newId(prefix)` — moved from `nutrition/model/foods.ts` |
+| `keys.ts` | `NAMESPACE` plus `dayKey`/`dayKeyPrefix`/`singletonKey` |
+| `guards.ts` | `isRecord`/`isFiniteNumber`/`isNonEmptyString`/`isPositiveNumber` |
+| `storage.ts` | `readJson`/`writeJson`/`removeKey`/`allKeys`, with unparseable JSON treated as absent rather than thrown |
+| `dayStore.ts` | `createDayKeyedStore<T>(domain, parse)` — one storage key per day, caller-supplied record parser |
+| `useDayRollover.ts` | The `AppState → active` local-day rollover, generalized from `NutritionProvider` |
+
+**Deliberately not here: a shared entry type.** A glass of water and a peptide administration have genuinely different shapes, and unifying them behind a type parameter would make both harder to read. Shared infrastructure ends where the domains begin.
+
+**How nutrition compatibility was preserved.** `src/lib/nutrition/index.ts` re-exports every moved symbol under its original name, so its public API is unchanged and **no file under `src/features/` or `src/app/` was touched** — verified by `git diff --name-only`. Inside nutrition, seven files changed: five import-path rewrites, one `NAMESPACE` import, and the rollover swap. `model/foods.ts` re-exports `newId` rather than dropping it, so anything importing it from there still resolves.
+
+**What was deliberately NOT retrofitted.** `NutritionRepository` still uses its own storage helpers and its own key builders rather than `dayStore` and the shared guards. It is approved, merged, and holds real user data; rewriting its storage layer to prove a new abstraction would be regression risk bought with no user-visible gain. Consolidation is a later opportunity, recorded rather than taken.
+
+**Storage keys are a compatibility contract.** Only `NAMESPACE` moved out of `nutrition/data/keys.ts`; every key string it builds is unchanged, and `src/lib/daily/__tests__/keys.test.ts` now pins those exact strings — `vita:v1:foodlog:<date>`, `vita:v1:targets`, `vita:v1:myfoods`, `vita:v1:favorites`, `vita:v1:cache:food:<id>`. These name data already on users' devices; a change here would not throw, it would silently orphan a real food log.
+
+**Test harness — the deferred stack decision, now made.** `jest` + `jest-expo` + `@types/jest`, installed with `npx expo install --dev` so the versions match SDK 54 (`jest-expo@~54.0.18`). **Dev dependencies only — nothing enters the app bundle and no native module was added**, so Expo Go compatibility is untouched. Config is `jest.config.js`, deliberately minimal: the Expo preset, a `__tests__/*.test.ts(x)` match, and source-only paths. Scripts: `npm test`, `npm run test:watch`. `jest-expo` was chosen over Vitest because it is Expo's own supported preset and leaves component testing available later without a second migration.
+
+**62 tests across 4 suites**, all passing. `dates` (36) — formatting and padding, late-night local-calendar behavior, month/year boundaries, a leap day, the non-leap Feb 29 rollover, format-vs-calendar validation, rejection of non-strings, `todayLogDate` bracketed against a midnight crossing, and every month and weekday name. `keys` (11) — the nutrition key strings pinned, plus domain isolation. `guards` (11) — `NaN`/`Infinity`/`null`/array cases. `dayStore` (15) — round-trip, wholesale replacement, key removal on an emptied day, parser rejection including day-mismatch, unparseable JSON, newest-first history, gaps, `maxDays`, and cross-domain isolation.
+
+**Every test is timezone-independent by construction.** Dates are built from local components and checked with local getters, so they pass identically in UTC, Los Angeles, and Auckland. The `new Date('YYYY-MM-DD')` UTC trap is expressed as a **round-trip property over 365 consecutive days** rather than as a direct comparison — asserting the trap directly would only fail in negative-offset timezones and pass everywhere else, which is exactly the machine-dependent test this suite should not contain. No DST-specific test was written; controlling the process timezone is a harness capability this slice did not need, and a fragile version of it would be worse than none.
+
+**Validation.** `npm test` — 62/62 pass · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · `npx expo export --platform ios` — succeeds (3.43 MB bundle) · `npx expo install --check` — reports only the pre-existing `expo`/`expo-constants` patch drift carried from Sprint 2, unchanged here, with `jest-expo` not flagged · `git diff --name-only` — confirms zero files changed under `src/features/` or `src/app/`.
+
+**Verified running in Expo Go on the iOS Simulator, and the run produced an unplanned end-to-end proof of the date model.** The first launch happened on a simulator whose clock still read **2026-08-21**: Fuel rendered `Friday, August 21` and loaded that day's real persisted food log — 2,326 Calories, Breakfast and Lunch populated, Big Mac and Bananas intact — which is direct evidence that **food data written before this slice still reads correctly after it**. The simulator was then rebooted, resyncing its clock to 2026-08-22, and the same build rendered `Saturday, August 22` with an empty day, `0 Calories`, and all four meal slots showing `No foods logged`. Same code, two device dates, the correct log for each. Home rendered correctly on the new date, and Fuel's Hydration (`5 of 8 cups · 63%`) and Peptides (`1 logged today`) modules still show their Sprint 0 fixtures exactly as before — the regression boundary held.
+
+**Not verified:** tap-driven paths, unchanged from the standing limitation — the simulator can be deep-linked and screenshotted but not driven. No physical-device testing was performed in this slice, and none was needed: nothing user-facing changed.

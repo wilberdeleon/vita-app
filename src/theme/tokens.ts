@@ -53,6 +53,17 @@ export const palette = {
   success: '#2E9E5B',
   successSoft: '#E4F4EA',
 
+  /**
+   * A deliberately skipped routine day (founder direction, slice 3.9B).
+   *
+   * Amber, reusing the existing `carbs` hex rather than inventing a colour.
+   * **Not red**: skipping on purpose is a choice the user made, not a failure,
+   * and `fat` red is what this app uses for genuine errors. Named for its
+   * meaning so nothing has to remember which macro token happened to look
+   * right.
+   */
+  routineSkipped: '#F5A623',
+
   // Surfaces — warm cream, not pure white (founders, 2026-07-18).
   background: '#F8F6F2',
   card: '#FFFFFF',

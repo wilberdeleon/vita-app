@@ -2,6 +2,9 @@ import type { PropsWithChildren } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DOCK_CLEARANCE, spacing } from '../../theme/tokens';
+
+/** Enough room to scroll a form's foot clear of an open numeric keypad. */
+const KEYBOARD_CLEARANCE = 320;
 import { useTheme } from '../../theme/ThemeProvider';
 
 type Props = PropsWithChildren<{
@@ -27,6 +30,19 @@ type Props = PropsWithChildren<{
   topInset?: boolean;
   /** Outer horizontal inset. Defaults to spacing.xl (unchanged everywhere else). */
   horizontalInset?: number;
+  /**
+   * Keyboard-aware scrolling, for screens whose content must stay readable
+   * while a keyboard is open.
+   *
+   * **Opt-in, so no existing screen changes behaviour.** It matters on forms
+   * where the thing you need to see sits *below* the field you are typing
+   * into — the peptide calculator being the case that made it necessary. It
+   * adds three things: a tap outside a field dismisses the keyboard instead
+   * of being swallowed, dragging the scroll view dismisses it too, and enough
+   * extra bottom padding that the last content can be scrolled clear of the
+   * keyboard rather than being permanently trapped behind it.
+   */
+  keyboardAware?: boolean;
 }>;
 
 /**
@@ -45,10 +61,14 @@ export function Screen({
   contentGap = spacing.l,
   topInset = true,
   horizontalInset = spacing.xl,
+  keyboardAware = false,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { surfaces } = useTheme();
-  const bottomPadding = dockClearance ? DOCK_CLEARANCE : insets.bottom + spacing.xxl;
+  const baseBottomPadding = dockClearance ? DOCK_CLEARANCE : insets.bottom + spacing.xxl;
+  // Roughly a numeric keypad's height, so the foot of the content can always
+  // be scrolled above the keyboard rather than sitting under it.
+  const bottomPadding = keyboardAware ? baseBottomPadding + KEYBOARD_CLEARANCE : baseBottomPadding;
   const paddingTop = topInset ? insets.top : 0;
   const rootBackground = surfaces.background;
 
@@ -68,6 +88,8 @@ export function Screen({
           { gap: contentGap, paddingBottom: bottomPadding, paddingHorizontal: horizontalInset },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps={keyboardAware ? 'handled' : undefined}
+        keyboardDismissMode={keyboardAware ? 'interactive' : undefined}
       >
         {children}
       </ScrollView>

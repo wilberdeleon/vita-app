@@ -9,7 +9,7 @@ type Props = {
   /** Domain color — blue for water, purple for peptides. */
   color: string;
   title: string;
-  /** The one figure worth reading at a glance, e.g. "5 of 8 cups". */
+  /** The one figure worth reading at a glance, e.g. "24 fl oz" or "None logged". */
   value: string;
   /** 0..1 */
   progress: number;

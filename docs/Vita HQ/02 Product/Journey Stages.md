@@ -27,14 +27,14 @@ Stages are implemented as static data and displayed on the [[Dashboard]] (Journe
 
 ## Target state
 
-Stage progression driven by real consistency data (**Sprint 4 — Journey / Weight** on the [[Roadmap]]; Journey was Sprint 2 under the 2026-07-09 plan, split into two sprints on 2026-08-17, and moved one place later by the 2026-08-21 reorder that put [[Water]] + [[Peptides]] ahead of it — **deferred, not reduced**). The rules must embody the promise: advancing feels earned, and missing days never feels punished.
+Stage progression driven by real consistency data (**Sprint 5 — Journey / Weight** on the [[Roadmap]]; Journey was Sprint 2 under the 2026-07-09 plan, split into two sprints on 2026-08-17, moved later by the 2026-08-21 reorder that put [[Water]] + [[Peptides]] ahead of it, and moved one place later again by the 2026-09-01 reorder that put [[Settings]] + Tools & Reference ahead of it — **deferred, not reduced**). The rules must embody the promise: advancing feels earned, and missing days never feels punished.
 
 **⚠️ Direct tension with the Streak System slice.** The Journey sprint also includes a "Streak System" slice (see [[Roadmap]]). This page's own opening line calls Stages "Vita's answer to streaks and guilt mechanics" — the two need to be designed as complements (e.g., a streak that measures the same forgiving, non-punishing consistency Stages already track), not as a second, competing progress metric that reintroduces the guilt mechanic Stages were built to avoid.
 
 ## Open questions
 
-- **The progression algorithm is undefined.** What combination of logging consistency, check-ins, and milestones advances a stage? Can users move backward? (Recommendation: no — regression contradicts "progress over perfection.") *Owner: founders + Claude at Sprint 4.*
+- **The progression algorithm is undefined.** What combination of logging consistency, check-ins, and milestones advances a stage? Can users move backward? (Recommendation: no — regression contradicts "progress over perfection.") *Owner: founders + Claude at Sprint 5.*
 - Are names/taglines final for V1? ([[Open Questions]] #5)
-- How does the new Streak System slice relate to stage progression — one signal or two? *Owner: founders, before Sprint 4 starts.*
+- How does the new Streak System slice relate to stage progression — one signal or two? *Owner: founders, before Sprint 5 starts.*
 
 **Related:** [[My Journey]] · [[Product Philosophy]] · [[Coaching Strategy]]

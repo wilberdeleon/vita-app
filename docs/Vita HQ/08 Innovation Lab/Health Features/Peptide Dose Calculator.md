@@ -13,7 +13,9 @@ tags: [peptides, calculator, dose, reconstitution, safety-sensitive, units]
 
 ## Status
 
-📋 Planned — named directly in founder direction 2026-08-18 as a proposed slice of **Sprint 3 — Water + Peptides** ([[Roadmap]]), proposed slice **3.7**. *Sprint 5 when recorded; moved forward by the founder roadmap reorder of 2026-08-21, which put Water + Peptides ahead of Journey — so this is now due in the next sprint rather than the fourth one out.* The concept is clear and the math is well-defined; what is not settled is the unit model's edge behavior and how the derivation is shown.
+📋 Planned — named directly in founder direction 2026-08-18 as a proposed slice of **Sprint 3 — Water + Peptides** ([[Roadmap]]), proposed slice **3.7**. *Sprint 5 when recorded; moved forward by the founder roadmap reorder of 2026-08-21, which put Water + Peptides ahead of Journey.*
+
+**Built in Sprint 3 (slice 3.6)** and carried into **Sprint 4 — Settings + Tools & Reference**, which organises and expands the Tools experience around it rather than building it again. The lifecycle status above moves to ✅ Released when the founders close Sprint 3.
 
 ## Category
 
@@ -76,7 +78,7 @@ This is the feature that makes VITA credible to GLP-1 users and peptide trackers
 
 - Remaining-vial tracking — doses drawn against vial volume, so the user knows when a vial runs out.
 - Warning when an entered value is wildly outside the vial's possible range (an arithmetic sanity check, **not** a clinical judgment).
-- Unit-preference default carried from [[Settings]] (Sprint 7).
+- Unit-preference default carried from [[Settings]] (**Sprint 4**).
 
 ## Related Ideas
 

@@ -8,11 +8,16 @@
  * One key per day rather than one key for the whole log — a day's entries
  * are the unit that's read and written together, so this keeps every
  * operation small regardless of how much history accumulates.
+ *
+ * `NAMESPACE` moved to `src/lib/daily/keys.ts` in Sprint 3 slice 3.1 so every
+ * domain shares one prefix. The key strings built below are unchanged and are
+ * pinned by `src/lib/daily/__tests__/keys.test.ts` — these keys name data
+ * already on users' devices, so their exact format is a compatibility
+ * contract, not an implementation detail.
  */
 
-import type { LogDate } from '../model/dates';
-
-const NAMESPACE = 'vita:v1';
+import type { LogDate } from '../../daily/dates';
+import { NAMESPACE } from '../../daily/keys';
 
 export const StorageKeys = {
   foodLog: (logDate: LogDate) => `${NAMESPACE}:foodlog:${logDate}`,

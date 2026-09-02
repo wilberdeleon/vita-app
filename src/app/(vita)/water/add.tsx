@@ -1,91 +1,49 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Button, Chip, Screen, ScreenHeader, SectionHeader, SegmentedTabs, TextField } from '../../../components/ui';
-import { BOTTLE_SIZES_OZ, QUICK_CUPS } from '../../../features/water/mock';
-import { palette, spacing, typography } from '../../../theme/tokens';
-import { useTheme } from '../../../theme/ThemeProvider';
+import { Button, Screen, ScreenHeader, useToast } from '../../../components/ui';
+import { AmountEditor, type AmountValue } from '../../../features/water/components/AmountEditor';
+import { createWaterEntry, formatEntered, useWater } from '../../../lib/water';
+import { palette } from '../../../theme/tokens';
 
-const UNITS = ['Cups', 'Ounces'] as const;
-
+/**
+ * Add Water.
+ *
+ * Opens in the user's preferred unit, because that is the one they think in.
+ * They may switch it for this drink — **and that switch belongs to this entry
+ * alone.** Logging a 500 mL bottle while your preference is fluid ounces
+ * records 500 mL and leaves your preference at fluid ounces (founder decision,
+ * 2026-08-22, correcting slice 3.2's temporary behavior). Changing the
+ * preference is an explicit act, done on the goal screen.
+ */
 export default function AddWater() {
-  const [unitIndex, setUnitIndex] = useState(0);
-  const [amount, setAmount] = useState<number | null>(null);
-  const [custom, setCustom] = useState('');
-  const { surfaces } = useTheme();
+  const { preferences, addEntry } = useWater();
+  const { showToast } = useToast();
 
-  const isCups = unitIndex === 0;
-  const options = isCups ? QUICK_CUPS : BOTTLE_SIZES_OZ;
-  const unitLabel = isCups ? (amount === 1 ? 'cup' : 'cups') : 'oz';
-  const displayAmount = amount ?? (custom ? Number(custom) || 0 : 0);
+  const [value, setValue] = useState<AmountValue>({ amount: null, unit: preferences.unit });
+  const [saving, setSaving] = useState(false);
 
-  const selectUnit = (index: number) => {
-    setUnitIndex(index);
-    setAmount(null);
-    setCustom('');
+  const save = async () => {
+    if (value.amount === null || saving) return;
+    setSaving(true);
+
+    await addEntry(createWaterEntry({ amount: value.amount, unit: value.unit }));
+    showToast({ message: `Added · ${formatEntered(value.amount, value.unit)}` });
+    router.back();
   };
 
   return (
     <Screen>
       <ScreenHeader title="Add Water" back />
 
-      <SegmentedTabs options={UNITS} selectedIndex={unitIndex} onChange={selectUnit} activeColor={palette.water} />
+      <AmountEditor initial={{ amount: null, unit: preferences.unit }} onChange={setValue} />
 
-      <View style={styles.display}>
-        <Text style={[styles.amount, { color: surfaces.text }]}>{displayAmount || '—'}</Text>
-        <Text style={[styles.unit, { color: surfaces.textTertiary }]}>
-          {displayAmount ? unitLabel : 'Choose an amount'}
-        </Text>
-      </View>
-
-      <SectionHeader title={isCups ? 'Quick add' : 'Common bottle sizes'} />
-      <View style={styles.chips}>
-        {options.map((option) => (
-          <Chip
-            key={option}
-            label={`${option} ${isCups ? (option === 1 ? 'cup' : 'cups') : 'oz'}`}
-            selected={amount === option}
-            color={palette.water}
-            onPress={() => {
-              setAmount(option);
-              setCustom('');
-            }}
-          />
-        ))}
-      </View>
-
-      <SectionHeader title="Custom amount" />
-      <TextField
-        placeholder={isCups ? 'Enter cups' : 'Enter ounces'}
-        keyboardType="numeric"
-        value={custom}
-        onChangeText={(text) => {
-          setCustom(text);
-          setAmount(null);
-        }}
+      <Button
+        label="Add Water"
+        icon="add"
+        color={palette.water}
+        disabled={value.amount === null || saving}
+        onPress={() => void save()}
       />
-
-      <Button label="+ Add Water" color={palette.water} onPress={() => router.back()} />
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  display: {
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginVertical: spacing.s,
-  },
-  amount: {
-    fontSize: 44,
-    fontWeight: '700',
-  },
-  unit: {
-    ...typography.caption,
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.s,
-  },
-});

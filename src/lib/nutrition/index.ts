@@ -30,7 +30,7 @@ export {
   toLogDate,
   todayLogDate,
   type LogDate,
-} from './model/dates';
+} from '../daily/dates';
 
 export { defaultMealForTime, parseMealSlot } from './model/mealSlots';
 

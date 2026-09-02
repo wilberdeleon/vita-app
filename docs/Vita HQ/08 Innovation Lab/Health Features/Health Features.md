@@ -17,7 +17,9 @@
 | [[Health Age]] | 📋 Planned — ⚠️ no scheduled sprint | Critical | Pro |
 | [[Biomarker Age]] | 📋 Planned — ⚠️ no scheduled sprint | High | Elite |
 | [[Longevity Dashboard]] | 📝 Defined | High | Elite |
-| [[Peptide Dose Calculator]] | 📋 Planned — **Sprint 3** | High | Free |
-| [[Injection Site Tracking]] | 📋 Planned — **Sprint 3** | Medium | Free |
+| [[Peptide Dose Calculator]] | 📋 Planned — **built in Sprint 3**, carried into **Sprint 4** Tools | High | Free |
+| [[Injection Site Tracking]] | 📋 Planned — **built in Sprint 3**, carried into **Sprint 4** Tools | Medium | Free |
+| [[BMI Calculator]] | 📋 Planned — **Sprint 4** Tools | Medium | Free |
+| [[Research Library]] | 📋 Planned — **Sprint 4** Reference (🔴 blocked on [[Open Questions]] #17) | Medium | Free |
 
 **Related:** [[Innovation Lab]] · [[Future Features]] · [[Long-Term Vision]]

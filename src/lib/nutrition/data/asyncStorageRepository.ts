@@ -10,7 +10,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { isValidLogDate, type LogDate } from '../model/dates';
+import { isValidLogDate, type LogDate } from '../../daily/dates';
 import { canPersistDefinition, type FavoriteFood } from '../model/favorites';
 import {
   MEAL_SLOTS,

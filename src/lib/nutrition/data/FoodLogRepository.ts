@@ -16,7 +16,7 @@
  * signature change rippling through the app.
  */
 
-import type { LogDate } from '../model/dates';
+import type { LogDate } from '../../daily/dates';
 import type { FavoriteFood } from '../model/favorites';
 import type { FoodEntry, NutritionTargets, VitaFood } from '../model/types';
 

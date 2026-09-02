@@ -13,7 +13,7 @@ tags: [atlas, workouts, ai-generated, blocked-on-product-decision]
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as the Atlas sprint, Slice 4, under the name **"Workout Planning"** — **Sprint 6** under the current numbering (Sprint 4 when promoted). This confirms Atlas will generate workout plans; it does **not** explicitly confirm whether a full workout-*tracking* module also ships — the product decision below remains genuinely open despite the promotion.
+📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as the Atlas sprint, Slice 4, under the name **"Workout Planning"** — **Sprint 7** under the current numbering (Sprint 4 when promoted, 6 from 2026-08-17, 7 since the 2026-09-01 reorder). This confirms Atlas will generate workout plans; it does **not** explicitly confirm whether a full workout-*tracking* module also ships — the product decision below remains genuinely open despite the promotion.
 
 ## Category
 
@@ -77,10 +77,10 @@ Extends Atlas's utility surface area and the product's premium positioning again
 
 **Next Step Required:** Founder decision — does a workout-tracking module enter the product, or does "Workout Planning" stay advisory-only?
 
-**Estimated Sprint:** Sprint 6 — Atlas, Slice 4 ("Workout Planning")
+**Estimated Sprint:** Sprint 7 — Atlas, Slice 4 ("Workout Planning")
 
 **Dependencies:**
-- Atlas coaching/chat foundation (Sprint 6, Slices 1–2)
+- Atlas coaching/chat foundation (Sprint 7, Slices 1–2)
 - Tracking-module scope decision (see Status above)
 
 **Confidence:** 6 / 10 — the roadmap commitment resolves *whether* this ships, not *what* it fully includes.

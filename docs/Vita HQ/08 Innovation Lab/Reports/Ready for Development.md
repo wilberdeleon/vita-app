@@ -12,8 +12,8 @@ The official [[Roadmap]] issued 2026-07-09 named these directly, promoting them 
 
 | Idea | Sprint (current numbering) | Readiness | Confidence |
 |---|---|---|---|
-| [[Meal Planning]] | **Sprint 6 — Atlas**, Slice 3 | 🟢 Concept Complete | 7.5/10 |
-| [[Workout Generation]] | **Sprint 6 — Atlas**, Slice 4 | 🟡 Needs Refinement (tracking-module scope open) | 6/10 |
+| [[Meal Planning]] | **Sprint 7 — Atlas**, Slice 3 | 🟢 Concept Complete | 7.5/10 |
+| [[Workout Generation]] | **Sprint 7 — Atlas**, Slice 4 | 🟡 Needs Refinement (tracking-module scope open) | 6/10 |
 | [[Apple Health Integration]] | ⚠️ none — was Health, Slice 5 | 🟢 Concept Complete | 8.5/10 |
 | [[Mobile Order Screenshot Import]] | ⚠️ none — deferred out of Sprint 2 — Fuel | 🟢 Concept Complete | 8.5/10 |
 | [[Apple Home Screen Widgets]] | ⚠️ none — was Premium, Slices 1–2 | 🟢 Concept Complete | 8/10 |
@@ -23,7 +23,7 @@ The official [[Roadmap]] issued 2026-07-09 named these directly, promoting them 
 
 **⚠️ Six of these eight have no scheduled sprint.** The 2026-08-17 restructure dropped Health and Premium, and Screenshot Food Analysis was deferred out of Sprint 2's approved scope. Their 📋 Planned status is deliberately preserved rather than reverted — [[Open Questions]] #14, awaiting founder direction.
 
-**Named in the current roadmap but living outside this table:** [[Peptide Dose Calculator]] (proposed slice 3.7) and [[Injection Site Tracking]] (proposed slice 3.8) are both scoped into **Sprint 3 — Water + Peptides**, the next sprint after Fuel per the 2026-08-21 reorder.
+**Named in the current roadmap but living outside this table:** [[Peptide Dose Calculator]] (proposed slice 3.7) and [[Injection Site Tracking]] (proposed slice 3.8) were both scoped into **Sprint 3 — Water + Peptides** and are built there (slices 3.6 and 3.8–3.8C). **Sprint 4 — Settings + Tools & Reference** carries them forward into a coherent Tools destination rather than rebuilding them.
 
 **Honest read:** "Planned" means the roadmap named it, not that it's implementation-ready today — every one of these still depends on live data (Vita is still on mock data per [[Project Status]]), and four of the eight (marked 🟡) have real unresolved gaps even after promotion. Apple Health Integration and Mobile Order Screenshot Import are the closest to genuinely ready.
 

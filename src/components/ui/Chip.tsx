@@ -7,6 +7,12 @@ type Props = {
   selected?: boolean;
   onPress?: () => void;
   /**
+   * Spoken name, when the visible label is too terse to stand alone — a
+   * weekday chip reading "M" is meaningless without sight. Unset everywhere
+   * the label is already a full word, which is every existing caller.
+   */
+  accessibilityLabel?: string;
+  /**
    * Selected fill color. Defaults to the theme's neutral structural color —
    * brand ink in light, white in dark, since ink is invisible on a near-black
    * card. Pass a domain color for domain flows.
@@ -15,7 +21,7 @@ type Props = {
 };
 
 /** Small selectable pill — time ranges (7D/1M/…), bottle sizes, quick amounts. */
-export function Chip({ label, selected = false, onPress, color }: Props) {
+export function Chip({ label, selected = false, onPress, color, accessibilityLabel }: Props) {
   const { scheme, surfaces } = useTheme();
   // The one case needing a dark label is the neutral default in dark mode,
   // where the fill is white. Every domain color is dark enough for white.
@@ -26,6 +32,12 @@ export function Chip({ label, selected = false, onPress, color }: Props) {
   return (
     <Pressable
       onPress={onPress}
+      // Selection is signalled by fill color alone, which a screen reader
+      // cannot see. `selected` state makes the same information audible.
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected }}
+      hitSlop={6}
       style={[
         styles.chip,
         { backgroundColor: surfaces.card, borderColor: surfaces.border },

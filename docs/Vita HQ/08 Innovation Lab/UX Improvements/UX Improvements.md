@@ -10,6 +10,8 @@
 
 ## Ideas in this category
 
-*No ideas logged yet.*
+| Idea | Status | Priority | Tier |
+|---|---|---|---|
+| [[Tools Discoverability from Dashboard]] | 📝 Defined — placement deliberately undecided | Low | Free |
 
 **Related:** [[Innovation Lab]] · [[UX Principles]] · [[Design Bible]]
