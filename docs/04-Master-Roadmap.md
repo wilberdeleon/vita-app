@@ -12,6 +12,8 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
+**Sprint 4 — Settings + Tools & Reference** · Status: 🟡 **In progress** — authorized 2026-09-01 against its approved planning audit. Slice 4.1 — Settings Foundation is implemented and awaiting founder device review.
+
 **Sprint 3 — Water + Peptides** · Status: ✅ **COMPLETE** — founder-reviewed, approved, and merged into `main` on 2026-09-01 (merge commit `2bac43b`, from branch `sprint-3-water-peptides`)
 
 Objective: turn Water and Peptides from the Sprint 0 placeholder logs they were into real, persisted, date-aware features at the quality bar Sprint 2 set for Fuel. Delivered.
@@ -26,9 +28,11 @@ Sprint 3's planning and architecture audit is founder-approved and all three ent
 
 **Sprint 3 is merged and closed.** Founder-approved 2026-09-01 and merged into `main` as `2bac43b`, an explicit `--no-ff` merge preserving the full slice history.
 
-**The next sprint is Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01 recorded below. Its branch `sprint-4-settings-tools-reference` is cut from the merged `main`. **No Sprint 4 work has started**, and none starts until the founders separately authorize the sprint. Its candidate Tools — a BMI Calculator, a Food / Product Scanner, a Research Library, and Dashboard discoverability for Tools — all remain Innovation Lab proposals, not committed slices.
+**Sprint 4 — Settings + Tools & Reference is the current sprint**, per the founder reorder of 2026-09-01 recorded below, on branch `sprint-4-settings-tools-reference` cut from the merged `main`. It was authorized on 2026-09-01 against its approved planning audit. Of its candidate Tools, **BMI is committed**, the **Research Library is committed as architecture only**, the **Food / Product Scanner's scoring is not authorized**, and the **Dashboard shortcut is deferred**.
 
-**Sprint 4 planning is underway and is not approved.** A full planning and architecture audit — existing Settings and Tools inventory, recommended information architecture, a BMI / Food Scanner / Research Library assessment, a ranked risk register, and a proposed 4.x slice sequence — is in `docs/Sprint-4-Planning-Audit.md`, marked **DRAFT / PENDING FOUNDER APPROVAL**. It contains twelve decisions the founders must rule on before slice 4.1 can open, and it modified no application source.
+**Sprint 4 is open.** Its planning and architecture audit was founder-reviewed and approved on 2026-09-01, and slice 4.1 — Settings Foundation is implemented and awaiting founder device review. Slice-by-slice detail, and the founder rulings recorded at approval, are in `docs/06-Slice-Tracker.md` → Sprint 4.
+
+The audit itself — existing Settings and Tools inventory, recommended information architecture, a BMI / Food Scanner / Research Library assessment, a ranked risk register, and the proposed 4.x slice sequence — is preserved as authored in `docs/Sprint-4-Planning-Audit.md`. Two of its recommendations the founders acted on directly: **the Food Scanner's scoring left the sprint** (no VITA Score is to be invented without an approved methodology), and **the Research Library ships as architecture without content** while Open Question #17 stays open. **Slice 4.6 is explicitly not committed** and is reassessed after 4.5.
 
 ---
 
@@ -52,7 +56,7 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
 | 2 — Fuel | Build the smartest nutrition experience possible | ✅ Complete |
 | **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ✅ Complete |
-| **4 — Settings + Tools & Reference** | Settings architecture, a coherent Tools destination, and the reference layer | ⬜ **Next** |
+| **4 — Settings + Tools & Reference** | **Settings architecture, a coherent Tools destination, and the reference layer** | **🟡 Current** |
 | 5 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
 | 6 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
 | 7 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |

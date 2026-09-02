@@ -1,9 +1,11 @@
 # Sprint 4 — Settings + Tools & Reference
 # Planning & Architecture Audit
 
-**Status: 🟡 DRAFT — PENDING FOUNDER APPROVAL**
+**Status: ✅ FOUNDER-REVIEWED AND APPROVED — 2026-09-01**
 
-**No implementation is authorized by this document.** It is the planning artifact the Build Handbook's slice workflow expects *before* step 1 of the first slice. Every slice proposed here is a proposal. Nothing in `src/` was modified to produce it.
+*This document was written as a planning draft and is preserved as authored. The founders reviewed it, approved the sprint direction and the proposed 4.x sequence, and ruled on the decisions in §S; those rulings and the slice statuses now live in `docs/06-Slice-Tracker.md` → Sprint 4, which is the single source of truth for what is built. **Slice 4.6 was explicitly not committed** — it is reassessed after 4.5.*
+
+*Nothing in `src/` was modified to produce this document.*
 
 | | |
 |---|---|

@@ -74,9 +74,11 @@ export type WaterGoal = {
 /**
  * Water's own preferences.
  *
- * Water owns these in Sprint 3 (founder decision, 2026-08-21); Settings in
- * Sprint 7 will read and write this same source rather than creating a
- * second one that can disagree with it.
+ * Water owns these in Sprint 3 (founder decision, 2026-08-21), and
+ * **Settings reads and writes this same source** as of Sprint 4 slice 4.1 —
+ * `Settings → Units` calls `useWater().setUnit` rather than creating a
+ * second record that can disagree with this one. Nothing here moved to make
+ * that work.
  *
  * Deliberately just the unit. Quick-add presets are fixed for now and are
  * Slice 3.3's concern — storing a configuration nothing can configure would

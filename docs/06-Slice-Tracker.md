@@ -1849,3 +1849,82 @@ Technically careful, and it never tells the reader what 5-Amino-1MQ is actually 
 **Verified running in Expo Go on the iOS Simulator, and the run produced an unplanned end-to-end proof of the date model.** The first launch happened on a simulator whose clock still read **2026-08-21**: Fuel rendered `Friday, August 21` and loaded that day's real persisted food log — 2,326 Calories, Breakfast and Lunch populated, Big Mac and Bananas intact — which is direct evidence that **food data written before this slice still reads correctly after it**. The simulator was then rebooted, resyncing its clock to 2026-08-22, and the same build rendered `Saturday, August 22` with an empty day, `0 Calories`, and all four meal slots showing `No foods logged`. Same code, two device dates, the correct log for each. Home rendered correctly on the new date, and Fuel's Hydration (`5 of 8 cups · 63%`) and Peptides (`1 logged today`) modules still show their Sprint 0 fixtures exactly as before — the regression boundary held.
 
 **Not verified:** tap-driven paths, unchanged from the standing limitation — the simulator can be deep-linked and screenshotted but not driven. No physical-device testing was performed in this slice, and none was needed: nothing user-facing changed.
+
+---
+
+## Sprint 4 — Settings + Tools & Reference — 🟡 In progress (opened 2026-09-01)
+
+**Opened 2026-09-01.** Branch `sprint-4-settings-tools-reference`, cut from `main` at `8b8ec8d`. Founder-authorized against the **Sprint 4 Planning & Architecture Audit** (`docs/Sprint-4-Planning-Audit.md`, planning commit `aa1c60a`), which the founders reviewed and approved.
+
+**Founder decisions recorded at approval.** Tools are promoted out of Settings-owned route identity — a calculator is not a preference, and a later slice establishes the `/tools` architecture · any Settings row that visually promises navigation must actually work, and a nonfunctional row is removed rather than kept as a placeholder · Appearance must persist · Units becomes a real preference surface **without rewriting already-approved domain storage** · BMI is Sprint 4 but not slice 4.1 · Research Library *architecture* is approved, full health/reference content is not · **Food/Product Scanner scoring is not authorized — no VITA Score is to be invented** · Dashboard Tools shortcut deferred · OS notification delivery deferred · no account/profile/export systems built merely to populate Settings.
+
+| # | Slice | Objective | Status |
+|---|-------|-----------|--------|
+| 4.1 | Settings Foundation | Honest Settings, persistent Appearance, real Units destination, accurate version | 🟡 Implemented — awaiting founder device review |
+| 4.2 | Tools & Reference Hub + route architecture | Promote Tools out of `/settings/`, establish the hub | ⬜ Planned |
+| 4.3 | Existing Tools integration / polish | Peptide Calculator and Injection Sites discoverability and consistency | ⬜ Planned |
+| 4.4 | BMI Calculator | Height/weight in, BMI and range out, neutral visual scale, nothing persisted but the unit preference | ⬜ Planned |
+| 4.5 | Research Library foundation | Content model, routes, content tests. No unreviewed articles | ⬜ Planned |
+| 4.6 | Product Scanner shared-data expansion | Extend the shared Open Food Facts product model — **reassessed after 4.5, not promised** | ⬜ Conditional |
+| 4.7 | Sprint-wide integration / polish | — | ⬜ Planned |
+| 4.8 | Sprint 4 audit + closeout | — | ⬜ Planned |
+
+**Slice 4.6 is deliberately not committed.** The founders' words: *"I would not promise 4.6 yet. We can reassess once 4.1–4.5 are real."*
+
+### Slice 4.1 — Settings Foundation 🟡
+
+**Objective:** turn Settings from a partially functional placeholder into an honest, persistent foundation — every visible row real, Appearance surviving a relaunch, Units a genuine destination — ready to receive the Tools & Reference entry in slice 4.2.
+
+---
+
+**The rule the slice is built on:** a row that shows a chevron opens something, or it is not on the screen.
+
+**Five of eight rows failed that test**, all re-verified against source before anything was changed:
+
+| Row | What it claimed | Disposition |
+|---|---|---|
+| Profile | A profile, over `AuthProvider`'s mock user (`Wilber` / `wilber@vita.app`) | **Removed** — no profile model exists |
+| Notifications | Notification settings | **Removed** — `expo-notifications` is not a dependency; no delivery infrastructure exists |
+| Units | `Imperial (lb, oz)` | **Replaced with a real screen** — see below |
+| Privacy & Data | Privacy/data controls | **Removed** — no export, delete, or reset exists |
+| Sign Out | A sign-out, in destructive red | **Removed** — `AuthProvider.signOut` is `async () => {}` |
+
+None was rebuilt to preserve its row. Building a profile system, an auth session, or a notifications surface so that Settings looks fuller would be letting a screen's layout dictate the product roadmap — and the founder ruling was explicit that these return when they are real.
+
+**The Units row was the most serious defect, because it was not empty — it was false.** VITA has never had pounds or mass ounces anywhere in the codebase; the only body-adjacent `MassUnit` is `'mg' | 'mcg'` and describes a peptide dose. Worse, the claim *contradicted a real preference*: Water genuinely stores a volume unit at `vita:v1:water:prefs`, so a user who had chosen millilitres was being told by Settings that they were on imperial units.
+
+**Appearance now persists.** `ThemeProvider` held `mode` in `useState('system')` with no storage, so the only functioning preference in Settings was discarded on every relaunch. It now hydrates from and writes to a preference repository. Three behaviours matter and each is pinned by test: an explicit choice is restored, `system` is restored **as a live choice** and keeps following the device rather than freezing whatever it resolved to, and an unreadable or missing value falls back to System instead of falling through to light.
+
+**Startup was the risk, and is handled deliberately.** Nothing renders until the stored appearance is known — the alternative is a visible flash where a user whose choice is Light on a Dark device sees the app paint dark and snap one frame later. The hold is bounded: `hydrated` is set in a `finally`, so a storage failure can never leave the app blank. A test asserts children still mount when the read throws.
+
+**`src/lib/preferences/` — small on purpose.** Model, key, repository interface, AsyncStorage implementation, public API. It holds app-level preferences only: things more than one feature reads and no feature owns. It is not a settings framework, and Sprint 4 has real features left to build.
+
+**The parser reads field by field, never all-or-nothing.** This is what makes the slice-4.4 extension point real rather than aspirational: a record written before a preference existed is missing that field, and one written by a later build carries fields this one does not know. Rejecting the whole record in either case would silently discard preferences the user did set. Each field independently falls back to its default; a test pins that an unknown key does not destroy a known one.
+
+**Water's storage was not touched, by ruling and by design.** The Units screen writes through `useWater().setUnit` — the same call the Water goal screen makes, into the same `vita:v1:water:prefs` record. This is the founder ruling on Open Question #16 (closed 2026-08-21) honoured literally: Settings reads and writes Water's source rather than creating a second one that can disagree with it. **No migration was performed and none is needed.** Two stores behind one screen is the correct outcome, not a compromise — migrating already-approved domain storage for architectural tidiness would be risk bought with no user-visible gain.
+
+**Only preferences with a real consumer appear.** The Units screen shows Water's four volume units and nothing else. Body weight and height belong to slice 4.4 and are deliberately absent — a preference a user can set and never observe is the same dishonesty as a row that navigates nowhere. The extension point is documented in `src/lib/preferences/model/types.ts`, not pre-built into the UI.
+
+**Version is read from configuration.** `0.1.0 (Sprint 0)` was a hardcoded string three sprints stale — which is what hardcoded versions do. It now derives from `Constants.expoConfig`, appending a build number only when one is configured, so it can never read `1.0.0 (undefined)`. **No internal sprint names**: a user has no way to interpret them.
+
+**One additive change outside Settings.** `UnitSelector` gained an optional `groupLabel`, passed through to `SegmentedTabs`. Without it a screen reader on the Units screen announces four bare unit names with nothing saying what they measure. Existing call sites are unchanged and pass nothing.
+
+**Deliberately not done — the Tools entry.** Slice 4.2 owns the `/tools` route architecture and the "Tools & Reference" identity. 4.1 only guarantees the existing entry still works, and a test pins that it still pushes `/settings/tools`. The mild redundancy of a `Tools` section header above a `Tools` row is left for 4.2, which retitles that area anyway.
+
+---
+
+**Validation.** `npm test` — **1153/1153** pass across 43 suites (1093 → 1153: **60 added**, none removed) · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · `npx expo export --platform ios` — succeeds (3.86 MB bundle) · `npx expo install --check` — reports only the `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2, unchanged.
+
+**Test coverage added — 60 tests across 3 suites.** `lib/preferences/__tests__/repository.test.ts` (24) — key namespacing, key isolation from Water's, the mode guard including prototype-chain strings, round trips, and every damaged-storage case degrading to a default rather than a wrong value. `lib/preferences/__tests__/provider.test.tsx` (13) — **every persistence test is written as a relaunch**, because the defect was a startup defect and toggling the control already worked; plus System still following the device after a relaunch, a throwing read, and a throwing write. `features/settings/__tests__/SettingsRoutes.test.tsx` (23) — real renders of the real routes.
+
+**The honesty rule is enforced as an invariant, not a checklist.** One test walks every `ListRow` on the screen and asserts that anything drawing a chevron has an `onPress`, so a row added later cannot reintroduce the defect without failing. Separate tests pin the exact row list and the absence of each removed row by name.
+
+**The single-source-of-truth claim is proven, not asserted.** A test changes the water unit on the Settings → Units screen, unmounts it, mounts the **Water screen** against the same provider, and reads `500 mL` off it. A second test confirms an already-logged `16 fl oz` entry still stores `enteredAmount: 16` / `enteredUnit: 'floz'` afterwards — the display preference re-reads history, it does not rewrite it.
+
+**Boundary audit.** Six paths touched in total: `settings/index.tsx`, `settings/units.tsx` (new), `theme/ThemeProvider.tsx`, `features/water/components/UnitSelector.tsx` (one optional prop), `lib/preferences/` (new), `features/settings/__tests__/` (new). **Zero changes** to nutrition, Fuel, Home, Journey, Atlas, Peptides, the Peptide Calculator, Injection Sites, the body map, the peptide catalog, or any Water file other than the additive `UnitSelector` prop.
+
+**No regressions.** The full pre-existing suite passes unchanged, including `WaterRoutes` (which exercises the goal screen's `UnitSelector`), `UnitConversion` (the Peptide Calculator and the Tools row), and `PeptideLogging`/`PeptideRoutines` (Injection Sites). `ThemeProvider` is mounted by all ten pre-existing route/component suites and every one still passes, which is the theme-regression check across Home, Fuel, Water, Peptides, the Calculator and Injection Sites.
+
+**A pre-existing test-harness warning is unchanged and unrelated.** Real renders emit `You are trying to access a property or method of the Jest environment after it has been torn down` from `react-native/jest/setup.js`. The untouched `WaterRoutes` suite emits it 991 times on its own; the new Settings suite emits it for the same reason — the same harness. Not introduced here, and not a failure.
+
+**⚠️ Not verified: on-device Light/Dark capture, and the relaunch scenarios on real hardware.** This was attempted and is blocked by the environment, not by the code: the simulator's Expo Go is **57.0.2**, SDK 54 requires **54.0.7**, and Expo CLI's offer to install the matching client cannot be answered without a TTY. The simulator was booted, deep-linked, screenshotted, and then shut down and Metro stopped, leaving the environment as found. **Every persistence and rendering claim above rests on route-level tests that drive the real handlers and mount the real screens** — but the four screenshots §29 asked for (Settings and Units, Light and Dark) were not captured, and the founder's device review should cover them along with the relaunch scenarios.
