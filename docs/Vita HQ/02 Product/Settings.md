@@ -24,7 +24,11 @@ Settings' placement is **permanently locked**: top-right corner icon, present on
 
 ## Target state
 
-**Sprint 4 — Settings + Tools & Reference** ([[Roadmap]]) — **the current sprint**, opened 2026-09-01 immediately after [[Water]] + [[Peptides]]. *Moved forward by the founder roadmap reorder of 2026-09-01 (it was Sprint 7, behind both Journey sprints and [[Atlas]]); the 2026-08-17 restructure had already given Settings its first sprint anywhere, closing [[Open Questions]] #11.*
+**Sprint 4 — Settings + Tools Foundation is ✅ complete** (opened and closed 2026-09-01), and **Sprint 5 — VITA Identity & Interaction is next.** Sprint 4's close was an **intentional scope decision** — not a failure, an abandonment, or a sprint cut short: it fixed and completed the Settings foundation, created an honest preference architecture, established the Tools routing / navigation foundation, preserved the existing tools, and stopped before additional UI-heavy Tools work. **All of that is preserved and not rebuilt by Sprint 5**, which is primarily presentation and interaction work. **Remaining Tools work is not cancelled** — [[BMI Calculator|BMI]] (still planned), [[Research Library]], [[Food & Product Scanner]] evolution and Dashboard discoverability resume under the new VITA visual and interaction language, into the `/tools` architecture slice 4.2 established. See [[Roadmap]] and repo `docs/Sprint-5-Identity-Brief.md`.
+
+*The original sprint framing follows, as written.*
+
+**Sprint 4 — Settings + Tools & Reference** ([[Roadmap]]) — opened 2026-09-01 immediately after [[Water]] + [[Peptides]]. *Moved forward by the founder roadmap reorder of 2026-09-01 (it was Sprint 7, behind both Journey sprints and [[Atlas]]); the 2026-08-17 restructure had already given Settings its first sprint anywhere, closing [[Open Questions]] #11.*
 
 **The sprint is broader than "Settings".** The founder-approved identity is **Settings + Tools & Reference** — not "Settings & Miscellaneous", "Utilities", or "the Tools sprint". Settings is one of three things it owns.
 
@@ -51,7 +55,7 @@ Core Settings screen structure · preferences and settings organisation (profile
 
 **Planned:**
 
-- **[[BMI Calculator]]** — height input, weight input, calculated BMI, category/range, and a polished visual representation of the scale. *Future opportunity, explicitly not now:* once Journey / Weight exists (Sprint 5), BMI could read the user's stored height and latest weight instead of requiring duplicate entry.
+- **[[BMI Calculator]]** — height input, weight input, calculated BMI, category/range, and a polished visual representation of the scale. *Future opportunity, explicitly not now:* once Journey / Weight exists (**Sprint 6** since the 2026-09-01 identity insertion; Sprint 5 when this was written), BMI could read the user's stored height and latest weight instead of requiring duplicate entry.
 - **[[Food & Product Scanner]] (Food Score)** — a Yuka-style scan-a-product evaluation. A **Sprint 4 candidate, not a guaranteed or trivial feature**, and likely the largest single Tools item; it may need its own slice or planning pass.
 
 ### 3 — Reference

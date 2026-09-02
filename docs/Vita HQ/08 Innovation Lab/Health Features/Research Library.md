@@ -101,7 +101,7 @@ Search across reference material · linking a routine's compound directly to its
 
 **Next Step Required:** Founder decision on #17, plus a decision on who performs medical and legal review and on what cadence.
 
-**Estimated Sprint:** Sprint 4 — Settings + Tools & Reference, at concept and structure level. Content ships only when review allows.
+**Estimated Sprint:** **Sprint 5 — VITA Identity & Interaction**, draft slice 5.6, at concept and structure level — carried over when Sprint 4 closed as *Settings + Tools Foundation*. **Deferred, not cancelled.** Content ships only when review allows, and the **binding boundary is unchanged: VITA does not provide recommended dosages, dose ranges, or treatment-style protocols, and doing so is not a product direction.**
 
 **Dependencies:**
 - [[Open Questions]] #17 — unresolved

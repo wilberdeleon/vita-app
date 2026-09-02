@@ -17,6 +17,8 @@ tags: [navigation, discoverability, tools, dashboard, sprint4]
 
 **⏸️ Deferred at the Sprint 4 closeout, 2026-09-01 — deferred, not cancelled.** Sprint 4 closed as **Settings + Tools Foundation** after its two foundation slices, and this remains a valid product direction. The reason is sequencing, not doubt: this is presentation-heavy work, and the founders are defining a new VITA visual and interaction language next. Building it now would mean designing it twice. It resumes once that language exists — and lands into the `/tools` architecture slice 4.2 already established, where a new tool is a row and a route rather than a question about where it belongs.
 
+**Carried into Sprint 5 — VITA Identity & Interaction by the roadmap alignment of 2026-09-01.** The Sprint 5 Dashboard direction makes this question live: Home may carry Tools among its modules, and smaller utility modules (Peptide Calculator, Injection Sites, Food Scanner, Reference) are named as possibilities. **Still nothing is decided and no [[Dashboard]] card is authorized** — Home is not a launcher.
+
 **Its own precondition is now met**, which is the one thing that changed: this note said *build the Tools destination first, then evaluate whether discoverability is actually a problem*. Slice 4.2 built it. The evaluation still has not happened, and **no [[Dashboard]] card is authorised.**
 
 Original note follows. Exact placement is open, and **no [[Dashboard]] card is authorised.**
@@ -61,7 +63,7 @@ Increases usage of features already built. That is genuine value and also the ex
 
 ## Dependencies
 
-- **The Sprint 4 Tools & Reference destination must exist first.**
+- ~~**The Tools & Reference destination must exist first.**~~ **Met** — built in Sprint 4 slice 4.2.
 - Founder design decision on Home placement — [[Dashboard]], [[Navigation & Floating Dock]].
 - The primary-navigation question for [[Water]] and [[Peptides]] ([[Open Questions]] #4), which this overlaps.
 
@@ -83,7 +85,7 @@ Contextual surfacing — showing the calculator to someone who has an active pep
 
 **Next Step Required:** Build the Tools destination first, then evaluate whether discoverability is actually a problem before designing a solution to it.
 
-**Estimated Sprint:** Future — **not** authorised for Sprint 4 implementation.
+**Estimated Sprint:** **Sprint 5 — VITA Identity & Interaction**, draft slice 5.2 / 5.6 — **not authorised for implementation**, and the placement question is deliberately still open.
 
 **Dependencies:**
 - Sprint 4 Tools destination

@@ -36,9 +36,11 @@ Candidates named so far — none approved, none designed:
 - Card state transitions
 - Progress changes
 
-**Where this work lives.** Sprint 8 — Final Polish & Animations owns the **global** layer: the shared motion system, haptics vocabulary, transition consistency, and app-wide micro-interaction standards. It is **not a holding pen for every feature's visual debt** — feature-specific motion may ship earlier where it genuinely belongs to that feature (Fuel motion inside Sprint 2's refinement slice, for example), and Sprint 8 then reconciles everything into one vocabulary. See [[Roadmap]].
+**Where this work lives — revised 2026-09-01 by the identity insertion.** **Sprint 5 — VITA Identity & Interaction establishes VITA's interaction vocabulary** — what a press, a completion, a sheet, a progress change and a successful log feel like — including water fill, dose completion, press states, sheets, transitions and haptics. Slice 5.7 is that pass, and it is explicitly **not** the final launch-animation sprint. **Sprint 9 — Final Polish / Motion / Launch Experience** (renumbered and renamed from Sprint 8 — Final Polish & Animations) then performs the final app-wide pass: applying that vocabulary consistently everywhere, finishing motion, edge cases, accessibility, performance and the launch experience. **Neither replaces the other.**
 
-*Note: the standing-rule box above describes the 2026-07-09 roadmap's per-sprint Polish slices. The 2026-08-17 restructure reintroduced a terminal polish sprint (Sprint 8) — so both exist now: per-feature polish where it belongs, plus a global reconciliation pass at the end.*
+Sprint 9 owns the **global** layer: the shared motion system, haptics vocabulary, transition consistency, and app-wide micro-interaction standards. It is **not a holding pen for every feature's visual debt** — feature-specific motion may ship earlier where it genuinely belongs to that feature (Fuel motion inside Sprint 2's refinement slice, for example), and Sprint 8 then reconciles everything into one vocabulary. See [[Roadmap]].
+
+*Note: the standing-rule box above describes the 2026-07-09 roadmap's per-sprint Polish slices. The 2026-08-17 restructure reintroduced a terminal polish sprint (Sprint 8, now **Sprint 9**) — so both exist now: per-feature polish where it belongs, plus a global reconciliation pass at the end. Since 2026-09-01 there is a third layer between them: **Sprint 5 defines the vocabulary** the other two apply.*
 
 ## Principles for when that work begins
 
@@ -48,7 +50,7 @@ Candidates named so far — none approved, none designed:
 
 ## Dependencies / open questions
 
-- Animation driver (Reanimated vs. core `Animated`) is an undecided per-slice choice — **Needs Verification**, now relevant as early as Sprint 1's Dashboard Polish slice rather than a distant Sprint 8.
+- Animation driver (Reanimated vs. core `Animated`) is an undecided per-slice choice — **Needs Verification**, relevant well before the final polish sprint; **Sprint 5's motion work is where it most likely has to be settled.**
 - Haptics vocabulary (when does Vita buzz?) — founder taste decision.
 
 **Related:** [[Design Bible]] · [[Component Library]] · [[UX Principles]]

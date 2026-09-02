@@ -90,7 +90,7 @@ Suggested alternatives · personal weighting (allergens, goals) · scanning non-
 
 **Next Step Required:** A dedicated planning pass on the scoring methodology — what it measures, on what data, how it is explained, and what VITA says when it does not know. Not a slice-planning task squeezed into a broader sprint.
 
-**Estimated Sprint:** Sprint 4 — Settings + Tools & Reference, **as a candidate only.** May well move to its own sprint.
+**Estimated Sprint:** Unscheduled. Carried past Sprint 4's closeout; **Sprint 5 — VITA Identity & Interaction is not committed to inventing a VITA Score**, and scoring methodology remains a separate founder/product decision. Sprint 5 may redesign how the *existing* scanner fits visually into VITA if and when that is authorized. The Sprint 2 barcode scanner in [[Fuel]] is untouched and still works. May well move to its own sprint.
 
 **Dependencies:**
 - A defensible scoring methodology (does not exist)

@@ -12,8 +12,8 @@
 
 | Idea | Status | Priority | Tier |
 |---|---|---|---|
-| [[Meal Planning]] | 📋 Planned — **Sprint 7 — Atlas** | High | Atlas |
-| [[Workout Generation]] | 📋 Planned — **Sprint 7 — Atlas** | Medium | Atlas |
+| [[Meal Planning]] | 📋 Planned — **Sprint 8 — Atlas** | High | Atlas |
+| [[Workout Generation]] | 📋 Planned — **Sprint 8 — Atlas** | Medium | Atlas |
 | [[Voice Atlas]] | 📋 Planned — ⚠️ no scheduled sprint | Medium | Elite |
 | [[Advanced Coaching (Proactive Check-Ins)]] | 📝 Defined | High | Atlas |
 | [[Mobile Order Screenshot Import]] | 📋 Planned — ⚠️ no scheduled sprint | High | Atlas |

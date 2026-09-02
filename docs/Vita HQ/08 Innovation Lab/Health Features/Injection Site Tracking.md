@@ -74,6 +74,9 @@ Depth in an underserved niche. Together with the [[Peptide Dose Calculator]], th
 ## Future Enhancements
 
 - Site-rotation history as a reviewable view (frequency and recency by area). **Not automatic health analytics** — the founders were explicit that complex analytics are not added by default.
+- **Injection rotation visualization (founder-requested, 2026-09-01 — an exploration target for Sprint 5 draft slice 5.5, not guaranteed final UX).** A body visualization showing injection locations over a selected week — for example Monday right abdomen, Tuesday left thigh, Wednesday right thigh, Friday left abdomen — with markers on the body representation and a tap opening the corresponding log or day detail. Open planning questions: front / back · multiple injections at the same site · multiple peptides · week filtering · historical filtering · marker overlap · accessibility · and whether it lives in Routine, History or Tools. See [[Open Questions]] #20.
+- **Optional site logging on Mark as Taken (founder direction, 2026-09-01, Sprint 5 draft slice 5.5).** Mark as Taken → optional site selection → body map / quick site interaction → confirm, with the log retaining date, time, dose, units and injection site. **The existing logging and history architecture is reused, never replaced.**
+- **Shared body-map principle (binding).** Peptide logging and this standalone tool should share the **same** body-map / injection-site primitive. **Do not create an unrelated duplicate implementation** — the existing `BodyMap` is inspected and evolved.
 - Gentle selection feedback as a micro-interaction ([[Motion & Animation]]) — named by the founders as a restrained-motion candidate.
 - Per-peptide site preferences, if a peptide's typical administration differs.
 

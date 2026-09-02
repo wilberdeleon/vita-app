@@ -2016,6 +2016,33 @@ Regression suites run individually as well as together: Settings + Tools + prefe
 
 Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence is a comment or a negative test assertion), **no Research Library source exists**, **`src/lib/nutrition` and `fuel/scan.tsx` are byte-identical to `main`**, `/tools`, `/tools/peptide-calculator` and `/tools/injection-sites` are present, and `src/app/(vita)/settings/tools/` is absent.
 
-**One recorded follow-up, deliberately not fixed here.** Two source comments reference "slice 4.4" as BMI's home (`settings/units.tsx`, `lib/preferences/model/types.ts`). That number will change when the roadmap session renumbers, and inventing the new numbering now was explicitly out of scope. They are accurate about *intent* and stale only about *numbering*; the roadmap session should correct them.
+**One recorded follow-up, still open after the roadmap session.** Two source comments reference "slice 4.4" as BMI's home (`settings/units.tsx`, `lib/preferences/model/types.ts`). The roadmap-alignment session of 2026-09-01 was **documentation-only and changed no application source**, so the comments were deliberately left as they are. They remain accurate about *intent* and stale only about *numbering*: **BMI is still planned, deferred into the Sprint 5 identity work**, and no slice number is assigned to it yet — slice 5.6 is a candidate but the draft plan explicitly leaves open whether BMI earns its own adjacent slice. **Correct the comments in the first Sprint 5 slice that touches those files**, once BMI has a real slice number.
 
-**Next step is a roadmap-alignment session**, not implementation. A founder-directed identity / interaction sprint is pending formal roadmap alignment; numbering and ordering are that session's to decide, and no redesign work should begin before it.
+**The roadmap-alignment session ran on 2026-09-01, and no implementation followed it.** The founder-directed identity sprint is now on the roadmap as **Sprint 5 — VITA Identity & Interaction**, ahead of Journey; Journey / Weight is Sprint 6, Journey / Photos Sprint 7, Atlas Sprint 8, and the final polish sprint **Sprint 9 — Final Polish / Motion / Launch Experience**. See `docs/04-Master-Roadmap.md` and `docs/Sprint-5-Identity-Brief.md`.
+
+---
+
+## Sprint 5 — VITA Identity & Interaction — ⬜ NEXT (planned 2026-09-01, not opened)
+
+**No slice is approved and no implementation has started.** There is no Sprint 5 branch. The sprint requires founder authorization plus a **Sprint 5 architecture audit** before planning or implementation begins — the same gate every prior sprint passed.
+
+**Objective:** make VITA feel unmistakably like VITA — establish the visual and interaction language before Journey is built in it.
+
+**Scope character:** primarily presentation and interaction work. Sprint 4's Settings architecture, Appearance persistence, Units architecture, `/tools`, the Tools & Reference hub, the Peptide Calculator, Injection Sites, the Body Map / injection-site primitives, navigation foundations, domain logic, utilities, persistence and repositories are **preserved and not rebuilt**. Working domain logic is untouched unless a concrete issue requires the change.
+
+**Proposed slices — DRAFT, not implementation-authorized.** A Sprint 5 architecture audit may refine dependency order, slice boundaries, whether BMI deserves its own slice, whether Tools integration moves earlier or later, and whether some motion work belongs inside individual slices.
+
+| # | Slice (draft) | Objective | Status |
+|---|-------|-----------|--------|
+| 5.1 | VITA Design Language | Hierarchy, card usage, modules, spacing, typography, color behavior, visual objects, bottom sheets, primary/secondary actions, motion, haptics, completion states, progressive disclosure, reusable primitives | ⬜ Draft |
+| 5.2 | Dashboard Identity Redesign | Keep the dynamic greeting, remove generic slogan copy, action-oriented Home, recognizable feature modules, Tools discoverability | ⬜ Draft |
+| 5.3 | Interactive Water Experience | Hydration visual object, fill state, tactile logging, quick-add sheet, animation and haptics, history simplification — Water's data architecture preserved | ⬜ Draft |
+| 5.4 | Peptides Home Redesign | Due / completed / upcoming hierarchy, immediate comprehension, reduced administrative feel — routine and business logic preserved | ⬜ Draft |
+| 5.5 | Routine + Injection Site Experience | Simplify routine hierarchy, optional site logging, evolve the shared body map, explore injection rotation visualization | ⬜ Draft |
+| 5.6 | Tools Integration | Remaining Tools UI under the new language; BMI here or in a dedicated adjacent slice after design-language approval | ⬜ Draft |
+| 5.7 | Motion + Microinteraction Pass | A restrained reusable interaction language — not the final launch-animation sprint | ⬜ Draft |
+| 5.8 | Founder Review / Identity Audit | Real-device review of Dashboard, Water, Peptides, Routine and Tools. *"Would I genuinely want to use this app every day?"* | ⬜ Draft |
+
+**Journey does not begin without explicit founder approval after 5.8.**
+
+Full direction: `docs/04-Master-Roadmap.md` → Sprint 5, and `docs/Sprint-5-Identity-Brief.md` — **DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL.**

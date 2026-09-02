@@ -241,7 +241,7 @@ Built in Slice 0.7 under `src/app/(vita)/peptides/`:
 
 ## Target state
 
-**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the current sprint, feature-complete and in final audit / closeout.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Peptides its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position, which means the catalog sourcing and medical-content questions below are now due sooner.
+**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **✅ complete and merged into `main` 2026-09-01** (`2bac43b`). *(This line read "the current sprint, feature-complete and in final audit / closeout" until the 2026-09-01 roadmap alignment; it was stale.)* **Sprint 4 — Settings + Tools Foundation is also complete, and Sprint 5 — VITA Identity & Interaction is next** — see the Sprint 5 direction section below. *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Peptides its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position, which means the catalog sourcing and medical-content questions below are now due sooner.
 
 Sprint 2 preserves the existing Peptide log but **deliberately does not extend it**; the real work is Sprint 3. The compact Peptides module on the redesigned [[Fuel]] screen becomes a real entry point and summary backed by that work — Sprint 3 does **not** redesign Fuel.
 
@@ -310,6 +310,22 @@ Future reminder work — unscheduled, and **not** automatically Sprint 4 scope:
 - Scheduled routine notifications
 - Taken / Skipped actions from a notification
 - Reminder delivery on the configured schedule days
+
+## Sprint 5 direction — Peptides Home, Routine, and injection sites (founder direction, 2026-09-01)
+
+**⚠️ Direction, not implementation authorization.** Slices 5.4 and 5.5 are **draft** and need founder approval plus a Sprint 5 architecture audit. **No business-logic rewrite is implied anywhere below.** Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
+
+**Peptides Home.** Peptide tracking works; the presentation currently feels administrative and information-heavy. The redesigned hierarchy should prioritise immediate comprehension of one question — **what do I need to do today?** — and more clearly distinguish **due · completed · upcoming · routine management** rather than giving everything equal visual priority.
+
+**Routine.** The principle is **immediate action first, administrative detail second.** A possible top state, *not yet a required literal layout*: the peptide name · *Routine amount · Today* · primary **Mark as Taken** · secondary **Skip** · then progressive disclosure of Routine Details, History, Preparation and Edit Routine.
+
+**Optional injection-site logging on Taken.** Explore: Mark as Taken → optional site selection → body map / quick site interaction → confirm. The log can retain date, time, dose, units and injection site. **The existing logging and history architecture is reused, not replaced.**
+
+**Injection rotation visualization.** Explore a body visualization of injection locations over a selected week — e.g. Monday right abdomen, Tuesday left thigh, Wednesday right thigh, Friday left abdomen — with markers on the body representation and a tap opening the corresponding log or day detail. Open: front / back · multiple injections at one site · multiple peptides · week filtering · historical filtering · marker overlap · accessibility · whether it lives in Routine, History or Tools. **An exploration target, not guaranteed final UX** — [[Open Questions]] #20.
+
+**Shared body map.** Peptide logging and the standalone [[Injection Site Tracking|Injection Sites]] tool should share the **same** body-map / injection-site primitive. **Do not create an unrelated duplicate implementation** — the existing `BodyMap` work is inspected and evolved.
+
+**The product boundary is unchanged and binding.** VITA does **not** become a peptide dosage recommendation or protocol engine. Nothing in this redesign introduces recommended doses, protocols, prescriptive cycles or individualized dosage recommendations.
 
 ## Future ideas
 

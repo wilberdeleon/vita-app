@@ -71,7 +71,7 @@ The test for whether something belongs here: does more than one feature read it,
 
 **`ThemeProvider` holds nothing until it has read.** The provider renders no children until the stored appearance is known — a user whose choice is Light on a device set to Dark would otherwise see the app paint dark and snap one frame later. The hold is bounded: the hydrated flag is set in a `finally`, so a storage failure falls back to System and still mounts the app rather than leaving it blank. A failed *write* keeps the choice for the session and is not surfaced; a toast about a failed preference write would be more alarming than the loss it describes.
 
-**Extension point.** Slice 4.4 (BMI) adds a body-weight unit and a height unit here, and Sprint 5's Journey / Weight reads the same weight unit — which is what makes them app-level rather than tool-level. They are **not added before something reads them**: a persisted preference with no consumer is one the user can set and never observe.
+**Extension point.** BMI adds a body-weight unit and a height unit here, and **Sprint 6**'s Journey / Weight reads the same weight unit — which is what makes them app-level rather than tool-level. They are **not added before something reads them**: a persisted preference with no consumer is one the user can set and never observe.
 
 ## UI conventions
 

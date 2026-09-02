@@ -35,7 +35,7 @@ Built in Slice 0.6 under `src/app/(vita)/water/`:
 
 ## Target state
 
-**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the current sprint, feature-complete and in final audit / closeout.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Water its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position.
+**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **✅ complete and merged into `main` 2026-09-01** (`2bac43b`). *(This line read "the current sprint, feature-complete and in final audit / closeout" until the 2026-09-01 roadmap alignment; it was stale.)* **Sprint 4 — Settings + Tools Foundation is also complete, and Sprint 5 — VITA Identity & Interaction is next** — see the Sprint 5 direction section below. *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Water its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position.
 
 Water currently exists conceptually inside [[Fuel]] and is **deliberately not a Sprint 2 focus**: Sprint 2 preserves its entry points and necessary integration only, and does **not** remove it. The deep hydration work belongs to Sprint 3.
 
@@ -61,6 +61,22 @@ Water came through the closeout audit with **one defect and no functional proble
 **Water now has route-level tests.** Its units, totals, goals, entries, week and provider were all thoroughly covered — and no test had ever rendered a Water screen. That is the same gap that let PT-141 appear missing in Peptides: a correct function with passing tests behind a screen nobody had exercised. The new suite drives the real routes, and it is what caught the waterline.
 
 **One consistency note, not a defect.** Water's strip is a *"Last 7 days"* rolling bar chart while the Peptides routine strip is a Monday-to-Sunday calendar. The two are different objects doing different jobs — a volume trend versus a week you can mark days on — and Water's label says exactly what it shows. Recorded so the difference reads as deliberate rather than as drift.
+
+## Sprint 5 direction — Interactive Water Experience (founder direction, 2026-09-01)
+
+**⚠️ Direction, not implementation authorization.** Slice 5.3 is **draft** and needs founder approval plus a Sprint 5 architecture audit. Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
+
+**The problem is presentation, not correctness.** The existing Water summary and Add Water flow are functionally correct but visually form-like and space-heavy.
+
+**A premium stylized VITA hydration vessel may become the hero interaction object** — a visible fill level mapped to hydration progress · logging visibly raising the liquid level · subtle ripple / splash feedback · an appropriate haptic · progress updating with animation · a non-cartoon visual treatment.
+
+**Potential logging flow:** tap Add Water → compact bottom sheet or overlay → quick amounts → custom amount → log → the vessel responds → the sheet closes.
+
+*The standing caution from the 2026-08-18 direction below is **not** overruled: do not assume a literal animated water bottle is automatically right. The vessel is a strong candidate to be designed inside VITA's premium system, not a foregone conclusion.*
+
+**Preserved exactly as built:** canonical storage · units · goal · entries · persistence · rollover · history.
+
+**History.** The 7-day history remains valuable and may simply be presented more elegantly — individual daily entries can become compact, secondary, or progressively disclosed rather than permanent large cards. **No data loss, and no history simplification for visual reasons.**
 
 ## Future ideas
 

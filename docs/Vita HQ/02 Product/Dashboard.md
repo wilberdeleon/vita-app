@@ -21,6 +21,23 @@ Built in Slice 0.4, refined in 0.11–0.12. Components live in `src/features/das
 
 **Sprint 1** of the [[Roadmap]] — ✅ **complete (2026-08-02)**; see [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what actually shipped. As originally planned, eight slices: Layout, Greeting Card, Today's Summary, Health Metrics, Journey Preview, Meals Preview, Floating Navigation, Dashboard Polish. This elevates the existing mock components above (GreetingCard, DailyProgressCard, QuickStatsRow, JourneyCard) to production quality rather than building from zero — live data once [[Supabase & Database|Supabase]] connects. Founder priority right now: **Dashboard polish** under the [[Design Bible|premium glass direction]].
 
+## Sprint 5 direction — VITA Identity & Interaction (founder direction, 2026-09-01)
+
+**⚠️ Direction, not implementation authorization.** Slice 5.2 — Dashboard Identity Redesign is **draft** and needs founder approval plus a Sprint 5 architecture audit. Nothing below is built. Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
+
+**Keep:** the time-aware greeting — *Good morning, Wilber* · *Good afternoon, Wilber* · *Good evening, Wilber* · *Good night, Wilber*.
+
+**Remove future reliance on:** *"Build with intention."* and *"Your day, your direction."* Both are considered generic wellness-marketing filler. **Do not automatically replace them with another slogan.** Prefer useful contextual information — the date · doses due · hydration state · goals remaining · meaningful current-day state.
+
+**Dashboard should become** more action-oriented and less analytics-report-like; visually recognizable; **modular without becoming a generic symmetrical grid.**
+
+- Potential primary modules: [[Fuel]] · [[Water]] · [[Peptides]] · [[My Journey|Journey]] · Tools
+- Potential smaller utility modules: [[Peptide Dose Calculator|Peptide Calculator]] · [[Injection Site Tracking|Injection Sites]] · [[Food & Product Scanner|Food Scanner]] · [[Research Library|Reference]]
+
+**Historical design note, recorded deliberately.** The founder's older Dashboard concept is **not** the visual target. It did succeed at one thing this sprint must recover: different destinations were **immediately recognizable**. Sprint 5 should recover that recognizability while keeping VITA's current sophistication. **This is not an instruction to recreate the old grid.**
+
+**Tools discoverability from Home** ([[Tools Discoverability from Dashboard]]) is live again as a question and is still not decided; no Dashboard card is authorized. Home is not a launcher.
+
 ## Future ideas
 
 - Longevity signals on the dashboard (Health Age at a glance) — see [[Future Features]]
