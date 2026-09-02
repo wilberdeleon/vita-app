@@ -7,6 +7,8 @@
 
 *Nothing in `src/` was modified to produce this document.*
 
+*Implementation status: §F (Settings scope) shipped in slice 4.1. §E's route recommendation — promoting Tools to a top-level `/tools` — was approved and shipped in slice 4.2, along with §D's one-screen two-section hub. §S.2, §S.3 and §S.4 are answered; §S.7 (Research Library vs Open Question #17) is still open and gates slice 4.5.*
+
 | | |
 |---|---|
 | Prepared | 2026-09-01 |

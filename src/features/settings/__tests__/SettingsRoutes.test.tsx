@@ -182,7 +182,12 @@ describe('every visible row is real', () => {
     const { repository } = fakeWaterRepository();
     const tree = await mount(<Settings />, repository);
 
-    expect(rows(tree).map((row) => row.title)).toEqual(['Appearance', 'Units', 'Tools', 'Version']);
+    expect(rows(tree).map((row) => row.title)).toEqual([
+      'Appearance',
+      'Units',
+      'Tools & Reference',
+      'Version',
+    ]);
   });
 
   it.each([
@@ -280,13 +285,30 @@ describe('navigation', () => {
     expect(mockPush).toHaveBeenCalledWith('/settings/units');
   });
 
-  /** Slice 4.2 moves this route; 4.1 only guarantees it still works. */
-  it('still opens the existing Tools entry', async () => {
+  /**
+   * Settings stays the discovery path after slice 4.2 moved Tools out of its
+   * route tree — the row remains, and points at the canonical destination
+   * rather than at a Settings-owned subfolder.
+   */
+  it('opens Tools & Reference at its own top-level route', async () => {
     const { repository } = fakeWaterRepository();
     const tree = await mount(<Settings />, repository);
 
-    await act(async () => control(tree, 'Tools')!.props.onPress());
-    expect(mockPush).toHaveBeenCalledWith('/settings/tools');
+    await act(async () => control(tree, 'Tools & Reference')!.props.onPress());
+    expect(mockPush).toHaveBeenCalledWith('/tools');
+  });
+
+  /** The old address is gone, not aliased. */
+  it('never pushes the retired settings-owned tools route', async () => {
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    for (const row of rows(tree)) {
+      if (row.onPress) await act(async () => row.onPress());
+    }
+    for (const call of mockPush.mock.calls) {
+      expect(String(call[0])).not.toContain('/settings/tools');
+    }
   });
 
   it('offers a way back and never jumps to another feature', async () => {

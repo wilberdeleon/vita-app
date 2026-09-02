@@ -28,7 +28,7 @@ import PeptideHistory from '../../../app/(vita)/peptides/setup/[id]/history';
 import PeptideLogDetail from '../../../app/(vita)/peptides/log/[id]';
 import EditPeptideSetup from '../../../app/(vita)/peptides/setup/[id]';
 import RoutineDetail from '../../../app/(vita)/peptides/routine/[id]';
-import InjectionSites from '../../../app/(vita)/settings/tools/injection-sites';
+import InjectionSites from '../../../app/(vita)/tools/injection-sites';
 import type { PeptideRepository } from '../../../lib/peptides/data/PeptideRepository';
 import {
   PeptideProvider,

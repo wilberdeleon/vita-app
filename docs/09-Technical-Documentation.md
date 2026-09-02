@@ -45,6 +45,18 @@ All of it was written for nutrition in Sprint 2 and promoted unchanged when Wate
 
 **Formatting helpers live here too, and are hand-written on purpose.** `formatLogDateLong` ("Friday, August 21"), `formatLogDateWithYear` ("24 August 2026"), `formatClockTime` ("2:15 PM"), `formatTimeOfDay` ("09:00" → "9:00 AM"), and `toTimeInput` are all built from local date parts rather than `toLocaleDateString`/`toLocaleTimeString`. Hermes' `Intl` support varies by platform and engine build, and a header that silently falls back to `2026-08-21` — or throws — on one device and not another is not worth the dependency for a handful of strings. Swap them for `Intl` when localization actually ships. The two added in the 3.10 audit exist because the routine screen was rendering storage formats directly: `09:00` for a reminder and `2026-08-24` for a start date. `formatLogDateWithYear` carries the year that `formatLogDateLong` omits, because a routine's start date is often months or years old.
 
+## Tools & Reference routes (Sprint 4 slice 4.2)
+
+`src/app/(vita)/tools/` — `index.tsx` (the hub), `peptide-calculator.tsx`, `injection-sites.tsx`. A sibling of `settings/`, `water/` and `peptides/`, with **no `_layout.tsx`**: `(vita)/_layout.tsx` declares only `(tabs)` and every other route is implicit, as those three already are. **Not a route group** — groups exist to share a layout without appearing in the URL, and here there is no layout to share and the segment is wanted in the URL.
+
+**Why they moved out of `/settings/tools/`.** A tool is something you use once and walk away from; a setting is something you change. The route is the plainest statement the app makes about which one something is, and `/settings/tools/peptide-calculator` said a calculator was a child of Settings. **Settings is still the only way in** — it owns discovery, not identity.
+
+**The old routes were removed, not redirected.** No public deep links exist to preserve, so a compatibility tree would be two screens to maintain and one of them dead. Tests pin the removal from both ends: Settings pushes nothing containing `/settings/tools`, and the hub pushes nothing containing `/settings`.
+
+**The everyday logging flow never touched these routes.** `SiteSelector`'s *View Body Model* is an inline mode toggle (`setMode('map')` rendering `BodyMap` in the sheet), not navigation — a deliberate slice-3.8 decision. Nothing in Peptides required updating for the migration.
+
+**Hub composition.** `ListRow` under a `SectionHeader`, no new primitives. Sections group by **Tools vs Reference**, not by domain — a BMI calculator is not a peptide tool, and a `Peptides` heading would force a false grouping. Icon colour tracks the domain a tool serves; a tool belonging to no domain takes the neutral treatment. **A REFERENCE section appears in slice 4.5 when something real sits under it** — nothing is listed before it works.
+
 ## App preferences (Sprint 4 slice 4.1)
 
 `src/lib/preferences/` holds **app-level preferences only** — settings that change the whole app and belong to no single feature. It is deliberately not a settings framework.

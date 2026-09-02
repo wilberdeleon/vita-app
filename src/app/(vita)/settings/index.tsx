@@ -76,17 +76,24 @@ export default function Settings() {
         onPress={() => router.push('/settings/units')}
       />
 
-      {/* Unchanged in this slice. Slice 4.2 owns the Tools route architecture
-          and the "Tools & Reference" identity; 4.1 only guarantees the entry
-          still works. */}
-      <SectionHeader title="Tools" />
+      {/*
+        * Settings is the way in, not the home (slice 4.2). Tools moved out to
+        * `/tools` because a calculator is not a preference — but the founders
+        * kept Settings as the discovery path, so this row stays and simply
+        * points somewhere honest.
+        *
+        * The subtitle names the two tools that exist rather than promising
+        * the destination's full identity. "Calculators and reference" would
+        * be advertising a Reference section that arrives in slice 4.5.
+        */}
+      <SectionHeader title="Tools & Reference" />
       <ListRow
         icon="construct-outline"
-        title="Tools"
-        subtitle="Peptide calculator and other utilities"
+        title="Tools & Reference"
+        subtitle="Peptide calculator and injection sites"
         chevron
-        accessibilityHint="Opens the tools list"
-        onPress={() => router.push('/settings/tools')}
+        accessibilityHint="Opens tools and reference"
+        onPress={() => router.push('/tools')}
       />
 
       {/* One real fact. No Terms, Privacy, or support rows — those routes do

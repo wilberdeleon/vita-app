@@ -12,7 +12,7 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
-**Sprint 4 — Settings + Tools & Reference** · Status: 🟡 **In progress** — authorized 2026-09-01 against its approved planning audit. Slice 4.1 — Settings Foundation is implemented and awaiting founder device review.
+**Sprint 4 — Settings + Tools & Reference** · Status: 🟡 **In progress** — authorized 2026-09-01 against its approved planning audit. Slice 4.1 — Settings Foundation is **founder-approved on device**; slice 4.2 — Tools & Reference Hub + Route Architecture is implemented and awaiting founder device review.
 
 **Sprint 3 — Water + Peptides** · Status: ✅ **COMPLETE** — founder-reviewed, approved, and merged into `main` on 2026-09-01 (merge commit `2bac43b`, from branch `sprint-3-water-peptides`)
 
@@ -30,7 +30,7 @@ Sprint 3's planning and architecture audit is founder-approved and all three ent
 
 **Sprint 4 — Settings + Tools & Reference is the current sprint**, per the founder reorder of 2026-09-01 recorded below, on branch `sprint-4-settings-tools-reference` cut from the merged `main`. It was authorized on 2026-09-01 against its approved planning audit. Of its candidate Tools, **BMI is committed**, the **Research Library is committed as architecture only**, the **Food / Product Scanner's scoring is not authorized**, and the **Dashboard shortcut is deferred**.
 
-**Sprint 4 is open.** Its planning and architecture audit was founder-reviewed and approved on 2026-09-01, and slice 4.1 — Settings Foundation is implemented and awaiting founder device review. Slice-by-slice detail, and the founder rulings recorded at approval, are in `docs/06-Slice-Tracker.md` → Sprint 4.
+**Sprint 4 is open.** Its planning and architecture audit was founder-reviewed and approved on 2026-09-01, slice 4.1 — Settings Foundation is founder-approved, and slice 4.2 — Tools & Reference Hub + Route Architecture is implemented and awaiting founder device review. **Tools now live at a top-level `/tools` route rather than under Settings** — Settings remains the discovery entry point but no longer owns the tools' identity. Slice-by-slice detail, and the founder rulings recorded at approval, are in `docs/06-Slice-Tracker.md` → Sprint 4.
 
 The audit itself — existing Settings and Tools inventory, recommended information architecture, a BMI / Food Scanner / Research Library assessment, a ranked risk register, and the proposed 4.x slice sequence — is preserved as authored in `docs/Sprint-4-Planning-Audit.md`. Two of its recommendations the founders acted on directly: **the Food Scanner's scoring left the sprint** (no VITA Score is to be invented without an approved methodology), and **the Research Library ships as architecture without content** while Open Question #17 stays open. **Slice 4.6 is explicitly not committed** and is reassessed after 4.5.
 

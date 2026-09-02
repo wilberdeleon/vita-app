@@ -34,13 +34,15 @@ Settings' placement is **permanently locked**: top-right corner icon, present on
 
 ### 1 — Settings
 
-**Slice 4.1 delivered the foundation** — see Current state above. What remains under this heading is the Tools & Reference entry (slice 4.2) and whatever later slices add.
+**Delivered.** Slice 4.1 built the foundation (see Current state above) and slice 4.2 added the **Tools & Reference** entry row. Settings is now feature-complete for this sprint unless a later slice adds a preference; what remains under the Sprint 4 umbrella is Tools, Reference and BMI, none of which live *in* Settings.
 
 Core Settings screen structure · preferences and settings organisation (profile, notifications, preferences, units, appearance, privacy) · clean navigation · visual consistency with the established design system · completion of the existing Settings placeholders. Placement is unchanged and still locked: top-right corner icon, never the dock.
 
 **[[Water]]'s preferences live here without moving — done in slice 4.1.** Water owns its goal and unit preference under `vita:v1:water:prefs`; Settings → Units reads and writes that same source, through the same `useWater().setUnit` call the Water goal screen makes, rather than creating a second one that can disagree with it ([[Open Questions]] #16, closed 2026-08-21). **No Water storage was migrated.**
 
 ### 2 — Tools
+
+**Tools left Settings' route tree in slice 4.2.** They now live at a top-level `/tools`, with the hub titled **Tools & Reference**; Settings keeps the entry row and remains the discovery path, but no longer owns the tools' identity. The founders' model, made literal in the routes: Settings owns preferences, Tools owns utilities, Reference owns reading material.
 
 **Already built in Sprint 3 — Sprint 4 organises and expands them, it does not build them from zero:**
 
@@ -60,7 +62,7 @@ A future **[[Research Library]] / Reference** layer, at concept level only: rese
 
 ### Discoverability
 
-**Settings → Tools & Reference** as the primary path. A future [[Dashboard]]/Home shortcut into Tools is a **saved product idea only, if product design supports it** — exact placement is deliberately undecided and **no Dashboard card is authorised**.
+**Settings → Tools & Reference** as the primary path — **implemented in slice 4.2**, at `/tools`. A future [[Dashboard]]/Home shortcut into Tools is a **saved product idea only, if product design supports it** — exact placement is deliberately undecided, **no Dashboard card is authorised**, and the founders deferred it again at Sprint 4 authorization.
 
 ## Future ideas
 

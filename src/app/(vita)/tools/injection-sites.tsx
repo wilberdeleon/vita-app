@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Card, Screen, ScreenHeader, SectionHeader, SegmentedTabs } from '../../../../components/ui';
-import { BodyMap } from '../../../../features/peptides/components/BodyMap';
-import { formatClockTime, formatLogDateLong } from '../../../../lib/daily';
+import { Card, Screen, ScreenHeader, SectionHeader, SegmentedTabs } from '../../../components/ui';
+import { BodyMap } from '../../../features/peptides/components/BodyMap';
+import { formatClockTime, formatLogDateLong } from '../../../lib/daily';
 import {
   REGION_DESCRIPTIONS,
   entriesAtSite,
@@ -11,9 +11,9 @@ import {
   usePeptideContext,
   type BodyView,
   type InjectionSiteKey,
-} from '../../../../lib/peptides';
-import { palette, spacing, typography } from '../../../../theme/tokens';
-import { useTheme } from '../../../../theme/ThemeProvider';
+} from '../../../lib/peptides';
+import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 
 /** How many recent records the screen lists before it stops. */
 const RECENT_LIMIT = 12;

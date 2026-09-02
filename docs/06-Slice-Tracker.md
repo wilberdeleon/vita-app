@@ -1860,8 +1860,8 @@ Technically careful, and it never tells the reader what 5-Amino-1MQ is actually 
 
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
-| 4.1 | Settings Foundation | Honest Settings, persistent Appearance, real Units destination, accurate version | 🟡 Implemented — awaiting founder device review |
-| 4.2 | Tools & Reference Hub + route architecture | Promote Tools out of `/settings/`, establish the hub | ⬜ Planned |
+| 4.1 | Settings Foundation | Honest Settings, persistent Appearance, real Units destination, accurate version | ✅ Approved |
+| 4.2 | Tools & Reference Hub + route architecture | Promote Tools out of `/settings/`, establish the hub | 🟡 Implemented — awaiting founder device review |
 | 4.3 | Existing Tools integration / polish | Peptide Calculator and Injection Sites discoverability and consistency | ⬜ Planned |
 | 4.4 | BMI Calculator | Height/weight in, BMI and range out, neutral visual scale, nothing persisted but the unit preference | ⬜ Planned |
 | 4.5 | Research Library foundation | Content model, routes, content tests. No unreviewed articles | ⬜ Planned |
@@ -1928,3 +1928,49 @@ None was rebuilt to preserve its row. Building a profile system, an auth session
 **A pre-existing test-harness warning is unchanged and unrelated.** Real renders emit `You are trying to access a property or method of the Jest environment after it has been torn down` from `react-native/jest/setup.js`. The untouched `WaterRoutes` suite emits it 991 times on its own; the new Settings suite emits it for the same reason — the same harness. Not introduced here, and not a failure.
 
 **⚠️ Not verified: on-device Light/Dark capture, and the relaunch scenarios on real hardware.** This was attempted and is blocked by the environment, not by the code: the simulator's Expo Go is **57.0.2**, SDK 54 requires **54.0.7**, and Expo CLI's offer to install the matching client cannot be answered without a TTY. The simulator was booted, deep-linked, screenshotted, and then shut down and Metro stopped, leaving the environment as found. **Every persistence and rendering claim above rests on route-level tests that drive the real handlers and mount the real screens** — but the four screenshots §29 asked for (Settings and Units, Light and Dark) were not captured, and the founder's device review should cover them along with the relaunch scenarios.
+
+### Slice 4.2 — Tools & Reference Hub + Route Architecture 🟡
+
+**Objective:** give Tools & Reference a real product identity and a clean route architecture — the destination stops being a Settings subfolder and becomes its own thing, with the two Sprint 3 tools moved under it unchanged.
+
+---
+
+**The route was the argument.** Slice 4.1 established that Settings shows only what is real; 4.2 addresses the other half of the founders' §22 concern — that a calculator is not a preference. The strongest available statement of that is the address itself, and `/settings/tools/peptide-calculator` said the opposite. A route is the plainest claim an app makes about what something *is*.
+
+| Before | After |
+|---|---|
+| `/settings/tools` | `/tools` |
+| `/settings/tools/peptide-calculator` | `/tools/peptide-calculator` |
+| `/settings/tools/injection-sites` | `/tools/injection-sites` |
+
+`src/app/(vita)/tools/` is a sibling of `settings/`, `water/` and `peptides/`, which is the repository's existing convention. **No `_layout.tsx` was added** — `(vita)/_layout.tsx` declares only `(tabs)` and every other route is implicit, exactly as Water, Peptides and Settings already are. **No route group** (`(tools)`): groups exist to share a layout without appearing in the URL, and here there is no layout to share and the segment is wanted in the URL.
+
+**Legacy routes: removed entirely**, not redirected or wrapped. VITA has no public deep links to preserve and is under active development, so a duplicate route tree would be two screens to maintain and one of them dead. The `settings/tools/` directory is gone, including the now-empty folder. Two tests pin the removal from both ends: Settings never pushes anything containing `/settings/tools`, and the hub never pushes anything containing `/settings`.
+
+**A dependency map was produced before anything moved** — nine references across six files, and **nothing outside Settings and the test suites referenced these routes at all**.
+
+**The fast logging flow was the real risk, and it was never exposed.** `SiteSelector`'s *View Body Model* affordance reads like navigation and is not: it calls `setMode('map')` and renders `BodyMap` inline in the sheet. That was a deliberate slice-3.8 decision — *the figure did not go away, and is not buried in Settings* — and it means the everyday Taken flow has no dependency on the Tools route at all. Nothing in Peptides needed updating; **zero Peptides source files changed.**
+
+**Grouped by TOOLS, not by domain.** The old header read `Peptides`, which was correct when every tool here was a peptide tool and becomes wrong the moment one is not — a BMI calculator is not a peptide tool and would force either a false grouping or a second header. The split the founders want visible is Tools versus Reference, so that is the split the headers carry. The icon-colour convention is now explicit: a tool takes the colour of the domain it serves (both current tools are peptide purple); a tool belonging to no domain takes the neutral treatment.
+
+**There is deliberately no REFERENCE section.** The screen title is the founder-approved destination identity; an empty heading underneath it, or a disabled "Research Library — Coming Soon" row, would be exactly the placeholder UI the founders have twice rejected. Slice 4.5 adds one header and one row, which is why the TOOLS header is carried now rather than added later. A test asserts `TOOLS` is present and `REFERENCE` is not, and four more assert the hub advertises no BMI, no scanner, no Research Library, and no "Coming Soon".
+
+**Visual pattern unchanged: `ListRow`.** Considered and rejected: a card grid, which with two items reads as a sparse dashboard rather than a list, and a `ToolRow` abstraction, which would wrap `ListRow` and add nothing — the planning audit's finding that one new component is the right number for this sprint still holds, and 4.2 adds zero.
+
+**Copy.** Peptide Calculator: *"Vial and reconstitution to U-100 units"* — what it converts, with no dose framing. Injection Sites: *"Body map, site reference, and your history"* — names all three things it offers while implying no recommendation. Both fit `ListRow`'s single-line subtitle; the longer phrasing sketched in the authorization would have truncated at this width. A test asserts neither row's copy contains recommendation language.
+
+**Settings keeps the entry and loses the misdirection.** The row is now titled **Tools & Reference** and pushes `/tools`. Its subtitle names the two tools that exist rather than the destination's full identity — *"Calculators and reference"* would advertise a Reference section that does not arrive until 4.5.
+
+**One judgement call worth flagging for device review.** Settings now carries a `TOOLS & REFERENCE` section header above a single row also titled *Tools & Reference*. The header is load-bearing — it is what separates Tools from PREFERENCES, and dropping it would let the row read as a preference, which is the thesis of this slice inverted — but the repetition is visible, and it is the founders' call whether it reads as clear or as redundant on device.
+
+---
+
+**Validation.** `npm test` — **1174/1174** pass across 44 suites (1153 → 1174: **21 added** in a new hub suite, one pre-existing hub assertion relocated into it) · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · `npx expo export --platform ios` — succeeds · `npx expo install --check` — reports only the `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2, unchanged · stale-reference sweep for `settings/tools` — clean apart from one explanatory comment and two negative test assertions · empty-directory sweep — clean.
+
+**Test coverage — `features/tools/__tests__/ToolsRoutes.test.tsx`, 21 tests.** The hub is titled for the destination rather than the route · it lists exactly `['Peptide Calculator', 'Injection Sites']` · it advertises no BMI, scanner, Research Library or "Coming Soon" · it renders no empty REFERENCE heading · the chevron-implies-a-destination invariant from 4.1 is enforced here too · every row has a title, subtitle and accessibility hint · both tools open at their canonical routes · neither the hub nor Settings pushes anything under `/settings` · back from hub and from each tool calls `router.back()` and pushes nothing. Both migrated tools are re-proven rather than assumed: the calculator still renders `Vial Amount (MG)` and `Reconstitution Volume (ML)`, still converts `20 mg / 2 mL` to `1 mg = 10 units`, and still offers **no vial unit toggle** (the 3.10A ruling, pinned across the move); Injection Sites still renders Front/Back, `RECENT SITES` and `SITE REFERENCE`, and still recommends nothing.
+
+**The relocated assertion.** `UnitConversion.test.tsx` carried a small `Tools destination` block asserting the hub opened the calculator. It moved into the new suite and was expanded — it was a Tools-destination concern sitting in a suite about dose arithmetic. Net coverage rose; nothing was dropped.
+
+**Boundary audit.** Changed: the three migrated route files (import depth only, contents otherwise untouched apart from the hub rewrite), `settings/index.tsx` (one row), and four test files (import paths and route assertions). **Zero diff against `87fbf02`** on nutrition, Fuel, Home, Journey, Atlas, Water, every `src/lib`, every `src/features` component including `SiteSelector`, `BodyMap` and `UnitConversion`, and both migrated tools' rendered output.
+
+**⚠️ Not verified: on-device Light/Dark capture, for the second slice running, and the cause is now fully diagnosed.** Two independent blockers, neither in the code. The simulator's Expo Go is **57.0.2** while SDK 54 requires **54.0.7**, and the Expo CLI's offer to install the matching client cannot be answered without a TTY (`CI=1` and piped input both refused). The dev-client route around that — `expo run:ios`, which needs no Expo Go — is blocked because **CocoaPods is not installed**, and installing it is a system-level change requiring elevated permissions rather than an engineering decision. `/ios` and `/android` are gitignored, so a prebuild would have been safe to attempt had the toolchain allowed it. **This is simulator-only:** the founders' own iPhones run a matching Expo Go, which is how slice 4.1 was reviewed and approved on device. The four screenshots §27 asked for were not captured and belong to that review.

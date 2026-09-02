@@ -6,11 +6,11 @@ import {
   Screen,
   ScreenHeader,
   SectionHeader,
-} from '../../../../components/ui';
-import { UnitConversion } from '../../../../features/peptides/components/UnitConversion';
-import { DEFAULT_UNITS_PER_ML, parseAmount, toMcg } from '../../../../lib/peptides';
-import { palette, spacing, typography } from '../../../../theme/tokens';
-import { useTheme } from '../../../../theme/ThemeProvider';
+} from '../../../components/ui';
+import { UnitConversion } from '../../../features/peptides/components/UnitConversion';
+import { DEFAULT_UNITS_PER_ML, parseAmount, toMcg } from '../../../lib/peptides';
+import { palette, spacing, typography } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
 
 /**
  * The peptide calculator, standing on its own.
