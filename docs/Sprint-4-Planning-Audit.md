@@ -7,7 +7,13 @@
 
 *Nothing in `src/` was modified to produce this document.*
 
-*Implementation status: §F (Settings scope) shipped in slice 4.1. §E's route recommendation — promoting Tools to a top-level `/tools` — was approved and shipped in slice 4.2, along with §D's one-screen two-section hub. §S.2, §S.3 and §S.4 are answered; §S.7 (Research Library vs Open Question #17) is still open and gates slice 4.5.*
+*Final disposition, 2026-09-01. **§F (Settings scope) shipped in slice 4.1.** **§E's route recommendation — promoting Tools to a top-level `/tools` — and §D's one-screen two-section hub shipped in slice 4.2.** Both are founder-approved on device, and the sprint then closed as **Sprint 4 — Settings + Tools Foundation**.*
+
+*The rest of this document describes work that is **deferred, not cancelled**: §G (BMI), §H (Food Scanner), §I (Research Library) and §J (Dashboard). The founders' reason is one this audit did not anticipate and would have agreed with — all four are presentation-heavy, and a new VITA visual / interaction language is being defined next, so building them now would mean designing them twice. §N's scope classification and §O's slice plan are superseded by that decision.*
+
+*Two rulings from §S are worth carrying forward verbatim. **§S.8/§S.9: no VITA Score exists or is authorised** — the scoring methodology is still undefined and deliberately so. **§S.7 is still open**: Open Question #17 continues to gate any Research Library content.*
+
+*One correction to this document's own §I.7 and §15, made at closeout: the "dose-range content requires founder authorisation plus review" framing used throughout is **withdrawn**. It described a gated future feature; the founders do not want the feature. VITA does not provide recommended dosages, dose ranges, or protocols, and doing so is not a product direction.*
 
 | | |
 |---|---|

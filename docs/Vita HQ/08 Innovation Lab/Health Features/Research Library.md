@@ -13,7 +13,13 @@ tags: [reference, research, education, peptides, safety-sensitive, sprint4]
 
 ## Status
 
-📋 Planned — the **Reference** half of **Sprint 4 — Settings + Tools & Reference** ([[Roadmap]]), named by the founders on 2026-09-01. **Concept level only.** No content is authored by that decision, and nothing here is approved to ship.
+📋 Planned — the **Reference** half of Sprint 4 (then titled *Settings + Tools & Reference*, [[Roadmap]]), named by the founders on 2026-09-01. **Concept level only.**
+
+**⏸️ Deferred at the Sprint 4 closeout, 2026-09-01 — deferred, not cancelled.** Sprint 4 closed as **Settings + Tools Foundation** after its two foundation slices, and this remains a valid product direction. The reason is sequencing, not doubt: this is presentation-heavy work, and the founders are defining a new VITA visual and interaction language next. Building it now would mean designing it twice. It resumes once that language exists — and lands into the `/tools` architecture slice 4.2 already established, where a new tool is a row and a route rather than a question about where it belongs.
+
+**The concept is preserved in full:** factual educational material on storage, handling, reconstitution basics, stability and general reference, and research/development/approval status. **It remains gated on [[Open Questions]] #17** independently of the visual-language deferral — that gate is about review capacity and content accuracy, and it did not move.
+
+Original note follows. No content is authored by that decision, and nothing here is approved to ship.
 
 ## Category
 
@@ -48,7 +54,7 @@ A reference layer reachable from **Settings → Tools & Reference**. Potential c
 
 ## ⚠️ Product boundary — binding
 
-**VITA does not casually provide "recommended dosage" or prescriptive protocols for unapproved or research compounds.** Dose-range or treatment-style content requires **explicit founder authorisation plus appropriate medical, legal and content review** — it is not a writing decision and not an engineering decision.
+**⚠️ Product boundary — binding (restated 2026-09-01, Sprint 4 closeout).** VITA does **not** provide recommended dosages, dose ranges, or treatment-style protocols — for research compounds or for approved medications. **This is not a gated future feature. It is not a product direction.** Earlier wording framed such content as available with founder authorisation plus medical and legal review; that framing is withdrawn, because it described a direction the founders do not want. What VITA does is unchanged: **it helps users understand, calculate, organise and track information they enter.** Factual reference material — storage, handling, reconstitution concepts, stability, and development/approval status — remains a valid direction, still subject to the review gate in [[Open Questions]] #17.
 
 The standing boundary, stated plainly:
 

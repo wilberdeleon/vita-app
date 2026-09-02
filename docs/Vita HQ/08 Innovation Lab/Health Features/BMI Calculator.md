@@ -13,7 +13,13 @@ tags: [tools, bmi, calculator, weight, height, reference]
 
 ## Status
 
-📋 Planned — named by the founders on 2026-09-01 as a planned Tool inside **Sprint 4 — Settings + Tools & Reference** ([[Roadmap]]). The concept is small and well understood; what is not decided is where it sits inside the Tools destination and how the result is presented without drifting into judgement.
+📋 Planned — named by the founders on 2026-09-01 as a planned Tool inside Sprint 4 (then titled *Settings + Tools & Reference*, [[Roadmap]]).
+
+**⏸️ Deferred at the Sprint 4 closeout, 2026-09-01 — deferred, not cancelled.** Sprint 4 closed as **Settings + Tools Foundation** after its two foundation slices, and this remains a valid product direction. The reason is sequencing, not doubt: this is presentation-heavy work, and the founders are defining a new VITA visual and interaction language next. Building it now would mean designing it twice. It resumes once that language exists — and lands into the `/tools` architecture slice 4.2 already established, where a new tool is a row and a route rather than a question about where it belongs.
+
+**No implementation details are assigned beyond that.** The presentation questions this note already raises — how the category and scale read without becoming a verdict — are exactly the ones the new visual language should answer first.
+
+Original note follows. The concept is small and well understood; what is not decided is where it sits inside the Tools destination and how the result is presented without drifting into judgement.
 
 ## Category
 

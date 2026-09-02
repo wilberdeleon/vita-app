@@ -12,7 +12,11 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
-**Sprint 4 — Settings + Tools & Reference** · Status: 🟡 **In progress** — authorized 2026-09-01 against its approved planning audit. Slice 4.1 — Settings Foundation is **founder-approved on device**; slice 4.2 — Tools & Reference Hub + Route Architecture is implemented and awaiting founder device review.
+**Sprint 4 — Settings + Tools Foundation** · Status: ✅ **COMPLETE** — opened and closed 2026-09-01. Both slices are founder-approved on device: 4.1 Settings Foundation and 4.2 Tools & Reference Hub + Route Architecture.
+
+**Complete means the founder-approved engineering foundation is done — not that every Tool is built.** BMI, the Research Library, Food Scanner evolution and Dashboard discoverability are **deferred, not cancelled**: they are presentation-heavy, and the founders are defining a new VITA visual / interaction language next. Building them now would mean designing them twice. Detail in `docs/06-Slice-Tracker.md` → Sprint 4 Closeout.
+
+**Next: a roadmap-alignment session**, not implementation. A founder-directed identity / interaction sprint is pending formal roadmap alignment; that session is authoritative for sprint numbering and ordering, and no redesign work begins before it.
 
 **Sprint 3 — Water + Peptides** · Status: ✅ **COMPLETE** — founder-reviewed, approved, and merged into `main` on 2026-09-01 (merge commit `2bac43b`, from branch `sprint-3-water-peptides`)
 
@@ -30,7 +34,7 @@ Sprint 3's planning and architecture audit is founder-approved and all three ent
 
 **Sprint 4 — Settings + Tools & Reference is the current sprint**, per the founder reorder of 2026-09-01 recorded below, on branch `sprint-4-settings-tools-reference` cut from the merged `main`. It was authorized on 2026-09-01 against its approved planning audit. Of its candidate Tools, **BMI is committed**, the **Research Library is committed as architecture only**, the **Food / Product Scanner's scoring is not authorized**, and the **Dashboard shortcut is deferred**.
 
-**Sprint 4 is open.** Its planning and architecture audit was founder-reviewed and approved on 2026-09-01, slice 4.1 — Settings Foundation is founder-approved, and slice 4.2 — Tools & Reference Hub + Route Architecture is implemented and awaiting founder device review. **Tools now live at a top-level `/tools` route rather than under Settings** — Settings remains the discovery entry point but no longer owns the tools' identity. Slice-by-slice detail, and the founder rulings recorded at approval, are in `docs/06-Slice-Tracker.md` → Sprint 4.
+**Sprint 4 is closed.** Its planning and architecture audit was founder-reviewed and approved on 2026-09-01, both slices are founder-approved and the sprint closed as **Sprint 4 — Settings + Tools Foundation**. **Tools now live at a top-level `/tools` route rather than under Settings** — Settings remains the discovery entry point but no longer owns the tools' identity. The canonical routes are `/tools`, `/tools/peptide-calculator` and `/tools/injection-sites`; the old `/settings/tools/…` tree was removed, not redirected, and is not restored. Slice-by-slice detail, and the founder rulings recorded at approval, are in `docs/06-Slice-Tracker.md` → Sprint 4.
 
 The audit itself — existing Settings and Tools inventory, recommended information architecture, a BMI / Food Scanner / Research Library assessment, a ranked risk register, and the proposed 4.x slice sequence — is preserved as authored in `docs/Sprint-4-Planning-Audit.md`. Two of its recommendations the founders acted on directly: **the Food Scanner's scoring left the sprint** (no VITA Score is to be invented without an approved methodology), and **the Research Library ships as architecture without content** while Open Question #17 stays open. **Slice 4.6 is explicitly not committed** and is reassessed after 4.5.
 
@@ -56,7 +60,7 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
 | 2 — Fuel | Build the smartest nutrition experience possible | ✅ Complete |
 | **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ✅ Complete |
-| **4 — Settings + Tools & Reference** | **Settings architecture, a coherent Tools destination, and the reference layer** | **🟡 Current** |
+| **4 — Settings + Tools Foundation** | Settings architecture and a top-level Tools destination — the foundation later Tools are built into | ✅ Complete |
 | 5 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
 | 6 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
 | 7 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |
@@ -278,7 +282,7 @@ A **Research Library / Reference** layer, at concept level only:
 - Stability and general reference
 - Research / development / approval-status reference
 
-**Product boundary — binding.** VITA does **not** casually provide "recommended dosage" or prescriptive protocols for unapproved or research compounds. Dose-range or treatment-style content requires explicit founder authorization plus appropriate medical, legal, and content review. The standing boundary: **VITA helps users understand, calculate, organize, and track information they enter; it does not silently become a treatment recommendation engine.** This extends the Sprint 3 safety rules rather than relaxing them — see `docs/07-Audit-Log.md` for the Sprint 3 release gate on peptide reference content, and Vita HQ `00 HQ/Open Questions.md` #17.
+**⚠️ Product boundary — binding (restated 2026-09-01, Sprint 4 closeout).** VITA does **not** provide recommended dosages, dose ranges, or treatment-style protocols — for research compounds or for approved medications. **This is not a gated future feature. It is not a product direction.** Earlier wording framed such content as available with founder authorisation plus medical and legal review; that framing is withdrawn, because it described a direction the founders do not want. What VITA does is unchanged: **it helps users understand, calculate, organise and track information they enter.** Factual reference material — storage, handling, reconstitution concepts, stability, and development/approval status — remains a valid direction, still subject to the review gate in Vita HQ `00 HQ/Open Questions.md` #17. The Sprint 3 release gate on existing peptide reference content is unchanged — see `docs/07-Audit-Log.md`.
 
 ## Discoverability
 

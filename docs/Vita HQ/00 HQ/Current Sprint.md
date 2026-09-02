@@ -23,7 +23,7 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Where it stands (2026-09-01): done.** Every slice, 3.1 through 3.10A, is founder-approved, and the sprint merged into `main` as `2bac43b` — an explicit merge that keeps the whole slice history. **Next is Sprint 4 — Settings + Tools & Reference**, whose branch is cut and empty and which needs its own authorization before anything begins. One release gate stays open and is not an engineering blocker: the 96 peptide reference entries need qualified medical, content and legal review before public release. Closure waits on founder review of the 3.10 audit and an explicit closeout approval, per the sprint workflow.
 
-## Sprint 4 — Settings + Tools & Reference — 🟡 In progress
+## Sprint 4 — Settings + Tools Foundation — ✅ Complete (opened and closed 2026-09-01)
 
 The branch `sprint-4-settings-tools-reference` is cut from the merged `main` and holds **documentation only**. A planning and architecture audit is complete and sits in the repo at `docs/Sprint-4-Planning-Audit.md`, marked **DRAFT / PENDING FOUNDER APPROVAL** — it audits the existing Settings and Tools surfaces, recommends an information architecture that keeps Settings from becoming a junk drawer, proposes an eight-slice 4.x sequence, and lists twelve founder decisions that gate implementation.
 
@@ -33,9 +33,13 @@ Its headline recommendation: Sprint 4 is **Settings cleanup + a real Tools & Ref
 
 **Slice 4.1 — Settings Foundation is founder-approved on device.** Settings now shows only rows with real functionality behind them: Profile, Notifications, Privacy & Data and Sign Out were **removed rather than filled in**, because none had an implementation and building an auth session or a notifications surface to justify a row would let a screen's layout drive the roadmap. Appearance persists. Units is a real destination that writes through Water's existing preference rather than duplicating or migrating it ([[Open Questions]] #16, honoured literally). The version string is read from configuration instead of the hardcoded `0.1.0 (Sprint 0)` it had carried for three sprints.
 
-**Slice 4.2 — Tools & Reference Hub + Route Architecture is implemented and awaiting founder device review.** The [[Peptide Dose Calculator|Peptide Calculator]] and [[Injection Site Tracking|Injection Sites]] moved from `/settings/tools/…` to a top-level `/tools/…`, because a tool is something you use once and walk away from and a route is the plainest statement an app makes about what something is. **Settings remains the way in and only that** — it owns discovery, not identity. The old routes were removed rather than redirected; VITA has no public deep links to preserve. The hub shows the two real tools and **no Reference section at all** — an empty heading, or a disabled "Research Library — Coming Soon" row, is exactly the placeholder UI the founders have rejected; [[Research Library]] gets its section in slice 4.5 when there is something real inside it.
+**Slice 4.2 — Tools & Reference Hub + Route Architecture is founder-approved on device.** The [[Peptide Dose Calculator|Peptide Calculator]] and [[Injection Site Tracking|Injection Sites]] moved from `/settings/tools/…` to a top-level `/tools/…`, because a tool is something you use once and walk away from and a route is the plainest statement an app makes about what something is. **Settings remains the way in and only that** — it owns discovery, not identity. The old routes were removed rather than redirected; VITA has no public deep links to preserve. The hub shows the two real tools and **no Reference section at all** — an empty heading, or a disabled "Research Library — Coming Soon" row, is exactly the placeholder UI the founders have rejected; [[Research Library]] gets its section in slice 4.5 when there is something real inside it.
 
 The everyday peptide logging flow was never at risk: *View Body Model* in the log sheet is an inline toggle, not navigation, so **no Peptides source file changed**.
+
+**The sprint closed here by founder decision, and was redefined as _Settings + Tools Foundation_.** This is an intentional endpoint. Both approved slices are foundation — persistence, information architecture, route identity — and none of it depends on how VITA looks. Everything still under the original umbrella is presentation-heavy: a [[BMI Calculator|BMI]] result and its scale, a [[Research Library]] reading experience, a product-evaluation surface, a [[Dashboard]] affordance. With a new VITA visual and interaction language about to be defined, building those now would mean designing them twice.
+
+**Deferred, not cancelled:** [[BMI Calculator]] · [[Food & Product Scanner]] evolution (the Sprint 2 barcode scanner in [[Fuel]] is untouched and still works; **no VITA Score exists or is authorised**) · [[Research Library]] · Dashboard Tools discoverability.
 
 Slice detail, validation totals, and the on-device verification gap are in the repo's `docs/06-Slice-Tracker.md` → Sprint 4.
 
@@ -261,7 +265,9 @@ One consequence I had to catch: with a single daily peptide, Active is now empty
 
 **Open at the time:** peptide catalog sourcing and the medical/legal boundary ([[Open Questions]] #17 — **still open**) · who owns the hydration goal preference ([[Open Questions]] #16 — **closed 2026-08-21**, Water owns it and [[Settings]] reads the same source) · Peptides sharing purple with [[Atlas]] ([[Color System]]).
 
-## Sprint 4 — Settings + Tools & Reference — ⬜ Next, not opened
+## Sprint 4 — Settings + Tools & Reference — pre-opening plan *(historical, superseded)*
+
+> **Superseded 2026-09-01.** This is the forward-look written during Sprint 3, before Sprint 4 opened. It is kept as the record of what was expected, not as a description of what happened — the sprint opened, ran two slices, and closed as **Sprint 4 — Settings + Tools Foundation**; see the current section at the top of this page. Two things below are no longer true: slices *were* defined and approved, and the product boundary quoted here has been **restated more strictly** (see [[Settings]] or [[Roadmap]]) — dose-range and protocol content is not a gated future feature, it is not a product direction.
 
 **Roadmap reorder, founder decision 2026-09-01.** [[Settings]] + Tools & Reference moves ahead of [[My Journey|Journey]] and becomes Sprint 4; Journey / Weight becomes Sprint 5, Journey / Photos Sprint 6, and [[Atlas]] Sprint 7. **Reason:** Journey / Weight is expected to be one of VITA's more complex feature areas, so the founders want the utility/settings architecture organized, the existing Tools built out coherently, and the reference/navigation structure established first. **Journey is deferred to Sprint 5, not cancelled.** See [[Roadmap]] and [[Decision Log]].
 

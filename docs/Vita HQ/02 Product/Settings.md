@@ -6,7 +6,7 @@
 
 ---
 
-## Current state (verified in repo, Sprint 4 slice 4.1 — real, awaiting founder device review)
+## Current state (verified in repo — Sprint 4 slices 4.1 and 4.2, both founder-approved)
 
 `src/app/(vita)/settings/index.tsx`, opened from the header gear (not the dock). Built as a shell in Slice 0.9; made real in **Sprint 4 slice 4.1**.
 
@@ -30,7 +30,7 @@ Settings' placement is **permanently locked**: top-right corner icon, present on
 
 **Why it moved.** Journey / Weight is expected to be one of VITA's more complex feature areas. Organising the utility/settings architecture first, building out the Tools that already exist, and establishing the reference/navigation structure means Journey is approached with cleaner app architecture and a more focused scope. **Journey is deferred to Sprint 5, not cancelled.**
 
-**Sprint 4 is open.** Its planning and architecture audit was founder-reviewed and approved on 2026-09-01 and an eight-slice sequence authorized; **slice 4.1 — Settings Foundation is implemented and awaiting founder device review.** Two scope rulings bind the rest of this page: the [[Food & Product Scanner]]'s **scoring is not authorized** (no VITA Score without an approved methodology), and the [[Research Library]] ships as **architecture without content** while [[Open Questions]] #17 stays open. Slice detail lives in the repo's `docs/06-Slice-Tracker.md` → Sprint 4.
+**Sprint 4 closed as _Settings + Tools Foundation_ on 2026-09-01**, after two founder-approved slices: 4.1 Settings Foundation and 4.2 Tools & Reference Hub + Route Architecture. **Much of the rest of this page is now forward-looking rather than current** — [[BMI Calculator|BMI]], [[Research Library]], [[Food & Product Scanner]] evolution and Dashboard discoverability are **deferred, not cancelled**, until the new VITA visual / interaction language exists, since all four are presentation-heavy and would otherwise be designed twice. Two rulings still stand: **no VITA Score is authorised**, and the Research Library remains gated on [[Open Questions]] #17. Slice detail lives in the repo's `docs/06-Slice-Tracker.md` → Sprint 4.
 
 ### 1 — Settings
 
@@ -58,7 +58,7 @@ Core Settings screen structure · preferences and settings organisation (profile
 
 A future **[[Research Library]] / Reference** layer, at concept level only: research library structure · peptide and compound reference material · storage and handling · reconstitution basics · stability and general reference · research/development/approval-status reference.
 
-**⚠️ Product boundary — binding.** VITA does **not** casually provide "recommended dosage" or prescriptive protocols for unapproved or research compounds. Dose-range or treatment-style content requires explicit founder authorisation plus appropriate medical, legal and content review. The standing boundary: **VITA helps users understand, calculate, organise and track information they enter; it does not silently become a treatment recommendation engine.** This extends the Sprint 3 safety rules rather than relaxing them — [[Peptides]], [[Open Questions]] #17, and the Sprint 3 release gate on peptide reference content.
+**⚠️ Product boundary — binding (restated 2026-09-01, Sprint 4 closeout).** VITA does **not** provide recommended dosages, dose ranges, or treatment-style protocols — for research compounds or for approved medications. **This is not a gated future feature. It is not a product direction.** Earlier wording framed such content as available with founder authorisation plus medical and legal review; that framing is withdrawn, because it described a direction the founders do not want. What VITA does is unchanged: **it helps users understand, calculate, organise and track information they enter.** Factual reference material — storage, handling, reconstitution concepts, stability, and development/approval status — remains a valid direction, still subject to the review gate in [[Open Questions]] #17.
 
 ### Discoverability
 

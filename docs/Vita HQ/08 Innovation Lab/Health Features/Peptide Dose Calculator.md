@@ -15,6 +15,9 @@ tags: [peptides, calculator, dose, reconstitution, safety-sensitive, units]
 
 📋 Planned — named directly in founder direction 2026-08-18 as a proposed slice of **Sprint 3 — Water + Peptides** ([[Roadmap]]), proposed slice **3.7**. *Sprint 5 when recorded; moved forward by the founder roadmap reorder of 2026-08-21, which put Water + Peptides ahead of Journey.*
 
+**Route, since Sprint 4 slice 4.2:** `/tools/peptide-calculator`, reached via **Settings → Tools & Reference**. It was `/settings/tools/peptide-calculator` when built in Sprint 3; Tools were promoted out of Settings' route tree because a calculator is not a preference. Behaviour is unchanged by that move — the files are byte-identical apart from import depth.
+
+
 **Built in Sprint 3 (slice 3.6)** and carried into **Sprint 4 — Settings + Tools & Reference**, which organises and expands the Tools experience around it rather than building it again. The lifecycle status above moves to ✅ Released when the founders close Sprint 3.
 
 ## Category

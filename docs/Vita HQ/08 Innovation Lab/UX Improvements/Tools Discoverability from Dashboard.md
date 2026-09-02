@@ -13,7 +13,13 @@ tags: [navigation, discoverability, tools, dashboard, sprint4]
 
 ## Status
 
-📝 Defined — recorded by the founders on 2026-09-01 as a **saved product idea** alongside the Sprint 4 reorder. **Deliberately not decided.** Exact placement is open, and **no [[Dashboard]] card is authorised.**
+📝 Defined — recorded by the founders on 2026-09-01 as a **saved product idea** alongside the Sprint 4 reorder. **Deliberately not decided.**
+
+**⏸️ Deferred at the Sprint 4 closeout, 2026-09-01 — deferred, not cancelled.** Sprint 4 closed as **Settings + Tools Foundation** after its two foundation slices, and this remains a valid product direction. The reason is sequencing, not doubt: this is presentation-heavy work, and the founders are defining a new VITA visual and interaction language next. Building it now would mean designing it twice. It resumes once that language exists — and lands into the `/tools` architecture slice 4.2 already established, where a new tool is a row and a route rather than a question about where it belongs.
+
+**Its own precondition is now met**, which is the one thing that changed: this note said *build the Tools destination first, then evaluate whether discoverability is actually a problem*. Slice 4.2 built it. The evaluation still has not happened, and **no [[Dashboard]] card is authorised.**
+
+Original note follows. Exact placement is open, and **no [[Dashboard]] card is authorised.**
 
 ## Category
 
