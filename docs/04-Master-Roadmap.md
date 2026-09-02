@@ -28,6 +28,8 @@ Sprint 3's planning and architecture audit is founder-approved and all three ent
 
 **The next sprint is Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01 recorded below. Its branch `sprint-4-settings-tools-reference` is cut from the merged `main`. **No Sprint 4 work has started**, and none starts until the founders separately authorize the sprint. Its candidate Tools — a BMI Calculator, a Food / Product Scanner, a Research Library, and Dashboard discoverability for Tools — all remain Innovation Lab proposals, not committed slices.
 
+**Sprint 4 planning is underway and is not approved.** A full planning and architecture audit — existing Settings and Tools inventory, recommended information architecture, a BMI / Food Scanner / Research Library assessment, a ranked risk register, and a proposed 4.x slice sequence — is in `docs/Sprint-4-Planning-Audit.md`, marked **DRAFT / PENDING FOUNDER APPROVAL**. It contains twelve decisions the founders must rule on before slice 4.1 can open, and it modified no application source.
+
 ---
 
 # Development Philosophy
@@ -49,7 +51,7 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | 1 — Dashboard / Home | Build the Home experience that defines the quality standard for the app | ✅ Complete |
 | — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
 | 2 — Fuel | Build the smartest nutrition experience possible | ✅ Complete |
-| **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | **🟡 Current** |
+| **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ✅ Complete |
 | **4 — Settings + Tools & Reference** | Settings architecture, a coherent Tools destination, and the reference layer | ⬜ **Next** |
 | 5 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
 | 6 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |

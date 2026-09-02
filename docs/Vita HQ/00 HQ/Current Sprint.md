@@ -23,6 +23,14 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Where it stands (2026-09-01): done.** Every slice, 3.1 through 3.10A, is founder-approved, and the sprint merged into `main` as `2bac43b` — an explicit merge that keeps the whole slice history. **Next is Sprint 4 — Settings + Tools & Reference**, whose branch is cut and empty and which needs its own authorization before anything begins. One release gate stays open and is not an engineering blocker: the 96 peptide reference entries need qualified medical, content and legal review before public release. Closure waits on founder review of the 3.10 audit and an explicit closeout approval, per the sprint workflow.
 
+## Sprint 4 — Settings + Tools & Reference — 🟡 Planning, not authorized
+
+The branch `sprint-4-settings-tools-reference` is cut from the merged `main` and holds **documentation only**. A planning and architecture audit is complete and sits in the repo at `docs/Sprint-4-Planning-Audit.md`, marked **DRAFT / PENDING FOUNDER APPROVAL** — it audits the existing Settings and Tools surfaces, recommends an information architecture that keeps Settings from becoming a junk drawer, proposes an eight-slice 4.x sequence, and lists twelve founder decisions that gate implementation.
+
+Its headline recommendation: Sprint 4 is **Settings cleanup + a real Tools & Reference destination + BMI**. The Food Scanner's *scoring* and most Research Library *content* are recommended out of the sprint — the barcode scanner itself already shipped in Sprint 2, and the [[Research Library]] remains blocked on [[Open Questions]] #17.
+
+**No slice is approved and no implementation has started.**
+
 **Founder-authorized 2026-08-22** against the approved Sprint 3 Planning & Architecture Audit. Branch: `sprint-3-water-peptides`, cut from `main`. All three entry conditions met — device QA accepted, Sprint 2 merged, branch cut.
 
 **Objective:** turn [[Water]] and [[Peptides]] from the Sprint 0 placeholder logs they still are into real, persisted, date-aware features at the quality bar Sprint 2 set for [[Fuel]]. Both are genuinely placeholders today: neither saves anything, and both "Add" buttons discard what the user entered.
