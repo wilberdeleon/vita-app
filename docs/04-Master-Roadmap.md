@@ -12,21 +12,21 @@ It intentionally avoids implementation details. Those belong in the Slice Tracke
 
 # Current Stage
 
-**Sprint 3 — Water + Peptides** · Status: ✅ **COMPLETE (engineering)** — closeout resolutions built and pending founder review (opened 2026-08-22, branch `sprint-3-water-peptides`, not merged)
+**Sprint 3 — Water + Peptides** · Status: ✅ **COMPLETE** — founder-reviewed, approved, and merged into `main` on 2026-09-01 (merge commit `2bac43b`, from branch `sprint-3-water-peptides`)
 
-Objective: turn Water and Peptides from the Sprint 0 placeholder logs they still are into real, persisted, date-aware features at the quality bar Sprint 2 set for Fuel.
+Objective: turn Water and Peptides from the Sprint 0 placeholder logs they were into real, persisted, date-aware features at the quality bar Sprint 2 set for Fuel. Delivered.
 
 Everything before it is complete: Sprint 0, Sprint 0.1, Sprint 1, the App-Wide Visual Consistency Pass, and **Sprint 2 — Fuel** (audited and merged into `main` 2026-08-21, merge commit `44eeae6`, closed by `473cb59`).
 
-Sprint 3's planning and architecture audit is founder-approved and all three entry conditions were met. **Every implementation slice, 3.1 through 3.9B, is founder-approved on device.** Slice 3.10 — the closeout audit — fixed nine defects and referred four findings back to the founders; slice 3.10A implements all four rulings and is the one slice still awaiting review. Slice-by-slice detail is in `docs/06-Slice-Tracker.md`; findings are in `docs/07-Audit-Log.md`.
+Sprint 3's planning and architecture audit is founder-approved and all three entry conditions were met. **Every implementation slice, 3.1 through 3.9B, is founder-approved on device.** Slice 3.10 — the closeout audit — fixed nine defects and referred four findings back to the founders; slice 3.10A implemented all four rulings. **Every slice is founder-approved.** Slice-by-slice detail is in `docs/06-Slice-Tracker.md`; findings are in `docs/07-Audit-Log.md`.
 
 **Sprint 3 is complete from an engineering standpoint.** No engineering blockers remain: 1093 tests pass, typecheck and no-unused are clean, the iOS export succeeds, and the diff boundary held on nutrition, Fuel, Home, Atlas and Journey throughout.
 
 **That is not the same as being ready to ship.** One **release gate** is open and is deliberately not counted as an engineering blocker: the 96 peptide reference entries require qualified medical, content and legal review before public release. The automated tests enforce structure and internal consistency — unique ids and aliases, no shared prose between similar compounds, no dosing or protocol language, every time-sensitive development stage dated and sourced — and **none of that is a check on whether a sentence is medically accurate.**
 
-**The branch is not merged, and closure still needs an explicit founder sign-off** on slice 3.10A per the sprint workflow.
+**Sprint 3 is merged and closed.** Founder-approved 2026-09-01 and merged into `main` as `2bac43b`, an explicit `--no-ff` merge preserving the full slice history.
 
-**The next sprint is Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01 recorded below. **No Sprint 4 work has started**, and none starts until the founders close Sprint 3 and separately authorize Sprint 4. Its candidate Tools — a BMI Calculator, a Food / Product Scanner, a Research Library, and Dashboard discoverability for Tools — all remain Innovation Lab proposals, not committed slices.
+**The next sprint is Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01 recorded below. Its branch `sprint-4-settings-tools-reference` is cut from the merged `main`. **No Sprint 4 work has started**, and none starts until the founders separately authorize the sprint. Its candidate Tools — a BMI Calculator, a Food / Product Scanner, a Research Library, and Dashboard discoverability for Tools — all remain Innovation Lab proposals, not committed slices.
 
 ---
 
@@ -223,7 +223,7 @@ Standalone proposals for the calculator and site tracking live in the Vita HQ In
 
 **Not a provider-integration sprint.** FatSecret and restaurant provider selection stay deferred to launch readiness — see "Launch readiness follow-ups" at the end of this document. Nothing from that list moves into Sprint 3.
 
-Status: 🟡 Feature-complete — **final audit / closeout**. Opened 2026-08-22 on branch `sprint-3-water-peptides`; all implementation slices are built and slice 3.10 (closeout audit) is built and pending founder review. Tracked in `docs/06-Slice-Tracker.md`. **Not merged and not closed.**
+Status: ✅ **Complete and merged.** Opened 2026-08-22 on branch `sprint-3-water-peptides`, closed out by slices 3.10 and 3.10A, and merged into `main` on 2026-09-01 as `2bac43b`. Tracked in `docs/06-Slice-Tracker.md`. One release gate stays open and is not an engineering blocker: qualified medical, content and legal review of the 96 peptide reference entries.
 
 ---
 
@@ -373,7 +373,7 @@ Status: ⬜ Planned
 
 | Sprint | Was (2026-08-21) | Now (2026-09-01) |
 |---|---|---|
-| 3 | Water + Peptides | Water + Peptides — unchanged (current, in closeout) |
+| 3 | Water + Peptides | Water + Peptides — unchanged (complete, merged 2026-09-01) |
 | 4 | Journey / Weight | **Settings + Tools & Reference** (was Sprint 7, and expanded) |
 | 5 | Journey / Photos | **Journey / Weight** (was Sprint 4) |
 | 6 | Atlas | **Journey / Photos** (was Sprint 5) |

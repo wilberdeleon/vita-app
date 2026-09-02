@@ -18,9 +18,9 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 
 ## Current stage
 
-**Sprint 3 — Water + Peptides is 🟡 feature-complete and in final audit / closeout** (opened 2026-08-22, branch `sprint-3-water-peptides`). All implementation slices are built; slice 3.10, the closeout audit, is built and pending founder review. **Sprint 3 is not merged and not closed.** Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), the App-Wide Visual Consistency Pass (2026-08-16), and Sprint 2 — Fuel (merged to `main` 2026-08-21). See [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what shipped in each.
+**Sprint 3 — Water + Peptides is ✅ complete and merged** (opened 2026-08-22 on branch `sprint-3-water-peptides`, closed out by slices 3.10 and 3.10A, merged into `main` 2026-09-01 as `2bac43b`). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), the App-Wide Visual Consistency Pass (2026-08-16), and Sprint 2 — Fuel (merged to `main` 2026-08-21). See [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what shipped in each.
 
-**Next: Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01. **No Sprint 4 work has started**, and none starts until the founders close Sprint 3 and separately authorize Sprint 4.
+**Next: Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01. Its branch `sprint-4-settings-tools-reference` is cut from the merged `main`. **No Sprint 4 work has started**, and none starts until the founders separately authorize the sprint.
 
 *The prior sequencing warning here — that Fuel and Journey were swapped in build order but not renumbered — is resolved. The 2026-08-17 restructure renumbered them properly; the 2026-08-21 reorder moved Water + Peptides ahead of Journey; the 2026-09-01 reorder then moved Settings + Tools & Reference ahead of Journey too.*
 
@@ -35,7 +35,7 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 | 1 — [[Dashboard]] / Home | Build the Home experience that defines the quality standard for the app | ✅ Complete |
 | — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
 | 2 — [[Fuel]] | Build the smartest nutrition experience possible | ✅ Complete |
-| **3 — [[Water]] + [[Peptides]]** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | **🟡 Current — final closeout** |
+| 3 — [[Water]] + [[Peptides]] | Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure | ✅ Complete |
 | **4 — [[Settings]] + Tools & Reference** | Settings architecture, a coherent Tools destination, and the reference layer | ⬜ **Next** |
 | 5 — [[My Journey\|Journey]] / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
 | 6 — [[My Journey\|Journey]] / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
@@ -54,7 +54,7 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 
 | Sprint | Was (2026-08-21) | Now (2026-09-01) |
 |---|---|---|
-| 3 | [[Water]] + [[Peptides]] | Water + Peptides — unchanged (current, in closeout) |
+| 3 | [[Water]] + [[Peptides]] | Water + Peptides — unchanged (complete, merged 2026-09-01) |
 | 4 | Journey / Weight | **[[Settings]] + Tools & Reference** (was Sprint 7, and broadened) |
 | 5 | Journey / Photos | **Journey / Weight** (was Sprint 4) |
 | 6 | [[Atlas]] | **Journey / Photos** (was Sprint 5) |
@@ -170,11 +170,11 @@ Design direction: [[Design Bible]] → "Density and restraint". **Contextual foo
 
 *Founder-stated direction recorded ahead of time. The slice is not yet opened, scoped, or approved — that happens under the normal slice workflow ([[Claude Workflow]]) when the preceding slices complete.*
 
-## Sprint 3 — Water + Peptides 🟡 Current — final closeout
+## Sprint 3 — Water + Peptides ✅ Complete
 
 *Moved here by **founder decision 2026-08-21** — this was Sprint 5 under the 2026-08-17 restructure. Nothing in its scope changed; only its position. Scope below is **founder direction recorded 2026-08-18**, preserved in full, with the slice plan expanded 2026-08-21 and approved 2026-08-22.*
 
-**Status: feature-complete, final audit / closeout underway.** All implementation slices are built; slice 3.10 (closeout audit) is built and pending founder review. **Sprint 3 is not merged and not closed** — closure waits on founder review of that audit and an explicit closeout approval. Live detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md`.
+**Status: complete and merged.** Every slice is founder-approved; slices 3.10 and 3.10A closed the sprint out, and it merged into `main` on 2026-09-01 as `2bac43b`. One release gate stays open and is not an engineering blocker: qualified medical, content and legal review of the 96 peptide reference entries. Live detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md`.
 
 **Objective:** build out VITA's daily health-tracking infrastructure beyond food — bring both existing logs to real, persisted functionality. **Deliverable:** [[Water]] and [[Peptides]] as genuinely functional health-tracking features rather than the visual mocks they are today, feeding the compact Hydration and Peptides modules on the redesigned [[Fuel]] screen.
 
@@ -388,7 +388,7 @@ Updated against the current sprint set (2026-08-17 restructure, reordered 2026-0
 
 ## Current priority
 
-**Closing Sprint 3 — Water + Peptides.** The sprint is feature-complete and its closeout audit is built and awaiting founder review; nothing else opens until the founders close it. **Sprint 4 — Settings + Tools & Reference is next**, and requires its own founder authorization before any implementation begins. Strictly sequential, one sprint at a time, consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level.
+**Opening Sprint 4 — Settings + Tools & Reference.** Sprint 3 is complete and merged into `main` (`2bac43b`, 2026-09-01). Sprint 4's branch is cut and empty; the sprint **requires its own founder authorization before any planning or implementation begins**. Strictly sequential, one sprint at a time, consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level.
 
 ## Remaining unscheduled ideas
 

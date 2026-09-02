@@ -727,7 +727,7 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 
 ---
 
-## Sprint 3 — Water + Peptides — ✅ COMPLETE (engineering)
+## Sprint 3 — Water + Peptides — ✅ COMPLETE (merged to `main` 2026-09-01, `2bac43b`)
 
 **Opened 2026-08-22.** Branch `sprint-3-water-peptides`, cut from `main` at `4ab32c5`. Founder-authorized against the approved Sprint 3 Planning & Architecture Audit; all three entry conditions met (device QA accepted · Sprint 2 merged · branch cut). Scope and the preserved Water/Peptide direction live in `docs/04-Master-Roadmap.md` → Sprint 3.
 
@@ -752,9 +752,9 @@ Audited the integrated system as it exists at `1f9b172`, not the previous PASS r
 | 3.9A | Routine UX Simplification + Interactive Schedule + Catalog Expansion | MG-only vial, Preferred Unit removed, interactive week strip, 96-entry catalog, punctuation-insensitive search | ✅ Approved |
 | 3.9B | Daily Peptide UX + Navigation Corrections | Routine Amount, two-tap Taken, Monday–Sunday week, reminder config, PT-141 display fix | ✅ Approved |
 | 3.10 | Sprint 3 Audit + Closeout | Integrated audit, edge cases, device QA, doc reconciliation | ✅ Approved |
-| 3.10A | Final Audit Resolutions + Closeout | Dead dose helpers removed, MG-only vial everywhere, VIAL/ROUTINE/NOTES hierarchy, Today/Active deduplication | 🟡 Built — pending founder review |
+| 3.10A | Final Audit Resolutions + Closeout | Dead dose helpers removed, MG-only vial everywhere, VIAL/ROUTINE/NOTES hierarchy, Today/Active deduplication | ✅ Approved |
 
-**Statuses reconciled at closeout (slice 3.10A).** The table had drifted: 3.6, 3.7 and 3.8 still read ⬜ Planned although all three shipped, and 3.8A–3.8C and 3.9A still read *pending founder review* after the founders had approved them on device — 3.8C explicitly ("Slice 3.8 is now complete and locked", slice 3.9 authorization) and 3.9A by way of 3.9B, which supersedes it and is approved. Every Sprint 3 slice through 3.10 is now marked to match what the founders actually said. **3.10A is the one slice still awaiting review.**
+**Statuses reconciled at closeout (slice 3.10A).** The table had drifted: 3.6, 3.7 and 3.8 still read ⬜ Planned although all three shipped, and 3.8A–3.8C and 3.9A still read *pending founder review* after the founders had approved them on device — 3.8C explicitly ("Slice 3.8 is now complete and locked", slice 3.9 authorization) and 3.9A by way of 3.9B, which supersedes it and is approved. Every Sprint 3 slice through 3.10 is now marked to match what the founders actually said. **Every Sprint 3 slice is now founder-approved, and the sprint is merged into `main` (`2bac43b`, 2026-09-01).**
 
 **Founder decisions recorded at approval** (full text in the approved planning report): water goal is established by the user on first use with **fl oz** as the US-English default display unit, never presented as a medical recommendation · Water owns its own preferences and Settings (**Sprint 4** since the 2026-09-01 reorder; Sprint 7 when this was decided) will read that same source rather than duplicating it · water history stays inline, no analytics section · fixed quick-add presets, no customization yet · restrained vertical-fill progress visual · a **12–20 entry** peptide catalog carrying name, classification, and broad category only · **no educational prose in Sprint 3** · only the peptide itself is a required setup field · one calculator surfaced in two places · restrained front/back body outline with a list fallback · inactive setups hidden but reachable, and **deactivation never deletes history** · Peptides does not go on Home; Water may · peptides purple stays.
 

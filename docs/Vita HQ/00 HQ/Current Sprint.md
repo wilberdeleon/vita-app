@@ -19,9 +19,9 @@ The nine-slice plan originally defined on [[Roadmap]] was superseded mid-sprint 
 
 The two prerequisite decisions that gated this sprint's UI work resolved 2026-07-09 (VITA supports Light + Dark via semantic tokens; Settings stays permanently in the top-right corner, never the dock — see [[Decision Log]]) both shipped as part of the theme system above.
 
-## Sprint 3 — Water + Peptides — 🟡 Final audit / closeout (opened 2026-08-22)
+## Sprint 3 — Water + Peptides — ✅ Complete and merged (opened 2026-08-22, merged 2026-09-01)
 
-**Where it stands (2026-09-01): implementation is feature-complete and the closeout audit is underway.** Every implementation slice, 3.1 through 3.9B, is built; slice 3.10 — the Sprint 3 audit and closeout — is built and pending founder review. **Sprint 3 is not merged and not marked complete.** Closure waits on founder review of the 3.10 audit and an explicit closeout approval, per the sprint workflow.
+**Where it stands (2026-09-01): done.** Every slice, 3.1 through 3.10A, is founder-approved, and the sprint merged into `main` as `2bac43b` — an explicit merge that keeps the whole slice history. **Next is Sprint 4 — Settings + Tools & Reference**, whose branch is cut and empty and which needs its own authorization before anything begins. One release gate stays open and is not an engineering blocker: the 96 peptide reference entries need qualified medical, content and legal review before public release. Closure waits on founder review of the 3.10 audit and an explicit closeout approval, per the sprint workflow.
 
 **Founder-authorized 2026-08-22** against the approved Sprint 3 Planning & Architecture Audit. Branch: `sprint-3-water-peptides`, cut from `main`. All three entry conditions met — device QA accepted, Sprint 2 merged, branch cut.
 
