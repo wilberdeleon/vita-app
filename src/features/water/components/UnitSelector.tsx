@@ -15,6 +15,20 @@ type Props = {
    * nothing saying what they measure.
    */
   groupLabel?: string;
+  /**
+   * Active-segment treatment.
+   *
+   * `'water'` (the default, and what every pre-existing caller gets) fills
+   * the selected segment in the domain blue. `'neutral'` uses
+   * `SegmentedTabs`' own theme neutral, which is what the Design System
+   * already prescribes for structural controls — *pass `activeColor` only for
+   * a domain flow.*
+   *
+   * The Add Water sheet asks for neutral because a saturated blue pill there
+   * is the loudest thing on a surface whose subject is the amounts below it,
+   * and the feature colour is already doing its work on the vessel.
+   */
+  tone?: 'water' | 'neutral';
 };
 
 /**
@@ -26,7 +40,7 @@ type Props = {
  * is how "index 2 means mL" ends up meaning something different on one of
  * them.
  */
-export function UnitSelector({ value, onChange, groupLabel }: Props) {
+export function UnitSelector({ value, onChange, groupLabel, tone = 'water' }: Props) {
   const index = Math.max(0, VOLUME_UNITS.indexOf(value));
 
   return (
@@ -34,7 +48,7 @@ export function UnitSelector({ value, onChange, groupLabel }: Props) {
       options={VOLUME_UNITS.map(unitName)}
       selectedIndex={index}
       onChange={(next) => onChange(VOLUME_UNITS[next])}
-      activeColor={palette.water}
+      activeColor={tone === 'water' ? palette.water : undefined}
       groupLabel={groupLabel}
     />
   );

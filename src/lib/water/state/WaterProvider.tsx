@@ -103,11 +103,18 @@ function reducer(state: WaterState, action: Action): WaterState {
 }
 
 export type WaterContextValue = WaterState & {
-  addEntry: (entry: WaterEntry) => Promise<void>;
-  updateEntry: (id: string, changes: Partial<Omit<WaterEntry, 'id' | 'logDate'>>) => Promise<void>;
-  removeEntry: (id: string) => Promise<void>;
+  /**
+   * Resolves `true` when the write reached storage, `false` when it did not.
+   *
+   * Never rejects. Callers that only need the state change may ignore it; a
+   * caller that signals success to the user — a haptic, an animation, a toast
+   * — must not do so on `false`.
+   */
+  addEntry: (entry: WaterEntry) => Promise<boolean>;
+  updateEntry: (id: string, changes: Partial<Omit<WaterEntry, 'id' | 'logDate'>>) => Promise<boolean>;
+  removeEntry: (id: string) => Promise<boolean>;
   /** Re-inserts a removed entry in its original position — powers Undo. */
-  restoreEntry: (entry: WaterEntry, index: number) => Promise<void>;
+  restoreEntry: (entry: WaterEntry, index: number) => Promise<boolean>;
   setGoal: (goal: WaterGoal) => Promise<void>;
   setUnit: (unit: VolumeUnit) => Promise<void>;
   selectDate: (logDate: LogDate) => void;
@@ -190,19 +197,32 @@ export function WaterProvider({ children, repository = asyncStorageWaterReposito
     onRollover: handleRollover,
   });
 
+  /**
+   * Writes the day and reports whether it reached storage.
+   *
+   * **The boolean is the only change here** (Sprint 5 slice 5.2), and it exists
+   * for one reason: a caller has to be able to tell a successful log from a
+   * failed one *at the moment it happens*. The redesigned Water screen fires a
+   * confirmation haptic and animates the vessel on a successful log, and both
+   * of those would be lies after a failed write. Reading `error` from state
+   * cannot answer it — the value in a caller's closure predates this dispatch.
+   *
+   * Everything else is unchanged. The optimistic state still stands after a
+   * failure, because reverting would throw away what the user just did, and
+   * the error message is still what tells them it is not saved.
+   */
   const commit = useCallback(
-    async (next: WaterEntry[]) => {
+    async (next: WaterEntry[]): Promise<boolean> => {
       const logDate = logDateRef.current;
       entriesRef.current = next;
       dispatch({ type: 'setEntries', entries: next });
       try {
         await repository.saveEntries(logDate, next);
         dispatch({ type: 'setError', message: null });
+        return true;
       } catch {
-        // State keeps the optimistic value — reverting would throw away what
-        // the user just did. The message is what tells them it isn't saved,
-        // rather than letting them find out after a restart.
         dispatch({ type: 'setError', message: "We couldn't save that. Your water log may not persist." });
+        return false;
       }
     },
     [repository],

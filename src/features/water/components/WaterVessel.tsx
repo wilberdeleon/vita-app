@@ -6,8 +6,23 @@ import { useTheme } from '../../../theme/ThemeProvider';
 import { useReducedMotion } from '../../../theme/useReducedMotion';
 
 type Props = {
-  /** 0..1, already clamped by the caller. */
-  progress: number;
+  /**
+   * The fraction of the goal reached — **unclamped**, or `null` when there is
+   * no goal to be a fraction of.
+   *
+   * Values above 1 are expected and meaningful: the *drawing* clamps, so
+   * liquid never spills outside the vessel, but the *announcement* does not.
+   * A day at 112% shows a full vessel and says "112 percent of goal", which
+   * is what the visible readout says too. Clamping the spoken value as well
+   * would tell a screen-reader user 100% while the screen said 112%.
+   *
+   * `null` is not zero and must not render as zero. A user who has never set
+   * a goal has not failed to fill anything, and an empty vessel presented as
+   * 0% says they have — the exact misreading slice 3.10 removed from the
+   * panel this replaces. `null` draws the vessel latent instead: present,
+   * inert, making no claim.
+   */
+  progress: number | null;
   /** Rendered width in points. Height follows the vessel's aspect ratio. */
   width?: number;
   /** Spoken name. The percentage is appended automatically. */
@@ -207,10 +222,13 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
   const { scheme } = useTheme();
   const reducedMotion = useReducedMotion();
 
-  const clamped = Math.max(0, Math.min(1, progress));
+  const latent = progress === null;
+  const raw = latent ? 0 : Math.max(0, progress);
+  // The drawing clamps; the spoken value does not.
+  const clamped = Math.min(1, raw);
   const level = clamped > 0 ? Math.max(MINIMUM_VISIBLE_FILL, clamped) : 0;
-  const complete = clamped >= 1;
-  const percent = Math.round(clamped * 100);
+  const complete = !latent && clamped >= 1;
+  const percent = Math.round(raw * 100);
 
   const height = (width / VIEW_W) * VIEW_H;
   const scale = width / VIEW_W;
@@ -283,7 +301,22 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
    * read as complete on black, `BodyMap`'s zone that vanished in light, and
    * `waterSoft` outshining today's column in the week strip.
    */
-  const emptyFill = dark ? 'rgba(255,255,255,0.05)' : 'rgba(17,17,20,0.045)';
+  /**
+   * Latent sits a step above empty.
+   *
+   * An empty vessel and a goalless one look identical if they share a fill,
+   * and they mean opposite things — one is "you have not drunk yet today",
+   * the other is "there is nothing here to measure against". The latent
+   * vessel is slightly more present, which reads as waiting rather than as
+   * failing.
+   */
+  const emptyFill = latent
+    ? dark
+      ? 'rgba(255,255,255,0.08)'
+      : 'rgba(17,17,20,0.07)'
+    : dark
+      ? 'rgba(255,255,255,0.05)'
+      : 'rgba(17,17,20,0.045)';
   const liquidFill = dark ? 'rgba(47,128,237,0.46)' : 'rgba(47,128,237,0.42)';
   /**
    * The meniscus, and the single most important colour on the object.
@@ -333,9 +366,17 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
     <View
       style={{ width, height }}
       accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityValue={{ min: 0, max: 100, now: percent, text: `${percent} percent of goal` }}
+      /*
+       * Without a goal there is no progress to announce, so it stops being a
+       * progressbar rather than reporting a hollow 0%. Saying "0 percent of
+       * goal" to someone who has no goal is the spoken version of the same
+       * lie the latent fill exists to avoid.
+       */
+      accessibilityRole={latent ? 'image' : 'progressbar'}
+      accessibilityLabel={latent ? `${accessibilityLabel}, no daily goal set` : accessibilityLabel}
+      accessibilityValue={
+        latent ? undefined : { min: 0, max: 100, now: percent, text: `${percent} percent of goal` }
+      }
     >
       {/* 1 — the empty vessel */}
       <Svg width={width} height={height} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} style={StyleSheet.absoluteFill}>

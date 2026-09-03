@@ -2035,8 +2035,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
 | 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | 🟡 Identity direction founder-approved on device; polished in 5.1A, awaiting the 5.1A review that locks it |
-| 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | 🟡 Implemented — awaiting founder device review |
-| 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ⬜ Not started |
+| 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | ✅ Founder-approved on device 2026-09-02 — **5.1 locked** |
+| 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | 🟡 Implemented — awaiting founder device review |
 | 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | ⬜ Not started |
 | 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
 | 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
@@ -2083,7 +2083,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review, 2026-09-02: the identity direction is APPROVED.** Direct-on-background as the default, cards earning their use, glass as rare, feature-specific visual objects, restrained feature colour, the neutral primary action, one display-size subject per screen, `VitaSheet`, the `PressableScale` evolution, restrained haptics, the RN Animated motion foundation, reduce-motion support, and the vessel as a percentage-of-goal object with no capacity semantics all stand. **The concept is not reopened.** Several small visual refinements were requested and are slice 5.1A.
 
-### Slice 5.1A — Identity Prototype Visual Polish 🟡
+### Slice 5.1A — Identity Prototype Visual Polish ✅
 
 **Implemented 2026-09-02. Awaiting founder device review — 5.1 is not formally locked until it passes.** Polish only: no concept was reinterpreted, no production screen was touched, and no dependency was added.
 
@@ -2109,5 +2109,37 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Validation.** `npm test` **47 suites / 1204 tests** (1200 → 1204; four new) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged (the same two long-documented patch-drift items) · iOS export clean · **no dependency added** · verified in Expo Go at 56% and 100% in Dark, 75% in Light, and with the sheet open — via temporary initial-state overrides that were then removed (none remain).
 
-**Still to verify — founder, on a real device:** whether the quick-adds now feel comfortable and premium, whether the settle is noticeable without being distracting, whether the softened CTA still reads as unmistakably primary, and whether the vessel's added depth stayed on the right side of glossy.
+**Founder device review: approved. Slice 5.1 is locked** — the identity is the foundation the rest of Sprint 5 builds on.
+
+### Slice 5.2 — Interactive Water Experience 🟡
+
+**Implemented 2026-09-03. Awaiting founder device review — not approved.** The first production feature in the Sprint 5 identity.
+
+**What it replaced.** A summary `Card`, a full-width button that pushed an entire screen, a `Card` holding seven bars, and a `Card` holding the day's drinks — four stacked rounded rectangles down a scroll.
+
+**The hierarchy now.** Vessel and day state direct on the background · a neutral primary action · seven days of context · today's drinks collapsed behind a one-line summary · goal editing as a quiet link. No card anywhere on the screen.
+
+**Everyday logging is a sheet, and the old route is gone.** `AddWaterSheet` replaces `/water/add` — deleted rather than left reachable, because two ways to log one drink is the duplicate-flow problem and a screen nothing links to is the dead-row problem Settings had. Editing an existing drink keeps its own route: adding should be fast, amending should be deliberate. Also removed: `WaterLevelPanel`, `WaterLogPanel`, `WaterWeekStrip`, all superseded and all confirmed to have no remaining callers.
+
+**Units.** All four (`floz` · `cup` · `ml` · `l`) were already in the domain; nothing was added and no conversion rule was invented. What is new is that **quick-add amounts adapt to the logging unit** — 8/12/16/24 oz · ½/1/1½/2 cups · 250/500/750/1000 mL · ¼/½/1/1½ L. Converting one canonical set four ways produces `0.35 cups`, which nobody taps. The presets live in `features/water/quickAdds.ts` as presentation config, deliberately not in the repository.
+
+**The two unit concepts stay separate**, per §47 and the founders' 2026-08-22 ruling. The **display preference** lives in `vita:v1:water:prefs`, Settings → Units is its home, and the sheet never writes it. The **logging unit** belongs to one drink: the sheet opens in the preference, switching it logs that drink in that unit, and Water keeps rendering in the preference afterwards. The explanatory line appears only when the two differ. Reopening the sheet returns to the preference rather than remembering the last unit used — otherwise the sheet would accumulate a preference nobody set.
+
+**States.** No goal → latent vessel, the day's real total as the headline, `Set a daily goal`; **no fake 0%**, and the vessel stops announcing itself as a progressbar because a percentage of nothing is not a number. Under → percentage plus `48 fl oz to go · 64 fl oz goal`. Met → `Goal reached · 64 fl oz`, gold vessel edge. Over → vessel stays full, line reads `72 fl oz · Goal 64 fl oz`.
+
+**One accessibility decision worth recording.** The vessel now takes the *unclamped* ratio: the fill clamps so liquid never spills, but the announcement does not. A day at 112% draws full and says "112 percent of goal" — the same figure the screen shows. Clamping the spoken value told a screen-reader user 100% while the screen said 112%.
+
+**History keeps its Sprint 3 semantics deliberately.** Slice 5.2 was asked to consider per-day goal progress and did not: VITA stores one *current* goal and never snapshotted past goals, so "you hit your goal on Tuesday" remains a claim the data cannot support. The columns still show volume relative to the week's own biggest day. **Only the presentation changed** — the strip lost its `Card`, which was spending a border, a shadow and 16pt of padding on seven thin bars. Still no score, streak, average or judgement.
+
+**The one domain change, and why.** `WaterProvider.commit` — and therefore `addEntry`/`updateEntry`/`removeEntry`/`restoreEntry` — now resolves `boolean` instead of `void`. Nothing else about it moved: the write is still optimistic and a failure still keeps the optimistic state and sets the error message. The reason is concrete and was required by §19/§43: the screen fires a confirmation haptic and a toast on a successful log, and both would be lies after a failed write. Reading `error` from state cannot answer it — the value in the caller's closure predates the dispatch. A failed save now raises a `warn` haptic, says nothing was recorded, and leaves the sheet open with the amount intact.
+
+**Frozen and untouched:** the repository, canonical millilitre storage, persistence keys, the goal model, day rollover, entry snapshots, unit conversion math, `useWaterToday`, `useWaterWeek`, `buildWaterWeek`, `AmountEditor` and the edit/goal routes.
+
+**One visual correction found on device.** The sheet's unit selector was rendering its active segment as a saturated blue pill — the loudest thing on a surface whose subject is the amounts below it. `UnitSelector` gained an optional `tone`, and the sheet asks for neutral; every pre-existing caller is unchanged. This is the Design System's own rule for structural controls: *pass `activeColor` only for a domain flow.*
+
+**Validation.** `npm test` **48 suites / 1232 tests** (1204 → 1232; +28) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged (the same two long-documented patch-drift items) · iOS export clean · **no dependency added** · rendered in Expo Go: no-goal state and the Add Water sheet in **Dark**, and the sheet in **Light**.
+
+**Device coverage limit, stated plainly.** Goal-set, partial, met and over-goal states were verified by route tests that mount the real screen against the real provider, **not by screenshot** — this environment cannot tap the simulator and cannot seed hydration data, so those states were unreachable interactively. They are the first thing for founder review on a real device.
+
+**Still to verify — founder, on a real device:** whether Water now reads as a hydration product rather than a tracker form, whether the vessel is useful daily rather than merely interesting, whether logging is meaningfully faster, whether cups are genuinely comfortable, and whether anything still reads as card soup.
 

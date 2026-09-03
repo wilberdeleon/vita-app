@@ -24,6 +24,24 @@ A compact **seven-day strip** gives light context. It shows **daily volume, not 
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Water architecture", and `docs/06-Slice-Tracker.md` → slice 3.2.
 
+## Sprint 5 slice 5.2 — the interactive Water experience (2026-09-03, awaiting founder device review)
+
+**Water is the first production feature rebuilt in the Sprint 5 identity.** The presentation and the logging interaction changed; the hydration engine did not. Millilitres are still canonical, entries still snapshot what the user typed, the goal is still stored as the pair they authored, and there is still no default goal.
+
+**The screen.** A hydration vessel holds the top of the screen, direct on the background — no card anywhere. It shows **percentage of the user's chosen goal**, never a literal container capacity, and carries no measurement markings. One display-size figure: the percentage, or the day's total when no goal exists. Below it a neutral *Add Water* action, seven days of context, and today's drinks collapsed behind a one-line summary.
+
+**Logging is a sheet, not a screen.** Tap *Add Water* → four quick amounts → the drink is recorded → the vessel rises → a confirmation haptic. The old `/water/add` route is gone. Editing an existing drink still opens its own screen: adding should be fast, amending deliberate.
+
+**Quick amounts adapt to the unit you are logging in** — 8/12/16/24 oz · ½/1/1½/2 cups · 250/500/750/1000 mL · ¼/½/1/1½ L. Amounts people actually say, rather than one set converted into awkward decimals.
+
+**Two unit ideas, kept apart.** Your **display preference** is what Water renders in and lives in Settings → Units. The **logging unit** belongs to one drink: switch it in the sheet to log 500 mL while your preference stays fluid ounces, and Water keeps showing fluid ounces afterwards. History keeps what you typed, forever.
+
+**No goal is still an honest state.** The vessel goes latent, the day's real total shows, and there is no percentage and no empty-vessel-at-zero implying a target was missed.
+
+**History still shows volume, not goal attainment** — VITA never snapshotted past goals, so marking a past day met or missed would be inventing history. No score, streak, average or judgement.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.2.
+
 ## What it was before (Sprint 0 — mock data, superseded)
 
 Built in Slice 0.6 under `src/app/(vita)/water/`:

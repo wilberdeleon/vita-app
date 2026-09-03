@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { AmountEditor, type AmountValue } from '../../../../features/water/components/AmountEditor';
-import { timeLabel } from '../../../../features/water/components/WaterLogPanel';
+import { timeLabel } from '../../../../features/water/components/TodayEntries';
 import { formatEntered, useWater, waterAmountChanges } from '../../../../lib/water';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';

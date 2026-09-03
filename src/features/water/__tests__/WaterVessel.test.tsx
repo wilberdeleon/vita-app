@@ -178,9 +178,14 @@ describe('WaterVessel', () => {
     expect(vessel(tree).props.accessibilityLabel).toBe('Hydration');
   });
 
-  it('clamps progress rather than reporting an impossible percentage', async () => {
+  it('clamps the fill but tells the truth about the percentage', async () => {
+    /*
+     * The drawing clamps so liquid never spills outside the vessel; the
+     * announcement does not, because a screen-reader user must hear the same
+     * figure the screen shows. A day at 250% is a full vessel that says 250.
+     */
     const over = await mount(<WaterVessel progress={2.5} />);
-    expect(vessel(over).props.accessibilityValue.now).toBe(100);
+    expect(vessel(over).props.accessibilityValue.now).toBe(250);
 
     act(() => {
       mounted?.unmount();

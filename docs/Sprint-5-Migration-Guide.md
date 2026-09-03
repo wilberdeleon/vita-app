@@ -1,8 +1,8 @@
 # Sprint 5 — Screen Migration Guide
 
-# ⚠️ DRAFT — produced by slice 5.1, awaiting founder identity review
+# Status: slice 5.1 approved and locked · slice 5.2 implemented, awaiting device review · 5.3–5.8 not started
 
-**Nothing here is implemented, and no slice below is open.** This is the map slice 5.1 owes the slices that follow it, so 5.2–5.8 are mechanical rather than exploratory. Each slice still requires its own founder authorization.
+This is the map slice 5.1 owed the slices that follow it, so each is mechanical rather than exploratory. **Each remaining slice still requires its own founder authorization.** Sections are updated with what actually happened as they ship, so a later slice reads the outcome rather than only the plan.
 
 The language it applies is `docs/05-Design-System.md` → *The VITA Design Language*. The freeze it respects is `docs/Sprint-5-Planning-Audit.md` §D.
 
@@ -16,7 +16,10 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.2 — Water
+# Slice 5.2 — Water — ✅ IMPLEMENTED 2026-09-03 (awaiting founder device review)
+
+*Outcome recorded below the original plan. Two things went differently and both are worth carrying: `/water/add` was **removed** rather than kept as a fallback, and the provider gained a `boolean` return so a failed write can never raise a success signal — see the Slice Tracker.*
+
 
 **Files:** `src/app/(vita)/water/index.tsx` · `features/water/components/WaterLevelPanel.tsx` · `WaterLogPanel.tsx` · `WaterWeekStrip.tsx` · `AmountEditor.tsx` · `src/app/(vita)/water/add.tsx`
 
@@ -24,7 +27,7 @@ For each screen: what generic pattern is there now · what role it should take �
 |---|---|
 | `WaterLevelPanel` — an animated fill inside a `Card` | **Feature visual object.** `WaterVessel`, direct on background, no card |
 | Full-width blue `Button` → `/water/add` route | **Neutral primary action** + quick amounts. Custom opens `VitaSheet` |
-| `/water/add` — a full route with unit selector, big amount display, chips, text field | **Kept as a route** for deep-link and edit, but no longer the primary path |
+| `/water/add` — a full route with unit selector, big amount display, chips, text field | **Removed.** The sheet fully replaces it, nothing else linked to it, and a route reachable only by deep link is the dead-row problem. Editing keeps its own route |
 | `WaterWeekStrip` in a `Card` | **Panel**, or direct content. Semantics unchanged |
 | `WaterLogPanel` in a `Card` + `SectionHeader` | **Panel**, likely progressively disclosed |
 | 4 stacked `Card`s, 2 `SectionHeader`s | 1 object + 1 action + 1 disclosed history region |
@@ -34,6 +37,15 @@ For each screen: what generic pattern is there now · what role it should take �
 **Frozen:** all of `src/lib/water/` — canonical mL, entered-unit snapshots, goal, rollover, 7-day derivation, `WaterRepository`, `vita:v1:water:*` keys. `AmountEditor` is reused unchanged; its unit-per-entry behaviour is a founder decision.
 
 **Carry forward, do not regress:** no fill renders when no goal is set (the 3.10 audit fix) · the week strip shows volume, never goal attainment · each log row shows the unit the user typed.
+
+**Patterns 5.2 established that the remaining slices should reuse:**
+
+- **A feature's visual object goes direct on the background.** No card around the hero. Dashboard, Peptides and BMI each have a candidate object.
+- **The primary action is neutral with a feature-coloured glyph.** Proven on device in both themes.
+- **A structural control inside a sheet takes the neutral tone**, not the domain colour — `UnitSelector`'s new `tone` prop is the pattern.
+- **Progressive disclosure for a secondary list**: a one-line summary that is useful on its own (`Today's log · 3 drinks`), expanding in place. Directly applicable to Peptides' Active/Inactive and Routine's details.
+- **Never signal success before the write lands.** If another feature's provider cannot report persistence, that is a finding, not a reason to fire the haptic anyway.
+- **`flex` belongs on a wrapper around `PressableScale`**, never on it. Hit three times now; 5.7 should fix the primitive.
 
 ---
 

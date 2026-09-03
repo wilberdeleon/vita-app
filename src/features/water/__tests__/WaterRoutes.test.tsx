@@ -36,7 +36,6 @@ jest.mock('expo-router', () => ({
 import { Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import AddWater from '../../../app/(vita)/water/add';
 import WaterGoalScreen from '../../../app/(vita)/water/goal';
 import WaterLog from '../../../app/(vita)/water/index';
 import { ToastProvider } from '../../../components/ui';
@@ -92,7 +91,14 @@ function fakeRepository(
     },
   };
 
-  return { repository, stored: { day: (d: string) => days[d] ?? [], goal: () => goal } };
+  return {
+    repository,
+    stored: {
+      day: (d: string) => days[d] ?? [],
+      goal: () => goal,
+      preferences: () => preferences,
+    },
+  };
 }
 
 let mounted: ReactTestRenderer | null = null;
@@ -229,7 +235,7 @@ describe('the Water screen', () => {
     expect(painted.length).toBeGreaterThan(0);
   });
 
-  it('states the day total and what is left against a goal', async () => {
+  it('leads with the percentage and states what is left against the goal', async () => {
     const { repository } = fakeRepository({
       goal: createWaterGoal(64, 'floz'),
       preferences: { unit: 'floz' },
@@ -238,9 +244,60 @@ describe('the Water screen', () => {
     const tree = await mount(<WaterLog />, repository);
 
     const rendered = screen(tree);
-    expect(rendered).toContain('16 fl oz');
-    expect(rendered).toContain('Goal 64 fl oz');
+    // The percentage is the hero; the goal and the remainder share one line,
+    // and neither the goal nor the remainder is repeated anywhere else.
     expect(rendered).toContain('25%');
+    expect(rendered).toContain('48 fl oz to go · 64 fl oz goal');
+  });
+
+  it('says the goal is reached without congratulating anyone', async () => {
+    const { repository } = fakeRepository({
+      goal: createWaterGoal(64, 'floz'),
+      preferences: { unit: 'floz' },
+      entries: { [TODAY]: [entry(64, 'floz')] },
+    });
+    const tree = await mount(<WaterLog />, repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('100%');
+    expect(rendered).toContain('Goal reached · 64 fl oz');
+  });
+
+  it('reports the real total when the day goes over the goal, and never spills', async () => {
+    const { repository } = fakeRepository({
+      goal: createWaterGoal(64, 'floz'),
+      preferences: { unit: 'floz' },
+      entries: { [TODAY]: [entry(72, 'floz')] },
+    });
+    const tree = await mount(<WaterLog />, repository);
+
+    const rendered = screen(tree);
+    // The truth about the day, stated plainly and without comment.
+    expect(rendered).toContain('72 fl oz · Goal 64 fl oz');
+    // 112, not 113: the ratio of two exact-conversion millilitre values
+    // lands a hair under 112.5, and the domain rounds what it actually has.
+    expect(rendered).toContain('112%');
+
+    // The vessel itself is clamped: `progress` never exceeds 1.
+    const vessel = tree.root.find((node) => node.props?.accessibilityRole === 'progressbar');
+    expect(vessel.props.accessibilityValue.now).toBe(112);
+  });
+
+  it('shows the day total, not a percentage, when no goal exists', async () => {
+    const { repository } = fakeRepository({
+      preferences: { unit: 'floz' },
+      entries: { [TODAY]: [entry(16, 'floz')] },
+    });
+    const tree = await mount(<WaterLog />, repository);
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('16 fl oz');
+    expect(rendered).toContain('No daily goal set yet');
+    expect(rendered).not.toMatch(/\d+%/);
+
+    // And it is not announced as progress toward anything.
+    const progressbars = tree.root.findAll((node) => node.props?.accessibilityRole === 'progressbar');
+    expect(progressbars).toHaveLength(0);
   });
 
   it('never scores the day — no streak, no average, no judgement', async () => {
@@ -270,15 +327,20 @@ describe('the Water screen', () => {
   });
 });
 
-/* ── logging a drink, through the real Add screen ───────────────────────── */
+/* ── logging a drink, through the real sheet ────────────────────────────── */
+
+/** Opens the Add Water sheet from the Water screen, the way a finger does. */
+async function openSheet(tree: ReactTestRenderer) {
+  await act(async () => control(tree, 'Add Water')!.props.onPress());
+}
 
 describe('adding water', () => {
   it('writes the drink to today, in the unit it was entered in', async () => {
     const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
-    const tree = await mount(<AddWater />, repository);
+    const tree = await mount(<WaterLog />, repository);
 
-    await type(tree, /custom amount/i, '12');
-    await act(async () => control(tree, 'Add Water')!.props.onPress());
+    await openSheet(tree);
+    await act(async () => control(tree, 'Add 12 fl oz')!.props.onPress());
 
     const day = stored.day(TODAY);
     expect(day).toHaveLength(1);
@@ -287,30 +349,229 @@ describe('adding water', () => {
   });
 
   it('records two taps as two drinks, never as one', async () => {
-    // Repeated adds are the most ordinary thing anyone does on this screen,
-    // and the failure mode — a second tap replacing the first, or being
-    // swallowed — is invisible until the day's total is wrong.
+    // Repeated adds are the most ordinary thing anyone does here, and the
+    // failure mode — a second tap replacing the first, or being swallowed —
+    // is invisible until the day's total is wrong.
     const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
 
-    for (const amount of ['8', '12']) {
-      const tree = await mount(<AddWater />, repository);
-      await type(tree, /custom amount/i, amount);
-      await act(async () => control(tree, 'Add Water')!.props.onPress());
-      await act(async () => tree.unmount());
-      mounted = null;
-    }
+    await openSheet(tree);
+    await act(async () => control(tree, 'Add 8 fl oz')!.props.onPress());
+    await openSheet(tree);
+    await act(async () => control(tree, 'Add 12 fl oz')!.props.onPress());
 
     expect(stored.day(TODAY).map((e) => e.enteredAmount)).toEqual([8, 12]);
   });
 
-  it('cannot be saved with nothing entered', async () => {
-    const { repository, stored } = fakeRepository();
-    const tree = await mount(<AddWater />, repository);
+  it('closes the sheet and updates the screen after a successful log', async () => {
+    const { repository } = fakeRepository({
+      goal: createWaterGoal(64, 'floz'),
+      preferences: { unit: 'floz' },
+    });
+    const tree = await mount(<WaterLog />, repository);
 
-    const button = control(tree, 'Add Water')!;
-    expect(button.props.accessibilityState?.disabled ?? button.props.disabled).toBe(true);
-    await act(async () => button.props.onPress?.());
+    await openSheet(tree);
+    expect(control(tree, 'Add 16 fl oz')).toBeDefined();
+
+    await act(async () => control(tree, 'Add 16 fl oz')!.props.onPress());
+
+    // The sheet is gone, and the hero reflects the real new state.
+    expect(control(tree, 'Add 16 fl oz')).toBeUndefined();
+    expect(screen(tree)).toContain('25%');
+  });
+
+  it('never reports success when the write failed', async () => {
+    /*
+     * The defect this exists to prevent: a confirmation haptic and a toast
+     * saying the drink was recorded, over a save that did not happen. The
+     * provider reports whether the write landed; the screen must believe it.
+     */
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    const failing: WaterRepository = {
+      ...repository,
+      async saveEntries() {
+        throw new Error('storage unavailable');
+      },
+    };
+    const tree = await mount(<WaterLog />, failing);
+
+    await openSheet(tree);
+    await act(async () => control(tree, 'Add 8 fl oz')!.props.onPress());
+
+    expect(screen(tree)).toMatch(/couldn.t save|nothing was recorded/i);
+    // The sheet stays open so the amount can be tried again rather than lost.
+    expect(control(tree, 'Add 8 fl oz')).toBeDefined();
+  });
+
+  it('offers quick amounts a person would say in the unit they are logging in', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'cup' } });
+    const tree = await mount(<WaterLog />, repository);
+    await openSheet(tree);
+
+    // Halves and wholes, not 0.35 of something — see `quickAdds.ts`.
+    for (const label of ['Add 0.5 cups', 'Add 1 cup', 'Add 1.5 cups', 'Add 2 cups']) {
+      expect(control(tree, label)).toBeDefined();
+    }
+    // And the visible form is the one people write, singular through one.
+    expect(screen(tree)).toContain('½ cup');
+    expect(screen(tree)).toContain('1½ cups');
+  });
+
+  it('logs a custom amount in the active unit', async () => {
+    const { repository, stored } = fakeRepository({ preferences: { unit: 'ml' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openSheet(tree);
+    await act(async () => control(tree, 'Enter a custom amount')!.props.onPress());
+    await type(tree, /custom amount in/i, '330');
+    await act(async () => control(tree, /^Log 330 mL$/)!.props.onPress());
+
+    const day = stored.day(TODAY);
+    expect(day).toHaveLength(1);
+    expect(day[0].enteredAmount).toBe(330);
+    expect(day[0].enteredUnit).toBe('ml');
+  });
+
+  it('will not log a custom amount that is not a real quantity', async () => {
+    const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openSheet(tree);
+    await act(async () => control(tree, 'Enter a custom amount')!.props.onPress());
+
+    for (const bad of ['', '0', '-4', 'abc']) {
+      await type(tree, /custom amount in/i, bad);
+      // Specific: the unit segments announce as "Log in, mL" and would
+      // otherwise match first.
+      const button = control(tree, /^Log (custom amount|\d)/)!;
+      expect(button.props.accessibilityState?.disabled ?? button.props.disabled).toBe(true);
+      await act(async () => button.props.onPress?.());
+    }
+
     expect(stored.day(TODAY)).toHaveLength(0);
+  });
+});
+
+/* ── display preference vs the unit one drink was logged in ─────────────── */
+
+describe('units', () => {
+  it('opens the sheet in the saved display preference', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'l' } });
+    const tree = await mount(<WaterLog />, repository);
+    await openSheet(tree);
+
+    expect(control(tree, 'Add 0.5 L')).toBeDefined();
+    expect(control(tree, 'Add 8 fl oz')).toBeUndefined();
+  });
+
+  it('logs in a temporarily switched unit without changing the saved preference', async () => {
+    /*
+     * The distinction the founders drew on 2026-08-22 and slice 5.2 had to
+     * keep: switching units inside the sheet belongs to *this drink*.
+     * Changing what Water displays in is a deliberate act done in Settings.
+     */
+    const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openSheet(tree);
+    await act(async () => control(tree, 'Log in, mL')!.props.onPress());
+    await act(async () => control(tree, 'Add 500 mL')!.props.onPress());
+
+    // The drink is recorded exactly as authored...
+    const day = stored.day(TODAY);
+    expect(day[0].enteredAmount).toBe(500);
+    expect(day[0].enteredUnit).toBe('ml');
+    // ...and the preference on disk is untouched.
+    expect(stored.preferences()?.unit ?? 'floz').toBe('floz');
+  });
+
+  it('keeps rendering in the display preference after logging in another unit', async () => {
+    const { repository } = fakeRepository({
+      goal: createWaterGoal(64, 'floz'),
+      preferences: { unit: 'floz' },
+    });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openSheet(tree);
+    await act(async () => control(tree, 'Log in, mL')!.props.onPress());
+    await act(async () => control(tree, 'Add 500 mL')!.props.onPress());
+
+    // 500 mL is ~16.9 fl oz of a 64 fl oz goal.
+    const rendered = screen(tree);
+    expect(rendered).toContain('fl oz');
+    expect(rendered).toContain('26%');
+  });
+
+  it('says which unit a drink is being logged in only when it differs', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openSheet(tree);
+    expect(screen(tree)).not.toMatch(/Water still shows/);
+
+    await act(async () => control(tree, 'Log in, cups')!.props.onPress());
+    expect(screen(tree)).toContain('Logging this drink in cups');
+    expect(screen(tree)).toContain('Water still shows fl oz');
+  });
+
+  it('preserves what the user typed, whatever the display unit later becomes', async () => {
+    const { repository } = fakeRepository({
+      preferences: { unit: 'ml' },
+      entries: { [TODAY]: [entry(1, 'cup')] },
+    });
+    const tree = await mount(<WaterLog />, repository);
+
+    // The entries list is disclosed, and shows the authored pair — not a
+    // reconstructed 236.6 mL the user never entered.
+    await act(async () => control(tree, /Today's log/)!.props.onPress());
+    expect(screen(tree)).toContain('1 cup');
+  });
+
+  it('reopens the sheet in the saved preference rather than the last unit used', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openSheet(tree);
+    await act(async () => control(tree, 'Log in, cups')!.props.onPress());
+    await act(async () => control(tree, 'Add 1 cup')!.props.onPress());
+
+    await openSheet(tree);
+    expect(control(tree, 'Add 8 fl oz')).toBeDefined();
+  });
+});
+
+/* ── today's drinks ─────────────────────────────────────────────────────── */
+
+describe("today's entries", () => {
+  it('summarises the day and discloses the drinks on demand', async () => {
+    const { repository } = fakeRepository({
+      preferences: { unit: 'floz' },
+      entries: { [TODAY]: [entry(8, 'floz'), entry(12, 'floz')] },
+    });
+    const tree = await mount(<WaterLog />, repository);
+
+    expect(screen(tree)).toContain('2 drinks');
+    // Collapsed by default: the individual amounts are not on screen yet.
+    expect(control(tree, /^Remove /)).toBeUndefined();
+
+    await act(async () => control(tree, /Today's log/)!.props.onPress());
+    expect(control(tree, 'Remove 8 fl oz')).toBeDefined();
+  });
+
+  it('removes a drink and can put it back', async () => {
+    const { repository, stored } = fakeRepository({
+      preferences: { unit: 'floz' },
+      entries: { [TODAY]: [entry(8, 'floz'), entry(12, 'floz')] },
+    });
+    const tree = await mount(<WaterLog />, repository);
+
+    await act(async () => control(tree, /Today's log/)!.props.onPress());
+    await act(async () => control(tree, 'Remove 8 fl oz')!.props.onPress());
+    expect(stored.day(TODAY).map((e) => e.enteredAmount)).toEqual([12]);
+
+    await act(async () => control(tree, 'Undo')!.props.onPress());
+    // Restored to where it was, not appended to the end.
+    expect(stored.day(TODAY).map((e) => e.enteredAmount)).toEqual([8, 12]);
   });
 });
 
@@ -356,7 +617,8 @@ describe('rollover', () => {
     const tree = await mount(<WaterLog />, repository);
 
     const rendered = screen(tree);
-    expect(rendered).toContain('0 fl oz');
+    expect(rendered).toContain('0%');
+    expect(rendered).toContain('64 fl oz to go');
     expect(rendered).not.toContain('Goal reached');
   });
 
@@ -365,10 +627,10 @@ describe('rollover', () => {
       preferences: { unit: 'floz' },
       entries: { [YESTERDAY]: [entry(20, 'floz')] },
     });
-    const tree = await mount(<AddWater />, repository);
+    const tree = await mount(<WaterLog />, repository);
 
-    await type(tree, /custom amount/i, '8');
     await act(async () => control(tree, 'Add Water')!.props.onPress());
+    await act(async () => control(tree, 'Add 8 fl oz')!.props.onPress());
 
     expect(stored.day(YESTERDAY).map((e) => e.enteredAmount)).toEqual([20]);
     expect(stored.day(TODAY).map((e) => e.enteredAmount)).toEqual([8]);
