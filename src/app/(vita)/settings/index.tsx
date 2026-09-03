@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { ListRow, Screen, ScreenHeader, SectionHeader, SegmentedTabs } from '../../../components/ui';
 import { THEME_MODES } from '../../../lib/preferences';
-import { spacing } from '../../../theme/tokens';
+import { palette, spacing } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
 /** Title case for the segmented control, in the order `THEME_MODES` declares. */
@@ -101,6 +101,30 @@ export default function Settings() {
           this slice just removed from the rest of the screen. */}
       <SectionHeader title="About" />
       <ListRow icon="information-circle-outline" title="Version" value={appVersion()} />
+
+      {/*
+        * TEMPORARY — Sprint 5 slice 5.1. Remove in slice 5.9.
+        *
+        * The only way the founders can reach the identity prototype on a real
+        * iPhone in Expo Go. `__DEV__` means it cannot exist in a release
+        * build, so this is not a permanent "Design Playground" row — the
+        * standing rule that VITA does not grow launcher entries still holds,
+        * and the row is deleted with the prototype at the end of the sprint.
+        */}
+      {__DEV__ ? (
+        <>
+          <SectionHeader title="Development" />
+          <ListRow
+            icon="color-palette-outline"
+            iconColor={palette.gold}
+            title="Identity Prototype"
+            subtitle="Slice 5.1 — temporary, removed in 5.9"
+            chevron
+            accessibilityHint="Opens the Sprint 5 identity prototype"
+            onPress={() => router.push('/identity')}
+          />
+        </>
+      ) : null}
     </Screen>
   );
 }

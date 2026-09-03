@@ -214,3 +214,51 @@ export const glassShadow = {
   shadowOffset: { width: 0, height: 8 },
   elevation: 6,
 } as const;
+
+/**
+ * Motion timings (Sprint 5 slice 5.1).
+ *
+ * **Four durations, not one per component.** Before this, every animating
+ * component picked its own number — 650ms in `ProgressBar`, 700ms in
+ * `WaterLevelPanel`, an undocumented spring in `PressableScale` — so nothing
+ * in the app moved at a shared speed. These are the speeds; a component that
+ * needs a fifth is making a case, not reaching for a literal.
+ *
+ * The scale runs from "the finger is still down" to "a value changed and the
+ * eye should follow it":
+ *
+ * - `press` — the touch response. Must beat the user's own perception of lag.
+ * - `state` — a discrete change: selection, a toggle, a completion settling.
+ * - `sheet` — a surface entering or leaving.
+ * - `progress` — a measured value moving to a new one. The slowest, because
+ *   it is the only one whose *travel* carries the meaning.
+ *
+ * **Nothing exceeds 700ms.** `progress` keeps `ProgressBar`'s and
+ * `WaterLevelPanel`'s existing feel rather than inventing a new one — those
+ * two are founder-approved on device, and re-timing approved motion is not
+ * what this slice is for.
+ *
+ * The governing rule, unchanged since Sprint 0.1: **motion confirms, it never
+ * decorates.** If nothing changed, nothing moves.
+ */
+export const motion = {
+  duration: {
+    press: 90,
+    state: 180,
+    sheet: 260,
+    progress: 700,
+  },
+  /**
+   * The shared press spring — previously hardcoded inside `PressableScale`.
+   * Stiff and barely bouncy on purpose: a press is feedback, not a flourish.
+   */
+  pressSpring: {
+    speed: 40,
+    bounciness: 5,
+  },
+  /** Scale a surface compresses to while held. Large surfaces use less. */
+  pressScale: {
+    control: 0.97,
+    surface: 0.98,
+  },
+} as const;

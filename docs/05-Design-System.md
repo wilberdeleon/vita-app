@@ -173,15 +173,208 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 ---
 
-## What this document will define (when authored)
+---
 
-- Design tokens: color palette, typography scale, spacing, radii, elevation
-- Light and dark themes
-- Core components (Button, Card, Input, etc.) and their states
-- The floating dock and app shell
+# The VITA Design Language (slice 5.1)
+
+# ⚠️ IMPLEMENTED — AWAITING FOUNDER IDENTITY REVIEW
+
+**Built and testable on device; not yet approved.** Everything in this section is the output of slice 5.1 and is subject to the founder identity review. The founder *rulings* it is built on (surface hierarchy, the vessel as percentage-of-goal, restrained haptics) are approved and are recorded in `docs/Sprint-5-Planning-Audit.md` §W. **The execution below is not.** Until that review passes, production screens are not migrated onto this language — slice 5.2 (Water) is the first that does.
+
+## 1 — Surface roles
+
+**The rule this replaces:** *content needs containing, therefore `Card`.*
+**The rule now:** *a surface's treatment is chosen by what the content is for.*
+
+Founder-approved hierarchy (§W.1), in order of how often it should be reached for:
+
+| Role | Treatment | Use it for | Built from |
+|---|---|---|---|
+| **Direct content** — *the default* | No container, no border, no shadow. Hierarchy from type and space alone | Headings · primary status · key actions · the feature's visual object | plain `View` |
+| **Grouped surface** | Opaque, `radii.card`, hairline border, soft shadow, generous padding. **Used sparingly** | Several *related* controls or facts that genuinely belong together | `Card` |
+| **Panel** | One grouped surface, hairline-divided rows, minimal padding | Any list of peers — logs, routines, meals | `Card` + row dividers |
+| **Utility row** | Small, navigational, low visual weight | A link to somewhere else | `ListRow` |
+| **Layered surface** | Real blur, tint, highlight. **Rare** | Floating navigation · overlays · genuine layering | `GlassSurface` |
+| **Sheet** | Bottom-anchored, backdrop, one task | A decision made *in place*, where a route would lose context | `VitaSheet` |
+| **Feature visual object** | Feature-specific, non-rectangular, carries the feature's colour and state | The thing the screen is *about* | e.g. `WaterVessel` |
+
+**The binding constraint, in the founder's words: do not replace card soup with glass soup.** Glass does not inherit the card's old job. If a card was wrong for a piece of content, glass is wrong for it too — the answer is usually Direct content.
+
+**Test when adding UI:** if two adjacent surfaces have the same role, one of them is probably wrong.
+
+**Card vs sheet vs route.** A **route** is for a task with its own address — navigable back to, deep-linkable, leavable and returnable. A **sheet** is for a decision made in place, where the thing being changed should stay on screen while it changes. Logging a drink while looking at today's hydration is the second kind.
+
+## 2 — Feature colour
+
+Mapping unchanged (it is a permanent founder decision): **Gold** = VITA / Journey / brand · **Blue** = Water · **Purple** = Peptides (and Atlas) · **Orange** = Fuel · **Green** = movement / activity.
+
+What changes is *behaviour*.
+
+**Feature colour carries:** the feature's visual object · progress and fill · completion state · selection state · icon glyphs · microinteraction feedback · **one** accent per screen, on the thing that matters most.
+
+**Feature colour does not carry:** a full-width primary button · a whole card or surface tint · state that has no second, non-colour signal · decoration where nothing is stateful · gradients.
+
+**Two rules that follow:**
+
+- **The primary action is neutral.** It does not change hue by section. A blue button on Water and a purple one on Peptides is exactly what made two unrelated screens read as one template in two colours — the diagnosis the whole sprint rests on. The prototype demonstrates this: the vessel is blue, the *Add Water* action is the theme's neutral.
+- **Neutral is the default; colour is earned.** A screen where everything is blue says nothing is important.
+
+*Note: this narrows the earlier convention that "domain flows pass their domain color explicitly." Domain colour still travels with domain flows — it now lands on objects, progress and state rather than on the button.*
+
+## 3 — Typography
+
+**No new font.** The existing scale stands: `display` 32 · `title` 24 · `heading` 17 · `body` 15 · `caption` 13 · `micro` 11, system font throughout.
+
+| Role | Token | Rule |
+|---|---|---|
+| Brand / identity | `title` + wordmark spacing | `ScreenHeader brand` only |
+| Screen context | `title` | The screen's name |
+| Hero metric | `display` or larger | **One per screen, maximum.** It is the thing the screen is about — never a slogan |
+| Section / group | `SectionHeader` | See below |
+| Body | `body` | What the screen says |
+| Secondary metadata | `caption` | Timestamps, context lines |
+| Label / kicker | `micro` uppercase | Sparingly |
+
+**`SectionHeader` is a real contributor to sameness** — one treatment, and up to twelve on a single screen (`peptides/catalog/[id].tsx`). Guidance until variants are added in a screen's own slice:
+
+- Use it for a screen's genuine structural divisions, **two or three at most**.
+- Prefer an **inline label** inside a surface for a group that is not a screen-level division.
+- Prefer **progressive disclosure** where a section exists only to hold secondary detail — a collapsed region needs no header above it.
+- A section whose content can be empty should **vanish when empty** rather than render a header over nothing. Peptides home already does this; it is the correct pattern.
+
+## 4 — Spacing and rhythm
+
+- **Section rhythm** (unrelated concepts): `spacing.xxl`–`xxxl`, via `Screen`'s `contentGap`.
+- **Content rhythm** (within a group): `spacing.m`.
+- **Around a visual object**: generous, because the object is the hierarchy.
+- **Progressive disclosure**: tighter than section rhythm — a disclosed region is *inside* its parent, not a peer of it.
+
+**Premium does not mean empty.** Do not add whitespace to look expensive; add it to separate things that are genuinely separate. `Screen`'s `contentGap` is the lever, and most screens currently take the default without thinking about it.
+
+## 5 — Radius
+
+Current: `card` 20 · `control` 16 · `chip` 12 · `pill` 999 · `glassTile` 20 · `glassRow` 22 · `glassLarge` 24 — five of seven are the same rounded-rectangle idea.
+
+- **Direct content has no radius at all** — it has no bounding box. This is the biggest single change, and it is what stops every piece of content from being another rounded rectangle.
+- **Large surfaces** keep `card` / `glassLarge`.
+- **Controls** keep `control`; **chips and pills** keep theirs.
+- **A visual object owns its own shape** and is not bound to the radius scale.
+
+Do not flatten everything to sharp rectangles; do not keep large rounded rectangles everywhere.
+
+## 6 — Borders and dividers
+
+Prefer, in order: **spacing** → **alignment** → **typography** → **a hairline divider** → **a bordered surface**. A group of peers is usually a panel with dividers, not a stack of bordered cards — `ListRow` currently carries its own border and shadow, which is why a list of rows reads as a stack of cards.
+
+Where a border is used, it stays a hairline in `surfaces.border`. In dark mode the border does the separating work: the light-mode drop shadow is invisible against near-black.
+
+## 7 — Interaction
+
+| | Rule |
+|---|---|
+| **Press** | `PressableScale`. Scale `motion.pressScale` (0.97 control / 0.98 surface) with the shared spring. **Under Reduced Motion it fades instead of scaling** — feedback stays, movement goes |
+| **Selection** | Instant, no motion. Colour plus `accessibilityState.selected` |
+| **Success** | `Toast` remains the default confirmation for an action that completes instantly |
+| **Completion** | The object changes, plus **one** accompanying signal. Never a toast *and* an animation *and* a haptic for one action |
+| **Destructive** | Reversible → Undo toast, never a dialog. Irreversible → a dialog that **says what is kept** |
+| **Motion budget** | Nothing over 700ms. Nothing animates on mount that could animate on change |
+
+**Motion confirms, it never decorates. If nothing changed, nothing moves.**
+
+## 8 — Motion
+
+Timings live in `theme/tokens.ts` → `motion`, so components stop inventing their own:
+
+| Token | Value | For |
+|---|---|---|
+| `duration.press` | 90ms | Touch response |
+| `duration.state` | 180ms | A discrete change — selection, completion settling |
+| `duration.sheet` | 260ms | A surface entering or leaving |
+| `duration.progress` | 700ms | A measured value moving to a new one |
+
+`pressSpring` (speed 40, bounciness 5) and `pressScale` are shared. Easing is `Easing.out(cubic)` for progress, `Easing.out(quad)` for state.
+
+**React Native `Animated` only.** Reanimated is not installed and is not justified — the audit found no requirement it answers, and it would be a native dependency added during an Expo-Go-pinned sprint.
+
+## 9 — Reduce motion
+
+`useReducedMotion` is the switch. **Every new Sprint 5 motion must honour it.**
+
+**The degradation rule: land on the final state directly. Never play a shorter version of the same animation.** Where feedback would otherwise vanish entirely, substitute a non-moving equivalent — `PressableScale` fades rather than scales, and `VitaSheet` presents without sliding.
+
+Honoured by: `ProgressBar` · `WaterLevelPanel` · `PressableScale` (5.1) · `VitaSheet` (5.1) · `WaterVessel` (5.1). **Still outstanding: `Toast`, `FuelQuickActions`** — scheduled for slice 5.7.
+
+## 10 — Haptics
+
+`expo-haptics`, behind `src/lib/haptics`. Call sites say `vitaHaptic('confirm')`, never a raw Expo call.
+
+| Event | Platform | Fires on |
+|---|---|---|
+| `selection` | `selectionAsync` | Choosing from a set — a quick amount, a unit, a site, a tab |
+| `confirm` | `impactAsync(Light)` | Something the user asked for was recorded |
+| `complete` | `notificationAsync(Success)` | A day-level goal was reached. **Rare by design** |
+| `warn` | `notificationAsync(Warning)` | Destructive confirmation, or a failed save |
+
+**Never** on scroll, navigation, render, or decorative transitions. **Never twice for one action** — where `confirm` and `complete` both apply, fire only `complete`. Failures are silent: a missing vibration must never interrupt the action it accompanied.
+
+## 11 — Progressive disclosure
+
+Hide secondary complexity; never hide the primary action, and never hide safety-relevant text.
+
+- **Immediate action is always visible.** Administrative detail collapses.
+- A disclosed region is **inside** its parent — tighter spacing, no section header above it.
+- Disclosure state is presentation only. It never changes what is stored.
+
+## 12 — Completion
+
+The object changes, and **one** signal accompanies it.
+
+Water's goal: the vessel's own edge turns brand gold and the fill completes — blue is the feature, gold is VITA, and a met goal is a VITA moment. A `complete` haptic. The text says `Goal reached`.
+
+**Excluded: confetti · badges · streak celebrations · scores · sounds · anything that reads as reward.** VITA has a no-guilt-mechanics rule; its mirror is no-reward-mechanics. **Completion should feel like settling, not like winning.**
+
+## 13 — Empty states
+
+`EmptyState` is tonally correct and stays. Two rules around it:
+
+- **Sections vanish when empty** wherever the section is genuinely optional.
+- Use a **compact inline line** for an empty region *inside* a surface; reserve the full `EmptyState` for a screen's primary empty condition.
+- **No motivational filler.** The current copy is right and should not be warmed up.
+
+## 14 — Feature-specific vs shared
+
+**A primitive is justified by shared *behaviour*, not by shared silhouette.** Two things that are both "a big rounded thing at the top of a screen" are not the same component — treating them as one is how VITA got here.
+
+**Intentionally not shared:** the hydration vessel (Water only — never a `ProgressObject` or `HeroCard`) · `BodyMap` (shared *within* Peptides across its modes, never generalised to a "diagram") · `WaterWeekStrip` vs `RoutineDayStrip` (different semantics: relative volume vs discrete day marks) · Fuel's meal colour language and food art · the Taken/Skipped control pair · Atlas's orb.
+
+## 15 — Accessibility floor
+
+Every new surface must clear all of these:
+
+1. **Never colour-only.** Completion, selection and due-state each carry a second signal — text, icon, or shape.
+2. **Never animation-only.** No state reachable solely by watching a transition.
+3. **Every visual object has a text equivalent.** `WaterVessel` is a `progressbar` with a label and a spoken value, so "Hydration, 33 percent of goal" is available without sight.
+4. **Touch targets** stay at 44pt, or add `hitSlop`.
+5. **Dynamic type** — compact modules and tiles break first; check on device.
+
+## 16 — Light and dark
+
+Dark is the primary identity reference. **Light is real and must not feel like a broken inversion.**
+
+**Define relationships, not values, and give each theme its own numbers.** Three bugs in this codebase came from one value that inverted its own hierarchy across themes: the pale progress track that read as *complete* on black; `BodyMap`'s zone that survived review on a bright screen and vanished on a real one; and `waterSoft` outshining today's column in the week strip. All three passed desk review.
+
+`WaterVessel` follows the rule — separate empty-fill, liquid and edge values per theme, and a lighter meniscus in dark than in light.
+
+**Verify on a real device, in both themes.** Desk review does not catch this class of defect.
+
+---
+
+## What this document still owes
+
+- `SectionHeader` variants (proposed in 5.1, built when a screen's slice needs them)
 - Iconography
-- Motion, haptics, and transitions
-- Accessibility standards
+- The full component state matrix
+- App-shell and dock specification beyond current behaviour
 
 ## Where the Design System lives in code
 

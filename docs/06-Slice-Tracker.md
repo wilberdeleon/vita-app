@@ -2022,27 +2022,63 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 
 ---
 
-## Sprint 5 — VITA Identity & Interaction — ⬜ NEXT (planned 2026-09-01, not opened)
+## Sprint 5 — VITA Identity & Interaction — 🟡 IN PROGRESS (opened 2026-09-02)
 
-**No slice is approved and no implementation has started.** There is no Sprint 5 branch. The sprint requires founder authorization plus a **Sprint 5 architecture audit** before planning or implementation begins — the same gate every prior sprint passed.
+**Opened 2026-09-02.** Branch `sprint-5-identity-interaction`, cut from `main` at merge commit `8dce19c` (Sprint 4 merged the same day). Founder-authorized against the **Sprint 5 Planning & Architecture Audit** (`docs/Sprint-5-Planning-Audit.md`, `7743443`), which the founders reviewed and approved, ruling on eleven decisions recorded in its §W.
 
 **Objective:** make VITA feel unmistakably like VITA — establish the visual and interaction language before Journey is built in it.
 
-**Scope character:** primarily presentation and interaction work. Sprint 4's Settings architecture, Appearance persistence, Units architecture, `/tools`, the Tools & Reference hub, the Peptide Calculator, Injection Sites, the Body Map / injection-site primitives, navigation foundations, domain logic, utilities, persistence and repositories are **preserved and not rebuilt**. Working domain logic is untouched unless a concrete issue requires the change.
+**Scope character:** primarily presentation and interaction work. Sprint 4's Settings architecture, Appearance persistence, Units architecture, `/tools`, the Tools & Reference hub, the Peptide Calculator, Injection Sites, the Body Map / injection-site primitives, navigation foundations, domain logic, utilities, persistence and repositories are **preserved and not rebuilt**.
 
-**Proposed slices — DRAFT, not implementation-authorized.** A Sprint 5 architecture audit may refine dependency order, slice boundaries, whether BMI deserves its own slice, whether Tools integration moves earlier or later, and whether some motion work belongs inside individual slices.
+**Founder rulings at authorization** (full text in the planning audit §W). No single surface wins globally — direct-on-background is the default, opaque surfaces group only when content genuinely needs it, `GlassSurface` is a rare emphasis role, and feature-specific visual objects are preferred where the activity benefits; **card soup must not become glass soup** · the Water object shows **percentage of the user's goal**, never literal vessel capacity, with no capacity markings · **fixture Dashboard data does not survive the redesign**, and nothing is fabricated to populate a module · Tools gets a real destination on Home, but Home does not become a launcher · `expo-haptics` approved with a restrained vocabulary · **BMI is its own slice 5.8**, not part of Tools cleanup · rotation uses the existing shared `BodyMap`, with the Injection Sites Tool as the richest historical view · Water moves ahead of Dashboard.
 
-| # | Slice (draft) | Objective | Status |
+| # | Slice | Objective | Status |
 |---|-------|-----------|--------|
-| 5.1 | VITA Design Language | Hierarchy, card usage, modules, spacing, typography, color behavior, visual objects, bottom sheets, primary/secondary actions, motion, haptics, completion states, progressive disclosure, reusable primitives | ⬜ Draft |
-| 5.2 | Dashboard Identity Redesign | Keep the dynamic greeting, remove generic slogan copy, action-oriented Home, recognizable feature modules, Tools discoverability | ⬜ Draft |
-| 5.3 | Interactive Water Experience | Hydration visual object, fill state, tactile logging, quick-add sheet, animation and haptics, history simplification — Water's data architecture preserved | ⬜ Draft |
-| 5.4 | Peptides Home Redesign | Due / completed / upcoming hierarchy, immediate comprehension, reduced administrative feel — routine and business logic preserved | ⬜ Draft |
-| 5.5 | Routine + Injection Site Experience | Simplify routine hierarchy, optional site logging, evolve the shared body map, explore injection rotation visualization | ⬜ Draft |
-| 5.6 | Tools Integration | Remaining Tools UI under the new language; BMI here or in a dedicated adjacent slice after design-language approval | ⬜ Draft |
-| 5.7 | Motion + Microinteraction Pass | A restrained reusable interaction language — not the final launch-animation sprint | ⬜ Draft |
-| 5.8 | Founder Review / Identity Audit | Real-device review of Dashboard, Water, Peptides, Routine and Tools. *"Would I genuinely want to use this app every day?"* | ⬜ Draft |
+| 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | 🟡 Implemented — awaiting founder identity review |
+| 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ⬜ Not started |
+| 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | ⬜ Not started |
+| 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
+| 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
+| 5.6 | Tools Integration | Sprint 4's existing working Tools under the new language — behaviour frozen | ⬜ Not started |
+| 5.7 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps | ⬜ Not started |
+| 5.8 | BMI Calculator | Built from scratch in the new system | ⬜ Not started |
+| 5.9 | Founder Identity Audit | Real-device review, both themes, VoiceOver, reduce-motion | ⬜ Not started |
 
-**Journey does not begin without explicit founder approval after 5.8.**
+**Journey does not begin without explicit founder approval after 5.9.**
 
-Full direction: `docs/04-Master-Roadmap.md` → Sprint 5, and `docs/Sprint-5-Identity-Brief.md` — **DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL.**
+### Slice 5.1 — VITA Design Language + Identity Prototype 🟡
+
+**Implemented 2026-09-02. Awaiting founder identity review — not approved.**
+
+**The design language is authored** in `docs/05-Design-System.md` → *The VITA Design Language*: sixteen sections covering surface roles, feature colour, typography, spacing, radius, borders, interaction, motion, reduce motion, haptics, progressive disclosure, completion, empty states, feature-specific vs shared, the accessibility floor, and light/dark. `docs/Sprint-5-Migration-Guide.md` maps every remaining screen onto it so 5.2–5.8 are mechanical rather than exploratory.
+
+**Four primitives, each solving a problem the audit measured — and no more.** The instruction was explicitly not to build a design system for its own sake.
+
+- **`VitaSheet`** (`components/ui/VitaSheet.tsx`) — extracted, not invented. The audit found four hand-rolled `Modal` sheets in `features/peptides/components/`, two sharing a byte-identical backdrop and shell. Built on RN `Modal`; **no `@gorhom/bottom-sheet`**, which would have added Reanimated *and* Gesture Handler for snap points nothing needs. Backdrop, top radius, safe-area bottom, keyboard avoidance, optional head, three exits (backdrop, close, Android back), `accessibilityViewIsModal`, reduce-motion presentation.
+- **`src/lib/haptics/`** — `expo-haptics@~15.0.8` behind `vitaHaptic(event)`. Four events: `selection` · `confirm` · `complete` · `warn`. Silent on failure, returns `void` so no caller can await a vibration.
+- **`motion` tokens** (`theme/tokens.ts`) — `press` 90ms · `state` 180ms · `sheet` 260ms · `progress` 700ms, plus the shared press spring and scales. Replaces per-component literals (650ms in `ProgressBar`, 700ms in `WaterLevelPanel`, an undocumented spring in `PressableScale`). `progress` deliberately keeps the founder-approved feel rather than re-timing approved motion.
+- **`PressableScale` evolved rather than replaced.** A new `VitaPressable` was considered and rejected — the existing component already had the call sites. It now honours reduce-motion (fading instead of scaling, so feedback survives without movement), reads its spring and scale from tokens, and takes an optional `haptic`. **This closes the largest remaining reduce-motion gap in the app across six call sites at once.**
+
+**`WaterVessel`** (`features/water/components/WaterVessel.tsx`) — the identity object, and deliberately **Water-specific**. Not a `ProgressObject`, takes no colour or shape props, and Peptides and Fuel do not inherit it. An abstract vessel: narrow mouth, shoulder, straight body, slightly drawn-in base — no cap, no threads, no label panel, **no measurement marks of any kind**, because the fill is percentage of the user's chosen goal and a branded bottle would assert a capacity the app does not have.
+
+Drawn as four layers with **no SVG clip path anywhere**: the silhouette is generated from a parametric `halfWidthAt(t)`, the liquid is the same silhouette inside a bottom-anchored view clipped rectangularly by `overflow: 'hidden'`, the waterline's width is read from the same function so it always meets the wall, and the edge strokes over the top. `ClipPath` was avoided on purpose — `BodyMap` records that it "was tried first and did not apply on device", and it also forces a per-frame SVG re-render. Rectangular clipping is what `WaterLevelPanel` already animates against, on device, founder-approved.
+
+**Three defects were found on device and fixed before review**, which is what the prototype exists for:
+1. the silhouette was visibly **faceted** — 44 polyline samples left about ten segments carrying the shoulder; now 120;
+2. the primary action was a **full-width saturated blue slab** using the shared `Button` with `color={palette.water}` — the loudest thing on screen, and precisely what the founder colour rule forbids. Replaced with the app's **neutral** action, which is now the documented rule: the object carries the feature colour, the button does not;
+3. the completion ring was drawn at `scale(1.05)` and **clipped at the top**, leaving gold down the sides and nothing across the shoulder. Completion now turns the vessel's own edge gold, which needs no room and cannot clip. The waterline also overshot the rim at 100% and now stops three points short.
+
+**The prototype** (`src/app/(vita)/identity.tsx`) is `__DEV__`-gated, reachable from Settings → Development → Identity Prototype (also `__DEV__`-only) or by deep link to `/identity`. **Both are temporary and are removed in slice 5.9.** It holds every value in local `useState` — it does not read `useWater()`, write an entry, or touch a goal, so founder testing cannot contaminate real hydration data. A test asserts exactly that.
+
+**`PressableCard` deleted** — zero call sites, confirmed before removal; the only remaining references were two doc comments, both updated.
+
+**Production files touched, and why.** `theme/tokens.ts` (motion tokens, additive) · `components/ui/PressableScale.tsx` (reduce-motion + haptic, backward compatible) · `components/ui/index.ts` (exports) · `Card.tsx` / `GlassSurface.tsx` (**doc comments only** — recording that neither is the default surface) · `settings/index.tsx` (the `__DEV__` row) · `package.json` (`expo-haptics`). **No screen was redesigned.** `Card`'s 23 call sites, `SectionHeader`'s 28 and `ScreenHeader`'s 31 are untouched; migration happens in the slice that redesigns each screen.
+
+**Zero changes under `src/lib/` domain code.** The only `src/lib/` addition is the new `haptics/` module.
+
+**Validation.** `npm test` **47 suites / 1200 tests passing** (was 44 / 1174; +26 tests) · `npx tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `npx expo install --check` reports only the two long-documented patch-drift items (`expo@54.0.36`, `expo-constants@18.0.13`), unchanged and untouched · iOS export succeeded, 3.87 MB, zero errors · rendered in Expo Go on the iOS simulator at 0 / 50 / 75 / 100% in **Dark**, and at 75% in **Light**, via a temporary initial-state override that was then removed (no override remains in the codebase).
+
+**The Settings row-inventory test caught the new `__DEV__` row** — which is what that test exists for. It now asserts the shipping inventory (the four rows a real user can see) separately from the development row, so the guarantee that Settings shows nothing dead is intact.
+
+**Still to verify — founder, on a real device:** whether the vessel reads premium rather than cartoonish, whether the sheet beats navigating to a form, and whether the surface roles have avoided trading card soup for glass soup.
+

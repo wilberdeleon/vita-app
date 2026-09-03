@@ -182,12 +182,36 @@ describe('every visible row is real', () => {
     const { repository } = fakeWaterRepository();
     const tree = await mount(<Settings />, repository);
 
-    expect(rows(tree).map((row) => row.title)).toEqual([
-      'Appearance',
-      'Units',
-      'Tools & Reference',
-      'Version',
-    ]);
+    /**
+     * The shipping inventory. `Identity Prototype` is deliberately absent:
+     * it is `__DEV__`-only (Sprint 5 slice 5.1, removed in 5.9), so the rows
+     * a real user can ever see are still exactly these four.
+     */
+    const shipped = rows(tree)
+      .map((row) => row.title)
+      .filter((title) => title !== 'Identity Prototype');
+
+    expect(shipped).toEqual(['Appearance', 'Units', 'Tools & Reference', 'Version']);
+  });
+
+  /**
+   * Guards the temporary development entry point in both directions: it has
+   * to work while it exists, and it has to be genuinely gated. Jest runs with
+   * `__DEV__` true, which is why the row is present here at all — the
+   * assertion that matters for shipping is the one above, which excludes it.
+   */
+  it('offers the identity prototype only in development, and it navigates', async () => {
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    const row = rows(tree).find((candidate) => candidate.title === 'Identity Prototype');
+
+    if (__DEV__) {
+      expect(row).toBeDefined();
+      expect(typeof row!.onPress).toBe('function');
+    } else {
+      expect(row).toBeUndefined();
+    }
   });
 
   it.each([

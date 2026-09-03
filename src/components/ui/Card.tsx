@@ -9,8 +9,14 @@ type Props = PropsWithChildren<{
 
 /**
  * Base card surface — the single source of truth for card background,
- * radius, border, and shadow. Reused by PressableCard so every tappable card
- * matches every static one exactly.
+ * radius, border, and shadow.
+ *
+ * **Not the default surface any more** (Sprint 5 slice 5.1, founder ruling).
+ * Content sits directly on the background unless it genuinely needs grouping;
+ * a card is what you reach for when several related things belong together,
+ * not what you reach for because content exists. See `docs/05-Design-System.md`
+ * → Surface roles. Existing call sites are unchanged and are migrated by the
+ * slice that redesigns their screen, never in bulk.
  *
  * A hook rather than a constant since the app-wide visual consistency pass:
  * the surface follows the active theme, and it carries a hairline border in

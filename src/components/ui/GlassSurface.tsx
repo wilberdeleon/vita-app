@@ -28,9 +28,14 @@ type Props = PropsWithChildren<{
  * BlurView) + a tint overlay + a subtle border + a soft shadow, theme-aware
  * via useTheme() — tokens come from theme/tokens.ts `glass[variant][scheme]`.
  * Becomes pressable, with the app's standard press-scale feedback, only when
- * `onPress` is passed — one component rather than a separate static/
- * pressable pair, matching Card/PressableCard's relationship but
- * consolidated.
+ * `onPress` is passed — one component rather than a separate static/pressable
+ * pair.
+ *
+ * **A rare role, not a default surface** (Sprint 5 slice 5.1, founder ruling).
+ * Glass is for floating navigation, overlays, and genuine layering — the dock
+ * is its clearest correct use. It is explicitly not the replacement for the
+ * card: the instruction this slice works under is that VITA must not trade
+ * card soup for glass soup. See `docs/05-Design-System.md` → Surface roles.
  *
  * Two-layer structure (shadow wrapper + clipped inner) rather than one view:
  * `overflow: hidden` (needed to clip the blur/tint to the rounded corners)
