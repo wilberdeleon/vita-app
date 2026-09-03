@@ -19,7 +19,7 @@
 
 ## Target state — ⚠️ scope reversed 2026-07-09
 
-**Sprint 7** of the [[Roadmap]] (Sprint 4 under the 2026-07-09 numbering; renumbered to 6 by the 2026-08-17 restructure, and to **7** by the 2026-09-01 reorder that moved [[Settings]] + Tools & Reference ahead of Journey — scope unchanged, number only): Atlas Home, Chat Experience, **Meal Planning** ([[Meal Planning]], promoted to 📋 Planned), **Workout Planning** ([[Workout Generation]], promoted to 📋 Planned), Health Guidance, Memory & Context, Recommendations, Atlas Polish.
+**Sprint 8** of the [[Roadmap]] (Sprint 4 under the 2026-07-09 numbering; renumbered to 6 by the 2026-08-17 restructure, to 7 by the 2026-09-01 reorder that moved [[Settings]] + Tools & Reference ahead of Journey, and to **8** by the 2026-09-01 identity insertion — scope unchanged, number only): Atlas Home, Chat Experience, **Meal Planning** ([[Meal Planning]], promoted to 📋 Planned), **Workout Planning** ([[Workout Generation]], promoted to 📋 Planned), Health Guidance, Memory & Context, Recommendations, Atlas Polish.
 
 This **directly reverses** the prior locked decision — "Atlas V1 is a polished placeholder only. Do not implement AI coaching yet" (repo Master Roadmap Atlas scope decision under the old numbering, logged in the [[Decision Log]]). The new official roadmap commits to a full AI health coach as part of the core Sprint plan, not a post-V1 stretch goal. See the [[Decision Log]] for the superseding entry.
 
@@ -38,6 +38,6 @@ This **directly reverses** the prior locked decision — "Atlas V1 is a polished
 ## Open questions
 
 - Does the `planet` dock icon survive the space-aesthetic removal decision? ([[Open Questions]] #8)
-- The scope reversal itself is now committed at the roadmap level, but the underlying [[Future AI]] engineering decisions (model, cost, privacy) remain entirely unresolved — the roadmap names *what* ships in Sprint 7, not *how*.
+- The scope reversal itself is now committed at the roadmap level, but the underlying [[Future AI]] engineering decisions (model, cost, privacy) remain entirely unresolved — the roadmap names *what* ships in Sprint 8, not *how*.
 
 **Related:** [[Atlas Personality]] · [[Atlas Capabilities]] · [[Coaching Strategy]] · [[Prompt Library]]

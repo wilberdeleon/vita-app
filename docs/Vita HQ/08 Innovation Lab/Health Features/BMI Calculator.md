@@ -13,7 +13,15 @@ tags: [tools, bmi, calculator, weight, height, reference]
 
 ## Status
 
-📋 Planned — named by the founders on 2026-09-01 as a planned Tool inside **Sprint 4 — Settings + Tools & Reference** ([[Roadmap]]). The concept is small and well understood; what is not decided is where it sits inside the Tools destination and how the result is presented without drifting into judgement.
+📋 Planned — named by the founders on 2026-09-01 as a planned Tool inside Sprint 4 (then titled *Settings + Tools & Reference*, [[Roadmap]]).
+
+**⏸️ Deferred at the Sprint 4 closeout, 2026-09-01 — deferred, not cancelled.** Sprint 4 closed as **Settings + Tools Foundation** after its two foundation slices, and this remains a valid product direction. The reason is sequencing, not doubt: this is presentation-heavy work, and the founders are defining a new VITA visual and interaction language next. Building it now would mean designing it twice. It resumes once that language exists — and lands into the `/tools` architecture slice 4.2 already established, where a new tool is a row and a route rather than a question about where it belongs.
+
+**Carried into Sprint 5 — VITA Identity & Interaction by the roadmap alignment of 2026-09-01. Still planned. Explicitly not cancelled — the founders want it.** It may land in draft slice 5.6 (Tools Integration) or in a dedicated adjacent slice after the design language is approved; that is a Sprint 5 architecture-audit decision and no slice number is assigned yet.
+
+**No implementation details are assigned beyond that.** The presentation questions this note already raises — how the category and scale read without becoming a verdict — are exactly the ones the new visual language should answer first.
+
+Original note follows. The concept is small and well understood; what is not decided is where it sits inside the Tools destination and how the result is presented without drifting into judgement.
 
 ## Category
 
@@ -58,13 +66,13 @@ Low direct value; real compounding value. It makes **Tools** a place worth retur
 
 ## Dependencies
 
-- The Sprint 4 Tools destination and its navigation.
+- The Tools destination and its navigation — **built in Sprint 4 slice 4.2 and now a dependency that is met.**
 - A unit model for height and weight consistent with whatever [[Settings]] establishes.
-- **For the future integration only:** [[My Journey|Journey]] / Weight (Sprint 5), which will own stored height and latest weight.
+- **For the future integration only:** [[My Journey|Journey]] / Weight (**Sprint 6** since the 2026-09-01 identity insertion), which will own stored height and latest weight.
 
 ## Future Enhancements
 
-**Read the user's own numbers instead of asking for them.** Once Journey / Weight exists (Sprint 5), BMI could read the stored height and latest weight rather than requiring duplicate entry. **This is explicitly not built now** — Journey owns that data and does not exist yet, and building against a data model that has not been designed would constrain it.
+**Read the user's own numbers instead of asking for them.** Once Journey / Weight exists (**Sprint 6**), BMI could read the stored height and latest weight rather than requiring duplicate entry. **This is explicitly not built now** — Journey owns that data and does not exist yet, and building against a data model that has not been designed would constrain it.
 
 ## Related Ideas
 
@@ -78,14 +86,15 @@ Low direct value; real compounding value. It makes **Tools** a place worth retur
 
 **Current Status:** 🟡 Needs Refinement — the calculation and inputs are obvious; the presentation of the category, and the exact tone around it, are not yet designed.
 
-**Next Step Required:** Decide how the category and scale are presented without reading as a verdict, and whether anything is persisted — at Sprint 4 planning, not before.
+**Next Step Required:** Decide how the category and scale are presented without reading as a verdict, and whether anything is persisted — **once the Sprint 5 design language exists**, not before. That language is precisely what should answer it.
 
-**Estimated Sprint:** Sprint 4 — Settings + Tools & Reference.
+**Estimated Sprint:** **Sprint 5 — VITA Identity & Interaction** — Tools Integration, or a dedicated adjacent slice, after the design language is approved. *(Was Sprint 4 — Settings + Tools & Reference; deferred at that sprint's closeout.)*
 
 **Dependencies:**
-- The Sprint 4 Tools destination
+- The Tools destination (met — Sprint 4 slice 4.2)
+- The Sprint 5 design language
 - A shared height/weight unit model
-- Journey / Weight (Sprint 5) — for the future auto-fill only
+- Journey / Weight (Sprint 6) — for the future auto-fill only
 
 **Confidence:** 8 / 10 — high confidence in the value and feasibility; the deduction is for tone, which is where a BMI feature most easily goes wrong.
 

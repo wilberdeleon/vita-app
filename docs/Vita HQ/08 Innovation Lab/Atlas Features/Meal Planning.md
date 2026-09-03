@@ -13,7 +13,7 @@ tags: [atlas, meal-planning, nutrition, ai-generated]
 
 ## Status
 
-📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as the Atlas sprint, Slice 3 — **Sprint 7** under the current numbering (Sprint 4 when promoted, 6 from 2026-08-17, 7 since the 2026-09-01 reorder).
+📋 Planned — promoted 2026-07-09. Named directly in the official [[Roadmap]] as the Atlas sprint, Slice 3 — **Sprint 8** under the current numbering (Sprint 4 when promoted, 6 from 2026-08-17, 7 since the 2026-09-01 reorder).
 
 ## Category
 
@@ -77,12 +77,12 @@ A concrete, dailyuse reason to open Vita beyond logging — strong retention lev
 
 **Current Status:** 🟢 Concept Complete
 
-**Next Step Required:** None — promoted to the official roadmap; awaiting Sprint 7 — Atlas to begin.
+**Next Step Required:** None — promoted to the official roadmap; awaiting Sprint 8 — Atlas to begin.
 
-**Estimated Sprint:** Sprint 7 — Atlas, Slice 3
+**Estimated Sprint:** Sprint 8 — Atlas, Slice 3 *(renumbered from Sprint 7 by the 2026-09-01 identity insertion)*
 
 **Dependencies:**
-- Atlas coaching/chat foundation (Sprint 7, Slices 1–2)
+- Atlas coaching/chat foundation (Sprint 8, Slices 1–2)
 - Food database provider decision (open on [[Fuel]])
 - Live Fuel logging history
 

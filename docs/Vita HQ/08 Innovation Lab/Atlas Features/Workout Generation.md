@@ -77,10 +77,10 @@ Extends Atlas's utility surface area and the product's premium positioning again
 
 **Next Step Required:** Founder decision — does a workout-tracking module enter the product, or does "Workout Planning" stay advisory-only?
 
-**Estimated Sprint:** Sprint 7 — Atlas, Slice 4 ("Workout Planning")
+**Estimated Sprint:** Sprint 8 — Atlas, Slice 4 ("Workout Planning") *(renumbered from Sprint 7 by the 2026-09-01 identity insertion)*
 
 **Dependencies:**
-- Atlas coaching/chat foundation (Sprint 7, Slices 1–2)
+- Atlas coaching/chat foundation (Sprint 8, Slices 1–2)
 - Tracking-module scope decision (see Status above)
 
 **Confidence:** 6 / 10 — the roadmap commitment resolves *whether* this ships, not *what* it fully includes.

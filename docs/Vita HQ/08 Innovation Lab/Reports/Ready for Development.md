@@ -12,8 +12,8 @@ The official [[Roadmap]] issued 2026-07-09 named these directly, promoting them 
 
 | Idea | Sprint (current numbering) | Readiness | Confidence |
 |---|---|---|---|
-| [[Meal Planning]] | **Sprint 7 — Atlas**, Slice 3 | 🟢 Concept Complete | 7.5/10 |
-| [[Workout Generation]] | **Sprint 7 — Atlas**, Slice 4 | 🟡 Needs Refinement (tracking-module scope open) | 6/10 |
+| [[Meal Planning]] | **Sprint 8 — Atlas**, Slice 3 | 🟢 Concept Complete | 7.5/10 |
+| [[Workout Generation]] | **Sprint 8 — Atlas**, Slice 4 | 🟡 Needs Refinement (tracking-module scope open) | 6/10 |
 | [[Apple Health Integration]] | ⚠️ none — was Health, Slice 5 | 🟢 Concept Complete | 8.5/10 |
 | [[Mobile Order Screenshot Import]] | ⚠️ none — deferred out of Sprint 2 — Fuel | 🟢 Concept Complete | 8.5/10 |
 | [[Apple Home Screen Widgets]] | ⚠️ none — was Premium, Slices 1–2 | 🟢 Concept Complete | 8/10 |

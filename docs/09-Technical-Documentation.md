@@ -45,6 +45,34 @@ All of it was written for nutrition in Sprint 2 and promoted unchanged when Wate
 
 **Formatting helpers live here too, and are hand-written on purpose.** `formatLogDateLong` ("Friday, August 21"), `formatLogDateWithYear` ("24 August 2026"), `formatClockTime` ("2:15 PM"), `formatTimeOfDay` ("09:00" → "9:00 AM"), and `toTimeInput` are all built from local date parts rather than `toLocaleDateString`/`toLocaleTimeString`. Hermes' `Intl` support varies by platform and engine build, and a header that silently falls back to `2026-08-21` — or throws — on one device and not another is not worth the dependency for a handful of strings. Swap them for `Intl` when localization actually ships. The two added in the 3.10 audit exist because the routine screen was rendering storage formats directly: `09:00` for a reminder and `2026-08-24` for a start date. `formatLogDateWithYear` carries the year that `formatLogDateLong` omits, because a routine's start date is often months or years old.
 
+## Tools & Reference routes (Sprint 4 slice 4.2)
+
+`src/app/(vita)/tools/` — `index.tsx` (the hub), `peptide-calculator.tsx`, `injection-sites.tsx`. A sibling of `settings/`, `water/` and `peptides/`, with **no `_layout.tsx`**: `(vita)/_layout.tsx` declares only `(tabs)` and every other route is implicit, as those three already are. **Not a route group** — groups exist to share a layout without appearing in the URL, and here there is no layout to share and the segment is wanted in the URL.
+
+**Why they moved out of `/settings/tools/`.** A tool is something you use once and walk away from; a setting is something you change. The route is the plainest statement the app makes about which one something is, and `/settings/tools/peptide-calculator` said a calculator was a child of Settings. **Settings is still the only way in** — it owns discovery, not identity.
+
+**The old routes were removed, not redirected.** No public deep links exist to preserve, so a compatibility tree would be two screens to maintain and one of them dead. Tests pin the removal from both ends: Settings pushes nothing containing `/settings/tools`, and the hub pushes nothing containing `/settings`.
+
+**The everyday logging flow never touched these routes.** `SiteSelector`'s *View Body Model* is an inline mode toggle (`setMode('map')` rendering `BodyMap` in the sheet), not navigation — a deliberate slice-3.8 decision. Nothing in Peptides required updating for the migration.
+
+**Hub composition.** `ListRow` under a `SectionHeader`, no new primitives. Sections group by **Tools vs Reference**, not by domain — a BMI calculator is not a peptide tool, and a `Peptides` heading would force a false grouping. Icon colour tracks the domain a tool serves; a tool belonging to no domain takes the neutral treatment. **A REFERENCE section appears in slice 4.5 when something real sits under it** — nothing is listed before it works.
+
+## App preferences (Sprint 4 slice 4.1)
+
+`src/lib/preferences/` holds **app-level preferences only** — settings that change the whole app and belong to no single feature. It is deliberately not a settings framework.
+
+The test for whether something belongs here: does more than one feature read it, and does no feature own it? Appearance passes — it changes every screen and belongs to none. A preference a feature owns stays with that feature: **Water keeps its display unit at `vita:v1:water:prefs`, and Settings reads and writes that same record** rather than holding a second copy that could disagree with it (founder ruling, Open Question #16, closed 2026-08-21). Settings → Units calls `useWater().setUnit`, the same call the Water goal screen makes. **No Water storage was migrated**, and none needs to be — two stores behind one screen is the correct outcome, not a compromise.
+
+**Storage key:** `vita:v1:settings:prefs`, one record via the shared `singletonKey` helper. One key rather than one per preference: they are read together at startup and are individually tiny.
+
+**The parser reads field by field, never all-or-nothing.** A record written before a preference existed is missing that field, and one written by a later build carries fields this one does not know; rejecting either wholesale would silently discard preferences the user did set. Each field independently falls back to its documented default, and `null` is reserved for "there is nothing stored at all". This is what makes adding a preference a three-line change with no key change and no migration.
+
+**`ThemeMode` is defined here, not in the theme.** A persisted value needs one definition and one validator, and this is what persists and validates it; `src/theme/ThemeProvider.tsx` re-exports the type under its original name so every existing import is unchanged. That is the one `theme/ → lib/` dependency in the codebase, and it runs in the direction that keeps `src/lib` independent of the theme.
+
+**`ThemeProvider` holds nothing until it has read.** The provider renders no children until the stored appearance is known — a user whose choice is Light on a device set to Dark would otherwise see the app paint dark and snap one frame later. The hold is bounded: the hydrated flag is set in a `finally`, so a storage failure falls back to System and still mounts the app rather than leaving it blank. A failed *write* keeps the choice for the session and is not surfaced; a toast about a failed preference write would be more alarming than the loss it describes.
+
+**Extension point.** BMI adds a body-weight unit and a height unit here, and **Sprint 6**'s Journey / Weight reads the same weight unit — which is what makes them app-level rather than tool-level. They are **not added before something reads them**: a persisted preference with no consumer is one the user can set and never observe.
+
 ## UI conventions
 
 **Units are cased by role.** A **configuration field label** names its unit in capitals — `Vial Amount (MG)`, `Reconstitution Volume (ML)`, `Amount (MG)` — matching the founder's requested styling on setup surfaces. Every **displayed value** stays lowercase — `2 mg`, `250 mcg`, `20 units`, `1.2 mL`, `10 mg/mL`. Nothing else uppercases a unit; in particular the conversion reference, history rows, and log sheets are all values and stay lowercase.
@@ -336,7 +364,7 @@ WaterEntry[]  →  WaterState  →  derived totals  →  Water screen + Fuel
 
 **Every entry stores both representations.** `amountMl` for arithmetic, plus `enteredAmount` + `enteredUnit` as a snapshot of what the user typed — the same principle as `FoodEntry.nutrition`. Changing the display preference must never rewrite what someone recorded.
 
-**The goal is stored as the authored pair**, not as millilitres, so it reads back exactly as set. **There is no default goal**: `null` means not set, and `progress`/`percent`/`remaining` are all honest about it rather than dividing by an invented target. Logging is never gated on a goal existing. Water owns its own preferences under `vita:v1:water:prefs`; Settings (**Sprint 4** since the 2026-09-01 reorder) will read and write that same key rather than creating a second source.
+**The goal is stored as the authored pair**, not as millilitres, so it reads back exactly as set. **There is no default goal**: `null` means not set, and `progress`/`percent`/`remaining` are all honest about it rather than dividing by an invented target. Logging is never gated on a goal existing. Water owns its own preferences under `vita:v1:water:prefs`; **Settings → Units reads and writes that same key** as of Sprint 4 slice 4.1, through `useWater().setUnit`, rather than creating a second source. See App preferences above.
 
 **A display preference and an entry's unit are different things** (founder decision, 2026-08-22). `WaterPreferences.unit` is how Water renders derived values — totals, goal, remaining. An entry's `enteredUnit` is what the user typed for that drink. Logging one bottle in millilitres does not move the preference, and changing the preference never rewrites a stored entry. `setUnit` is called from exactly one place: the explicit unit control on `/water/goal`. Slice 3.2 briefly conflated the two; slice 3.3 separated them, and provider tests pin the separation.
 

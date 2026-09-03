@@ -1849,3 +1849,200 @@ Technically careful, and it never tells the reader what 5-Amino-1MQ is actually 
 **Verified running in Expo Go on the iOS Simulator, and the run produced an unplanned end-to-end proof of the date model.** The first launch happened on a simulator whose clock still read **2026-08-21**: Fuel rendered `Friday, August 21` and loaded that day's real persisted food log — 2,326 Calories, Breakfast and Lunch populated, Big Mac and Bananas intact — which is direct evidence that **food data written before this slice still reads correctly after it**. The simulator was then rebooted, resyncing its clock to 2026-08-22, and the same build rendered `Saturday, August 22` with an empty day, `0 Calories`, and all four meal slots showing `No foods logged`. Same code, two device dates, the correct log for each. Home rendered correctly on the new date, and Fuel's Hydration (`5 of 8 cups · 63%`) and Peptides (`1 logged today`) modules still show their Sprint 0 fixtures exactly as before — the regression boundary held.
 
 **Not verified:** tap-driven paths, unchanged from the standing limitation — the simulator can be deep-linked and screenshotted but not driven. No physical-device testing was performed in this slice, and none was needed: nothing user-facing changed.
+
+---
+
+## Sprint 4 — Settings + Tools Foundation — ✅ COMPLETE (opened and closed 2026-09-01)
+
+**Opened 2026-09-01.** Branch `sprint-4-settings-tools-reference`, cut from `main` at `8b8ec8d`. Founder-authorized against the **Sprint 4 Planning & Architecture Audit** (`docs/Sprint-4-Planning-Audit.md`, planning commit `aa1c60a`), which the founders reviewed and approved.
+
+**Founder decisions recorded at approval.** Tools are promoted out of Settings-owned route identity — a calculator is not a preference, and a later slice establishes the `/tools` architecture · any Settings row that visually promises navigation must actually work, and a nonfunctional row is removed rather than kept as a placeholder · Appearance must persist · Units becomes a real preference surface **without rewriting already-approved domain storage** · BMI is Sprint 4 but not slice 4.1 · Research Library *architecture* is approved, full health/reference content is not · **Food/Product Scanner scoring is not authorized — no VITA Score is to be invented** · Dashboard Tools shortcut deferred · OS notification delivery deferred · no account/profile/export systems built merely to populate Settings.
+
+| # | Slice | Objective | Status |
+|---|-------|-----------|--------|
+| 4.1 | Settings Foundation | Honest Settings, persistent Appearance, real Units destination, accurate version | ✅ Approved |
+| 4.2 | Tools & Reference Hub + route architecture | Promote Tools out of `/settings/`, establish the hub | ✅ Approved |
+| 4.3 | Existing Tools integration / polish | Peptide Calculator and Injection Sites discoverability and consistency | ⏸️ **Deferred** — presentation work, awaiting the new visual language |
+| 4.4 | BMI Calculator | Height/weight in, BMI and range out, neutral visual scale | ⏸️ **Deferred, not cancelled** |
+| 4.5 | Research Library foundation | Content model, routes, content tests | ⏸️ **Deferred, not cancelled** |
+| 4.6 | Product Scanner shared-data expansion | Never committed; scoring never authorized | ⏸️ **Deferred, not cancelled** |
+| 4.7 | Sprint-wide integration / polish | — | ⏸️ Deferred |
+| 4.8 | Sprint 4 audit + closeout | Folded into this closeout | ✅ Done |
+
+**Slice 4.6 is deliberately not committed.** The founders' words: *"I would not promise 4.6 yet. We can reassess once 4.1–4.5 are real."*
+
+### Slice 4.1 — Settings Foundation 🟡
+
+**Objective:** turn Settings from a partially functional placeholder into an honest, persistent foundation — every visible row real, Appearance surviving a relaunch, Units a genuine destination — ready to receive the Tools & Reference entry in slice 4.2.
+
+---
+
+**The rule the slice is built on:** a row that shows a chevron opens something, or it is not on the screen.
+
+**Five of eight rows failed that test**, all re-verified against source before anything was changed:
+
+| Row | What it claimed | Disposition |
+|---|---|---|
+| Profile | A profile, over `AuthProvider`'s mock user (`Wilber` / `wilber@vita.app`) | **Removed** — no profile model exists |
+| Notifications | Notification settings | **Removed** — `expo-notifications` is not a dependency; no delivery infrastructure exists |
+| Units | `Imperial (lb, oz)` | **Replaced with a real screen** — see below |
+| Privacy & Data | Privacy/data controls | **Removed** — no export, delete, or reset exists |
+| Sign Out | A sign-out, in destructive red | **Removed** — `AuthProvider.signOut` is `async () => {}` |
+
+None was rebuilt to preserve its row. Building a profile system, an auth session, or a notifications surface so that Settings looks fuller would be letting a screen's layout dictate the product roadmap — and the founder ruling was explicit that these return when they are real.
+
+**The Units row was the most serious defect, because it was not empty — it was false.** VITA has never had pounds or mass ounces anywhere in the codebase; the only body-adjacent `MassUnit` is `'mg' | 'mcg'` and describes a peptide dose. Worse, the claim *contradicted a real preference*: Water genuinely stores a volume unit at `vita:v1:water:prefs`, so a user who had chosen millilitres was being told by Settings that they were on imperial units.
+
+**Appearance now persists.** `ThemeProvider` held `mode` in `useState('system')` with no storage, so the only functioning preference in Settings was discarded on every relaunch. It now hydrates from and writes to a preference repository. Three behaviours matter and each is pinned by test: an explicit choice is restored, `system` is restored **as a live choice** and keeps following the device rather than freezing whatever it resolved to, and an unreadable or missing value falls back to System instead of falling through to light.
+
+**Startup was the risk, and is handled deliberately.** Nothing renders until the stored appearance is known — the alternative is a visible flash where a user whose choice is Light on a Dark device sees the app paint dark and snap one frame later. The hold is bounded: `hydrated` is set in a `finally`, so a storage failure can never leave the app blank. A test asserts children still mount when the read throws.
+
+**`src/lib/preferences/` — small on purpose.** Model, key, repository interface, AsyncStorage implementation, public API. It holds app-level preferences only: things more than one feature reads and no feature owns. It is not a settings framework, and Sprint 4 has real features left to build.
+
+**The parser reads field by field, never all-or-nothing.** This is what makes the slice-4.4 extension point real rather than aspirational: a record written before a preference existed is missing that field, and one written by a later build carries fields this one does not know. Rejecting the whole record in either case would silently discard preferences the user did set. Each field independently falls back to its default; a test pins that an unknown key does not destroy a known one.
+
+**Water's storage was not touched, by ruling and by design.** The Units screen writes through `useWater().setUnit` — the same call the Water goal screen makes, into the same `vita:v1:water:prefs` record. This is the founder ruling on Open Question #16 (closed 2026-08-21) honoured literally: Settings reads and writes Water's source rather than creating a second one that can disagree with it. **No migration was performed and none is needed.** Two stores behind one screen is the correct outcome, not a compromise — migrating already-approved domain storage for architectural tidiness would be risk bought with no user-visible gain.
+
+**Only preferences with a real consumer appear.** The Units screen shows Water's four volume units and nothing else. Body weight and height belong to slice 4.4 and are deliberately absent — a preference a user can set and never observe is the same dishonesty as a row that navigates nowhere. The extension point is documented in `src/lib/preferences/model/types.ts`, not pre-built into the UI.
+
+**Version is read from configuration.** `0.1.0 (Sprint 0)` was a hardcoded string three sprints stale — which is what hardcoded versions do. It now derives from `Constants.expoConfig`, appending a build number only when one is configured, so it can never read `1.0.0 (undefined)`. **No internal sprint names**: a user has no way to interpret them.
+
+**One additive change outside Settings.** `UnitSelector` gained an optional `groupLabel`, passed through to `SegmentedTabs`. Without it a screen reader on the Units screen announces four bare unit names with nothing saying what they measure. Existing call sites are unchanged and pass nothing.
+
+**Deliberately not done — the Tools entry.** Slice 4.2 owns the `/tools` route architecture and the "Tools & Reference" identity. 4.1 only guarantees the existing entry still works, and a test pins that it still pushes `/settings/tools`. The mild redundancy of a `Tools` section header above a `Tools` row is left for 4.2, which retitles that area anyway.
+
+---
+
+**Validation.** `npm test` — **1153/1153** pass across 43 suites (1093 → 1153: **60 added**, none removed) · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · `npx expo export --platform ios` — succeeds (3.86 MB bundle) · `npx expo install --check` — reports only the `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2, unchanged.
+
+**Test coverage added — 60 tests across 3 suites.** `lib/preferences/__tests__/repository.test.ts` (24) — key namespacing, key isolation from Water's, the mode guard including prototype-chain strings, round trips, and every damaged-storage case degrading to a default rather than a wrong value. `lib/preferences/__tests__/provider.test.tsx` (13) — **every persistence test is written as a relaunch**, because the defect was a startup defect and toggling the control already worked; plus System still following the device after a relaunch, a throwing read, and a throwing write. `features/settings/__tests__/SettingsRoutes.test.tsx` (23) — real renders of the real routes.
+
+**The honesty rule is enforced as an invariant, not a checklist.** One test walks every `ListRow` on the screen and asserts that anything drawing a chevron has an `onPress`, so a row added later cannot reintroduce the defect without failing. Separate tests pin the exact row list and the absence of each removed row by name.
+
+**The single-source-of-truth claim is proven, not asserted.** A test changes the water unit on the Settings → Units screen, unmounts it, mounts the **Water screen** against the same provider, and reads `500 mL` off it. A second test confirms an already-logged `16 fl oz` entry still stores `enteredAmount: 16` / `enteredUnit: 'floz'` afterwards — the display preference re-reads history, it does not rewrite it.
+
+**Boundary audit.** Six paths touched in total: `settings/index.tsx`, `settings/units.tsx` (new), `theme/ThemeProvider.tsx`, `features/water/components/UnitSelector.tsx` (one optional prop), `lib/preferences/` (new), `features/settings/__tests__/` (new). **Zero changes** to nutrition, Fuel, Home, Journey, Atlas, Peptides, the Peptide Calculator, Injection Sites, the body map, the peptide catalog, or any Water file other than the additive `UnitSelector` prop.
+
+**No regressions.** The full pre-existing suite passes unchanged, including `WaterRoutes` (which exercises the goal screen's `UnitSelector`), `UnitConversion` (the Peptide Calculator and the Tools row), and `PeptideLogging`/`PeptideRoutines` (Injection Sites). `ThemeProvider` is mounted by all ten pre-existing route/component suites and every one still passes, which is the theme-regression check across Home, Fuel, Water, Peptides, the Calculator and Injection Sites.
+
+**A pre-existing test-harness warning is unchanged and unrelated.** Real renders emit `You are trying to access a property or method of the Jest environment after it has been torn down` from `react-native/jest/setup.js`. The untouched `WaterRoutes` suite emits it 991 times on its own; the new Settings suite emits it for the same reason — the same harness. Not introduced here, and not a failure.
+
+**⚠️ Not verified: on-device Light/Dark capture, and the relaunch scenarios on real hardware.** This was attempted and is blocked by the environment, not by the code: the simulator's Expo Go is **57.0.2**, SDK 54 requires **54.0.7**, and Expo CLI's offer to install the matching client cannot be answered without a TTY. The simulator was booted, deep-linked, screenshotted, and then shut down and Metro stopped, leaving the environment as found. **Every persistence and rendering claim above rests on route-level tests that drive the real handlers and mount the real screens** — but the four screenshots §29 asked for (Settings and Units, Light and Dark) were not captured, and the founder's device review should cover them along with the relaunch scenarios.
+
+### Slice 4.2 — Tools & Reference Hub + Route Architecture 🟡
+
+**Objective:** give Tools & Reference a real product identity and a clean route architecture — the destination stops being a Settings subfolder and becomes its own thing, with the two Sprint 3 tools moved under it unchanged.
+
+---
+
+**The route was the argument.** Slice 4.1 established that Settings shows only what is real; 4.2 addresses the other half of the founders' §22 concern — that a calculator is not a preference. The strongest available statement of that is the address itself, and `/settings/tools/peptide-calculator` said the opposite. A route is the plainest claim an app makes about what something *is*.
+
+| Before | After |
+|---|---|
+| `/settings/tools` | `/tools` |
+| `/settings/tools/peptide-calculator` | `/tools/peptide-calculator` |
+| `/settings/tools/injection-sites` | `/tools/injection-sites` |
+
+`src/app/(vita)/tools/` is a sibling of `settings/`, `water/` and `peptides/`, which is the repository's existing convention. **No `_layout.tsx` was added** — `(vita)/_layout.tsx` declares only `(tabs)` and every other route is implicit, exactly as Water, Peptides and Settings already are. **No route group** (`(tools)`): groups exist to share a layout without appearing in the URL, and here there is no layout to share and the segment is wanted in the URL.
+
+**Legacy routes: removed entirely**, not redirected or wrapped. VITA has no public deep links to preserve and is under active development, so a duplicate route tree would be two screens to maintain and one of them dead. The `settings/tools/` directory is gone, including the now-empty folder. Two tests pin the removal from both ends: Settings never pushes anything containing `/settings/tools`, and the hub never pushes anything containing `/settings`.
+
+**A dependency map was produced before anything moved** — nine references across six files, and **nothing outside Settings and the test suites referenced these routes at all**.
+
+**The fast logging flow was the real risk, and it was never exposed.** `SiteSelector`'s *View Body Model* affordance reads like navigation and is not: it calls `setMode('map')` and renders `BodyMap` inline in the sheet. That was a deliberate slice-3.8 decision — *the figure did not go away, and is not buried in Settings* — and it means the everyday Taken flow has no dependency on the Tools route at all. Nothing in Peptides needed updating; **zero Peptides source files changed.**
+
+**Grouped by TOOLS, not by domain.** The old header read `Peptides`, which was correct when every tool here was a peptide tool and becomes wrong the moment one is not — a BMI calculator is not a peptide tool and would force either a false grouping or a second header. The split the founders want visible is Tools versus Reference, so that is the split the headers carry. The icon-colour convention is now explicit: a tool takes the colour of the domain it serves (both current tools are peptide purple); a tool belonging to no domain takes the neutral treatment.
+
+**There is deliberately no REFERENCE section.** The screen title is the founder-approved destination identity; an empty heading underneath it, or a disabled "Research Library — Coming Soon" row, would be exactly the placeholder UI the founders have twice rejected. Slice 4.5 adds one header and one row, which is why the TOOLS header is carried now rather than added later. A test asserts `TOOLS` is present and `REFERENCE` is not, and four more assert the hub advertises no BMI, no scanner, no Research Library, and no "Coming Soon".
+
+**Visual pattern unchanged: `ListRow`.** Considered and rejected: a card grid, which with two items reads as a sparse dashboard rather than a list, and a `ToolRow` abstraction, which would wrap `ListRow` and add nothing — the planning audit's finding that one new component is the right number for this sprint still holds, and 4.2 adds zero.
+
+**Copy.** Peptide Calculator: *"Vial and reconstitution to U-100 units"* — what it converts, with no dose framing. Injection Sites: *"Body map, site reference, and your history"* — names all three things it offers while implying no recommendation. Both fit `ListRow`'s single-line subtitle; the longer phrasing sketched in the authorization would have truncated at this width. A test asserts neither row's copy contains recommendation language.
+
+**Settings keeps the entry and loses the misdirection.** The row is now titled **Tools & Reference** and pushes `/tools`. Its subtitle names the two tools that exist rather than the destination's full identity — *"Calculators and reference"* would advertise a Reference section that does not arrive until 4.5.
+
+**One judgement call worth flagging for device review.** Settings now carries a `TOOLS & REFERENCE` section header above a single row also titled *Tools & Reference*. The header is load-bearing — it is what separates Tools from PREFERENCES, and dropping it would let the row read as a preference, which is the thesis of this slice inverted — but the repetition is visible, and it is the founders' call whether it reads as clear or as redundant on device.
+
+---
+
+**Validation.** `npm test` — **1174/1174** pass across 44 suites (1153 → 1174: **21 added** in a new hub suite, one pre-existing hub assertion relocated into it) · `npx tsc --noEmit` — clean · `npx tsc --noEmit --noUnusedLocals --noUnusedParameters` — clean · `npx expo export --platform ios` — succeeds · `npx expo install --check` — reports only the `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2, unchanged · stale-reference sweep for `settings/tools` — clean apart from one explanatory comment and two negative test assertions · empty-directory sweep — clean.
+
+**Test coverage — `features/tools/__tests__/ToolsRoutes.test.tsx`, 21 tests.** The hub is titled for the destination rather than the route · it lists exactly `['Peptide Calculator', 'Injection Sites']` · it advertises no BMI, scanner, Research Library or "Coming Soon" · it renders no empty REFERENCE heading · the chevron-implies-a-destination invariant from 4.1 is enforced here too · every row has a title, subtitle and accessibility hint · both tools open at their canonical routes · neither the hub nor Settings pushes anything under `/settings` · back from hub and from each tool calls `router.back()` and pushes nothing. Both migrated tools are re-proven rather than assumed: the calculator still renders `Vial Amount (MG)` and `Reconstitution Volume (ML)`, still converts `20 mg / 2 mL` to `1 mg = 10 units`, and still offers **no vial unit toggle** (the 3.10A ruling, pinned across the move); Injection Sites still renders Front/Back, `RECENT SITES` and `SITE REFERENCE`, and still recommends nothing.
+
+**The relocated assertion.** `UnitConversion.test.tsx` carried a small `Tools destination` block asserting the hub opened the calculator. It moved into the new suite and was expanded — it was a Tools-destination concern sitting in a suite about dose arithmetic. Net coverage rose; nothing was dropped.
+
+**Boundary audit.** Changed: the three migrated route files (import depth only, contents otherwise untouched apart from the hub rewrite), `settings/index.tsx` (one row), and four test files (import paths and route assertions). **Zero diff against `87fbf02`** on nutrition, Fuel, Home, Journey, Atlas, Water, every `src/lib`, every `src/features` component including `SiteSelector`, `BodyMap` and `UnitConversion`, and both migrated tools' rendered output.
+
+**⚠️ Not verified: on-device Light/Dark capture, for the second slice running, and the cause is now fully diagnosed.** Two independent blockers, neither in the code. The simulator's Expo Go is **57.0.2** while SDK 54 requires **54.0.7**, and the Expo CLI's offer to install the matching client cannot be answered without a TTY (`CI=1` and piped input both refused). The dev-client route around that — `expo run:ios`, which needs no Expo Go — is blocked because **CocoaPods is not installed**, and installing it is a system-level change requiring elevated permissions rather than an engineering decision. `/ios` and `/android` are gitignored, so a prebuild would have been safe to attempt had the toolchain allowed it. **This is simulator-only:** the founders' own iPhones run a matching Expo Go, which is how slice 4.1 was reviewed and approved on device. The four screenshots §27 asked for were not captured and belong to that review.
+
+### Sprint 4 Closeout — Settings + Tools Foundation ✅
+
+**Founder decision, 2026-09-01: Sprint 4 closes here, after slices 4.1 and 4.2, and is redefined as _Settings + Tools Foundation_.**
+
+**This is an intentional endpoint, not an abandonment.** Both approved slices are foundation work — persistence, information architecture, and route identity — and none of it depends on how VITA looks. Everything remaining under the original Sprint 4 umbrella is **presentation-heavy**: a BMI result and its scale, a reference library's reading experience, a product-evaluation surface, a Dashboard affordance. The founders are about to define a new VITA visual and interaction language, and building those four surfaces first would mean designing them twice — once now, once again immediately afterwards. Deferring them is the cheaper and more coherent order of work, not a reduction in ambition.
+
+The sprint delivered exactly the part that had to come first: **the architecture the deferred Tools will be built into.** `/tools` exists, the hub exists, Settings is honest and persistent, and a new tool is now a row and a route rather than a negotiation about where it belongs.
+
+#### What Sprint 4 represents
+
+**Settings foundation** — a persistent Appearance preference (System / Light / Dark); a real Units destination reading and writing Water's own `vita:v1:water:prefs`; every fake row removed (Profile, Notifications, Privacy & Data, Sign Out); an accurate version display; and an information architecture in which a visible row always does what it appears to do.
+
+**Tools foundation** — a top-level `/tools` route identity; the Tools & Reference hub; canonical routes for the two Sprint 3 tools; Settings retained as the discovery entry point but no longer the owner of Tools' identity; and a structure that accepts new tools and a Reference section without redesign.
+
+#### Deferred — not cancelled
+
+| Work | Status |
+|---|---|
+| **BMI Calculator** | **Planned. Not cancelled.** Deferred until the new visual / interaction language exists, so it is designed correctly once rather than built and immediately redesigned. No implementation details are assigned here beyond that. |
+| **Food / Product Scanner evolution** | Deferred. The Sprint 2 barcode scanner in [[Fuel]] is untouched and still works. Richer product analysis remains possible; **the scoring methodology remains unresolved and deliberately so — no VITA Score exists or is authorized.** |
+| **Research Library / Reference** | Deferred. The concept stands: factual educational material on storage, handling, reconstitution basics, stability, and research/development status. Still gated on Open Questions #17. |
+| **Dashboard Tools discoverability** | Deferred, as it has been at every decision point. Still a saved idea, still no authorized Dashboard card. |
+
+#### Product boundary — restated, and narrowed
+
+Earlier planning described dose-range and treatment-style content as available *with* founder authorisation plus medical, legal and content review. **That framing is withdrawn.** It described a gated future feature, and the founders do not want the feature.
+
+**VITA does not provide recommended dosages, dose ranges, or treatment-style protocols — for research compounds or approved medications — and doing so is not a product direction.** What VITA does is unchanged and is the whole point: it helps users understand, calculate, organise and track information *they* enter. Factual reference material stays in scope, still behind the Open Questions #17 review gate.
+
+Historical records that carry the older wording are left as written and marked superseded where they were being read as current. History is not rewritten.
+
+#### Closeout verification
+
+Documentation and status only — **no application source was changed in this closeout.**
+
+`npm test` — **1174/1174** pass across 44 suites · `npx tsc --noEmit` — clean · `npx expo install --check` — only the `expo@54.0.36` / `expo-constants@18.0.13` patch drift carried since Sprint 2.
+
+Regression suites run individually as well as together: Settings + Tools + preferences (82), Peptides including the calculator, Injection Sites and logging (336), Water including the unit-preference integration (171).
+
+Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence is a comment or a negative test assertion), **no Research Library source exists**, **`src/lib/nutrition` and `fuel/scan.tsx` are byte-identical to `main`**, `/tools`, `/tools/peptide-calculator` and `/tools/injection-sites` are present, and `src/app/(vita)/settings/tools/` is absent.
+
+**One recorded follow-up, still open after the roadmap session.** Two source comments reference "slice 4.4" as BMI's home (`settings/units.tsx`, `lib/preferences/model/types.ts`). The roadmap-alignment session of 2026-09-01 was **documentation-only and changed no application source**, so the comments were deliberately left as they are. They remain accurate about *intent* and stale only about *numbering*: **BMI is still planned, deferred into the Sprint 5 identity work**, and no slice number is assigned to it yet — slice 5.6 is a candidate but the draft plan explicitly leaves open whether BMI earns its own adjacent slice. **Correct the comments in the first Sprint 5 slice that touches those files**, once BMI has a real slice number.
+
+**The roadmap-alignment session ran on 2026-09-01, and no implementation followed it.** The founder-directed identity sprint is now on the roadmap as **Sprint 5 — VITA Identity & Interaction**, ahead of Journey; Journey / Weight is Sprint 6, Journey / Photos Sprint 7, Atlas Sprint 8, and the final polish sprint **Sprint 9 — Final Polish / Motion / Launch Experience**. See `docs/04-Master-Roadmap.md` and `docs/Sprint-5-Identity-Brief.md`.
+
+---
+
+## Sprint 5 — VITA Identity & Interaction — ⬜ NEXT (planned 2026-09-01, not opened)
+
+**No slice is approved and no implementation has started.** There is no Sprint 5 branch. The sprint requires founder authorization plus a **Sprint 5 architecture audit** before planning or implementation begins — the same gate every prior sprint passed.
+
+**Objective:** make VITA feel unmistakably like VITA — establish the visual and interaction language before Journey is built in it.
+
+**Scope character:** primarily presentation and interaction work. Sprint 4's Settings architecture, Appearance persistence, Units architecture, `/tools`, the Tools & Reference hub, the Peptide Calculator, Injection Sites, the Body Map / injection-site primitives, navigation foundations, domain logic, utilities, persistence and repositories are **preserved and not rebuilt**. Working domain logic is untouched unless a concrete issue requires the change.
+
+**Proposed slices — DRAFT, not implementation-authorized.** A Sprint 5 architecture audit may refine dependency order, slice boundaries, whether BMI deserves its own slice, whether Tools integration moves earlier or later, and whether some motion work belongs inside individual slices.
+
+| # | Slice (draft) | Objective | Status |
+|---|-------|-----------|--------|
+| 5.1 | VITA Design Language | Hierarchy, card usage, modules, spacing, typography, color behavior, visual objects, bottom sheets, primary/secondary actions, motion, haptics, completion states, progressive disclosure, reusable primitives | ⬜ Draft |
+| 5.2 | Dashboard Identity Redesign | Keep the dynamic greeting, remove generic slogan copy, action-oriented Home, recognizable feature modules, Tools discoverability | ⬜ Draft |
+| 5.3 | Interactive Water Experience | Hydration visual object, fill state, tactile logging, quick-add sheet, animation and haptics, history simplification — Water's data architecture preserved | ⬜ Draft |
+| 5.4 | Peptides Home Redesign | Due / completed / upcoming hierarchy, immediate comprehension, reduced administrative feel — routine and business logic preserved | ⬜ Draft |
+| 5.5 | Routine + Injection Site Experience | Simplify routine hierarchy, optional site logging, evolve the shared body map, explore injection rotation visualization | ⬜ Draft |
+| 5.6 | Tools Integration | Remaining Tools UI under the new language; BMI here or in a dedicated adjacent slice after design-language approval | ⬜ Draft |
+| 5.7 | Motion + Microinteraction Pass | A restrained reusable interaction language — not the final launch-animation sprint | ⬜ Draft |
+| 5.8 | Founder Review / Identity Audit | Real-device review of Dashboard, Water, Peptides, Routine and Tools. *"Would I genuinely want to use this app every day?"* | ⬜ Draft |
+
+**Journey does not begin without explicit founder approval after 5.8.**
+
+Full direction: `docs/04-Master-Roadmap.md` → Sprint 5, and `docs/Sprint-5-Identity-Brief.md` — **DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL.**

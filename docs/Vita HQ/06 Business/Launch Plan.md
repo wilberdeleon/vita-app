@@ -10,7 +10,7 @@
 
 ## Launch gate: Version 1 (per the official roadmap, 2026-07-09)
 
-Every primary screen implemented · complete navigation · visual consistency · Product Bible + Design System + Build Handbook compliance · Atlas functioning as a real AI coach. **Sprint 8 — Final Polish & Animations** in the [[Roadmap]] is the final gate — though it is narrower than the Beta sprint it replaced: the polish/performance/accessibility/offline work carried over, but **Analytics, Crash Reporting, App Store Preparation, and the Final QA & Launch Checklist have no explicit home** in the current structure ([[Open Questions]] #15). Those four overlap directly with the pre-launch checklist below — worth reconciling the two next time either page is touched.
+Every primary screen implemented · complete navigation · visual consistency · Product Bible + Design System + Build Handbook compliance · Atlas functioning as a real AI coach. **Sprint 9 — Final Polish / Motion / Launch Experience** in the [[Roadmap]] (renumbered and renamed from Sprint 8 — Final Polish & Animations by the 2026-09-01 identity insertion) is the final gate — though it is narrower than the Beta sprint it replaced: the polish/performance/accessibility/offline work carried over, but **Analytics, Crash Reporting, App Store Preparation, and the Final QA & Launch Checklist have no explicit home** in the current structure ([[Open Questions]] #15). Those four overlap directly with the pre-launch checklist below — worth reconciling the two next time either page is touched.
 
 ## Working phases (proposal)
 

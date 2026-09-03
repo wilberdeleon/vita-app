@@ -68,7 +68,7 @@ Each entry now has a **factual reference page** — About, *Studied for* (never 
 
 **History shows the site** without the rows getting taller, and editing a log lets you change or clear it. Changing where it happened never affects the dose conversion — they are separate facts about the same event.
 
-**New: Settings → Tools → Injection Sites.** Site history gathered across *all* your peptides, since people rotate locations across whatever they are taking rather than per compound. Since 3.8A the body map leads: tap a place on the figure and it tells you when you last used it and how many times — or says plainly that you have never recorded anything there. Underneath, your recent sites, then **Site Reference** — a plain line for each body area, including Other. No needle angles, no technique, nothing compound-specific. Tapping the figure here records nothing; it only looks back. Since 3.8B the screen is ordered so the body is the thing you see first, and the tracking-only note is said once at the bottom rather than three times on the way down.
+**New: Settings → Tools & Reference → Injection Sites** (at `/tools/injection-sites` since slice 4.2; it was `/settings/tools/…` when built). Site history gathered across *all* your peptides, since people rotate locations across whatever they are taking rather than per compound. Since 3.8A the body map leads: tap a place on the figure and it tells you when you last used it and how many times — or says plainly that you have never recorded anything there. Underneath, your recent sites, then **Site Reference** — a plain line for each body area, including Other. No needle angles, no technique, nothing compound-specific. Tapping the figure here records nothing; it only looks back. Since 3.8B the screen is ordered so the body is the thing you see first, and the tracking-only note is said once at the bottom rather than three times on the way down.
 
 **Slice 3.9B (2026-08-27) made daily logging two taps and fixed PT-141 discoverability.** PT-141 was always in the catalog as **Bremelanotide** — the search matched it correctly, but the result row showed only "Bremelanotide", so the words you searched for never appeared and the compound looked missing. Rows now show the matching alias: *Bremelanotide / PT-141 · Melanocortin Agonist*. **Add to Routine** now lands on Peptides explicitly rather than wherever the navigator's root happened to be. **Routine Setup gained an Amount** — the amount you usually use — so tapping **Taken** shows `2 mg · 20 units · From your routine` with the time already filled and site and notes optional; **Confirm Taken** and you're done. Changing today's amount affects today only, and changing your routine never rewrites past logs. **The week strip runs Monday to Sunday** with dates and back-navigation, replacing the rolling order. **Taken is a purple tick, Skipped an amber dash, nothing recorded a grey circle** — amber rather than red, because skipping is a choice. **Reminders can be configured** and are saved, but notifications are not sent yet. **Edit Routine** replaces "Edit Setup".
 
@@ -154,7 +154,7 @@ This version is also much harder to break than the last three: with nothing to t
 
 **Slice 3.6B (2026-08-25) rebuilt where the calculator lives.** The first version made you create and save a tracked peptide before you could reach it — which is backwards, because working out how many units to draw is a question you ask *before* you commit to anything, usually with a vial already in your hand.
 
-**It is now in two places, and they are the same calculator.** Inside a peptide setup it sits directly under the vial fields and **works while you are still filling the form in** — enter 20 mg, 2 mL and 2 mg and it says 20 units, before you have saved a thing. And it stands on its own at **Settings → Tools → Peptide Calculator**, where it needs no peptide, no catalog entry and no setup at all.
+**It is now in two places, and they are the same calculator.** Inside a peptide setup it sits directly under the vial fields and **works while you are still filling the form in** — enter 20 mg, 2 mL and 2 mg and it says 20 units, before you have saved a thing. And it stands on its own at **Settings → Tools & Reference → Peptide Calculator** (at `/tools/peptide-calculator` since slice 4.2), where it needs no peptide, no catalog entry and no setup at all.
 
 **Both surfaces are literally one component**, so the number you get in a setup and the number you get in Tools can never disagree.
 
@@ -241,7 +241,7 @@ Built in Slice 0.7 under `src/app/(vita)/peptides/`:
 
 ## Target state
 
-**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **the current sprint, feature-complete and in final audit / closeout.** *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Peptides its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position, which means the catalog sourcing and medical-content questions below are now due sooner.
+**Sprint 3 — Water + Peptides** ([[Roadmap]]) — **✅ complete and merged into `main` 2026-09-01** (`2bac43b`). *(This line read "the current sprint, feature-complete and in final audit / closeout" until the 2026-09-01 roadmap alignment; it was stale.)* **Sprint 4 — Settings + Tools Foundation is also complete, and Sprint 5 — VITA Identity & Interaction is next** — see the Sprint 5 direction section below. *Moved forward by the founder roadmap reorder of 2026-08-21 (it was Sprint 5, behind both Journey sprints); the 2026-08-17 restructure had already given Peptides its first sprint anywhere, closing [[Open Questions]] #11.* Scope is unchanged by the move — only its position, which means the catalog sourcing and medical-content questions below are now due sooner.
 
 Sprint 2 preserves the existing Peptide log but **deliberately does not extend it**; the real work is Sprint 3. The compact Peptides module on the redesigned [[Fuel]] screen becomes a real entry point and summary backed by that work — Sprint 3 does **not** redesign Fuel.
 
@@ -297,7 +297,7 @@ Sprint 3 built two things that are **Tools**, not Peptides-only screens. **Sprin
 - **Peptide Calculator** — the bidirectional vial/reconstitution ⇄ syringe-units conversion (slice 3.6), surfaced inline and standalone. [[Peptide Dose Calculator]].
 - **Injection Sites and the interactive Body Model** — the site taxonomy, tappable body map and accessible list fallback (slices 3.8–3.8C). [[Injection Site Tracking]].
 
-Sprint 4 also carries the concept-level [[Research Library]] / Reference layer, whose peptide and compound material inherits this page's safety boundary unchanged. **VITA does not casually provide "recommended dosage" or prescriptive protocols for unapproved or research compounds** — that content requires explicit founder authorisation plus medical, legal and content review. See [[Settings]] and [[Roadmap]].
+The [[Research Library]] / Reference layer remains a valid future direction and inherits this page's safety boundary. **⚠️ Product boundary — binding (restated 2026-09-01, Sprint 4 closeout).** VITA does **not** provide recommended dosages, dose ranges, or treatment-style protocols — for research compounds or for approved medications. **This is not a gated future feature. It is not a product direction.** Earlier wording framed such content as available with founder authorisation plus medical and legal review; that framing is withdrawn, because it described a direction the founders do not want. What VITA does is unchanged: **it helps users understand, calculate, organise and track information they enter.** Factual reference material — storage, handling, reconstitution concepts, stability, and development/approval status — remains a valid direction, still subject to the review gate in [[Open Questions]] #17. See [[Settings]] and [[Roadmap]].
 
 ## Reminders — what exists and what does not
 
@@ -310,6 +310,22 @@ Future reminder work — unscheduled, and **not** automatically Sprint 4 scope:
 - Scheduled routine notifications
 - Taken / Skipped actions from a notification
 - Reminder delivery on the configured schedule days
+
+## Sprint 5 direction — Peptides Home, Routine, and injection sites (founder direction, 2026-09-01)
+
+**⚠️ Direction, not implementation authorization.** Slices 5.4 and 5.5 are **draft** and need founder approval plus a Sprint 5 architecture audit. **No business-logic rewrite is implied anywhere below.** Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
+
+**Peptides Home.** Peptide tracking works; the presentation currently feels administrative and information-heavy. The redesigned hierarchy should prioritise immediate comprehension of one question — **what do I need to do today?** — and more clearly distinguish **due · completed · upcoming · routine management** rather than giving everything equal visual priority.
+
+**Routine.** The principle is **immediate action first, administrative detail second.** A possible top state, *not yet a required literal layout*: the peptide name · *Routine amount · Today* · primary **Mark as Taken** · secondary **Skip** · then progressive disclosure of Routine Details, History, Preparation and Edit Routine.
+
+**Optional injection-site logging on Taken.** Explore: Mark as Taken → optional site selection → body map / quick site interaction → confirm. The log can retain date, time, dose, units and injection site. **The existing logging and history architecture is reused, not replaced.**
+
+**Injection rotation visualization.** Explore a body visualization of injection locations over a selected week — e.g. Monday right abdomen, Tuesday left thigh, Wednesday right thigh, Friday left abdomen — with markers on the body representation and a tap opening the corresponding log or day detail. Open: front / back · multiple injections at one site · multiple peptides · week filtering · historical filtering · marker overlap · accessibility · whether it lives in Routine, History or Tools. **An exploration target, not guaranteed final UX** — [[Open Questions]] #20.
+
+**Shared body map.** Peptide logging and the standalone [[Injection Site Tracking|Injection Sites]] tool should share the **same** body-map / injection-site primitive. **Do not create an unrelated duplicate implementation** — the existing `BodyMap` work is inspected and evolved.
+
+**The product boundary is unchanged and binding.** VITA does **not** become a peptide dosage recommendation or protocol engine. Nothing in this redesign introduces recommended doses, protocols, prescriptive cycles or individualized dosage recommendations.
 
 ## Future ideas
 

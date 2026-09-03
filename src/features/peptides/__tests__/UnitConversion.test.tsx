@@ -23,8 +23,7 @@ jest.mock('expo-router', () => ({
 import { Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import StandalonePeptideCalculator from '../../../app/(vita)/settings/tools/peptide-calculator';
-import Tools from '../../../app/(vita)/settings/tools/index';
+import StandalonePeptideCalculator from '../../../app/(vita)/tools/peptide-calculator';
 import { SetupForm } from '../components/SetupForm';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
@@ -601,17 +600,6 @@ describe('the standalone surface specifically', () => {
     for (const field of tree.root.findAllByType(TextInput)) {
       expect(field.props.value).toBe('');
     }
-  });
-});
-
-describe('Tools destination', () => {
-  it('lists the peptide calculator and opens it', async () => {
-    const tree = await mount(<Tools />);
-    expect(screen(tree)).toContain('Peptide Calculator');
-
-    const row = control(tree, 'Peptide Calculator');
-    await act(async () => row!.props.onPress());
-    expect(mockPush).toHaveBeenCalledWith('/settings/tools/peptide-calculator');
   });
 });
 

@@ -4,7 +4,7 @@
 
 **Why does it exist?** So everyone knows what we're building now, what comes next, and what is out of scope until later.
 
-*Sources: the founders' official Sprint Roadmap. **Reordered 2026-09-01 (founder decision): [[Settings]] + Tools & Reference moves ahead of [[My Journey|Journey]].** The order is now Fuel → Water + Peptides → **Settings + Tools & Reference** → Journey / Weight → Journey / Photos → Atlas → Final Polish. Journey is **deferred to Sprint 5, not cancelled or reduced**. The 2026-08-21 reorder (which put Water + Peptides ahead of Journey) still stands for Sprint 3; its numbering for Sprints 4–7 is superseded. **Restructured 2026-08-17** (founder authorization, issued alongside Sprint 2 approval) — that restructure superseded the 8-sprint structure issued 2026-07-09 that the per-sprint sections further down were originally written against.*
+*Sources: the founders' official Sprint Roadmap. **Sprint 5 — VITA Identity & Interaction inserted 2026-09-01 (founder decision), ahead of [[My Journey|Journey]].** The order is now Fuel → Water + Peptides → Settings + Tools Foundation → **VITA Identity & Interaction** → Journey / Weight → Journey / Photos → Atlas → Final Polish / Motion / Launch Experience. Journey / Weight is **Sprint 6**, Journey / Photos **Sprint 7**, [[Atlas]] **Sprint 8**, and the final polish sprint **Sprint 9**. Journey is **deferred, not cancelled or reduced**. This supersedes the sprint numbering of the earlier 2026-09-01 reorder — whose own decision stands. **Reordered earlier on 2026-09-01 (founder decision): Settings + Tools & Reference moves ahead of Journey.** The order was then Fuel → Water + Peptides → **Settings + Tools & Reference** → Journey / Weight → Journey / Photos → Atlas → Final Polish. The 2026-08-21 reorder (which put Water + Peptides ahead of Journey) still stands for Sprint 3; its numbering for Sprints 4–7 is superseded. **Restructured 2026-08-17** (founder authorization, issued alongside Sprint 2 approval) — that restructure superseded the 8-sprint structure issued 2026-07-09 that the per-sprint sections further down were originally written against.*
 
 ---
 
@@ -20,13 +20,17 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 
 **Sprint 3 — Water + Peptides is ✅ complete and merged** (opened 2026-08-22 on branch `sprint-3-water-peptides`, closed out by slices 3.10 and 3.10A, merged into `main` 2026-09-01 as `2bac43b`). Everything before it is complete: Sprint 0 — Visual Foundation, Sprint 0.1 — Polish, Sprint 1 — Dashboard/Home (2026-08-02), the App-Wide Visual Consistency Pass (2026-08-16), and Sprint 2 — Fuel (merged to `main` 2026-08-21). See [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what shipped in each.
 
-**Next: Sprint 4 — Settings + Tools & Reference**, per the founder reorder of 2026-09-01. Its branch `sprint-4-settings-tools-reference` is cut from the merged `main`. **No Sprint 4 work has started**, and none starts until the founders separately authorize the sprint.
+**Sprint 4 — Settings + Tools Foundation: ✅ complete**, opened and closed 2026-09-01 on branch `sprint-4-settings-tools-reference`. Two founder-approved slices — 4.1 Settings Foundation and 4.2 Tools & Reference Hub + Route Architecture. The sprint was **redefined and closed after the foundation landed**, by founder decision: [[BMI Calculator|BMI]], [[Research Library]], [[Food & Product Scanner]] evolution and Dashboard discoverability are all presentation-heavy and are **deferred, not cancelled**, until the new VITA visual / interaction language exists.
+
+**That alignment session happened on 2026-09-01 and this page now reflects it.** The founder-directed identity sprint is on the roadmap as **Sprint 5 — VITA Identity & Interaction**, inserted ahead of Journey; Journey / Weight moves to Sprint 6, Journey / Photos to Sprint 7, Atlas to Sprint 8, and the final polish sprint to **Sprint 9 — Final Polish / Motion / Launch Experience**.
+
+**Sprint 5 is next: planned, not opened.** No redesign implementation is authorized. Its proposed slice structure (5.1–5.8) is **draft**, pending a Sprint 5 architecture audit and founder approval. Design brief: repo `docs/Sprint-5-Identity-Brief.md`, marked **DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL**.
 
 *The prior sequencing warning here — that Fuel and Journey were swapped in build order but not renumbered — is resolved. The 2026-08-17 restructure renumbered them properly; the 2026-08-21 reorder moved Water + Peptides ahead of Journey; the 2026-09-01 reorder then moved Settings + Tools & Reference ahead of Journey too.*
 
 **A note on what "Sprint 0 complete" means.** The new roadmap's Sprint 0 deliverable — brand identity, product vision, Atlas identity, navigation architecture, design language, product documentation, the Design Bible, the development workflow, the Innovation Lab, core planning — describes vision/design/documentation work, not application code. This reads as the founders folding together two things that happened separately in practice: the application shell already built in the repo (the old Slice 0.1–0.12, still tracked in `docs/06-Slice-Tracker.md`, still showing 🟡 founder review there) **and** the vision/design/documentation foundation built across recent HQ sessions (this vault, the [[Innovation Lab]], the [[Design Bible]], the [[Claude Workflow|sprint workflow]]). Both are now considered done as "Sprint 0 — Foundation." This is Claude's synthesis of the two, not something the roadmap text states explicitly — flagged as an interpretation, not a verified fact.
 
-## Sprint plan (official — founders 2026-08-17, reordered 2026-08-21 and again 2026-09-01)
+## Sprint plan (official — founders 2026-08-17, reordered 2026-08-21, reordered 2026-09-01, and Sprint 5 inserted 2026-09-01)
 
 | Sprint | Objective | Status |
 |---|---|---|
@@ -36,15 +40,37 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 | — App-Wide Visual Consistency Pass | Migrate every screen onto the theme system Sprint 1 established | ✅ Complete |
 | 2 — [[Fuel]] | Build the smartest nutrition experience possible | ✅ Complete |
 | 3 — [[Water]] + [[Peptides]] | Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure | ✅ Complete |
-| **4 — [[Settings]] + Tools & Reference** | Settings architecture, a coherent Tools destination, and the reference layer | ⬜ **Next** |
-| 5 — [[My Journey\|Journey]] / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
-| 6 — [[My Journey\|Journey]] / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
-| 7 — [[Atlas]] | Transform Atlas into a true AI health coach | ⬜ Planned |
-| 8 — Final Polish & Animations | Motion, micro-interactions, and the final quality pass | ⬜ Planned |
+| **4 — [[Settings]] + Tools Foundation** | Settings architecture and a top-level Tools destination — the foundation later Tools are built into | ✅ Complete |
+| **5 — VITA Identity & Interaction** | **Establish how VITA looks, behaves, responds and communicates interaction — the language Journey is built in** | ⬜ **Next** |
+| 6 — [[My Journey\|Journey]] / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
+| 7 — [[My Journey\|Journey]] / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
+| 8 — [[Atlas]] | Transform Atlas into a true AI health coach | ⬜ Planned |
+| 9 — Final Polish / Motion / Launch Experience | App-wide finishing motion, consistency, edge cases, and the launch experience | ⬜ Planned |
 
 **Two long-flagged gaps are now closed.** [[Water]] and [[Peptides]] get **Sprint 3** (Sprint 5 when the gap was closed on 2026-08-17; moved forward 2026-08-21); [[Settings]] gets **Sprint 4** (Sprint 7 when the gap was closed; moved forward and broadened to *Settings + Tools & Reference* on 2026-09-01). All three previously had no sprint anywhere — tracked as Gaps #1–#3 below and [[Open Questions]] #11. **A new gap opens in their place** — see "What changed in the 2026-08-17 restructure."
 
-## What changed in the 2026-09-01 reorder
+## What changed in the 2026-09-01 identity insertion
+
+**Founder decision: Sprint 5 — VITA Identity & Interaction is inserted ahead of [[My Journey|Journey]].**
+
+**Why.** VITA has substantial working functionality, but real-device review showed the presentation layer has become too visually generic — dark background, large rounded card, text, icon, another rounded card, repeated across features that behave nothing alike. The founders want VITA's visual and interaction identity established **before** Journey, because Journey is expected to be one of the app's most important and visually significant areas. Building it first would mean building it in a visual language already targeted for replacement, redesigning it immediately afterwards, and accumulating presentation-layer debt. **This is not a product restart.**
+
+| Sprint | Was (earlier on 2026-09-01) | Now (identity insertion) |
+|---|---|---|
+| 4 | [[Settings]] + Tools & Reference | **Settings + Tools Foundation** — complete, renamed at closeout |
+| 5 | Journey / Weight | **VITA Identity & Interaction** (new) |
+| 6 | Journey / Photos | **Journey / Weight** (was 5) |
+| 7 | [[Atlas]] | **Journey / Photos** (was 6) |
+| 8 | Final Polish & Animations | **Atlas** (was 7) |
+| 9 | — | **Final Polish / Motion / Launch Experience** (was Sprint 8, renamed) |
+
+**Preserved explicitly:** Sprint 4 is complete and its close was an **intentional scope decision**, not a failure — its Settings architecture, Appearance persistence, Units architecture, `/tools`, the Tools & Reference hub, [[Peptide Dose Calculator|Peptide Calculator]], [[Injection Site Tracking|Injection Sites]], the Body Map primitives, navigation foundations, domain logic, utilities, persistence and repositories all stand and are **not rebuilt** by Sprint 5 · remaining Tools work **resumes** under the new language · **[[BMI Calculator|BMI]] is still planned, not cancelled** · **Journey is deferred to Sprint 6, not cancelled or reduced**, and Weight still precedes Photos · Atlas's scope is unchanged, number only · **Sprint 9 remains the final app-wide polish, motion and launch pass** and is distinct from Sprint 5's interaction-vocabulary work · **VITA does not become a peptide dosage or protocol recommendation engine**.
+
+**Sprint 5's slices (5.1–5.8) are DRAFT and not implementation-authorized.**
+
+## What changed in the earlier 2026-09-01 reorder
+
+*Historical record — this decision stands, but **its numbering from Sprint 5 onward is superseded by the identity insertion above.***
 
 **Founder decision: [[Settings]] + Tools & Reference moves ahead of [[My Journey|Journey]].**
 
@@ -211,7 +237,54 @@ The six-slice plan recorded 2026-08-18 is preserved and expanded into ten contro
 
 **Sequencing note — resolved.** [[Water]] owns its own goal and unit preference under `vita:v1:water:prefs`; [[Settings]] reads and writes that same source rather than creating a second one. Settings is now **Sprint 4**, immediately after this sprint. [[Open Questions]] #16, closed 2026-08-21.
 
-## Sprint 4 — Settings + Tools & Reference ⬜ Next
+## Sprint 4 — Settings + Tools Foundation ✅ Complete
+
+**Final name: Settings + Tools Foundation**, renamed at closeout. **An intentional scope decision — not failed, abandoned, or cut short.** The sprint delivered the Settings foundation (persistent Appearance, real Units, honest rows, accurate version, clean Settings architecture) and the Tools foundation (top-level `/tools`, the Tools & Reference hub, [[Peptide Dose Calculator|Peptide Calculator]] and [[Injection Site Tracking|Injection Sites]] on canonical routes, the route/navigation foundation later Tools are built into) — then stopped deliberately before the presentation-heavy work. **All of it is preserved and is not rebuilt by Sprint 5**, along with the Body Map / injection-site primitives, domain logic, utilities, persistence and repositories. Remaining Tools work is **not cancelled**; it resumes under the Sprint 5 language.
+
+Detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` → Sprint 4.
+
+---
+
+## Sprint 5 — VITA Identity & Interaction ⬜ Next
+
+**Status: planned, not opened. No implementation is authorized.**
+
+**Objective:** make VITA feel unmistakably like VITA — establish the visual and interaction language before [[My Journey|Journey]] is built in it. **Deliverable:** a reusable VITA design and interaction language, applied to the surfaces that most need it and proven on a real device at founder review.
+
+**Broader than styling.** Not a redesign sprint, a UI refresh, a visual-polish pass, or a design-system token exercise: it establishes how VITA looks, behaves, responds, and communicates interaction.
+
+**The problem.** Many screens rely on the same pattern — dark background, large rounded card, text, icon, another rounded card — so features that behave very differently look like variations of one template.
+
+**Target identity:** premium · dark · modern · tactile · interactive · visually recognizable · simple to understand · restrained rather than flashy · mature · useful · personality without becoming childish · purposeful visual feedback · stronger hierarchy · progressive disclosure · feature-specific visual objects · fewer generic full-width cards.
+
+**Preserved foundation:** the black / near-black premium base · VITA branding · **gold as primary brand color** · premium typography · mature spacing · restrained feature colors · current product maturity. Feature colors become **functional** — gold VITA/Journey/brand, blue [[Water]], purple/violet [[Peptides]], orange [[Fuel]], green movement/activity — supporting indicators, interaction states, illustrations, visual objects, progress and motion rather than recoloring whole cards. This refines the permanent domain hierarchy in [[Color System]]; it does not replace it.
+
+**Non-goals:** bright cartoon gamification · random glassmorphism · gradient overload · animation for decoration · a completely different aesthetic · an architecture, business-logic, persistence or repository rewrite · a generic motivational wellness-app redesign. **Working domain logic is untouched unless a concrete issue requires the change.**
+
+**Screen directions** (direction, not implementation authorization) — [[Dashboard]] keeps its time-aware greeting and drops the generic slogan copy in favour of useful contextual information; [[Water]] may gain a premium hydration vessel as its hero interaction object with its data architecture untouched; [[Peptides]] Home is reorganised around *what do I need to do today?*; Routine puts immediate action first and administrative detail behind progressive disclosure; optional injection-site logging and an injection-rotation visualization are explored on the **shared** body-map primitive; Tools are integrated into the new language and eventually discoverable from Home. Full detail: repo `docs/04-Master-Roadmap.md` → Sprint 5 and `docs/Sprint-5-Identity-Brief.md`.
+
+**[[BMI Calculator|BMI]] remains planned and is not cancelled** — deferred until the new language exists so it is designed once, in the new VITA system.
+
+**Proposed slices — DRAFT, pending founder approval and a Sprint 5 architecture audit. Not implementation-authorized.**
+
+| # | Slice (draft) |
+|---|---|
+| 5.1 | VITA Design Language — hierarchy, card usage, modules, spacing, typography, color behavior, visual objects, bottom sheets, primary/secondary actions, motion, haptics, completion states, progressive disclosure, reusable primitives |
+| 5.2 | [[Dashboard]] Identity Redesign |
+| 5.3 | Interactive [[Water]] Experience |
+| 5.4 | [[Peptides]] Home Redesign |
+| 5.5 | Routine + Injection Site Experience |
+| 5.6 | Tools Integration |
+| 5.7 | Motion + Microinteraction Pass |
+| 5.8 | Founder Review / Identity Audit — *"Would I genuinely want to use this app every day?"* |
+
+**Journey does not begin without explicit founder approval after 5.8.**
+
+---
+
+## Sprint 4 — as originally planned *(historical, superseded)*
+
+*Preserved as authored. The sprint opened against this and closed after slices 4.1 and 4.2; slices 4.3–4.8 were deferred, not cancelled.*
 
 *Moved here by **founder decision 2026-09-01** — [[Settings]] was Sprint 7 and now runs immediately after [[Water]] + [[Peptides]], ahead of Journey. It is also **broadened**: the old sprint was "Settings / Account"; the founder-approved identity is now **Settings + Tools & Reference**.*
 
@@ -236,14 +309,14 @@ Sprint 3 built these — **Sprint 4 is not building them from zero**, it organiz
 
 ### Tools that are planned
 
-- **[[BMI Calculator]]** — height in, weight in, calculated BMI, category/range, and a polished visual scale. *Future opportunity, explicitly not now:* once Journey / Weight exists (Sprint 5), BMI could read the user's stored height and latest weight instead of asking again.
+- **[[BMI Calculator]]** — height in, weight in, calculated BMI, category/range, and a polished visual scale. *Future opportunity, explicitly not now:* once Journey / Weight exists (**Sprint 6** since the identity insertion; Sprint 5 when this was written), BMI could read the user's stored height and latest weight instead of asking again.
 - **[[Food & Product Scanner]] (Food Score)** — a Yuka-style scan-a-product evaluation. A **candidate**, not a guaranteed inclusion, and **likely the largest single Tools item** — it may need its own slice or planning pass.
 
 ### Reference
 
 A future **[[Research Library]] / Reference** layer at concept level only: research library structure · peptide and compound reference material · storage and handling · reconstitution basics · stability and general reference · research/development/approval-status reference.
 
-**⚠️ Product boundary — binding.** VITA does **not** casually provide "recommended dosage" or prescriptive protocols for unapproved or research compounds. Dose-range or treatment-style content requires explicit founder authorization plus medical, legal and content review. The standing boundary: **VITA helps users understand, calculate, organize and track information they enter; it does not silently become a treatment recommendation engine.** This extends the Sprint 3 safety rules rather than relaxing them — see [[Peptides]] and [[Open Questions]] #17.
+**⚠️ Product boundary — binding (restated 2026-09-01, Sprint 4 closeout).** VITA does **not** provide recommended dosages, dose ranges, or treatment-style protocols — for research compounds or for approved medications. **This is not a gated future feature. It is not a product direction.** Earlier wording framed such content as available with founder authorisation plus medical and legal review; that framing is withdrawn, because it described a direction the founders do not want. What VITA does is unchanged: **it helps users understand, calculate, organise and track information they enter.** Factual reference material — storage, handling, reconstitution concepts, stability, and development/approval status — remains a valid direction, still subject to the review gate in [[Open Questions]] #17.
 
 ### Discoverability
 
@@ -253,15 +326,17 @@ A future **[[Research Library]] / Reference** layer at concept level only: resea
 
 Sprint 3 shipped **reminder preferences and a reminder time that persist** on a peptide routine (slice 3.9B). **OS notification delivery is not implemented** — a test asserts no notification dependency exists. Future reminder work, unscheduled: scheduled routine notifications · Taken / Skipped actions from a notification · delivery on the configured schedule days. Notification infrastructure is not automatically Sprint 4 scope.
 
-## Sprints 5 & 6 — Journey / Weight and Journey / Photos
+## Sprints 6 & 7 — Journey / Weight and Journey / Photos
 
 *Was Sprint 2 under the 2026-07-09 structure; the 2026-08-17 restructure split it into two sprints — Weight and Photos — the **2026-08-21 reorder** moved both behind Water + Peptides (to 4 and 5), and the **2026-09-01 reorder** moved both one place later again, to **5 (Weight)** and **6 (Photos)**, behind [[Settings]] + Tools & Reference.*
 
 **⚠️ Deferred, not cancelled or reduced.** Journey remains a major pillar of VITA and its next major *feature* experience. **Every previously documented Journey requirement, slice, and decision stands unchanged** — weight planning, weight logging and history, the Journey data architecture, progress views, progress photos, photo comparisons, and the existing visual concepts. Only the scheduling moved. Nothing here has been narrowed because the sprint number changed. The founders moved Settings + Tools & Reference ahead of it precisely *because* Journey / Weight is expected to be complex: it benefits from cleaner app architecture and a more focused scope.
 
-**Weight still comes before Photos.** Sprint 5 owns the core Journey data architecture that Sprint 6's photo experience builds on.
+**Weight still comes before Photos.** Sprint 6 owns the core Journey data architecture that Sprint 7's photo experience builds on.
 
-*The eight slices below were written as one sprint and have still not been divided between them; that split is a planning task for whenever Sprint 5 opens.*
+**Intentionally delayed until the identity sprint is approved.** The 2026-09-01 identity insertion moved both one place later so Journey is built in VITA's established visual and interaction language rather than one already targeted for replacement. **Journey is not redesigned by that decision and its scope is not reduced** — Sprint 5's language is what Journey is built *in*.
+
+*The eight slices below were written as one sprint and have still not been divided between them; that split is a planning task for whenever Sprint 6 opens.*
 
 **Objective:** build the emotional core of Vita. **Deliverable:** a complete Journey experience that motivates through progress, not just data display.
 
@@ -280,9 +355,9 @@ Sprint 3 shipped **reminder preferences and a reminder time that persist** on a 
 
 Full proposal: [[Journey Stages]] · [[Product Philosophy]] · [[My Journey]].
 
-## Sprint 7 — Atlas
+## Sprint 8 — Atlas
 
-*Was Sprint 4 under the 2026-07-09 structure, **Sprint 6** from the 2026-08-17 restructure, and **Sprint 7** since the 2026-09-01 reorder. Its scope and slice list are unchanged — only the number moved.*
+*Was Sprint 4 under the 2026-07-09 structure, **Sprint 6** from the 2026-08-17 restructure, **Sprint 7** after the first 2026-09-01 reorder, and **Sprint 8** since the 2026-09-01 identity insertion. Its scope and slice list are unchanged — only the number moved.*
 
 **Objective:** transform Atlas into a true AI health coach. **Deliverable:** an AI experience that feels proactive, intelligent, and deeply integrated throughout Vita.
 
@@ -339,7 +414,7 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]] · [[My Journey]].
 | 7 | Subscription Experience | Relates to [[Monetization]] / [[Business Model & Pricing]] — no dedicated Lab idea note |
 | 8 | Premium Polish | |
 
-## Beta — superseded by Sprint 8 — Final Polish & Animations
+## Beta — superseded by Sprint 9 — Final Polish / Motion / Launch Experience
 
 *Was Sprint 7 under the 2026-07-09 structure. The 2026-08-17 restructure replaces it with Sprint 8 — Final Polish & Animations, which is narrower: the polish/performance/accessibility slices carry over, but Analytics, Crash Reporting, App Store Preparation, and Final QA & Launch Checklist have no explicit home in the new structure.*
 
@@ -358,9 +433,11 @@ Full proposal: [[Journey Stages]] · [[Product Philosophy]] · [[My Journey]].
 
 Overlaps with [[Launch Plan]]'s pre-launch checklist — cross-reference when either page is next updated.
 
-### What Sprint 8 owns — and what it does not (founder direction, 2026-08-18)
+### What Sprint 9 owns — and what it does not (founder direction, 2026-08-18)
 
-Sprint 8 owns the **global** layer: the shared motion system, haptics vocabulary, transition consistency, and app-wide micro-interaction standards. It is **not a holding pen for every feature's visual debt.** If Fuel still feels bulky once its functionality is finished, it gets its own refinement slice inside Sprint 2 (above) — the same principle applies to later sprints. Feature-specific motion may land earlier where it genuinely belongs to that feature; Sprint 8 then reconciles it into one vocabulary.
+*Renumbered and renamed 2026-09-01 — this was Sprint 8 — Final Polish & Animations. **It is distinct from Sprint 5's motion work and neither replaces the other:** Sprint 5 establishes the interaction vocabulary; Sprint 9 applies it app-wide and finishes the launch experience.*
+
+Sprint 9 owns the **global** layer: the shared motion system, haptics vocabulary, transition consistency, and app-wide micro-interaction standards. It is **not a holding pen for every feature's visual debt.** If Fuel still feels bulky once its functionality is finished, it gets its own refinement slice inside Sprint 2 (above) — the same principle applies to later sprints. Feature-specific motion may land earlier where it genuinely belongs to that feature; Sprint 8 then reconciles it into one vocabulary.
 
 Motion stays restrained — **premium micro-interactions, not novelty animation.** VITA does not become a cartoon or a game. Named candidates: small food-icon movement on a successful log · smooth macro/progress animation · gentle confirmation transitions · water fill animation · peptide injection-site selection feedback · card state transitions · progress changes. See [[Motion & Animation]].
 
@@ -374,7 +451,7 @@ Flagging rather than silently resolving, per the vault's standing rule to never 
 
 1. ~~**[[Water]] has no sprint anywhere.**~~ Now **Sprint 3 — Water + Peptides** (numbered 5 when the gap closed on 2026-08-17; moved ahead of Journey by the 2026-08-21 founder reorder).
 2. ~~**[[Peptides]] has no sprint anywhere.**~~ Same — **Sprint 3**.
-3. ~~**[[Settings]] has no sprint anywhere.**~~ Now **Sprint 4 — Settings + Tools & Reference** (Sprint 7 when the gap closed on 2026-08-17; moved forward and broadened on 2026-09-01). This was the most concerning of the three: Settings is part of the founder-stated five-item primary navigation ([[Decision Log]]) and currently only exists as an empty shell. Its placement was locked 2026-07-09; its feature work is now the **next** sprint.
+3. ~~**[[Settings]] has no sprint anywhere.**~~ Now **Sprint 4 — Settings + Tools Foundation**, complete (Sprint 7 when the gap closed on 2026-08-17; moved forward and broadened on 2026-09-01, then closed and renamed the same day). This was the most concerning of the three: Settings is part of the founder-stated five-item primary navigation ([[Decision Log]]) and currently only exists as an empty shell. Its placement was locked 2026-07-09; its feature work is now the **next** sprint.
 
 **Still open:**
 
@@ -384,18 +461,18 @@ Flagging rather than silently resolving, per the vault's standing rule to never 
 
 ## Version 1 goal
 
-Updated against the current sprint set (2026-08-17 restructure, reordered 2026-08-21 and 2026-09-01): Version 1 is complete when **Sprint 8 — Final Polish & Animations** finishes — every primary screen at production quality, complete navigation, visual consistency in both themes, and Atlas functioning as a real AI coach (not a placeholder).
+Updated against the current sprint set (2026-08-17 restructure, reordered 2026-08-21 and 2026-09-01, Sprint 5 inserted 2026-09-01): Version 1 is complete when **Sprint 9 — Final Polish / Motion / Launch Experience** finishes — every primary screen at production quality, complete navigation, visual consistency in both themes, and Atlas functioning as a real AI coach (not a placeholder).
 
 ## Current priority
 
-**Opening Sprint 4 — Settings + Tools & Reference.** Sprint 3 is complete and merged into `main` (`2bac43b`, 2026-09-01). Sprint 4's branch is cut and empty; the sprint **requires its own founder authorization before any planning or implementation begins**. Strictly sequential, one sprint at a time, consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level.
+**Sprint 5 — VITA Identity & Interaction is next.** Sprint 3 is complete and merged into `main` (`2bac43b`, 2026-09-01); **Sprint 4 — Settings + Tools Foundation is complete**, opened and closed 2026-09-01 on `sprint-4-settings-tools-reference`. Sprint 5 is **planned, not opened**: its slice structure is draft, and it **requires its own founder authorization plus a Sprint 5 architecture audit before any planning or implementation begins**. No redesign work starts before that. *(Superseded text follows, from before Sprint 4 opened.)* Strictly sequential, one sprint at a time, consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level.
 
 ## Remaining unscheduled ideas
 
 What's still genuinely future/unscheduled after this roadmap's promotions — everything else, cross-check against [[Innovation Lab]] for the full list:
 
 - [[Longevity Dashboard]] (see the note in the unscheduled **Health** section above)
-- [[Advanced Coaching (Proactive Check-Ins)]] (adjacent to the Recommendations slice of **Sprint 7 — Atlas** and to Smart Notifications in the unscheduled Premium set, not explicitly named)
+- [[Advanced Coaching (Proactive Check-Ins)]] (adjacent to the Recommendations slice of **Sprint 8 — Atlas** and to Smart Notifications in the unscheduled Premium set, not explicitly named)
 - [[AI Meal Photo Recognition]] and [[Smart Fridge Scanner]] (neither named in this roadmap)
 
 Nothing graduates from the Lab to a sprint without passing the VITA Promise ([[Product Philosophy]]) and the ten-year test ([[Core Principles]]) — the promotions logged in this update reflect the founders naming them directly in the official roadmap, which satisfies that bar by definition.

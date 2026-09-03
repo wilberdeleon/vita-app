@@ -153,7 +153,23 @@ Implementation options to evaluate when this is scoped: a curated food-category 
 
 Subtle motion is wanted, and restraint is the point: **premium micro-interactions, not novelty animation.** VITA does not become a cartoon or a game. Named candidates — small food-icon movement on a successful log, smooth macro/progress animation, gentle confirmation transitions, water fill animation, peptide injection-site selection feedback, card state transitions, progress changes.
 
-Division of ownership: the *shared* motion system, haptics vocabulary, transition consistency, and global micro-interaction standards belong to **Sprint 8 — Final Polish & Animations**. Feature-specific motion may ship earlier where it genuinely belongs to that feature — Fuel motion inside Sprint 2's refinement slice, for example. Sprint 8 is not a holding pen for every feature's visual debt. The standing rules still apply: motion confirms, never decorates; respect reduced-motion settings; one vocabulary app-wide.
+Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sprint 5 — VITA Identity & Interaction establishes the interaction vocabulary** — what a press, a completion, a sheet, a progress change and a successful log feel like in VITA — and **Sprint 9 — Final Polish / Motion / Launch Experience** (renumbered and renamed from Sprint 8 — Final Polish & Animations) performs the final app-wide pass: applying that vocabulary consistently everywhere, finishing motion, edge cases, accessibility, performance and the launch experience. **Neither replaces the other.** Feature-specific motion may still ship earlier where it genuinely belongs to that feature — Fuel motion inside Sprint 2's refinement slice, for example — and Sprint 9 is not a holding pen for every feature's visual debt. The standing rules still apply: motion confirms, never decorates; respect reduced-motion settings; one vocabulary app-wide.
+
+---
+
+## Sprint 5 — VITA Identity & Interaction (founder direction, 2026-09-01) — not yet implemented
+
+**⚠️ Direction, not approved specification. No implementation is authorized; the sprint is planned, not opened.** The full brief is `docs/Sprint-5-Identity-Brief.md` (**DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL**); the roadmap entry is in `docs/04-Master-Roadmap.md` → Sprint 5. This section exists so the Design System points at that work rather than duplicating it.
+
+**The problem this document must eventually answer.** VITA overuses large rounded surfaces and card containers, so unrelated content arrives at the same visual weight — most screens reach for dark background, large rounded card, text, icon, another rounded card. Features that behave nothing alike look like variations of one template. The 2026-08-18 density direction above identified this on Fuel; Sprint 5 generalizes it to the product.
+
+**Slice 5.1 — VITA Design Language is the slice that authors the missing parts of this document**, and it is a serious foundational slice rather than a token pass. Its questions: when VITA uses a card · when content sits directly on the background · what module sizes exist · how feature colors are used · what a VITA primary action is · how secondary actions work · how bottom sheets behave · how a completed state behaves · how progressive disclosure works · how VITA uses motion · how VITA uses haptics · what visual objects represent each feature · how VITA avoids over-design · **what a VITA interaction should feel like.**
+
+**What is preserved:** the black / near-black premium foundation · VITA branding and the VITA mark · **gold as the primary brand color** · premium typography · mature spacing · restrained feature colors · the interim tokens and primitives listed above. **Feature colors become more functional than decorative** — gold for VITA / Journey / brand, blue for Water, purple/violet for Peptides, orange for Fuel, green for movement / activity — carrying indicators, interaction states, illustrations, visual objects, progress and motion rather than recoloring whole buttons or whole cards. **This refines the permanent domain color hierarchy above; it does not replace it, and no feature is recolored into a different hue.**
+
+**Non-goals, explicitly:** bright cartoon gamification · random glassmorphism · gradient overload · animation for decoration · a completely different aesthetic · an architecture, business-logic, persistence or repository rewrite · a generic motivational wellness-app redesign.
+
+**Home's status.** Home/Dashboard remains the current visual source of truth until Sprint 5 replaces the language it embodies — and slice 5.2 redesigns Home itself, so the reference and the redesign are the same surface. Until 5.1 and 5.2 are founder-approved, everything above stands unchanged and no new UI invents styling ahead of them.
 
 ---
 
