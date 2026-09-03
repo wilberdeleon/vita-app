@@ -33,7 +33,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-import { Text, TextInput } from 'react-native';
+import { Keyboard, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import WaterGoalScreen from '../../../app/(vita)/water/goal';
@@ -537,6 +537,129 @@ describe('units', () => {
 
     await openSheet(tree);
     expect(control(tree, 'Add 8 fl oz')).toBeDefined();
+  });
+});
+
+/* ── the number pad's Done key ──────────────────────────────────────────── */
+
+describe('the custom amount keyboard', () => {
+  /** The Done bar, found the way a screen reader would. */
+  const doneKey = (tree: ReactTestRenderer) => control(tree, 'Done, close the number pad');
+
+  async function openCustom(tree: ReactTestRenderer) {
+    await act(async () => control(tree, 'Add Water')!.props.onPress());
+    await act(async () => control(tree, 'Enter a custom amount')!.props.onPress());
+  }
+
+  it('offers Done only while the amount field is on screen', async () => {
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await act(async () => control(tree, 'Add Water')!.props.onPress());
+    // Quick amounts open no keyboard, so there is nothing to dismiss.
+    expect(doneKey(tree)).toBeUndefined();
+
+    await act(async () => control(tree, 'Enter a custom amount')!.props.onPress());
+    expect(doneKey(tree)).toBeDefined();
+  });
+
+  it('dismisses the keyboard without logging anything', async () => {
+    /*
+     * The whole point of the control: `Log` stays the only thing that writes
+     * an entry. Two controls that both save is the ambiguity this removes.
+     */
+    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+    const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openCustom(tree);
+    await type(tree, /custom amount in/i, '14');
+
+    dismiss.mockClear();
+    await act(async () => doneKey(tree)!.props.onPress());
+
+    expect(dismiss).toHaveBeenCalled();
+    expect(stored.day(TODAY)).toHaveLength(0);
+    dismiss.mockRestore();
+  });
+
+  it('leaves the typed amount and the chosen unit exactly as they were', async () => {
+    const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await act(async () => control(tree, 'Add Water')!.props.onPress());
+    await act(async () => control(tree, 'Log in, mL')!.props.onPress());
+    await act(async () => control(tree, 'Enter a custom amount')!.props.onPress());
+    await type(tree, /custom amount in/i, '330');
+
+    await act(async () => doneKey(tree)!.props.onPress());
+
+    // Still mL, still 330 — and Log still works afterwards.
+    expect(screen(tree)).toContain('Log 330 mL');
+    await act(async () => control(tree, /^Log 330 mL$/)!.props.onPress());
+    expect(stored.day(TODAY)[0].enteredUnit).toBe('ml');
+    expect(stored.day(TODAY)[0].enteredAmount).toBe(330);
+  });
+
+  it('still dismisses an invalid amount, and still refuses to save it', async () => {
+    // Dismissal is not tied to validation: the keyboard should always be
+    // closable, and Log should still be the thing that judges the value.
+    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+    const { repository, stored } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openCustom(tree);
+    await type(tree, /custom amount in/i, 'abc');
+
+    dismiss.mockClear();
+    await act(async () => doneKey(tree)!.props.onPress());
+    expect(dismiss).toHaveBeenCalled();
+
+    const button = control(tree, /^Log (custom amount|\d)/)!;
+    expect(button.props.accessibilityState?.disabled ?? button.props.disabled).toBe(true);
+    expect(stored.day(TODAY)).toHaveLength(0);
+    dismiss.mockRestore();
+  });
+
+  it('takes the keyboard with it however the sheet is closed', async () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    // Closing outright — the backdrop and the close control share this path.
+    await openCustom(tree);
+    dismiss.mockClear();
+    await act(async () => control(tree, 'Close')!.props.onPress());
+    expect(dismiss).toHaveBeenCalled();
+
+    // And a successful log, which unmounts the sheet from under the keyboard.
+    await openCustom(tree);
+    await type(tree, /custom amount in/i, '10');
+    dismiss.mockClear();
+    await act(async () => control(tree, /^Log 10 fl oz$/)!.props.onPress());
+    expect(dismiss).toHaveBeenCalled();
+
+    dismiss.mockRestore();
+  });
+
+  it('clears a typed amount when the unit changes, rather than reinterpreting it', async () => {
+    /*
+     * `16` means something very different in ounces and litres. Carrying the
+     * number across a unit switch would log a drink the user never chose —
+     * the same reasoning `AmountEditor` records for the identical decision.
+     */
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+
+    await openCustom(tree);
+    await type(tree, /custom amount in/i, '16');
+    expect(screen(tree)).toContain('Log 16 fl oz');
+
+    await act(async () => control(tree, 'Log in, L')!.props.onPress());
+
+    // Nothing carried over, and the field now asks for litres.
+    expect(screen(tree)).not.toContain('Log 16');
+    expect(screen(tree)).toContain('Amount in L');
   });
 });
 

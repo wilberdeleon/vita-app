@@ -2036,7 +2036,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 |---|-------|-----------|--------|
 | 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | 🟡 Identity direction founder-approved on device; polished in 5.1A, awaiting the 5.1A review that locks it |
 | 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | ✅ Founder-approved on device 2026-09-02 — **5.1 locked** |
-| 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | 🟡 Implemented — awaiting founder device review |
+| 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ✅ Founder-approved on device 2026-09-03 |
+| 5.2A | Water Custom Amount Keyboard Polish | A Done key for the number pad, and the press-opacity regression it exposed | 🟡 Implemented — awaiting founder verification |
 | 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | ⬜ Not started |
 | 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
 | 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
@@ -2111,7 +2112,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: approved. Slice 5.1 is locked** — the identity is the foundation the rest of Sprint 5 builds on.
 
-### Slice 5.2 — Interactive Water Experience 🟡
+### Slice 5.2 — Interactive Water Experience ✅
 
 **Implemented 2026-09-03. Awaiting founder device review — not approved.** The first production feature in the Sprint 5 identity.
 
@@ -2141,5 +2142,27 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Device coverage limit, stated plainly.** Goal-set, partial, met and over-goal states were verified by route tests that mount the real screen against the real provider, **not by screenshot** — this environment cannot tap the simulator and cannot seed hydration data, so those states were unreachable interactively. They are the first thing for founder review on a real device.
 
-**Still to verify — founder, on a real device:** whether Water now reads as a hydration product rather than a tracker form, whether the vessel is useful daily rather than merely interesting, whether logging is meaningfully faster, whether cups are genuinely comfortable, and whether anything still reads as card soup.
+**Founder device review: approved.** Water is the first production feature in the Sprint 5 identity and it stands.
+
+### Slice 5.2A — Water Custom Amount Keyboard Polish 🟡
+
+**Implemented 2026-09-03. Awaiting founder verification.** Closeout polish on one item, plus one regression it uncovered.
+
+**The Done key.** iOS's decimal pad has no return key, so a focused custom-amount field left no obvious way to put the keyboard away. `NumericKeyboardAccessory` **already existed** — built in Sprint 3 after founder device QA found the identical problem on the peptide calculator — so this is reuse, not a new component and not a new dependency. `AddWaterSheet` now uses `NumericField` and renders the bar once while the custom field is on screen.
+
+**Done dismisses and nothing else.** It does not save. The amount and the chosen logging unit both survive it, and `Log` remains the only control that writes an entry. Dismissal is not tied to validation: an invalid amount can still close the keyboard, and `Log` still refuses it.
+
+**The accessory is neutral here.** Its Done label was hardcoded to peptide purple — correct-looking only because every caller until now happened to be a Peptides screen. `NumericKeyboardAccessory` gained an optional `tone`, defaulting to the existing brand purple so **the five Peptides call sites are untouched**; Water asks for neutral. Converging them belongs to 5.7.
+
+**Keyboard dismissal on every exit.** Done, the close control, the backdrop, and a successful log all route through a single `close`/`log` path that dismisses first, so a number pad can never outlive the sheet.
+
+**A correctness fix found while verifying unit switching (§7).** Switching units with a typed custom amount was carrying the number across — `16` in fluid ounces silently becoming `16` litres. That is the exact misinterpretation `AmountEditor` records its own guard against, and it was a defect introduced in 5.2. Changing the unit now clears a typed amount. Tapped quick amounts are unaffected, since they commit immediately.
+
+**A regression fixed beyond the literal scope, and worth stating plainly.** Device verification showed the disabled `Log` button rendering at full strength. The cause was mine: slice 5.1 added the reduced-motion press fade by putting an `opacity` *after* the caller's `style` in the same array, which silently won. **Every disabled `Button` in the app — 23 files' worth of call sites — had looked enabled since 5.1 while still refusing taps.** `PressableScale` now multiplies the caller's opacity by the press fade rather than replacing it. A control that looks available and is not is a defect rather than a style preference, which is why this was fixed here rather than deferred despite the narrow authorization.
+
+**Two findings reported, not fixed:** `TakenSheet` renders `NumericField` inside a `Modal` but never renders the accessory, so its Done bar has never appeared — for 5.5. And the accessory's brand-purple default should converge to neutral app-wide — for 5.7.
+
+**Validation.** `npm test` **49 suites / 1245 tests** (1232 → 1245; +13) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged · iOS export clean · **no dependency added** · diff boundary: Water plus the two shared primitives named above.
+
+**Device coverage limit, stated plainly.** The disabled-button fix was confirmed on device. **The accessory bar itself was not** — presenting the keyboard requires a tap this environment cannot perform, and `InputAccessoryView` inside a `Modal` is a combination no VITA screen has previously exercised. Its behaviour is covered by tests, but **whether the bar actually appears above the number pad is the one thing founder verification has to confirm.**
 

@@ -12,6 +12,15 @@ import { TextField } from './TextField';
  */
 export const NUMERIC_ACCESSORY_ID = 'vita-numeric-done';
 
+type AccessoryProps = {
+  /**
+   * `'brand'` (default) keeps the peptide-purple Done every existing caller
+   * renders today. `'neutral'` uses the theme's primary text, for screens
+   * outside that feature. See the note in the component.
+   */
+  tone?: 'brand' | 'neutral';
+};
+
 /**
  * The **Done** bar above the number pad.
  *
@@ -26,10 +35,24 @@ export const NUMERIC_ACCESSORY_ID = 'vita-numeric-done';
  *
  * Render **once per screen**, alongside the fields rather than inside them.
  */
-export function NumericKeyboardAccessory() {
+export function NumericKeyboardAccessory({ tone = 'brand' }: AccessoryProps = {}) {
   const { surfaces } = useTheme();
 
   if (Platform.OS !== 'ios') return null;
+
+  /**
+   * The bar is shared chrome, and until slice 5.2 every caller happened to be
+   * a Peptides screen — so a hardcoded peptide purple looked correct by
+   * coincidence rather than by design. Water is the first caller outside that
+   * feature, and a purple Done key in a hydration sheet reads as a bug.
+   *
+   * `'neutral'` is what the Sprint 5 colour rule actually asks for here: a Done
+   * key is keyboard chrome and has not earned a feature colour. The default
+   * stays `'brand'` so the five existing Peptides call sites are untouched by
+   * this slice. **Converging them onto neutral belongs to 5.7**, where shared
+   * primitives are unified.
+   */
+  const doneColor = tone === 'neutral' ? surfaces.text : palette.peptide;
 
   return (
     <InputAccessoryView nativeID={NUMERIC_ACCESSORY_ID}>
@@ -46,7 +69,7 @@ export function NumericKeyboardAccessory() {
           hitSlop={12}
           style={({ pressed }) => [styles.done, pressed && styles.pressed]}
         >
-          <Text style={[styles.doneLabel, { color: palette.peptide }]}>Done</Text>
+          <Text style={[styles.doneLabel, { color: doneColor }]}>Done</Text>
         </Pressable>
       </View>
     </InputAccessoryView>

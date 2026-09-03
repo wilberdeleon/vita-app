@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { PressableScale, TextField, VitaSheet } from '../../../components/ui';
+import { Keyboard, StyleSheet, Text, View } from 'react-native';
+import {
+  NumericField,
+  NumericKeyboardAccessory,
+  PressableScale,
+  VitaSheet,
+} from '../../../components/ui';
 import {
   formatEntered,
   parseAmount,
@@ -66,6 +71,19 @@ type Props = {
  * one feedback, not a selection *and* a confirmation. The confirmation is
  * raised by the caller and only after the repository has actually accepted
  * the entry.
+ *
+ * ## The number pad has a Done key, and Done does not log
+ *
+ * iOS's decimal pad has no return key, so a focused amount field can leave
+ * someone with no obvious way to put the keyboard away — founder device QA
+ * found exactly that here, and had found it once before on the peptide
+ * calculator, which is why `NumericKeyboardAccessory` already existed to
+ * reuse.
+ *
+ * **Done dismisses the keyboard and nothing else.** It does not save, and the
+ * amount and the chosen logging unit both survive it. `Log` remains the only
+ * control that writes an entry — two controls that both save is precisely the
+ * ambiguity this is meant to remove.
  */
 export function AddWaterSheet({ visible, preferredUnit, onClose, onLog }: Props) {
   const { surfaces } = useTheme();
@@ -96,6 +114,8 @@ export function AddWaterSheet({ visible, preferredUnit, onClose, onLog }: Props)
   const log = async (amount: number) => {
     if (saving) return;
     setSaving(true);
+    // The sheet is about to go; the keyboard must not outlive it.
+    Keyboard.dismiss();
     const saved = await onLog(amount, unit);
     // A failed write leaves the sheet open with the amount intact, so the
     // user can try again rather than discovering later that nothing saved.
@@ -103,9 +123,33 @@ export function AddWaterSheet({ visible, preferredUnit, onClose, onLog }: Props)
     else setSaving(false);
   };
 
+  /**
+   * Every way out of the sheet takes the keyboard with it.
+   *
+   * The backdrop and the close control both route through here, so neither
+   * can leave a number pad floating over the Water screen.
+   */
+  const close = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
+
+  /**
+   * Switching units clears a typed amount, and that is deliberate.
+   *
+   * `16` means something very different in ounces and litres, and carrying it
+   * across a unit change would log a drink the user never chose — the exact
+   * reasoning `AmountEditor` records for the same decision. A tapped quick
+   * amount is unaffected, since it commits immediately.
+   */
+  const selectUnit = (next: VolumeUnit) => {
+    setUnit(next);
+    setCustom('');
+  };
+
   return (
-    <VitaSheet visible={visible} onClose={onClose} title="Add Water">
-      <UnitSelector value={unit} onChange={setUnit} groupLabel="Log in" tone="neutral" />
+    <VitaSheet visible={visible} onClose={close} title="Add Water">
+      <UnitSelector value={unit} onChange={selectUnit} groupLabel="Log in" tone="neutral" />
 
       {unit !== preferredUnit ? (
         <Text style={[styles.note, { color: surfaces.textTertiary }]}>
@@ -146,10 +190,14 @@ export function AddWaterSheet({ visible, preferredUnit, onClose, onLog }: Props)
         */}
       {showCustom ? (
         <View style={styles.custom}>
-          <TextField
+          {/*
+            * `NumericField` carries the decimal pad and the Done bar's id; the
+            * bar itself is rendered once, below, because `InputAccessoryView`
+            * matches by `nativeID` and one field needs one bar.
+            */}
+          <NumericField
             label={`Amount in ${unitName(unit)}`}
             placeholder={`Enter ${unitName(unit)}`}
-            keyboardType="decimal-pad"
             value={custom}
             onChangeText={setCustom}
             autoFocus
@@ -184,6 +232,13 @@ export function AddWaterSheet({ visible, preferredUnit, onClose, onLog }: Props)
           <Text style={[styles.customToggleLabel, { color: surfaces.text }]}>Custom amount</Text>
         </PressableScale>
       )}
+
+      {/*
+        * Neutral rather than the bar's default brand purple — this is a
+        * hydration sheet, and a Done key is keyboard chrome that has not
+        * earned a feature colour.
+        */}
+      {showCustom ? <NumericKeyboardAccessory tone="neutral" /> : null}
     </VitaSheet>
   );
 }

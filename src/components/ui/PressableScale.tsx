@@ -1,5 +1,12 @@
-import { useRef, type PropsWithChildren } from 'react';
-import { Animated, Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import { useMemo, useRef, type PropsWithChildren } from 'react';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { motion } from '../../theme/tokens';
 import { useReducedMotion } from '../../theme/useReducedMotion';
 import { vitaHaptic, type HapticEvent } from '../../lib/haptics';
@@ -46,6 +53,15 @@ type Props = PropsWithChildren<
  * after the tap is committed — not on `onPressIn`, because a haptic is
  * confirmation that something happened, and a finger that slides off a button
  * has not made anything happen.
+ *
+ * **It composes with the caller's own opacity rather than replacing it**
+ * (fixed in slice 5.2A). Adding the reduced-motion fade in 5.1 put an
+ * `opacity` after the caller's `style` in the same array, which silently won
+ * — so every control that dims itself through style stopped dimming.
+ * `Button`'s disabled state is the one that mattered: a disabled button
+ * rendered at full strength across the whole app while still refusing taps,
+ * which is a control that lies about what it will do. The two opacities are
+ * multiplied now, so a disabled control is dim and *also* fades on press.
  */
 export function PressableScale({
   children,
@@ -59,6 +75,18 @@ export function PressableScale({
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const reducedMotion = useReducedMotion();
+
+  /**
+   * Whatever opacity the caller asked for, multiplied by the press fade.
+   * Flattened because `style` is routinely an array, and a caller's `opacity`
+   * can sit in any element of it.
+   */
+  const baseOpacity = StyleSheet.flatten(style)?.opacity;
+  const resolvedBase = typeof baseOpacity === 'number' ? baseOpacity : 1;
+  const composedOpacity = useMemo(
+    () => Animated.multiply(opacity, resolvedBase),
+    [opacity, resolvedBase],
+  );
 
   const springTo = (toValue: number) =>
     Animated.spring(scale, {
@@ -98,7 +126,9 @@ export function PressableScale({
       onPressOut={() => press(false)}
       {...pressableProps}
     >
-      <Animated.View style={[style, { opacity, transform: [{ scale }] }]}>{children}</Animated.View>
+      <Animated.View style={[style, { opacity: composedOpacity, transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
     </Pressable>
   );
 }
