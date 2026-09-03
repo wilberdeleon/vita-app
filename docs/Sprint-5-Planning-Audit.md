@@ -1,11 +1,13 @@
 # Sprint 5 — VITA Identity & Interaction
 # Planning & Architecture Audit
 
-# ⚠️ DRAFT / PENDING FOUNDER APPROVAL
+# ✅ FOUNDER-REVIEWED AND APPROVED — 2026-09-02
 
-**Nothing in this document is approved. No slice is open. No implementation has started or is authorized by this document.** Every recommendation below is a proposal for founder review. Where this audit recommends a design decision, that recommendation is *not* a decision — §W lists what actually needs a ruling.
+**The audit is approved and the §W decisions are ruled on.** The rulings are recorded in **§W** and are authoritative; where an earlier section states a *recommendation* that §W has since ruled on, §W wins. The approved slice structure is in **§S.2**.
 
-*Nothing in `src/` was modified to produce this document.*
+**No slice is open and no implementation has started.** Approval of this plan is not authorization to build: **slice 5.1 requires its own founder authorization** under the normal slice workflow (`docs/03-Build-Handbook.md`).
+
+*This document was written as a planning draft and is preserved as authored, with the founder rulings added. Nothing in `src/` was modified to produce it.*
 
 | | |
 |---|---|
@@ -16,7 +18,7 @@
 | Working tree | Clean — no staged, unstaged, or untracked changes |
 | Baseline | `npx jest` — **44 suites / 1174 tests passing**, exit 0 |
 | Sprint 4 | ✅ Complete (slices 4.1, 4.2, closeout). **5 commits ahead of `main`, not yet merged.** |
-| Sprint 5 | ⬜ Not started. **No Sprint 5 branch exists** (local or remote) — see §Y |
+| Sprint 5 | ⬜ Not started. Branch `sprint-5-identity-interaction` created from merged `main` after this audit was approved — see §Y |
 | Governing docs | `docs/Sprint-5-Identity-Brief.md` (DRAFT) · `docs/04-Master-Roadmap.md` → Sprint 5 · `docs/05-Design-System.md` · `docs/06-Slice-Tracker.md` |
 
 **Repository state verified.** Branches present: `main`, `sprint-1-dashboard-wilber`, `sprint-2-fuel`, `sprint-3-water-peptides`, `sprint-4-settings-tools-reference`, `visual-consistency-pass`, `docs/future-direction-fuel-water-peptides`. All mirrored on `origin`. HEAD is pushed and identical to `origin/sprint-4-settings-tools-reference`. Sprint 5 implementation has definitively **not** begun: no Sprint 5 branch, no 5.x commits, no Sprint 5 source changes.
@@ -165,9 +167,9 @@ Baseline is **44 suites / 1174 tests**. Feature test suites that must stay green
 **Home should become a day-state screen with a small number of real actions, not a report.**
 
 1. **Delete both slogan constants.** Do not replace with copy. Replace with *state*: date, and a one-line factual summary of what today actually contains (e.g. *"2 routines scheduled · 32 fl oz logged"*), derived from real domains only. Keep the gold time-aware greeting exactly as built (`useGreeting` re-evaluates each minute — good).
-2. **Retire or gate every fixture surface.** Steps/sleep/workouts/streak/Movement/Recovery have no feature behind them. Options: remove until a feature exists (recommended), or mark visibly as unavailable. **Do not carry four fake tiles into the new identity** — the redesign would be validating invented data on device.
+2. **Retire every fixture surface. ✅ RULED (§W.3)** — *"If real data exists, use real data. If it doesn't, don't fabricate activity just to make a module look populated."* Steps/sleep/workouts/streak/Movement/Recovery have no feature behind them and do not survive the redesign. The founder flagged this as especially load-bearing **before** Home is called action-oriented.
 3. **Adopt a mixed-module composition** (§E.3) rather than a symmetrical grid.
-4. **Give Water, Peptides and Tools real presence.** Water and Peptides deserve module-level surfaces with direct actions; Tools deserves a compact utility affordance. *Note the standing rule: "Home is not a launcher." §W.4 asks the founder to resolve this — a direct-action module is not the same thing as a launcher grid, but the boundary needs a ruling.*
+4. **Give Water, Peptides and Tools real presence. ✅ RULED (§W.4)** — a meaningful **Tools destination/module** is approved, and **Home must not become a generic app launcher**: not six small icons for every utility. One or two *contextual* shortcuts may follow later. **No specific layout is authorized** — it is designed during slice 5.3.
 
 ## E.3 Three composition systems (proposals — none implemented)
 
@@ -213,10 +215,12 @@ Why: the action question is answered above the fold; feature identity is carried
 
 > *"a bottle, a glass, or eight cup icons all imply a vessel of a fixed size, and VITA's goal is whatever the user chose, in whichever of four units they think in. A level has no implied capacity."*
 
-The founder now wants a premium hydration vessel as the hero. **These are in genuine tension, and the audit will not resolve it by preference.** The reasoning above is sound and is about correctness, not taste. **§W.2 puts this to the founder.** Two ways to honour both:
+The founder wanted a premium hydration vessel as the hero, and this was a genuine tension — the reasoning above is about correctness, not taste.
 
-- **Option A — Abstract vessel (recommended).** A vessel-*shaped* silhouette that is explicitly not a real container: no measurement marks, no cap, no branded bottle form; a tall soft-cornered form whose fill maps to *percentage of your goal*, not to a volume. Keeps the founder's tactile hero; keeps the "no implied capacity" correctness.
-- **Option B — Literal vessel.** Requires accepting that the shape implies a capacity it does not have, and a story for goals of 32 fl oz vs 4 L.
+**✅ RESOLVED (§W.2): build the vessel, as Option A.** The founder ruled that the concern was legitimate and the proposed resolution is exactly right — **the object represents percentage of the user's chosen goal, not a literal fixed-capacity container.**
+
+- **Option A — Abstract vessel ✅ APPROVED.** A vessel-*shaped* silhouette that is explicitly not a real container: **no ounce or volume markings**, no cap, no branded bottle form; a tall soft-cornered form whose fill maps to *percentage of goal*. 33% of goal reads ~33% full whether the goal is 3 cups, 100 fl oz or 2 L. Keeps the tactile hero; keeps the "no implied capacity" correctness; **preserves the Water math, units, storage, goals and entries exactly.**
+- ~~Option B — Literal vessel.~~ Rejected: it would imply a capacity the app does not have.
 
 ## F.3 Implementation technique — recommendation
 
@@ -322,7 +326,9 @@ Today occupies roughly one-fifth of the screen and is visually indistinguishable
 
 ## I.3 Rotation visualization — architecture recommendation
 
-**Recommendation: one shared `BodyMap` gaining a marker layer, with rotation living primarily in the Injection Sites tool, and a compact read-only week view embedded in Routine.**
+**✅ RULED (§W.8): one shared `BodyMap` gaining a marker layer. The standalone Injection Sites Tool becomes the richest historical / rotation visualization; Routine may reuse a smaller contextual weekly representation later. No duplicate body-map implementation.**
+
+> **Founder: "I would not jam the entire multi-peptide historical explorer into every Routine screen."**
 
 ```
 lib/peptides/model/sites.ts        (FROZEN — read only)
@@ -370,7 +376,7 @@ Presentation only, and **last**: the hub is currently three `ListRow`s' worth of
 
 **BMI is still wanted and is not lost.** It has a complete plan already written — `docs/Sprint-4-Planning-Audit.md` §G (UX, `src/lib/bmi/` domain model, non-goals, persistence, visual design, accessibility, the Journey seam) — which survives intact and needs no re-planning.
 
-**Recommendation: BMI becomes its own slice, `5.7`, immediately after Tools integration — not folded into 5.6.**
+**✅ RULED (§W.7): BMI is its own slice — `5.8`, after Tools Integration. Not folded into Tools cleanup.** The audit recommended this and the founder approved it, keeping 5.6 focused on the *existing working* Tools.
 
 Reasons: (1) 5.6 is a *migration* slice (existing screens → new language, zero new features); BMI is a **new feature with a new domain module** (`src/lib/bmi/`) and new persistence questions. Mixing them makes 5.6's regression surface unbounded. (2) BMI is the **best possible proof of the new language** — a result, a category scale, and a premium visual representation is exactly the "visual object instead of a summary card" case §L proposes; building it in the new system from scratch is why it was deferred in the first place. (3) It has a real dependency on 5.1 and a real seam into Sprint 6 (Journey/Weight owns stored height + latest weight) that a sub-item of a migration slice would blur.
 
@@ -387,6 +393,8 @@ Constraints, unchanged: height · weight · result · category range · premium 
 ## L.1 Surfaces — six roles
 
 The rule this replaces: *"content needs containing, therefore `Card`."* The rule proposed: **a surface's treatment is chosen by what the content is for.**
+
+**✅ Ordered by founder ruling §W.1: Ground is the default.** A container is not the baseline that other roles deviate from — *no container* is. Module, Panel and Sheet each need a reason; **Glass is a rare emphasis / layering / navigation role, never the default container.** Feature-specific visual objects are preferred wherever the activity benefits from its own representation. The binding constraint on 5.1: **do not replace card soup with glass soup.**
 
 | Role | Treatment | Derived from | Replaces today |
 |---|---|---|---|
@@ -458,7 +466,7 @@ Gold = VITA/Journey/brand · Blue = Water · Purple = Peptides · Orange = Fuel 
 
 `expo-haptics` is **not installed** and nothing calls it. It is the correct dependency (first-party Expo, SDK-54-aligned, no native config in Expo Go).
 
-**Recommendation: add `expo-haptics` in slice 5.1, behind a thin `src/lib/haptics/` wrapper** — so every call site is `vitaHaptic('confirm')` rather than a raw Expo call, giving one place to add a user preference or a global disable later. **This is a new dependency and needs the §W.5 ruling.**
+**✅ APPROVED (§W.5): add `expo-haptics` in slice 5.1, behind a thin `src/lib/haptics/` wrapper** — so every call site is `vitaHaptic('confirm')` rather than a raw Expo call, giving one place to add a user preference or a global disable later. The founder's condition: **a restrained, intentional vocabulary — not a haptic on every tap.**
 
 Proposed vocabulary — deliberately four:
 
@@ -611,28 +619,35 @@ The draft — 5.1 Design Language → 5.2 Dashboard → 5.3 Water → 5.4 Peptid
 3. **BMI gets its own slice** (§K), after Tools.
 4. **Motion should be distributed, then unified.** A pure motion slice at the end tempts every earlier slice to defer polish into it — the "holding pen" failure the Design System explicitly warns against. Each feature slice ships its own motion; the late slice **unifies and fixes gaps** (`PressableScale`, `Toast`, `FuelQuickActions` reduce-motion).
 
-## S.2 Proposed plan — DRAFT, none authorized
+## S.2 ✅ APPROVED SLICE STRUCTURE — founder-ruled 2026-09-02 (§W.6)
+
+**This is the authoritative Sprint 5 slice structure.** It supersedes both the draft plan in `docs/Sprint-5-Identity-Brief.md` §8 and this audit's own earlier ten-slice proposal. **No slice is open; each still requires its own founder authorization to begin.**
 
 | # | Slice | Scope | Depends on |
 |---|---|---|---|
-| **5.1** | **VITA Design Language — rules & prototype** | Author the Design System's missing sections: surface roles · hierarchy · colour rules · typography variants · spacing rhythm · interaction/motion/haptic rules · completion · disclosure · empty states. Add tokens where needed. **One throwaway coded prototype** (§U) reviewed on device. **No screen migrated.** | — |
-| **5.2** | **Foundation primitives** | Build `VitaSheet` · `Card` surface roles · `SectionHeader` variants · press+haptic layer (incl. `PressableScale` reduce-motion fix) · `DisclosureSection`. Add `expo-haptics`. Delete dead `PressableCard`. Fix stale comments (§X.3). **Migrate exactly one screen** as proof — recommend **Tools & Reference hub** (inert logic, low risk) | 5.1 |
-| **5.3** | **Interactive Water Experience** | Hydration visual object · quick-add on `/water` · custom via `VitaSheet` · haptics · history disclosure. **Water domain frozen** | 5.2 |
-| **5.4** | **Dashboard Identity Redesign** | Remove slogans · resolve fixtures · mixed-module composition · action-first · Tools discoverability (pending §W.4) | 5.3 |
-| **5.5** | **Peptides Home Redesign** | Today as hero · completed settles · Needs-setup inline · Active/Inactive disclosure. **Routine state frozen** | 5.2 |
-| **5.6** | **Routine + Injection Site Experience** | Routine hierarchy · disclosure for details/preparation/actions · site logging presentation · `BodyMap` `markers` prop · rotation view in Injection Sites | 5.5 |
-| **5.7** | **Tools Integration** | Remaining Tools screens to the new language. **Behaviour frozen** (§J.1) | 5.2 |
-| **5.8** | **BMI Calculator** | Per Sprint-4 audit §G, built in the new language. New `src/lib/bmi/` | 5.7 |
-| **5.9** | **Motion + Microinteraction Unification** | One vocabulary app-wide · fix remaining reduce-motion gaps (`Toast`, `FuelQuickActions`) · converge the 4 existing sheets onto `VitaSheet` · resolve inconsistencies. **Not Sprint 9** | 5.3–5.8 |
-| **5.10** | **Founder Review / Identity Audit** | Feature work stops. Full device review, both themes, VoiceOver, reduce-motion. Gate to Sprint 6 | all |
+| **5.1** | **VITA Design Language + Identity Prototype** | Author the Design System's missing sections: surface roles (per §W.1) · hierarchy · colour rules · typography variants · spacing rhythm · interaction / motion / haptic rules · completion · disclosure · empty states. Add tokens. Build the **minimal** primitives the language requires. Add `expo-haptics` (§W.5). **Small coded identity prototype** — Water visual object + foundational surface/interaction primitives + the motion and haptic behaviour needed to validate the identity (§W.10). **No production screen redesigned.** | — |
+| **5.2** | **Interactive Water Experience** | First complete feature in the new language. Hydration visual object (§W.2 — % of goal, no capacity markings) · quick-add on `/water` · custom amount via the sheet primitive · haptics · history disclosure. **Water domain, units, storage, goals and entries frozen** | 5.1 |
+| **5.3** | **Dashboard Identity Redesign** | Real data only — **fixtures removed, nothing fabricated** (§W.3) · no generic slogans · action-first composition · mixed module sizes · Tools destination/module, **not a launcher** (§W.4) | 5.2 |
+| **5.4** | **Peptides Home Redesign** | Today as hero · completed settles in place · Needs-setup inline · Active/Inactive progressive disclosure. **Routine and log state frozen** | 5.1 |
+| **5.5** | **Routine + Injection Site Experience** | Routine hierarchy — immediate action dominant · disclosure for details / preparation / actions · site-logging presentation · **shared `BodyMap` evolution** and rotation visualization (§W.8) | 5.4 |
+| **5.6** | **Tools Integration** | Make Sprint 4's **existing working** Tools visually belong to new VITA. **Behaviour frozen** (§J.1). No new tools | 5.1 |
+| **5.7** | **Motion + Microinteraction Unification** | Clean up inconsistencies once several real features use the vocabulary · fix remaining reduce-motion gaps (`Toast`, `FuelQuickActions`) · converge the four existing sheets onto the shared primitive. **Not Sprint 9** | 5.2–5.6 |
+| **5.8** | **BMI Calculator** | Built from scratch in the new system (§W.7). Per Sprint-4 audit §G: new `src/lib/bmi/`, premium visual representation, **no BMI history that shadows Journey** | 5.6 |
+| **5.9** | **Founder Identity Audit** | Feature work stops. Real-device review, both themes, VoiceOver, reduce-motion. **Journey does not begin until this passes.** | all |
 
-Ten slices vs eight. The additions are a split 5.1 and a promoted BMI — no new scope.
+**Nine slices.** Versus the draft's eight: Water moves ahead of Dashboard, BMI is promoted out of Tools, and the motion pass moves earlier so it unifies real usage rather than absorbing deferred polish. The audit's proposed separate "foundation primitives" slice is folded back into 5.1 (§W.6).
+
+**Deferred, not cancelled** (§W.11): richer Food Scanner work · Research Library (gated by Open Question #17) · Dashboard Tools discoverability beyond what the redesigned Home intentionally needs.
+
+**Housekeeping reassigned:** the stale source comments and the dead `PressableCard` (§X.3) were listed against the audit's old 5.2. They now belong to **5.1**, except the comment corrections made as branch-creation housekeeping — see §X.3.
 
 ---
 
 # T. Detailed Slice 5.1 Definition
 
-**5.1 must not be a token pass, and must not migrate screens.** It exists so that 5.2 onward can be built confidently and once. Its output is mostly a **document** plus a **throwaway prototype**.
+**5.1 must not be a token pass, and must not redesign a production screen.** It exists so that 5.2 onward can be built confidently and once.
+
+**Revised by §W.6.** The audit originally proposed splitting 5.1 in two, with primitives in a separate slice; the founder folded them back together. **5.1 therefore delivers three things: the authored rules, the minimal primitives those rules require, and the identity prototype.** The constraint that replaces the split is narrower and clearer: **5.1 builds primitives but redesigns no production screen** (§W.10).
 
 ## T.1 Deliverables
 
@@ -656,32 +671,34 @@ Ten slices vs eight. The additions are a split 5.1 and a promoted BMI — no new
 
 **2. Token additions** (`src/theme/tokens.ts`) — only what the rules require: surface-role values, a motion scale (durations + easings + the press spring), elevation levels if roles need more than one shadow. **No domain hue changes. No removals.**
 
-**3. One coded prototype** (§U), on a scratch route, **not merged into a product screen**.
+**3. The minimal primitives the language requires** (§W.6) — the shared sheet primitive · `Card` surface roles per §W.1 · `SectionHeader` variants · the press + haptic layer (including `PressableScale`'s missing reduce-motion check, which fixes 6 call sites centrally) · `DisclosureSection`. **Minimal is the operative word** — §N's justification bar applies, and a seventh primitive needs two independent screens that need it.
 
-**4. A component migration strategy** — an ordered map from each existing primitive to its new role, listing every call site, so 5.2+ are mechanical rather than exploratory. `PressableCard` is marked for deletion; `MetricTile`'s divergent press path is marked for consolidation.
+**4. `expo-haptics` added** (§W.5), behind a thin `src/lib/haptics/` wrapper so every call site is one function and a future global disable has one home.
 
-**5. Findings recorded, not fixed** — the stale comments (§X.3) and `PressableCard`, handed to 5.2.
+**5. The identity prototype** (§U) — Water visual object + the foundational surface/interaction primitives + the motion and haptic behaviour needed to judge the identity. On a scratch route. **Not a redesigned production screen** (§W.10).
+
+**6. A component migration strategy** — an ordered map from each existing primitive to its new role, listing every call site, so 5.2+ are mechanical rather than exploratory. `PressableCard` is marked for deletion; `MetricTile`'s divergent press path is marked for consolidation.
 
 ## T.2 Explicitly NOT in 5.1
 
-No screen redesigned · no primitive rewritten · no dependency added (that is 5.2) · no `lib/` change · no route change · no BMI, Reference, or scanner work.
+**No production screen redesigned** · no `lib/` domain change · no route change (the scratch prototype route excepted, and it is deleted at slice end) · no BMI, Reference, or scanner work · no dependency beyond `expo-haptics`.
 
 ## T.3 Definition of Done
 
-Design System authored and **founder-approved on device via the prototype** · tokens added, all 1174 tests still green, `tsc --noEmit` clean · prototype reviewed in Light **and** Dark on a real iPhone with reduce-motion both on and off · migration strategy written · §W decisions ruled on · Slice Tracker updated.
+Design System authored · primitives built · `expo-haptics` integrated behind the wrapper · **founder-approved on device via the prototype (gate G1)** · all 1174 tests still green, `tsc --noEmit` clean, `expo install --check` clean · prototype reviewed in Light **and** Dark on a real iPhone with reduce-motion both on and off · migration strategy written · scratch prototype route removed · Slice Tracker updated.
 
 ---
 
-# U. Prototype Recommendation
+# U. Prototype — ✅ APPROVED (§W.10)
 
-**Recommendation: yes — one prototype, in 5.1, on a scratch route, thrown away afterward.**
+**One prototype, in 5.1, on a scratch route, thrown away afterward.** The founder approved this and named the focus: the Water visual object, the foundational surface/interaction primitives, and the motion/haptic behaviour needed to validate the identity — **not an entire redesigned screen.**
 
 Rationale: three of the sprint's biggest risks (§R.6 motion performance, §R.9 theme parity, §R.11 the vessel) are **device-only questions**. All three of the light/dark inversions in §Q passed desk review and failed on hardware. A prototype is the cheapest possible way to move those risks to the front.
 
 **What to prototype — one screen containing three things:**
 
 1. **The Water vessel proof-of-concept.** Answers the most contested question (§W.2), the technique question (SVG vs masked view — including re-verifying the `ClipPath`-on-device caveat recorded in `BodyMap`), the perf question, and the light/dark question. **Highest information per hour of any option.**
-2. **One Dashboard module in the new surface roles**, beside one in the current `Card` — a direct A/B of "does this actually feel like VITA."
+2. **The surface roles shown side by side** — one block as Ground (direct on background, per §W.1's default), one as a Module, one as Glass — against the equivalent in today's `Card`. A direct A/B of "does this actually feel like VITA", and the fastest way to check the founder's *"don't replace card soup with glass soup"* constraint before it is written into five screens.
 3. **The press + haptic + completion micro-loop** — tap a quick-add, feel the haptic, watch the fill rise, see the completion settle. This is the sprint's thesis in three seconds, and it is the thing a written document cannot convey.
 
 **Lowest-risk way to run it:** a scratch route (e.g. `src/app/(vita)/_proto.tsx`) that imports nothing from `src/lib/` — the vessel is driven by a local slider, not by real water state. It cannot regress a domain because it never touches one. **Deleted at the end of 5.1**, with anything proven promoted deliberately in 5.2/5.3.
@@ -692,79 +709,116 @@ Rationale: three of the sprint's biggest risks (§R.6 motion performance, §R.9 
 
 **Device review is mandatory — Light and Dark, real iPhone, reduce-motion on and off — after every one of these. No two large visual slices may accumulate without a review in between.**
 
+*Renumbered to the approved nine-slice structure (§S.2).*
+
 | Gate | After | Question it answers |
 |---|---|---|
-| **G1** 🔴 | **5.1** (prototype) | Is this VITA? Is the vessel right (§W.2)? Do the surface roles read? **Blocks everything** |
-| **G2** | **5.2** (primitives + one migrated screen) | Does the language survive contact with a real screen? |
-| **G3** 🔴 | **5.3** (Water) | Does the hero interaction feel premium and not cartoonish? |
-| **G4** 🔴 | **5.4** (Dashboard) | Is Home action-first and recognizable? Are fixtures resolved? |
-| **G5** | **5.5 + 5.6** (Peptides + Routine) | *"What do I need to do today?"* — answered at a glance? |
-| **G6** | **5.7 + 5.8** (Tools + BMI) | Do tools belong to the same product? |
-| **G7** 🔴 | **5.10** | *"Would I genuinely want to use this app every day?"* **Gates Sprint 6.** |
+| **G1** 🔴 | **5.1** — Design Language + prototype | Is this VITA? Is the vessel right (§W.2)? Do the surface roles read, and has "card soup" become "glass soup" (§W.1)? **Blocks everything** |
+| **G2** 🔴 | **5.2** — Water | Does the hero interaction feel premium and not cartoonish? Does the language survive contact with a real feature? |
+| **G3** 🔴 | **5.3** — Dashboard | Is Home action-first and recognizable? Are the fixtures actually gone (§W.3)? Is Tools a destination and not a launcher (§W.4)? |
+| **G4** | **5.4 + 5.5** — Peptides + Routine | *"What do I need to do today?"* — answered at a glance? |
+| **G5** | **5.6 + 5.7** — Tools + Motion unification | Do Tools belong to the same product? Is the interaction vocabulary consistent? |
+| **G6** | **5.8** — BMI | Does a brand-new feature look native to the new identity? |
+| **G7** 🔴 | **5.9** — Founder Identity Audit | *"Would I genuinely want to use this app every day?"* **Gates Sprint 6 / Journey.** |
 
-G1, G3, G4 and G7 are hard stops. G5 and G6 may pair two slices because both are lower-risk migrations of already-approved behaviour.
+**G1, G2, G3 and G7 are hard stops.** G2 replaces the old G3 as the first real-feature gate — a direct consequence of moving Water ahead of Dashboard (§W.6), and the reason that reorder is worth the churn: the identity is judged on a finished feature before four more screens commit to it. G4 and G5 may pair two slices because both are migrations of already-approved behaviour.
 
 ---
 
-# W. Decisions Needed From Founder
+# W. Founder Rulings — ✅ ALL DECIDED 2026-09-02
 
-Concrete rulings. Everything above is a recommendation until these are answered.
+**These are decisions, not recommendations. Where an earlier section of this audit proposed something different, these rulings override it.**
 
-### W.1 — The two surface systems 🔴 *blocks 5.1*
-Home uses `GlassSurface` (blur); every other screen uses `Card` (opaque). Which becomes the language? **(a)** Glass extends app-wide *(most distinctive; blur cost on every screen; hardest to keep legible in Light)* · **(b)** Glass is retired to the dock only, and one refined opaque system carries the app *(safest, most performant)* · **(c)** Glass becomes a deliberate, rare role — the dock plus one hero surface per screen. **Audit recommends (c).**
+### W.1 — Surface system ✅ RULED
+**No single surface wins globally.** Neither `Card` nor `GlassSurface` becomes the default. The approved hierarchy:
 
-### W.2 — The hydration vessel 🔴 *blocks 5.3, should be answered at G1*
-`WaterLevelPanel` deliberately rejected a vessel and recorded a correctness reason: a vessel implies a fixed capacity, and VITA's goal is user-chosen across four units (§F.2). **(a)** abstract vessel-shaped object, no measurement marks, fill = % of goal *(recommended)* · **(b)** literal vessel, accepting the implied-capacity issue · **(c)** keep the abstract level, refine it. The prototype is designed to answer this.
+1. **Direct-on-background content is the default.**
+2. **Opaque / elevated surfaces** are used when content *genuinely needs grouping* — not as the automatic answer to containment.
+3. **`GlassSurface` is a rare emphasis / layering / navigation role**, not the new default container.
+4. **Feature-specific visual objects** are preferred where the activity benefits from its own representation.
 
-### W.3 — Dashboard fixture data 🔴 *blocks 5.4*
-4 of 5 Health Metric tiles and 2 of 4 goal pillars are fixtures. **(a)** remove until a real feature exists *(recommended)* · **(b)** keep, visibly marked unavailable · **(c)** keep as-is.
+> **Founder framing, binding on 5.1: "Avoid replacing card soup with glass soup."**
 
-### W.4 — Tools on Home 🟠 *shapes 5.4*
-The standing rule is *"Home is not a launcher,"* but Tools is reachable only via Settings and the brief lists compact utility modules. Is a low-weight utility affordance on Home approved, or does the rule stand?
+This is close to the audit's recommended option (c), but stronger: it makes *no container at all* the default rather than making a container role the default. §L.1's six roles stand, re-ordered so **Ground** is the default and **Module**, **Panel** and **Sheet** are each justified by a reason, with **Glass** as a deliberate rarity.
 
-### W.5 — `expo-haptics` 🟠 *blocks the haptic vocabulary*
-Approve adding `expo-haptics` (first-party Expo, SDK-54-aligned, no native config, Expo-Go-compatible) behind a `src/lib/haptics/` wrapper? Without it, §M.3 does not happen. **Audit recommends yes.**
+### W.2 — Hydration vessel ✅ APPROVED
+**Build the vessel.** The audit's §F.2 concern was legitimate and its Option A is the resolution: the object represents **percentage of the user's chosen hydration goal**, not a literal fixed-capacity container.
 
-### W.6 — Slice plan 🔴 *blocks sprint open*
-Approve the §S.2 ten-slice plan — specifically: splitting 5.1 into rules-and-prototype + primitives; **moving Water before Dashboard**; BMI as its own slice; motion distributed then unified.
+- **No ounce/volume markings.** No fake physical capacity.
+- **No implication that the drawn vessel equals the user's chosen daily goal.**
+- Fill maps to **0–100% of goal progress** — 33% of goal reads ~33% full, whether the goal is 3 cups, 100 fl oz or 2 L.
+- **All existing Water math, units, storage, goals and entries preserved exactly** (§D freeze stands).
 
-### W.7 — BMI placement 🟠
-Confirm BMI as slice **5.8** (own slice after Tools), per §K.
+### W.3 — Dashboard fixtures ✅ RULED — option (a)
+**Fixture data does not survive the identity redesign.** Use real application state where it exists. Where it does not, **do not invent activity to make a module look populated.** Explicitly load-bearing before Home is called "action-oriented."
 
-### W.8 — Rotation visualization scope 🟠 *shapes 5.6*
-Confirm: rotation lives primarily in the **Injection Sites tool** (all-peptide), with a compact read-only week view embedded in Routine — and confirm **no peptide colour-coding** and **no "next site" suggestion of any kind**.
+### W.4 — Tools on Home ✅ APPROVED as direction, layout not authorized
+A meaningful **Tools destination/module** is approved. **Home must not become a generic app launcher** — not six small icons for every utility. One or two *contextual* shortcuts may follow later. **Designed during the Dashboard slice; no specific layout is authorized by this document.**
 
-### W.9 — Branch strategy 🔴 *blocks any Sprint 5 commit*
-See §Y. Sprint 4 is complete but **unmerged** (5 commits ahead of `main`). Merge Sprint 4 to `main` first and cut Sprint 5 from `main`, or cut Sprint 5 directly from `952eee1`?
+### W.5 — `expo-haptics` ✅ APPROVED
+Approved for Sprint 5 where needed. **Restrained, intentional vocabulary only.**
 
-### W.10 — Prototype 🟠
-Approve one throwaway prototype route in 5.1 (§U), deleted at slice end?
+> **Founder: "Don't vibrate on every tap."**
+
+§M.3's four categories — Selection · Confirmation · Completion · Warning — and its prohibitions (never on scroll, navigation, render; never twice for one action; never decorative) are the standard.
+
+### W.6 — Slice plan ✅ APPROVED, with one revision
+The founder approved the audit's substantive changes — **Water before Dashboard**, BMI as its own slice, motion distributed then unified — and **folded the audit's proposed separate "foundation primitives" slice back into 5.1**, which now delivers rules, minimal primitives *and* the prototype together. Result is **nine slices**, not ten. See **§S.2**.
+
+Founder rationale for Water-before-Dashboard, recorded verbatim: *"Water is our best place to prove the new identity because it has a clear visual object and interaction. Once that works, Dashboard can reference that language rather than guessing."*
+
+### W.7 — BMI ✅ APPROVED as its own slice — **5.8**
+BMI is no longer part of generic Tools foundation work.
+
+> **Founder: "We specifically delayed it so it could be born in the new identity. Let's actually do that rather than squeezing it into generic Tools cleanup."**
+
+This keeps **5.6 Tools Integration** focused on the *existing working* Tools, and treats BMI as the new feature it is.
+
+### W.8 — Injection rotation ✅ RULED
+Build the capability around the **existing shared `BodyMap`**. The standalone **Injection Sites Tool becomes the richest historical / rotation visualization**; **Routine may reuse a smaller contextual weekly representation** later. **Do not create a duplicate body-map implementation.**
+
+> **Founder: "I would not jam the entire multi-peptide historical explorer into every Routine screen."**
+
+The audit's §I.3 constraints stand: no peptide colour-coding, no "next site" suggestion, no rest timers, no good/bad colour scale.
+
+### W.9 — Branch strategy ✅ RULED — audit recommendation adopted
+Merge Sprint 4 into `main`, then create `sprint-5-identity-interaction` from the merged state. **Sprint 5 does not start on the old Sprint 4 branch.** Executed — see §Y.
+
+### W.10 — Prototype ✅ APPROVED
+Slice 5.1 includes a **small coded identity proof-of-concept**. Preferred focus: the **Water visual object** · **foundational surface / interaction primitives** · the **motion and haptic behaviour needed to validate the identity**.
+
+> **Founder: "Not an entire redesigned screen… That gives us something meaningful to judge on-device before redesigning five screens."**
+
+**Do not redesign a whole production screen during the prototype phase unless separately authorized.**
+
+### W.11 — Deferred work reconfirmed ✅
+Still deferred, not cancelled: **richer Food Scanner work** · **Research Library** (still gated by Open Question #17) · **Dashboard Tools discoverability beyond what the redesigned Home intentionally needs.**
 
 ---
 
 # X. Documentation Changes
 
-## X.1 Created by this session
-- **`docs/Sprint-5-Planning-Audit.md`** — this document. Marked DRAFT / PENDING FOUNDER APPROVAL.
+## X.1 Created / updated by the planning sessions
+- **`docs/Sprint-5-Planning-Audit.md`** — this document. Written 2026-09-02 (`7743443`), **founder-reviewed and approved the same day**; the §W rulings and the approved §S.2 slice structure were then recorded into it.
 
-## X.2 To update **after** founder approval — not before
-- `docs/06-Slice-Tracker.md` → Sprint 5: replace the draft 8-slice table with the approved plan; record §W rulings. **Sprint 5 stays ⬜ NOT OPENED until a slice is authorized.**
+## X.2 To update when Sprint 5 actually opens — not before
+- `docs/06-Slice-Tracker.md` → Sprint 5: replace the draft 8-slice table with §S.2's approved nine, and record the §W rulings. **Sprint 5 stays ⬜ NOT OPENED until slice 5.1 is separately authorized.**
 - `docs/05-Design-System.md`: point its Sprint 5 section at this audit. **The document itself is authored by slice 5.1, not by this audit.**
-- `docs/Sprint-5-Identity-Brief.md`: add a pointer to this audit. The brief stays as authored — it records founder direction, and this audit is the architecture response to it.
-- Vita HQ (`docs/Vita HQ`) — **only if founder decisions change knowledge.** Candidates once §W is ruled on: `00 HQ/Decision Log.md` (W.1, W.2, W.5), `00 HQ/Current Sprint.md`, `00 HQ/Open Questions.md`, `03 Design/Design Bible.md` + `Motion & Animation.md` + `Component Library.md` (after 5.1 authors the system, not now). Per the CLAUDE.md checkpoint: **this planning session alone does not change Vita HQ knowledge**, so Vita HQ is untouched.
+- `docs/Sprint-5-Identity-Brief.md`: add a pointer to this audit. The brief stays as authored — it records founder direction, and this audit is the architecture response to it. Its §8 draft slice table is superseded by §S.2.
+- Vita HQ (`docs/Vita HQ`) — **only where founder decisions change knowledge.** Now genuinely applicable, since §W contains real product decisions: `00 HQ/Decision Log.md` (W.1 surface hierarchy, W.2 vessel-as-percentage, W.3 no fabricated data, W.5 haptics), `00 HQ/Current Sprint.md` (approved slice structure), `03 Design/Design Bible.md` + `Motion & Animation.md` + `Component Library.md` (**after 5.1 authors the system**, not now).
 
-## X.3 Findings reported for 5.2, not fixed here (§43)
+## X.3 Stale source comments (§43) — status
 
-Stale sprint numbering in source comments. **Not edited** — this audit is docs-only.
+Reported by the audit, **not** fixed by it. Corrected afterwards as comment-only housekeeping on the new Sprint 5 branch, under the founder's branch-creation authorization — zero runtime behaviour change, zero test change.
 
-| File | Line | Says | Should say |
+| File | Said | Now says | Status |
 |---|---|---|---|
-| `src/theme/useReducedMotion.ts` | 5 | *"Sprint 8 owns the shared motion vocabulary"* | Sprint 5 establishes the vocabulary; Sprint 9 does the app-wide pass |
-| `src/lib/preferences/model/types.ts` | 64 | *"Journey / Weight in Sprint 5"* | Journey / Weight is **Sprint 6** |
-| `src/lib/preferences/model/types.ts` | 61 | *"Extension point — Slice 4.4 (BMI)"* | BMI's real slice number (5.8 if §W.7 approved) — already recorded as a known follow-up in the Slice Tracker |
-| `src/app/(vita)/settings/units.tsx` | 24 | *"...belong to the BMI calculator in slice 4.4"* | same as above |
+| `src/theme/useReducedMotion.ts` | *"Sprint 8 owns the shared motion vocabulary"* | Sprint 5 establishes the vocabulary; Sprint 9 does the app-wide pass | ✅ corrected |
+| `src/lib/preferences/model/types.ts` | *"Journey / Weight in Sprint 5"* | Journey / Weight is **Sprint 6** | ✅ corrected |
+| `src/lib/preferences/model/types.ts` | *"Extension point — Slice 4.4 (BMI)"* | Slice **5.8** | ✅ corrected |
+| `src/app/(vita)/settings/units.tsx` | *"...the BMI calculator in slice 4.4"* | Slice **5.8** | ✅ corrected |
 
-Also for 5.2: **`src/components/ui/PressableCard.tsx` has zero call sites** — dead code, recommend deletion.
+**Deferred, deliberately not done:** `src/components/ui/PressableCard.tsx` has **zero call sites** — dead code. **Reported only.** Deleting a component is architecture work, not comment housekeeping, so it belongs to **slice 5.1**'s component migration strategy alongside `MetricTile`'s divergent press path.
 
 ---
 
@@ -778,42 +832,48 @@ Repository `/Users/wilber/vita-app` · branch `sprint-4-settings-tools-reference
 
 **`main` is at `8b8ec8d`** — Sprint 4's five commits (`aa1c60a`, `87fbf02`, `238d046`, `1de3353`, `952eee1`) are **ahead of `main` and not merged**. `main` has nothing the sprint branch lacks.
 
-## Y.2 Why no branch was created
+## Y.2 Why the audit created no branch
 
 The Build Handbook's Branch Policy is clear that sprint work lives on a dedicated sprint branch named for the sprint (e.g. `sprint-1-dashboard-wilber`), and Sprint 4's precedent is that the planning audit commits to the sprint branch (`aa1c60a` on `sprint-4-settings-tools-reference`, cut from `main` **before** the audit).
 
-**But the convention is not unambiguous here, because Sprint 4 is unmerged.** A Sprint 5 branch cut from `main` — which is what every prior sprint did — would silently lack all of Sprint 4. That is a real decision with a real consequence, and §45 of the authorization directs me to report rather than guess. **No branch was created.**
+**But the convention was not unambiguous, because Sprint 4 was unmerged.** A Sprint 5 branch cut from `main` — which is what every prior sprint did — would silently have lacked all of Sprint 4. That is a real decision with a real consequence, so the audit reported it rather than guessing, and created no branch.
 
-## Y.3 Recommended branch strategy — for founder approval (§W.9)
+## Y.3 ✅ RULED (§W.9) and executed — merge, then branch
 
-**Recommended:** merge Sprint 4 into `main` first (matching how Sprints 2 and 3 closed — `44eeae6`, `2bac43b`), then cut `sprint-5-identity-interaction` from `main`. This keeps `main` the integration branch, keeps Sprint 5 cut from `main` like every prior sprint, and makes Sprint 4's completed work visible where it belongs.
+**Founder ruling: merge Sprint 4 into `main`, then create `sprint-5-identity-interaction` from the merged state. Sprint 5 does not start on the old Sprint 4 branch.** This matches how Sprints 2 and 3 closed (`44eeae6`, `2bac43b`), keeps `main` the integration branch, and makes Sprint 4's completed work visible where it belongs.
 
-**Alternative:** cut `sprint-5-identity-interaction` directly from `952eee1` and merge both sprints later. Fewer steps now; leaves `main` two sprints behind.
+Executed in the follow-up session of 2026-09-02, in this order: push the planning audit → record the founder rulings (this commit) → validate Sprint 4 → `git merge --no-ff` into `main` → validate merged `main` → push `main` → create and push `sprint-5-identity-interaction` from merged `main`. **No force push. No squash — full Sprint 4 and planning history preserved.** The Sprint 4 branch is retained, not deleted.
 
-**Not recommended:** continuing Sprint 5 work on `sprint-4-settings-tools-reference`.
+Exact merge commit, branch head and validation results are recorded in `docs/06-Slice-Tracker.md` when Sprint 5 opens.
 
-## Y.4 This document's commit
+## Y.4 This document's commits
 
-This audit is committed to the current branch — consistent with `952eee1`, the roadmap-alignment commit that introduced Sprint 5 and also landed here.
+Written and committed on the Sprint 4 branch — consistent with `952eee1`, the roadmap-alignment commit that introduced Sprint 5 and also landed there.
 
 ```
-docs(sprint-5): plan identity and interaction architecture
+7743443  docs(sprint-5): plan identity and interaction architecture
+         docs(sprint-5): record founder rulings and approved slice structure
 ```
 
-**No merge to `main`. No new branch. No source changes.**
+Both are documentation-only. **No source change, no dependency change, and no slice opened by either.**
 
-## Y.5 Validation (§44)
+## Y.5 Validation
+
+**At audit time (§44 of the planning authorization):**
 
 | Check | Result |
 |---|---|
-| No source code changed | ✅ `src/` untouched — `git status` shows only this new doc |
+| No source code changed | ✅ `src/` untouched |
 | No `package.json` change | ✅ No dependency added |
 | Roadmap intact | ✅ `docs/04-Master-Roadmap.md` unmodified; `952eee1` present |
-| Sprint 5 still not started | ✅ No branch, no slice opened, no 5.x implementation |
-| Tests baseline unchanged | ✅ 44 suites / 1174 passing, exit 0 — same before and after |
-| No new branch | ✅ None created |
-| No merge to `main` | ✅ None performed |
+| Sprint 5 not started | ✅ No branch, no slice opened, no 5.x implementation |
+| Tests baseline unchanged | ✅ 44 suites / 1174 passing, exit 0 |
+| No new branch · no merge to `main` | ✅ Neither performed |
+
+**After the merge + branch authorization:** Sprint 4 merged to `main` (`--no-ff`, no conflicts), `main` pushed, `sprint-5-identity-interaction` created from merged `main` and pushed with upstream tracking, stale comments corrected as comment-only housekeeping. **Sprint 5 implementation still has not begun** — no screen redesigned, no feature code added, `PressableCard` deliberately left in place for 5.1.
 
 ---
 
-**Prepared 2026-09-02. Awaiting founder review. Slice 5.1 is not started and is not authorized to start.**
+**Audit prepared 2026-09-02 · founder-reviewed and approved 2026-09-02 · rulings recorded in §W · approved slice structure in §S.2.**
+
+**Slice 5.1 is not started and requires its own founder authorization to begin.**
