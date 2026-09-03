@@ -2,8 +2,9 @@
  * Whether the device asks for reduced motion.
  *
  * Lives beside the theme because motion is part of VITA's design system, not
- * any one feature's concern — Sprint 8 owns the shared motion vocabulary, and
- * this is the switch every part of it has to honor.
+ * any one feature's concern — Sprint 5 establishes the shared motion
+ * vocabulary and Sprint 9 applies it app-wide, and this is the switch every
+ * part of it has to honor.
  *
  * The rule it exists to enforce: **no information may depend on animation.**
  * A component reading `true` should land on its final state directly, not

@@ -21,7 +21,7 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * storage was rewritten to give Settings a tidier shape to talk to.
  *
  * **Only preferences that already change something appear here.** Body
- * weight and height belong to the BMI calculator in slice 4.4 and are not
+ * weight and height belong to the BMI calculator in slice 5.8 and are not
  * listed in advance — a preference the user can set and never observe is
  * the same dishonesty as a row that navigates nowhere. The extension point
  * is documented in `src/lib/preferences/model/types.ts`.

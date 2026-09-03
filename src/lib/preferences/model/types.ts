@@ -58,10 +58,10 @@ export function isThemeMode(value: unknown): value is ThemeMode {
  * startup and are individually tiny; a key each would mean a storage round
  * trip per preference for no gain.
  *
- * ## Extension point — Slice 4.4 (BMI)
+ * ## Extension point — Slice 5.8 (BMI)
  *
  * BMI needs a body-weight unit (lb/kg) and a height unit (ft-in/cm), and
- * Journey / Weight in Sprint 5 will read the same weight unit — which is
+ * Journey / Weight in Sprint 6 will read the same weight unit — which is
  * exactly what makes them app-level rather than tool-level. Adding them is:
  *
  *   1. a field here, with its own `DEFAULT_*` and type guard;
