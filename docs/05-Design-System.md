@@ -71,7 +71,7 @@ Home is founder-approved and stable. Changing a shared primitive in a way that v
 - **Type scale:** display 32 · title 24 · heading 17 · body 15 · caption 13 · micro 11 (system font)
 - **Spacing:** 4-based scale (4–32); floating dock clearance 120
 
-Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, PressableCard, GlassSurface, Section, SectionHeader, ProgressBar, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow, IconBadge, Button, TextField, Stepper, PressableScale, EmptyState, Toast.
+Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, GlassSurface, Section, SectionHeader, ProgressBar, ProgressRing, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow, IconBadge, Button, TextField, NumericField, Stepper, PressableScale, EmptyState, Toast, VitaSheet. *(`PressableCard` was removed in slice 5.1 — zero call sites.)*
 
 `EmptyState` (added Sprint 2, slice 2.1) is the shared empty-state treatment: outline glyph, secondary title, optional tertiary body, centered. Deliberately quiet — no illustration and no shouting call to action. Logging nothing yet is a normal moment in a normal day, not a failure to correct, which is the same reasoning behind the no-guilt-mechanics rule.
 
@@ -177,9 +177,11 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 # The VITA Design Language (slice 5.1)
 
-# ⚠️ IMPLEMENTED — AWAITING FOUNDER IDENTITY REVIEW
+# ⚠️ DIRECTION FOUNDER-APPROVED — EXECUTION AWAITING 5.1A REVIEW
 
-**Built and testable on device; not yet approved.** Everything in this section is the output of slice 5.1 and is subject to the founder identity review. The founder *rulings* it is built on (surface hierarchy, the vessel as percentage-of-goal, restrained haptics) are approved and are recorded in `docs/Sprint-5-Planning-Audit.md` §W. **The execution below is not.** Until that review passes, production screens are not migrated onto this language — slice 5.2 (Water) is the first that does.
+**The identity direction is approved** (founder device review, 2026-09-02): direct-on-background as the default, cards earning their use, glass as rare, feature-specific visual objects, restrained feature colour, the neutral primary action, one display-size subject per screen, `VitaSheet`, the `PressableScale` evolution, restrained haptics, the RN Animated motion foundation, reduce-motion support, and the vessel as a percentage-of-goal object with no capacity semantics.
+
+**The execution is not yet locked.** Slice 5.1A applied the visual refinements the review asked for and awaits its own device review. Until that passes, production screens are not migrated — slice 5.2 (Water) is the first that does. The founder *rulings* it is built on (surface hierarchy, the vessel as percentage-of-goal, restrained haptics) are approved and are recorded in `docs/Sprint-5-Planning-Audit.md` §W. **The execution below is not.** Until that review passes, production screens are not migrated onto this language — slice 5.2 (Water) is the first that does.
 
 ## 1 — Surface roles
 
@@ -213,6 +215,8 @@ What changes is *behaviour*.
 **Feature colour carries:** the feature's visual object · progress and fill · completion state · selection state · icon glyphs · microinteraction feedback · **one** accent per screen, on the thing that matters most.
 
 **Feature colour does not carry:** a full-width primary button · a whole card or surface tint · state that has no second, non-colour signal · decoration where nothing is stateful · gradients.
+
+**The accent exception (5.1A).** A neutral control may carry a single feature-coloured *glyph* — the `+` on Add Water is Water blue on an otherwise neutral surface. That is the rule working, not an exception to it: the colour marks what the action is about while the control itself stays neutral. A second coloured element on the same control would not be.
 
 **Two rules that follow:**
 
@@ -291,6 +295,8 @@ Timings live in `theme/tokens.ts` → `motion`, so components stop inventing the
 | `duration.state` | 180ms | A discrete change — selection, completion settling |
 | `duration.sheet` | 260ms | A surface entering or leaving |
 | `duration.progress` | 700ms | A measured value moving to a new one |
+
+**The settle (5.1A).** A value that *rises* may overshoot slightly and return — 1.8% over 240ms on the water level — so liquid reads as liquid rather than as a bar chart. It is the value's own motion, never a decorative layer on top, it fires only on a rise, and it is skipped entirely under Reduced Motion. Nothing in VITA animates once it has come to rest.
 
 `pressSpring` (speed 40, bounciness 5) and `pressScale` are shared. Easing is `Easing.out(cubic)` for progress, `Easing.out(quad)` for state.
 

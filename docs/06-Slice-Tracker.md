@@ -2034,7 +2034,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
-| 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | 🟡 Implemented — awaiting founder identity review |
+| 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | 🟡 Identity direction founder-approved on device; polished in 5.1A, awaiting the 5.1A review that locks it |
+| 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | 🟡 Implemented — awaiting founder device review |
 | 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ⬜ Not started |
 | 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | ⬜ Not started |
 | 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
@@ -2080,5 +2081,33 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **The Settings row-inventory test caught the new `__DEV__` row** — which is what that test exists for. It now asserts the shipping inventory (the four rows a real user can see) separately from the development row, so the guarantee that Settings shows nothing dead is intact.
 
-**Still to verify — founder, on a real device:** whether the vessel reads premium rather than cartoonish, whether the sheet beats navigating to a form, and whether the surface roles have avoided trading card soup for glass soup.
+**Founder device review, 2026-09-02: the identity direction is APPROVED.** Direct-on-background as the default, cards earning their use, glass as rare, feature-specific visual objects, restrained feature colour, the neutral primary action, one display-size subject per screen, `VitaSheet`, the `PressableScale` evolution, restrained haptics, the RN Animated motion foundation, reduce-motion support, and the vessel as a percentage-of-goal object with no capacity semantics all stand. **The concept is not reopened.** Several small visual refinements were requested and are slice 5.1A.
+
+### Slice 5.1A — Identity Prototype Visual Polish 🟡
+
+**Implemented 2026-09-02. Awaiting founder device review — 5.1 is not formally locked until it passes.** Polish only: no concept was reinterpreted, no production screen was touched, and no dependency was added.
+
+**Quick-add controls — the primary item.** They were narrow vertical pills with the number stacked over a compressed `FL OZ`, wasting the horizontal room the sheet had. Now **four equal-width controls across the sheet**, number and unit on one baseline (`8 oz`), number dominant, comfortable padding, 56pt minimum height. `oz` replaces `FL OZ`: the sheet is titled Add Water and every amount is a volume, so the longer form bought precision nobody needed at the cost of the layout.
+
+**A real layout bug surfaced doing it.** `flex: 1` handed to `PressableScale` never reaches the row — that component applies `style` to its inner animated view — so the first render bunched all four controls into the left two-thirds of the sheet. The flex now lives on a wrapper. `MetricTile` records the same trap; this is the second time it has been hit.
+
+**Four across is safe at the narrowest supported width.** At 320pt: 280 after the sheet's insets, less three 8pt gaps, is 64pt per control against roughly 46pt of content. The row is flex-based, so overflow is structurally impossible and only wrapping could break it — guarded by `numberOfLines`. **No 2×2 fallback was needed.** The narrowest simulator available in this environment is 390pt, so the 320pt case is arithmetic plus that guard rather than a screenshot.
+
+**Vessel silhouette.** Subtle shape polish, not a redesign: a longer, more gradual shoulder (`SHOULDER_END` 0.28 → 0.30), a slightly earlier and deeper heel (`HEEL_START` 0.86 → 0.855, `BASE` 0.94 → 0.92) so the base draws in more deliberately, and a marginally softer rim (`R_TOP` 10 → 11). The corner-tangency invariant still holds at both ends, which the geometry tests assert.
+
+**Depth.** One additional hairline just inside the outline at roughly half its strength. Two edges a hair apart read as a wall with thickness; one edge reads as a sticker. **Deliberately not** a gloss highlight, specular band or blur — a shiny bottle is the fastest way to make the object look like a toy.
+
+**Liquid settle.** The waterline now overshoots its target by 1.8% and returns over 240ms, so liquid rises, settles and comes to rest. It is the waterline itself moving, not a wave drawn on top: no simulation, no particles, nothing perpetual. **It fires only on a rise** — a downward correction just moves — and **not at all under Reduced Motion**, which still lands directly on the value.
+
+**Hydration copy** — the founder's Option C. `56%` then `28 oz to go · 64 oz goal`, two lines instead of three. The kicker `OF TODAY'S GOAL` and the trailing `Goal 64 fl oz` were saying the same thing twice and the vessel had already said it a third time. Both remaining *and* goal survive; only the redundancy went. At completion: `Goal reached · 64 oz`.
+
+**Add Water CTA.** Pure white read stark and default-ish on device. Now a soft off-white in dark and the brand ink in light, with the `+` glyph in Water blue — the colour rule in miniature: the object and the accent carry the feature colour, the button does not. **Custom amount** was a soft blue slab, which made the *less* important control the most colourful thing in the sheet; it is now a neutral hairline secondary.
+
+**Completion gold** reduced from 1.75 to 1.5 stroke — the instruction when completion feels strong is to reduce rather than to add.
+
+**Untouched by 5.1A:** the surface-role and type-hierarchy demonstrations, the press/haptic demo and its feel, `VitaSheet`'s architecture, the prototype controls (still clearly marked `PROTOTYPE CONTROLS`, still dev-only, still not a production pattern).
+
+**Validation.** `npm test` **47 suites / 1204 tests** (1200 → 1204; four new) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged (the same two long-documented patch-drift items) · iOS export clean · **no dependency added** · verified in Expo Go at 56% and 100% in Dark, 75% in Light, and with the sheet open — via temporary initial-state overrides that were then removed (none remain).
+
+**Still to verify — founder, on a real device:** whether the quick-adds now feel comfortable and premium, whether the settle is noticeable without being distracting, whether the softened CTA still reads as unmistakably primary, and whether the vessel's added depth stayed on the right side of glossy.
 

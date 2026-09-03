@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { G, Path } from 'react-native-svg';
 import { motion, palette } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { useReducedMotion } from '../../../theme/useReducedMotion';
@@ -43,12 +43,12 @@ const MAX_HALF = 46;
  * they start. Without them the outline kinks where the round meets the curve.
  */
 const RIM_END = 0.07;
-const SHOULDER_END = 0.28;
-const HEEL_START = 0.86;
+const SHOULDER_END = 0.30;
+const HEEL_START = 0.855;
 const HEEL_END = 0.93;
 const MOUTH = 0.58;
 const BODY = 1;
-const BASE = 0.94;
+const BASE = 0.92;
 
 /** Hermite smoothstep — zero slope at both ends, so segments meet without a crease. */
 function smoothstep(x: number): number {
@@ -71,7 +71,7 @@ export function halfWidthAt(t: number): number {
   return MAX_HALF * BASE;
 }
 
-const R_TOP = 10;
+const R_TOP = 11;
 const R_BOT = 16;
 /**
  * Enough samples that the shoulder reads as a curve rather than a chamfer.
@@ -132,6 +132,19 @@ const VESSEL = buildVesselPath();
  * something today" is exactly what the object is for.
  */
 const MINIMUM_VISIBLE_FILL = 0.03;
+
+/**
+ * The settle, after a rise.
+ *
+ * Liquid that stops dead at its new level reads as a bar chart. A small
+ * overshoot and a quick return is the whole of the effect — it is the
+ * waterline itself moving, not a wave drawn on top of it, so there is no
+ * simulation, no particles, and nothing that keeps moving once it has come to
+ * rest. It fires only when the level *rises*, because that is the only moment
+ * anything was actually poured.
+ */
+const SETTLE_OVERSHOOT = 0.018;
+const SETTLE_MS = 240;
 
 /** Sampled waterline widths, so the surface line always meets the wall. */
 const LINE_STOPS = 21;
@@ -204,20 +217,48 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
 
   const fill = useRef(new Animated.Value(0)).current;
   const completion = useRef(new Animated.Value(0)).current;
+  /** What the level was last time, so a rise can be told from a correction. */
+  const previousLevel = useRef(0);
 
   useEffect(() => {
+    const previous = previousLevel.current;
+    previousLevel.current = level;
+
     if (reducedMotion) {
-      // Land on the value. Never a shorter version of the same animation —
-      // the app-wide rule `useReducedMotion` exists to enforce.
+      // Land on the value. Never a shorter version of the same animation, and
+      // no settle — the app-wide rule `useReducedMotion` exists to enforce.
       fill.setValue(level);
       return;
     }
-    Animated.timing(fill, {
+
+    const rise = Animated.timing(fill, {
       toValue: level,
       duration: motion.duration.progress,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false, // animates height
-    }).start();
+    });
+
+    // Falling is a correction, not a pour. It just moves.
+    if (level <= previous) {
+      rise.start();
+      return;
+    }
+
+    const peak = Math.min(1, level + SETTLE_OVERSHOOT);
+    Animated.sequence([
+      Animated.timing(fill, {
+        toValue: peak,
+        duration: motion.duration.progress,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
+      Animated.timing(fill, {
+        toValue: level,
+        duration: SETTLE_MS,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: false,
+      }),
+    ]).start();
   }, [fill, level, reducedMotion]);
 
   useEffect(() => {
@@ -256,6 +297,16 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
    */
   const surfaceLine = dark ? '#8FC0F7' : palette.water;
   const edgeStroke = dark ? 'rgba(255,255,255,0.22)' : 'rgba(17,17,20,0.16)';
+  /**
+   * A second hairline just inside the first, at roughly half its strength.
+   *
+   * The whole of the depth treatment. Two edges a hair apart read as a wall
+   * with thickness where one edge reads as a sticker, and it costs one more
+   * stroked path. Deliberately *not* a gloss highlight, a specular band or a
+   * blurred layer: the object has to stay minimal and health-tech, and a
+   * shiny bottle is the fastest way to make it look like a toy.
+   */
+  const innerStroke = dark ? 'rgba(255,255,255,0.10)' : 'rgba(17,17,20,0.07)';
 
   const fillHeight = fill.interpolate({ inputRange: [0, 1], outputRange: [0, height] });
   /**
@@ -313,6 +364,9 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       >
+        <G transform={`translate(${CX} ${VIEW_H / 2}) scale(0.972) translate(${-CX} ${-VIEW_H / 2})`}>
+          <Path d={VESSEL} fill="none" stroke={innerStroke} strokeWidth={1} />
+        </G>
         <Path d={VESSEL} fill="none" stroke={edgeStroke} strokeWidth={1.5} />
       </Svg>
 
@@ -333,7 +387,10 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
        */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: completion }]} pointerEvents="none">
         <Svg width={width} height={height} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}>
-          <Path d={VESSEL} fill="none" stroke={palette.gold} strokeWidth={1.75} />
+          {/* 1.5 rather than 1.75 — the first device render read a touch
+              insistent, and the instruction when completion feels strong is
+              to reduce it rather than to add anything. */}
+          <Path d={VESSEL} fill="none" stroke={palette.gold} strokeWidth={1.5} />
         </Svg>
       </Animated.View>
     </View>

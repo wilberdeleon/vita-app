@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
-  Button,
   Card,
   GlassSurface,
   ListRow,
@@ -75,6 +74,18 @@ export default function IdentityPrototype() {
   const progress = Math.min(1, loggedFloz / PROTOTYPE_GOAL_FLOZ);
   const percent = Math.round(progress * 100);
   const complete = progress >= 1;
+  const dark = scheme === 'dark';
+
+  /**
+   * The primary action stays neutral — the approved rule is that colour is
+   * earned — but pure `surfaces.text` was stark on device, reading as an
+   * unstyled default rather than as a designed control. A soft off-white in
+   * dark and the brand ink in light both settle into the page, and the glyph
+   * carries the one note of Water blue.
+   */
+  const ctaFill = dark ? '#F2F3F5' : palette.ink;
+  const ctaLabel = dark ? '#14151A' : palette.paper;
+  const ctaAccent = dark ? palette.water : '#7FB3F5';
 
   /**
    * One haptic per action, and the more specific one wins.
@@ -104,13 +115,22 @@ export default function IdentityPrototype() {
       <View style={styles.hero}>
         <WaterVessel progress={progress} width={116} accessibilityLabel="Hydration" />
 
+        {/*
+          * Two lines, three facts — the founder's Option C.
+          *
+          * The kicker `OF TODAY'S GOAL` and the trailing `Goal 64 fl oz` were
+          * saying the same thing twice, and the vessel had already said it a
+          * third time. What survives is the percentage as the hero, then
+          * what is left and what it is out of on one quiet line. Nothing
+          * useful was dropped for tidiness: remaining *and* goal are both
+          * still there, one line shorter.
+          */}
         <View style={styles.readout}>
           <Text style={[styles.percent, { color: surfaces.text }]}>{percent}%</Text>
-          <Text style={[styles.readoutLabel, { color: surfaces.textTertiary }]}>OF TODAY'S GOAL</Text>
           <Text style={[styles.readoutContext, { color: surfaces.textSecondary }]}>
             {complete
-              ? 'Goal reached'
-              : `${PROTOTYPE_GOAL_FLOZ - loggedFloz} fl oz to go · Goal ${PROTOTYPE_GOAL_FLOZ} fl oz`}
+              ? `Goal reached · ${PROTOTYPE_GOAL_FLOZ} oz`
+              : `${PROTOTYPE_GOAL_FLOZ - loggedFloz} oz to go · ${PROTOTYPE_GOAL_FLOZ} oz goal`}
           </Text>
         </View>
 
@@ -137,13 +157,21 @@ export default function IdentityPrototype() {
           * `Button` to adopt in 5.2.
           */}
         <PressableScale
-          style={[styles.primaryAction, { backgroundColor: surfaces.text }]}
+          style={[styles.primaryAction, { backgroundColor: ctaFill }]}
           onPress={() => setSheetOpen(true)}
           haptic="selection"
           accessibilityLabel="Add Water"
         >
-          <Ionicons name="add" size={18} color={surfaces.background} />
-          <Text style={[styles.primaryActionLabel, { color: surfaces.background }]}>Add Water</Text>
+          {/*
+            * Neutral surface, Water-blue glyph. Pure white read stark and
+            * default-ish on device; an off-white in dark and the brand ink in
+            * light both sit better against the near-black or cream ground.
+            * The `+` is the one place the feature colour appears on the
+            * control — which is the colour rule in miniature: the object and
+            * the accent are blue, the button is not.
+            */}
+          <Ionicons name="add" size={18} color={ctaAccent} />
+          <Text style={[styles.primaryActionLabel, { color: ctaLabel }]}>Add Water</Text>
         </PressableScale>
       </View>
 
@@ -249,27 +277,61 @@ export default function IdentityPrototype() {
         <Text style={[styles.caption, { color: surfaces.textTertiary }]}>
           Prototype amounts — production quick-adds and units are unchanged.
         </Text>
+        {/*
+          * Four equal-width options across the sheet.
+          *
+          * The first device render stacked the number over a `FL OZ` kicker
+          * inside a narrow pill, which compressed the unit and wasted the
+          * horizontal room the sheet actually had. The number and unit now sit
+          * on one baseline — `8 oz` — so each control is wide, shallow and
+          * comfortable to hit, and the number is unambiguously the thing being
+          * chosen.
+          *
+          * `oz` rather than `FL OZ`: the sheet is titled Add Water and every
+          * amount here is a volume, so the longer form was buying precision
+          * nobody needed at the cost of the layout.
+          */}
         <View style={styles.amounts}>
           {QUICK_ADDS_FLOZ.map((amount) => (
-            <PressableScale
-              key={amount}
-              style={[styles.amount, { borderColor: surfaces.border, backgroundColor: surfaces.card }]}
-              onPress={() => logAmount(amount)}
-              accessibilityLabel={`Add ${amount} fluid ounces`}
-            >
-              <Text style={[styles.amountValue, { color: palette.water }]}>{amount}</Text>
-              <Text style={[styles.amountUnit, { color: surfaces.textTertiary }]}>FL OZ</Text>
-            </PressableScale>
+            /*
+             * The `flex: 1` has to live on a wrapper, not on the
+             * `PressableScale`.
+             *
+             * `PressableScale` applies its `style` to the inner animated view,
+             * so a flex basis handed to it never reaches the row and every
+             * control collapses to its own text width — which is exactly what
+             * the first 5.1A device render showed: four controls bunched into
+             * the left two-thirds of the sheet. `MetricTile` records the same
+             * trap. Wrapping is the fix that keeps the shared press language.
+             */
+            <View key={amount} style={styles.amountSlot}>
+              <PressableScale
+                style={[styles.amount, { borderColor: surfaces.border, backgroundColor: surfaces.card }]}
+                onPress={() => logAmount(amount)}
+                accessibilityLabel={`Add ${amount} ounces`}
+              >
+                <Text style={[styles.amountValue, { color: surfaces.text }]} numberOfLines={1}>
+                  {amount}
+                </Text>
+                <Text style={[styles.amountUnit, { color: surfaces.textTertiary }]}>oz</Text>
+              </PressableScale>
+            </View>
           ))}
         </View>
-        <View style={styles.sheetFooter}>
-          <Button
-            label="Custom amount"
-            variant="soft"
-            color={palette.water}
-            onPress={() => logAmount(10)}
-          />
-        </View>
+        {/*
+          * Secondary, and neutral for the same reason the primary action is:
+          * a soft blue slab here made the *less* important control the most
+          * colourful thing in the sheet. A hairline and neutral text put it
+          * plainly below the quick amounts without hiding it.
+          */}
+        <PressableScale
+          style={[styles.customAction, { borderColor: surfaces.border }]}
+          onPress={() => logAmount(10)}
+          haptic="selection"
+          accessibilityLabel="Enter a custom amount"
+        >
+          <Text style={[styles.customLabel, { color: surfaces.text }]}>Custom amount</Text>
+        </PressableScale>
       </VitaSheet>
     </Screen>
   );
@@ -374,23 +436,40 @@ const styles = StyleSheet.create({
     gap: spacing.s,
     marginTop: spacing.m,
   },
-  amount: {
+  amountSlot: {
     flex: 1,
-    alignItems: 'center',
+  },
+  amount: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+    gap: 3,
+    // Comfortable rather than tall-and-skinny: the control is now wider than
+    // it is deep, which is what makes four across read as a set.
     paddingVertical: spacing.l,
+    paddingHorizontal: spacing.xs,
+    minHeight: 56,
     borderRadius: radii.control,
     borderWidth: 1,
-    gap: 2,
   },
   amountValue: {
     ...typography.title,
   },
   amountUnit: {
-    ...typography.micro,
-    letterSpacing: 0.6,
+    ...typography.caption,
   },
-  sheetFooter: {
+  customAction: {
     marginTop: spacing.m,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: radii.control,
+    borderWidth: 1,
+    minHeight: 48,
+  },
+  customLabel: {
+    ...typography.bodyMedium,
+    fontWeight: '600',
   },
   footer: {
     ...typography.micro,

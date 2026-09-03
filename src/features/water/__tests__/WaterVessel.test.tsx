@@ -121,16 +121,24 @@ function tapTargetFor(tree: ReactTestRenderer, label: string) {
  */
 async function addAmount(tree: ReactTestRenderer, floz: number) {
   await act(async () => tapTargetFor(tree, 'Add Water').props.onPress());
-  await act(async () => byLabel(tree, `Add ${floz} fluid ounces`).props.onPress());
+  await act(async () => byLabel(tree, `Add ${floz} ounces`).props.onPress());
 }
 
 describe('the vessel geometry', () => {
   it('is symmetric, monotonic through the shoulder, and never wider than the body', () => {
-    // The shoulder only ever opens outward — a silhouette that narrowed again
-    // partway down would read as a waist, which is a different object.
-    for (let t = 0; t <= 0.86; t += 0.02) {
-      expect(halfWidthAt(t + 0.02)).toBeGreaterThanOrEqual(halfWidthAt(t) - 1e-9);
+    // Through the shoulder and the body the silhouette only ever opens
+    // outward — one that narrowed again partway down would read as a waist,
+    // which is a different object.
+    for (let t = 0; t <= 0.83; t += 0.01) {
+      expect(halfWidthAt(t + 0.01)).toBeGreaterThanOrEqual(halfWidthAt(t) - 1e-9);
     }
+
+    // Past the body it only ever draws in. The heel taper (from 0.855 since
+    // the 5.1A shape polish) is a narrowing and never a second flare.
+    for (let t = 0.86; t < 1; t += 0.01) {
+      expect(halfWidthAt(t + 0.01)).toBeLessThanOrEqual(halfWidthAt(t) + 1e-9);
+    }
+
     const widest = halfWidthAt(0.5);
     for (let t = 0; t <= 1; t += 0.01) {
       expect(halfWidthAt(t)).toBeLessThanOrEqual(widest + 1e-9);
@@ -139,8 +147,8 @@ describe('the vessel geometry', () => {
 
   it('is vertical where the rounded corners start, so the outline cannot kink', () => {
     // The corners are only true corners if the silhouette is flat where they
-    // begin. R_TOP is 10 of 260, R_BOT is 16 of 260.
-    expect(halfWidthAt(0)).toBeCloseTo(halfWidthAt(10 / 260), 6);
+    // begin. R_TOP is 11 of 260, R_BOT is 16 of 260.
+    expect(halfWidthAt(0)).toBeCloseTo(halfWidthAt(11 / 260), 6);
     expect(halfWidthAt(1)).toBeCloseTo(halfWidthAt(1 - 16 / 260), 6);
   });
 
@@ -200,12 +208,40 @@ describe('WaterVessel', () => {
     }
   });
 
+  /**
+   * The settle (5.1A) overshoots the target level and comes back. What must
+   * hold regardless is that it *ends* on the real value — an overshoot that
+   * failed to return would leave the vessel permanently reporting more than
+   * was logged.
+   */
+  it('lands on the true level after a rise, overshoot included', async () => {
+    const tree = await mount(<WaterVessel progress={0.4} />);
+    expect(vessel(tree).props.accessibilityValue.now).toBe(40);
+
+    await act(async () => {
+      tree.update(<WaterVessel progress={0.6} />);
+    });
+    expect(vessel(tree).props.accessibilityValue.now).toBe(60);
+  });
+
   it('renders under reduced motion with the value intact', async () => {
     mockReducedMotion = true;
     const tree = await mount(<WaterVessel progress={0.75} />);
 
     // Reduced motion changes how it gets there, never what it says.
     expect(vessel(tree).props.accessibilityValue.now).toBe(75);
+  });
+
+  it('under reduced motion a rise still lands exactly, with no settle', async () => {
+    mockReducedMotion = true;
+    const tree = await mount(<WaterVessel progress={0.2} />);
+
+    await act(async () => {
+      tree.update(<WaterVessel progress={0.9} />);
+    });
+
+    // No overshoot path is taken at all — the level is set directly.
+    expect(vessel(tree).props.accessibilityValue.now).toBe(90);
   });
 });
 
@@ -243,7 +279,10 @@ describe('the identity prototype', () => {
     await act(async () => byLabel(tree, 'Set hydration to 100 percent').props.onPress());
 
     expect(vessel(tree).props.accessibilityValue.now).toBe(100);
-    expect(texts(tree)).toContain('Goal reached');
+    expect(texts(tree)).toContain('100%');
+    // The supporting line keeps the goal alongside the completion (5.1A copy
+    // polish) rather than dropping the number the percentage refers to.
+    expect(texts(tree)).toContain('Goal reached · 64 oz');
   });
 
   it('never reports beyond 100 percent, however much is logged', async () => {
@@ -254,6 +293,45 @@ describe('the identity prototype', () => {
     }
 
     expect(vessel(tree).props.accessibilityValue.now).toBe(100);
+  });
+
+  /**
+   * The 5.1A quick-add polish changed both the layout and the spoken label
+   * (`fluid ounces` → `ounces`, matching the visible `oz`). All four have to
+   * stay individually reachable and individually named — a screen reader user
+   * choosing an amount is choosing between four things that differ only by a
+   * number.
+   */
+  it('offers four separately labelled quick amounts', async () => {
+    const tree = await mount(<IdentityPrototype />);
+    await act(async () => tapTargetFor(tree, 'Add Water').props.onPress());
+
+    for (const amount of [8, 12, 16, 24]) {
+      const control = byLabel(tree, `Add ${amount} ounces`);
+      expect(typeof control.props.onPress).toBe('function');
+    }
+
+    // And the visible label is the compact form, not a stacked FL OZ kicker.
+    expect(texts(tree)).toContain('oz');
+  });
+
+  /**
+   * Narrow-width guard.
+   *
+   * Four equal slots in a flex row cannot overflow — they shrink together —
+   * so the only way the layout breaks on a small phone is the number wrapping
+   * inside its slot. At the narrowest supported width (320pt) each slot is
+   * 64pt against roughly 46pt of content, but `numberOfLines` is what keeps
+   * that true if the type scale ever moves.
+   */
+  it('keeps each quick amount on one line', async () => {
+    const tree = await mount(<IdentityPrototype />);
+    await act(async () => tapTargetFor(tree, 'Add Water').props.onPress());
+
+    const value = tree.root.findAll(
+      (node) => node.type === Text && node.props.numberOfLines === 1 && node.props.children === 24,
+    );
+    expect(value.length).toBe(1);
   });
 
   it('cannot touch real hydration data', async () => {
