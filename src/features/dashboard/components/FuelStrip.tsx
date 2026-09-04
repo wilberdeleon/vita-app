@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale, ProgressBar } from '../../../components/ui';
 import type { DailyNutrition } from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { ModuleSize } from '../modules';
-import { SQUARE_HEIGHT, SQUARE_RADIUS, WIDE_RADIUS } from '../widget';
+import { SQUARE_RADIUS, TYPE, WIDE_RADIUS, isCompactSquare, squareHeight } from '../widget';
 
 type Props = {
   today: DailyNutrition;
@@ -42,6 +42,8 @@ type Props = {
  */
 export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
   const { surfaces } = useTheme();
+  const { fontScale } = useWindowDimensions();
+  const compact = isCompactSquare(fontScale);
 
   const consumed = Math.round(today.nutrition.calories);
   const target = Math.round(today.targets.calories);
@@ -93,7 +95,10 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
   if (size === 'square') {
     return (
       <PressableScale
-        style={[styles.square, { borderColor: surfaces.border }]}
+        style={[
+          styles.square,
+          { borderColor: surfaces.border, minHeight: squareHeight(fontScale), maxHeight: squareHeight(fontScale) },
+        ]}
         onPress={onOpen}
         onLongPress={onLongPress}
         delayLongPress={450}
@@ -108,12 +113,16 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
           <Text style={[styles.squareValue, { color: surfaces.text }]} numberOfLines={2} adjustsFontSizeToFit>
             {value}
           </Text>
-          <Text style={[styles.squareDetail, { color: surfaces.textTertiary }]} numberOfLines={1}>
+          <Text
+            style={[styles.squareDetail, { color: surfaces.textTertiary }]}
+            numberOfLines={compact ? 2 : 1}
+          >
             {detail}
           </Text>
         </View>
 
-        {bar}
+        {/* Decorative, and the first thing to give way to larger text. */}
+        {compact ? null : bar}
         {logAction}
       </PressableScale>
     );
@@ -134,7 +143,12 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
 
         <View style={styles.wideText}>
           <Text style={[styles.label, { color: surfaces.textSecondary }]}>Fuel</Text>
-          <Text style={[styles.wideValue, { color: surfaces.text }]} numberOfLines={1}>
+          {/* A figure is information, so it wraps rather than truncating once
+            the text is large — 5.3D found `2,000 c…` on a wide Fuel strip. */}
+        <Text
+          style={[styles.wideValue, { color: surfaces.text }]}
+          numberOfLines={compact ? 3 : 1}
+        >
             {value}
             {detail ? <Text style={[styles.detail, { color: surfaces.textTertiary }]}> · {detail}</Text> : null}
           </Text>
@@ -165,8 +179,7 @@ const styles = StyleSheet.create({
      * cell. Clamping the range pins the footprint whatever the flex maths
      * decides, in either direction.
      */
-    minHeight: SQUARE_HEIGHT,
-    maxHeight: SQUARE_HEIGHT,
+    /* The value is applied inline — it depends on the system text scale. */
   },
   wide: {
     borderWidth: 1,
@@ -188,6 +201,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.micro,
+    fontSize: TYPE.moduleLabel,
     letterSpacing: 0.6,
   },
   squareBody: {
@@ -199,11 +213,13 @@ const styles = StyleSheet.create({
   },
   squareValue: {
     ...typography.heading,
+    fontSize: TYPE.squareValue,
     fontWeight: '700',
     textAlign: 'center',
   },
   squareDetail: {
     ...typography.caption,
+    fontSize: TYPE.support,
     textAlign: 'center',
   },
   badge: {
@@ -219,10 +235,12 @@ const styles = StyleSheet.create({
   },
   wideValue: {
     ...typography.bodyMedium,
+    fontSize: TYPE.wideValue,
     fontWeight: '700',
   },
   detail: {
     ...typography.caption,
+    fontSize: TYPE.support,
     fontWeight: '400',
   },
   action: {
@@ -234,10 +252,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.l,
     paddingVertical: spacing.s,
-    minHeight: 36,
+    minHeight: 40,
   },
   actionLabel: {
     ...typography.captionMedium,
+    fontSize: TYPE.actionLabel,
     fontWeight: '600',
   },
 });

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../../../components/ui';
 import { routineDayMarkLabel, type RoutineDayMark, type TodayRoutine } from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
+import { TYPE } from '../widget';
 import { useTheme } from '../../../theme/ThemeProvider';
 
 /**
@@ -120,6 +121,12 @@ export function TodaySchedule({ items, isLoading }: Props) {
                   ) : null}
                 </View>
 
+                {/*
+                  * Never shrinks. At a large system text size the routine
+                  * name truncates — its full wording survives in the spoken
+                  * label above — but the state must stay whole, because it is
+                  * the only thing on the row that says what happened.
+                  */}
                 <Text style={[styles.state, { color: tint }]}>{state}</Text>
               </PressableScale>
             );
@@ -136,10 +143,12 @@ const styles = StyleSheet.create({
   },
   heading: {
     ...typography.micro,
+    fontSize: TYPE.sectionHeading,
     letterSpacing: 0.8,
   },
   empty: {
     ...typography.caption,
+    fontSize: TYPE.support,
     paddingVertical: spacing.s,
   },
   list: {},
@@ -164,12 +173,17 @@ const styles = StyleSheet.create({
   },
   name: {
     ...typography.bodyMedium,
+    fontSize: TYPE.wideValue,
     fontWeight: '600',
   },
   amount: {
     ...typography.caption,
+    fontSize: TYPE.support,
   },
   state: {
     ...typography.captionMedium,
+    fontSize: TYPE.support,
+    flexShrink: 0,
+    textAlign: 'right',
   },
 });

@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale } from '../../../components/ui';
 import type { TodayRoutine } from '../../../lib/peptides';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { ModuleSize } from '../modules';
-import { SQUARE_HEIGHT, SQUARE_RADIUS, WIDE_RADIUS } from '../widget';
+import { SQUARE_RADIUS, TYPE, WIDE_RADIUS, isCompactSquare, squareHeight } from '../widget';
 
 type Props = {
   today: readonly TodayRoutine[];
@@ -47,6 +47,8 @@ type Props = {
  */
 export function PeptidesModule({ today, isEmpty, isLoading, size, onOpen, onLongPress }: Props) {
   const { surfaces } = useTheme();
+  const { fontScale } = useWindowDimensions();
+  const compact = isCompactSquare(fontScale);
 
   const unanswered = today.filter((item) => item.mark === 'unconfirmed');
   const only = unanswered.length === 1 ? unanswered[0] : null;
@@ -93,7 +95,10 @@ export function PeptidesModule({ today, isEmpty, isLoading, size, onOpen, onLong
   if (size === 'square') {
     return (
       <PressableScale
-        style={[styles.square, { borderColor: surfaces.border }]}
+        style={[
+          styles.square,
+          { borderColor: surfaces.border, minHeight: squareHeight(fontScale), maxHeight: squareHeight(fontScale) },
+        ]}
         onPress={onOpen}
         onLongPress={onLongPress}
         delayLongPress={450}
@@ -136,7 +141,12 @@ export function PeptidesModule({ today, isEmpty, isLoading, size, onOpen, onLong
 
       <View style={styles.wideText}>
         <Text style={[styles.label, { color: surfaces.textSecondary }]}>Peptides</Text>
-        <Text style={[styles.wideValue, { color: surfaces.text }]} numberOfLines={1}>
+        {/* A figure is information, so it wraps rather than truncating once
+            the text is large — 5.3D found `2,000 c…` on a wide Fuel strip. */}
+        <Text
+          style={[styles.wideValue, { color: surfaces.text }]}
+          numberOfLines={compact ? 3 : 1}
+        >
           {value}
           {detail ? <Text style={[styles.detail, { color: surfaces.textTertiary }]}> · {detail}</Text> : null}
         </Text>
@@ -165,8 +175,7 @@ const styles = StyleSheet.create({
      * cell. Clamping the range pins the footprint whatever the flex maths
      * decides, in either direction.
      */
-    minHeight: SQUARE_HEIGHT,
-    maxHeight: SQUARE_HEIGHT,
+    /* The value is applied inline — it depends on the system text scale. */
   },
   wide: {
     flexDirection: 'row',
@@ -185,6 +194,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.micro,
+    fontSize: TYPE.moduleLabel,
     letterSpacing: 0.6,
   },
   squareBody: {
@@ -195,11 +205,13 @@ const styles = StyleSheet.create({
   },
   squareValue: {
     ...typography.heading,
+    fontSize: TYPE.squareValue,
     fontWeight: '700',
     textAlign: 'center',
   },
   squareDetail: {
     ...typography.caption,
+    fontSize: TYPE.support,
     textAlign: 'center',
   },
   badge: {
@@ -224,14 +236,17 @@ const styles = StyleSheet.create({
   },
   wideValue: {
     ...typography.bodyMedium,
+    fontSize: TYPE.wideValue,
     fontWeight: '700',
   },
   detail: {
     ...typography.caption,
+    fontSize: TYPE.support,
     fontWeight: '400',
   },
   link: {
     ...typography.captionMedium,
+    fontSize: TYPE.actionLabel,
   },
   action: {
     alignItems: 'center',
@@ -240,11 +255,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.l,
     paddingVertical: spacing.s,
-    minHeight: 36,
+    minHeight: 40,
     alignSelf: 'stretch',
   },
   actionLabel: {
     ...typography.captionMedium,
+    fontSize: TYPE.actionLabel,
     fontWeight: '600',
   },
 });

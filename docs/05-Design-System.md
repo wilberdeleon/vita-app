@@ -403,6 +403,34 @@ Added in 5.3C, for Home and anything that follows it.
 
 ---
 
+## 19 — Dynamic Type
+
+**VITA respects the platform's text-size accessibility setting by default.** Nothing in this app passes `allowFontScaling={false}`, and nothing may start. Protecting a layout by ignoring an accessibility preference is not a trade this product makes.
+
+**A fixed footprint scales with the text.** A shared cell height stays *shared* — that is what keeps a set of widgets equal — but it is not constant: it grows with the scale, damped, because a decorative element usually steps aside at the same point and hands its space back.
+
+**Decoration gives way before text collides.** A progress ring or a bar that encodes only what the words already say is the first thing to go at a large text size. Both are already hidden from screen readers, so nothing is lost — and no figure may be abbreviated and no spoken label may change. The presentation adapts; the truth does not.
+
+**Information scales without limit; ornament may be capped.** A `maxFontSizeMultiplier` on a quote, a wordmark or similar decoration is legitimate — it still grows, it simply stops before crowding out content — and must be documented and covered by a test naming exactly what is capped. On anything that states a fact it is not legitimate. **Truncation is for secondary labels only**: a value wraps.
+
+**Icon glyphs are the one exception.** Icon fonts render as `Text` with scaling disabled by the library; they are graphics sized in points. Exclude them explicitly when auditing, never silently.
+
+**Verify at two sizes on a device**: the default, and one substantially larger accessibility size. One caution learned in 5.3D — after changing the simulator's text size, Expo Go repaints without re-laying-out, which looks exactly like a clipping defect. Terminate and relaunch before judging the screenshot.
+
+## 20 — Direct manipulation
+
+**Reflow while the finger is down, not on release.** The user has to see where a thing will land while there is still time to change it.
+
+**Do it by translation, with the rendered order frozen.** Re-rendering a grid mid-gesture moves the dragged element's own cell out from under the finger. Move everything else *visually* toward the candidate arrangement instead, and keep the arithmetic in pure functions so it can be tested without a device that can drag.
+
+**Commit before the settle animation.** When every element already sits at its new position, committing is invisible — and an interrupted animation can never leave the screen and the stored state disagreeing.
+
+**Require a real crossing before proposing a change.** A fifth of the target on every edge. Without it a resting hand reorders continuously.
+
+**Reduce Motion gets the same outcome without the travel** — placed immediately, positional state completely clear — while normal motion stays fluid.
+
+---
+
 ## What this document still owes
 
 - `SectionHeader` variants (proposed in 5.1, built when a screen's slice needs them)

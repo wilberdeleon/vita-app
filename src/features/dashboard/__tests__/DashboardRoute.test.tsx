@@ -17,6 +17,24 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
+/**
+ * The system text scale, per test.
+ *
+ * React Native's jest preset reports `fontScale: 2` — a plausible value for a
+ * user who has turned text size well up, and not the default any of these
+ * cases mean to describe. Every test states the size it is exercising.
+ */
+let mockReducedMotion = false;
+jest.mock('../../../theme/useReducedMotion', () => ({
+  useReducedMotion: () => mockReducedMotion,
+}));
+
+let mockFontScale = 1;
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ width: 390, height: 844, scale: 3, fontScale: mockFontScale }),
+}));
+
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   router: {
@@ -30,11 +48,13 @@ jest.mock('expo-router', () => ({
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StyleSheet, Text, type TextStyle, type ViewStyle } from 'react-native';
+import { Animated, StyleSheet, Text, type TextStyle, type ViewStyle } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Dashboard from '../../../app/(vita)/(tabs)/dashboard';
-import { ToastProvider } from '../../../components/ui';
+import { EditableWidget } from '../components/EditableWidget';
+import type { DashboardModuleId } from '../modules';
+import { ProgressRing, ToastProvider } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
 import { NutritionProvider } from '../../../lib/nutrition';
 import { PeptideProvider } from '../../../lib/peptides';
@@ -45,7 +65,14 @@ import type { WaterEntry, WaterGoal, WaterPreferences } from '../../../lib/water
 import { WaterProvider } from '../../../lib/water/state/WaterProvider';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { greetingForHour } from '../greeting';
-import { QUOTE_FONT, SQUARE_HEIGHT, daypartAccent } from '../widget';
+import {
+  DECORATIVE_FONT_CAP,
+  QUOTE_FONT,
+  SQUARE_HEIGHT,
+  TOOL_TILE_HEIGHT,
+  daypartAccent,
+  squareHeight,
+} from '../widget';
 
 const TODAY = todayLogDate();
 
@@ -82,6 +109,24 @@ function fakeWater(
   return repository;
 }
 
+/**
+ * The rectangles a device would report for the shipped layout: a 390pt
+ * screen, 20pt gutters, `spacing.m` between cells. Fuel wide over a Water |
+ * Peptides pair, then the two wide utility sections.
+ *
+ * React Native's jest preset stubs `measureInWindow` to a no-op, so these are
+ * fed in through the same `onMeasure` callback the widget calls on a device.
+ * Without them the drag has no geometry to reason about and every reorder
+ * test would pass by quietly doing nothing.
+ */
+const WIDGET_RECTS: Record<string, { x: number; y: number; width: number; height: number }> = {
+  fuel: { x: 20, y: 200, width: 350, height: 64 },
+  water: { x: 20, y: 276, width: 169, height: 208 },
+  peptides: { x: 201, y: 276, width: 169, height: 208 },
+  quickTools: { x: 20, y: 496, width: 350, height: 100 },
+  schedule: { x: 20, y: 608, width: 350, height: 90 },
+};
+
 let mounted: ReactTestRenderer | null = null;
 
 async function mount(water: WaterRepository) {
@@ -109,6 +154,84 @@ async function mount(water: WaterRepository) {
   });
   return mounted!;
 }
+
+/** The `EditableWidget` wrapping one module, for its drag callbacks. */
+function widget(tree: ReactTestRenderer, id: DashboardModuleId) {
+  return tree.root.find((node) => node.type === EditableWidget && node.props.id === id);
+}
+
+/** The host view carrying that widget's gesture handlers. */
+function widgetHost(tree: ReactTestRenderer, id: DashboardModuleId) {
+  return tree.root.find((node) => node.props?.testID === `dashboard-widget-${id}`);
+}
+
+/**
+ * The spring a widget's offset was last sent toward.
+ *
+ * Read from the animation rather than from the value, because nothing in jest
+ * advances a frame — the value is still at its starting point when the
+ * assertion runs, while the *target* is the thing the reflow decided.
+ */
+function springTarget(spy: jest.SpyInstance, offset: unknown) {
+  const call = [...spy.mock.calls].reverse().find(([value]) => value === offset);
+  return call ? ((call[1] as { toValue: { x: number; y: number } }).toValue) : null;
+}
+
+/** Where a widget is currently drawn, relative to where it is rendered. */
+function offsetOf(tree: ReactTestRenderer, id: DashboardModuleId) {
+  const { offset } = widget(tree, id).props as { offset: { x: { __getValue(): number } ; y: { __getValue(): number } } };
+  return { x: offset.x.__getValue(), y: offset.y.__getValue() };
+}
+
+/** Hand the grid the rectangles a device would have measured. */
+async function seedRects(tree: ReactTestRenderer) {
+  await act(async () => {
+    for (const node of tree.root.findAll((n) => n.type === EditableWidget)) {
+      const id = node.props.id as DashboardModuleId;
+      const rect = WIDGET_RECTS[id];
+      if (rect) node.props.onMeasure(id, rect);
+    }
+  });
+}
+
+/** Enter edit mode the way a finger does, then give it something to measure. */
+async function enterEditMode(tree: ReactTestRenderer) {
+  await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+  await seedRects(tree);
+}
+
+/** Drive one drag through the callbacks the grid hands each widget. */
+async function drag(
+  tree: ReactTestRenderer,
+  id: DashboardModuleId,
+  dx: number,
+  dy: number,
+  { release = true }: { release?: boolean } = {},
+) {
+  const props = widget(tree, id).props as {
+    onDragStart: (id: DashboardModuleId) => void;
+    onDragMove: (id: DashboardModuleId, dx: number, dy: number) => void;
+    onDragEnd: (id: DashboardModuleId, dx: number, dy: number) => void;
+    onDragCancel: (id: DashboardModuleId) => void;
+  };
+
+  await act(async () => props.onDragStart(id));
+  await act(async () => props.onDragMove(id, dx, dy));
+  if (release) await act(async () => props.onDragEnd(id, dx, dy));
+  return props;
+}
+
+/** The order Home is currently rendering, read off the widgets themselves. */
+function renderedOrder(tree: ReactTestRenderer): DashboardModuleId[] {
+  return tree.root
+    .findAll((node) => node.type === EditableWidget)
+    .map((node) => node.props.id as DashboardModuleId);
+}
+
+beforeEach(() => {
+  mockFontScale = 1;
+  mockReducedMotion = false;
+});
 
 afterEach(async () => {
   const tree = mounted;
@@ -734,11 +857,31 @@ describe('quote typography', () => {
   });
 
   it('reads as one quotation to a screen reader, not two fragments', async () => {
+    // The em dash is typography; it is not something to read aloud. 5.3D
+    // fixed the spoken order to the sentence a person would actually say.
     const tree = await mount(fakeWater());
     const spoken = tree.root
       .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
       .map((node) => String(node.props.accessibilityLabel));
-    expect(spoken).toContain('I came, I saw, I conquered. — Julius Caesar');
+    expect(spoken).toContain('I came, I saw, I conquered. Julius Caesar.');
+  });
+
+  it('sets the attribution in the quote\'s own family, not body copy', async () => {
+    /*
+     * The founders' 5.3D note: grey sans-serif under a serif line read as two
+     * unrelated things. Same family, same italic, quieter — one object.
+     */
+    const tree = await mount(fakeWater());
+    const quote = styleOf(textNode(tree, 'I came, I saw, I conquered.')!);
+    const attribution = styleOf(textNode(tree, '— Julius Caesar')!);
+
+    expect(attribution.fontFamily).toBe(quote.fontFamily);
+    expect(attribution.fontStyle).toBe('italic');
+    expect(attribution.color).toBe(quote.color);
+    expect(Number(attribution.opacity)).toBeLessThan(1);
+    // Hangs off the last line rather than starting a new block beneath it.
+    expect(attribution.textAlign).toBe('right');
+    expect(Number(attribution.fontSize)).toBeLessThan(Number(quote.fontSize));
   });
 });
 
@@ -920,5 +1063,392 @@ describe('rearranging on Home', () => {
     for (const label of ['Hide Water', 'Move Water up', 'Water, Wide', 'Hide Food Scanner']) {
       expect(control(tree, label)).toBeDefined();
     }
+  });
+});
+
+/* ── the remove control (5.3D) ──────────────────────────────────────────── */
+
+describe('the remove control', () => {
+  it('appears only in edit mode, on every removable module', async () => {
+    const tree = await mount(fakeWater());
+    expect(control(tree, 'Remove Water from Home')).toBeUndefined();
+
+    await enterEditMode(tree);
+    for (const label of ['Water', 'Peptides', 'Fuel', 'Quick Tools', "Today's Schedule"]) {
+      expect(control(tree, `Remove ${label} from Home`)).toBeDefined();
+    }
+  });
+
+  it('sits in the top-right corner of its own widget', async () => {
+    /*
+     * Founder ruling, 5.3D — it was top-left. The corner is the one part of a
+     * VITA widget that carries no content: the feature label sits top-left
+     * and the action runs along the bottom.
+     */
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+
+    for (const label of ['Water', 'Peptides', 'Fuel']) {
+      const style = styleOf(control(tree, `Remove ${label} from Home`)!);
+      expect(style.position).toBe('absolute');
+      expect(Number(style.top)).toBeLessThanOrEqual(0);
+      expect(Number(style.right)).toBeLessThanOrEqual(0);
+      expect(style.left).toBeUndefined();
+      expect(style.bottom).toBeUndefined();
+    }
+  });
+
+  it('is big enough to hit', async () => {
+    // 28pt of badge plus 9pt of slop on each side clears the 44pt minimum
+    // without drawing a control that large over the widget's corner.
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+
+    const remove = control(tree, 'Remove Water from Home')!;
+    const style = styleOf(remove);
+    const slop = Number(remove.props.hitSlop ?? 0);
+    expect(Number(style.width) + slop * 2).toBeGreaterThanOrEqual(44);
+    expect(Number(style.height) + slop * 2).toBeGreaterThanOrEqual(44);
+  });
+
+  it('hides the module and keeps its data', async () => {
+    const repository = fakeWater({
+      goal: createWaterGoal(64, 'floz'),
+      entries: [createWaterEntry({ amount: 32, unit: 'floz' })],
+    });
+    const tree = await mount(repository);
+    await enterEditMode(tree);
+    await act(async () => control(tree, 'Remove Water from Home')!.props.onPress());
+
+    expect(control(tree, /^Water,/)).toBeUndefined();
+    // The day's real entries are untouched — hiding a widget is a view
+    // preference, and nothing about Water's own records changed.
+    expect(await repository.getEntries(TODAY)).toHaveLength(1);
+    expect(await repository.getGoal()).not.toBeNull();
+  });
+});
+
+/* ── the live drag (5.3D) ───────────────────────────────────────────────── */
+
+describe('dragging a widget', () => {
+  it('is only draggable while Home is being edited', async () => {
+    /*
+     * Outside edit mode the widget sets no gesture handlers at all, so a
+     * swipe across Home is a scroll. The 8pt slop that separates a drag from
+     * a press lives inside `PanResponder`'s own gesture state, which cannot
+     * be driven from here — it is a constant in `EditableWidget`.
+     */
+    const tree = await mount(fakeWater());
+    expect(widgetHost(tree, 'water').props.onMoveShouldSetResponder).toBeUndefined();
+
+    await enterEditMode(tree);
+    expect(typeof widgetHost(tree, 'water').props.onMoveShouldSetResponder).toBe('function');
+    expect(typeof widgetHost(tree, 'water').props.onResponderMove).toBe('function');
+  });
+
+  it('moves its neighbour out of the way before the finger lifts', async () => {
+    /*
+     * The founders' main 5.3D note: 5.3C showed nothing until release. Water
+     * is 169 wide with a 12pt gap, so it is sent one full column to the right
+     * while Peptides is still being carried.
+     */
+    const spring = jest.spyOn(Animated, 'spring');
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+
+    await drag(tree, 'peptides', -186, 0, { release: false });
+
+    expect(springTarget(spring, widget(tree, 'water').props.offset)).toEqual({ x: 181, y: 0 });
+    // The carried widget is following the finger, not an animation.
+    expect(springTarget(spring, widget(tree, 'peptides').props.offset)).toBeNull();
+    // And nothing has been committed — this is a proposal, not a change.
+    expect(renderedOrder(tree)).toEqual(['fuel', 'water', 'peptides', 'quickTools', 'schedule']);
+    spring.mockRestore();
+  });
+
+  it('places the neighbour immediately under Reduce Motion', async () => {
+    // Same outcome, no travel: the positional state stays completely clear.
+    mockReducedMotion = true;
+    const spring = jest.spyOn(Animated, 'spring');
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+
+    await drag(tree, 'peptides', -186, 0, { release: false });
+
+    expect(offsetOf(tree, 'water')).toEqual({ x: 181, y: 0 });
+    expect(spring).not.toHaveBeenCalled();
+    spring.mockRestore();
+  });
+
+  it('leaves the order alone for a small jitter', async () => {
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+
+    await drag(tree, 'peptides', -4, 3, { release: false });
+    expect(offsetOf(tree, 'water')).toEqual({ x: 0, y: 0 });
+  });
+
+  it('commits the proposed order on release, and persists it', async () => {
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+    await drag(tree, 'peptides', -186, 0);
+
+    // Committed synchronously — an interrupted settle can never leave Home
+    // showing one order and remembering another.
+    expect(renderedOrder(tree)).toEqual(['fuel', 'peptides', 'water', 'quickTools', 'schedule']);
+    // Water is already drawn where the new order places it, so it stops
+    // being translated without moving.
+    expect(offsetOf(tree, 'water')).toEqual({ x: 0, y: 0 });
+
+    await act(async () => tree.unmount());
+    mounted = null;
+    expect(renderedOrder(await mount(fakeWater()))).toEqual([
+      'fuel',
+      'peptides',
+      'water',
+      'quickTools',
+      'schedule',
+    ]);
+  });
+
+  it('settles the carried widget from where the finger left it', async () => {
+    /*
+     * Its offset is re-expressed against its *new* slot — the same pixel in a
+     * different frame of reference — and then animated to zero. That is the
+     * glide into place, and it is why the commit itself is invisible.
+     */
+    const spring = jest.spyOn(Animated, 'spring');
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+    await drag(tree, 'peptides', -186, 0);
+
+    const offset = widget(tree, 'peptides').props.offset;
+    expect(springTarget(spring, offset)).toEqual({ x: 0, y: 0 });
+    spring.mockRestore();
+  });
+
+  it('lands with no animation at all under Reduce Motion', async () => {
+    mockReducedMotion = true;
+    const spring = jest.spyOn(Animated, 'spring');
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+    await drag(tree, 'peptides', -186, 0);
+
+    expect(renderedOrder(tree)).toEqual(['fuel', 'peptides', 'water', 'quickTools', 'schedule']);
+    expect(offsetOf(tree, 'peptides')).toEqual({ x: 0, y: 0 });
+    expect(spring).not.toHaveBeenCalled();
+    spring.mockRestore();
+  });
+
+  it('reorders a wide module against the pair below it', async () => {
+    // Fuel carried down onto Water lands between Water and Peptides, and the
+    // rows re-stack around it rather than overlapping.
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+    await drag(tree, 'fuel', -95, 148);
+
+    expect(renderedOrder(tree)).toEqual(['water', 'fuel', 'peptides', 'quickTools', 'schedule']);
+  });
+
+  it('returns everything home when the gesture is cancelled', async () => {
+    mockReducedMotion = true;
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+
+    const props = await drag(tree, 'peptides', -186, 0, { release: false });
+    expect(offsetOf(tree, 'water').x).not.toBe(0);
+
+    await act(async () => props.onDragCancel('peptides'));
+
+    expect(renderedOrder(tree)).toEqual(['fuel', 'water', 'peptides', 'quickTools', 'schedule']);
+    expect(offsetOf(tree, 'water')).toEqual({ x: 0, y: 0 });
+  });
+
+  it('does nothing when a drag ends where it began', async () => {
+    const tree = await mount(fakeWater());
+    await enterEditMode(tree);
+    await drag(tree, 'peptides', 0, 0);
+
+    expect(renderedOrder(tree)).toEqual(['fuel', 'water', 'peptides', 'quickTools', 'schedule']);
+    expect(offsetOf(tree, 'peptides')).toEqual({ x: 0, y: 0 });
+  });
+
+  it('keeps the arrows working, which is the path a gesture cannot replace', async () => {
+    /*
+     * A hold-and-drag is unavailable to someone using VoiceOver or a switch.
+     * Every 5.3D interaction is a shortcut for something Customize Home
+     * already does by tap.
+     */
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Move Water up')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    expect(renderedOrder(tree)).toEqual(['water', 'fuel', 'peptides', 'quickTools', 'schedule']);
+  });
+});
+
+/* ── Dynamic Type (5.3D) ────────────────────────────────────────────────── */
+
+describe('the system text size', () => {
+  it('never switches font scaling off', async () => {
+    /*
+     * The whole policy in one assertion: **VITA respects the device's
+     * text-size setting.** `allowFontScaling={false}` protects a layout by
+     * ignoring an accessibility preference, and nothing on Home does it.
+     */
+    const tree = await mount(fakeWater());
+    const copy = tree.root
+      .findAllByType(Text)
+      /*
+       * Icon glyphs are excluded, and are the one legitimate exception: they
+       * are `Text` only as an implementation detail of the icon font, are
+       * sized in points like any other graphic, and `@expo/vector-icons` sets
+       * the flag itself. Everything the user actually reads is below.
+       */
+      .filter((node) => styleOf(node).fontFamily !== 'ionicons');
+
+    expect(copy.length).toBeGreaterThan(10);
+    for (const node of copy) {
+      expect(node.props.allowFontScaling).not.toBe(false);
+    }
+  });
+
+  it('caps decoration, and only decoration', async () => {
+    /*
+     * The distinction 5.3D settles: **information scales without limit,
+     * ornament does not.** At the largest accessibility sizes the quote ran
+     * to four lines and pushed the day's real figures off the screen. A cap
+     * is not `allowFontScaling={false}` — the quote still grows, it just
+     * stops before crowding out the content it decorates.
+     */
+    const tree = await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }));
+
+    const capped = tree.root
+      .findAllByType(Text)
+      .filter((node) => node.props.maxFontSizeMultiplier !== undefined)
+      .map((node) =>
+        (Array.isArray(node.props.children) ? node.props.children : [node.props.children]).join(''),
+      );
+
+    expect(capped.sort()).toEqual(
+      ['VITA', 'I came, I saw, I conquered.', '— Julius Caesar'].sort(),
+    );
+    for (const node of tree.root.findAllByType(Text)) {
+      const cap = node.props.maxFontSizeMultiplier;
+      if (cap !== undefined) expect(Number(cap)).toBeGreaterThanOrEqual(DECORATIVE_FONT_CAP);
+    }
+  });
+
+  it('wraps a figure rather than truncating it once the text is large', async () => {
+    // 5.3D found `2,000 c…` on the wide Fuel strip. A value is information;
+    // truncation is only ever acceptable for a secondary label.
+    mockFontScale = 1.6;
+    const tree = await mount(fakeWater());
+    const fuel = tree.root
+      .findAllByType(Text)
+      .find((node) => String(node.props.children?.[0] ?? '').includes('cal left'));
+
+    expect(fuel).toBeDefined();
+    expect(Number(fuel!.props.numberOfLines)).toBeGreaterThan(1);
+  });
+
+  it('keeps every square equal at a large text size, and gives them more room', async () => {
+    const normal = await mount(fakeWater());
+    await act(async () => normal.unmount());
+    mounted = null;
+
+    mockFontScale = 1.5;
+    const large = await mount(fakeWater());
+    await act(async () => control(large, 'Customize Home')!.props.onPress());
+    await act(async () => control(large, 'Fuel, Square')!.props.onPress());
+    await act(async () => control(large, 'Close')!.props.onPress());
+
+    const heights = [/^Water,/, /^Peptides,/, /^Fuel,/].map((label) => {
+      const style = styleOf(control(large, label)!);
+      expect(style.minHeight).toBe(style.maxHeight);
+      return style.minHeight;
+    });
+
+    expect(new Set(heights).size).toBe(1);
+    expect(Number(heights[0])).toBe(squareHeight(1.5));
+    expect(Number(heights[0])).toBeGreaterThan(squareHeight(1));
+  });
+
+  it('stands the decorative ring aside rather than letting text collide', async () => {
+    /*
+     * The 5.3C defect was Water's total overlapping its status line inside a
+     * footprint that could not grow. At a large text size the ring — which
+     * encodes only what the words already say, and is hidden from screen
+     * readers either way — gives up its 56pt.
+     */
+    mockFontScale = 1.5;
+    const tree = await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }));
+
+    // The reading survives in full; only the decoration went.
+    expect(screen(tree)).toContain('0%');
+    expect(control(tree, /^Water,/)).toBeDefined();
+    expect(tree.root.findAll((node) => node.type === ProgressRing)).toHaveLength(0);
+  });
+
+  it('keeps the ring at the default text size', async () => {
+    // The counterpart to the test above — the compact presentation must be a
+    // response to large text, not the shipped design.
+    const tree = await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }));
+    expect(tree.root.findAll((node) => node.type === ProgressRing).length).toBeGreaterThan(0);
+  });
+
+  it('says exactly the same thing at every text size', async () => {
+    // Compact is a presentation, not an edit: no figure is abbreviated away
+    // and no spoken label changes.
+    const repository = fakeWater({
+      goal: createWaterGoal(64, 'floz'),
+      entries: [createWaterEntry({ amount: 32, unit: 'floz' })],
+    });
+
+    const normal = await mount(repository);
+    const spokenNormal = String(control(normal, /^Water,/)!.props.accessibilityLabel);
+    await act(async () => normal.unmount());
+    mounted = null;
+
+    mockFontScale = 1.6;
+    const large = await mount(repository);
+    expect(String(control(large, /^Water,/)!.props.accessibilityLabel)).toBe(spokenNormal);
+    expect(screen(large)).toContain('50%');
+  });
+
+  it('lets a tool label wrap rather than clipping it, keeping the tiles equal', async () => {
+    mockFontScale = 1.5;
+    const tree = await mount(fakeWater());
+
+    const tiles = ['Peptide Calculator', 'Injection Sites', 'Food Scanner'].map(
+      (name) => styleOf(control(tree, name)!),
+    );
+    expect(new Set(tiles.map((tile) => tile.height)).size).toBe(1);
+    expect(Number(tiles[0].height)).toBeGreaterThan(TOOL_TILE_HEIGHT);
+
+    const label = tree.root.findAllByType(Text).find((node) => node.props.children === 'Calculator');
+    expect(label!.props.numberOfLines).toBe(2);
+  });
+
+  it('grows the Customize Home rows so their controls cannot overlap', async () => {
+    mockFontScale = 1.5;
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    // Still uniform — which is what the sheet's drag arithmetic needs — just
+    // not constant.
+    for (const label of ['Hide Water', 'Hide Fuel']) {
+      expect(control(tree, label)).toBeDefined();
+    }
+    expect(control(tree, 'Move Water up')).toBeDefined();
+    expect(control(tree, 'Reset Home layout to default')).toBeDefined();
+  });
+
+  it("keeps a schedule row's state readable when the name has to truncate", async () => {
+    const tree = await mount(fakeWater());
+    // Nothing scheduled today, so the section states that rather than
+    // rendering a row — the honest empty state, at any text size.
+    expect(screen(tree)).toContain('Nothing scheduled today');
   });
 });

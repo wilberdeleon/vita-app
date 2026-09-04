@@ -90,7 +90,21 @@ Home owns two persisted UI preferences, and they are the worked example of a **s
 - **Customize Home's list drag** reorders *live*, because it is a single column of uniform-height rows (`ROW_HEIGHT`), which makes the arithmetic exact. The nested Quick Tools section sits below that list rather than expanding a row, so the row height stays uniform.
 - **The grid's drag reorders on release.** Continuous reflow across a two-column grid would mean recomputing rows, re-measuring every cell and compensating the gesture baseline on each crossing. Widgets measure with `measureInWindow` and **re-measure on entering edit mode**, so all rectangles come from one frame; the delta is applied to the dragged widget's own rectangle, which makes the comparison scroll-invariant.
 
+**Live reflow is translation, not re-layout (5.3D).** During a drag the rendered order is frozen and every widget is moved by an `Animated.ValueXY` the route owns: the carried one follows the finger, the others are animated toward the slots the candidate order gives them. `dragLayout.ts` holds that arithmetic as pure functions — the grid frame read from the measured rectangles, the slot each module would occupy under a candidate order, which slot a point has meaningfully entered (a fifth of the cell inset on every edge), and the resulting offsets. On release the order commits **before** the settle animation: every other widget already sits at its new slot, and the carried one's offset is re-expressed against its new slot and animated to zero, so the commit is invisible and an interrupted animation cannot desynchronise the screen from the stored layout.
+
 **Long press is threaded into the feature modules, not layered over them.** React Native gives the responder to the innermost pressable, and `Pressable` suppresses `onPress` once a long press fires — which is both why a wrapper alone cannot work and why holding a widget does not also navigate. A blocking overlay is used only *while* editing, to stop a grab firing a module's own button.
+
+## Dynamic Type (Sprint 5 slice 5.3D)
+
+**VITA respects the device's text-size setting.** No file in `src/` passes `allowFontScaling={false}`, and none may. Dashboard is where the policy was proved; later feature identity slices carry it outward.
+
+Three mechanisms, all in `features/dashboard/widget.ts`:
+
+- **`squareHeight(fontScale)`** — the shared widget footprint grows with the text, damped, and stays a single value so Water, Peptides and Fuel remain equal at every size. `toolTileHeight` does the same for Quick Tools, and Customize Home's rows scale identically (uniform is what its drag arithmetic needs; constant was never the requirement).
+- **`isCompactSquare(fontScale)`** — past 1.25× the decorative ring and calorie bar step aside and hand their space to the words. Both are already `accessibilityElementsHidden`, so nothing is lost; **no figure is abbreviated and no spoken label changes** at any size.
+- **`DECORATIVE_FONT_CAP`** — information scales without limit, ornament does not. The quote, its attribution and the wordmark carry a `maxFontSizeMultiplier`; at `accessibility-large` the uncapped quote reached four lines and pushed the day's real figures off the screen. This is not disabled scaling, it is a bound, and a test asserts those three strings are the only capped ones on Home. Values wrap rather than truncate; truncation is for secondary labels only.
+
+Icon glyphs are the single exception: `@expo/vector-icons` renders them as `Text` with scaling off, they are graphics sized in points, and audits exclude them explicitly rather than silently.
 
 ## UI conventions
 

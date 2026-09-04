@@ -8,7 +8,7 @@ import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { Greeting } from '../greeting';
 import type { Quote } from '../quote';
-import { QUOTE_FONT, QUOTE_GOLD, daypartAccent } from '../widget';
+import { DECORATIVE_FONT_CAP, QUOTE_FONT, QUOTE_GOLD, TYPE, daypartAccent } from '../widget';
 
 type Props = {
   greeting: Greeting;
@@ -40,9 +40,13 @@ type Props = {
  * nothing else on the screen tries to have any. A quote someone is on record
  * as having said is content; `Stay on track` is the app commenting on your
  * behaviour, and that is the thing that has been removed twice. The
- * attribution is deliberately much quieter than the line — it credits without
- * competing — and is set on its own row with an em dash, the way a quotation
- * is actually attributed in print.
+ * **The attribution is part of the quotation, not a caption under it**
+ * (founders, 5.3D). It was grey sans-serif body copy sitting below a serif
+ * line, which read as two unrelated things. It now shares the quote's serif
+ * and italic, sits right-aligned beneath the last line with a small inset,
+ * and takes a dimmed version of the quote's own gold — the way a pull quote
+ * is credited in print. Same family, quieter voice, unmistakably the same
+ * object.
  *
  * **The quote is set in a classical serif** (`QUOTE_FONT`), italic, in a
  * restrained gold. That single typographic break is what makes it read as a
@@ -75,7 +79,12 @@ export function DashboardHeader({
       <View style={styles.bar}>
         <View style={styles.brand}>
           <VitaMark size={28} color={palette.gold} />
-          <Text style={[styles.wordmark, { color: surfaces.text }]}>VITA</Text>
+          <Text
+            style={[styles.wordmark, { color: surfaces.text }]}
+            maxFontSizeMultiplier={DECORATIVE_FONT_CAP}
+          >
+            VITA
+          </Text>
         </View>
 
         <View style={styles.controls}>
@@ -132,10 +141,25 @@ export function DashboardHeader({
           style={styles.quoteBlock}
           accessible
           accessibilityRole="text"
-          accessibilityLabel={`${quote.text} — ${quote.attribution}`}
+          /* Spoken as one sentence and one object. The em dash is
+             typography, not something to read aloud. */
+          accessibilityLabel={`${quote.text} ${quote.attribution}.`}
         >
-          <Text style={[styles.quote, { color: QUOTE_GOLD[scheme] }]}>{quote.text}</Text>
-          <Text style={[styles.attribution, { color: surfaces.textTertiary }]}>
+          {/*
+            * Capped, not frozen — see `DECORATIVE_FONT_CAP`. The quote is
+            * ornament; at the largest accessibility sizes it grew to four
+            * lines and pushed the day's real figures off the screen.
+            */}
+          <Text
+            style={[styles.quote, { color: QUOTE_GOLD[scheme] }]}
+            maxFontSizeMultiplier={DECORATIVE_FONT_CAP}
+          >
+            {quote.text}
+          </Text>
+          <Text
+            style={[styles.attribution, { color: QUOTE_GOLD[scheme] }]}
+            maxFontSizeMultiplier={DECORATIVE_FONT_CAP}
+          >
             — {quote.attribution}
           </Text>
         </View>
@@ -182,6 +206,7 @@ const styles = StyleSheet.create({
   },
   greeting: {
     ...typography.micro,
+    fontSize: TYPE.greeting,
     letterSpacing: 1.2,
     fontWeight: '600',
     marginTop: spacing.s,
@@ -200,26 +225,34 @@ const styles = StyleSheet.create({
   quote: {
     ...typography.heading,
     fontFamily: QUOTE_FONT,
-    fontSize: 19,
+    fontSize: TYPE.quote,
     // A serif at this size does not need weight to carry; bolding it would
     // make the header shout, which is what the quote is here to avoid.
     fontWeight: '400',
     fontStyle: 'italic',
     letterSpacing: 0,
-    lineHeight: 25,
+    lineHeight: TYPE.quoteLineHeight,
   },
   attribution: {
     ...typography.caption,
     fontFamily: QUOTE_FONT,
-    fontSize: 12,
+    fontSize: TYPE.attribution,
+    fontStyle: 'italic',
     letterSpacing: 0.3,
-    marginTop: 2,
+    // Beneath the last line and tucked in from the right — the credit hangs
+    // off the quotation rather than starting a new block under it. Dimmed
+    // below the quote's own gold so it credits without competing.
+    textAlign: 'right',
+    opacity: 0.72,
+    marginTop: 1,
+    paddingRight: spacing.xs,
   },
   done: {
     paddingHorizontal: spacing.xs,
   },
   doneLabel: {
     ...typography.bodyMedium,
+    fontSize: TYPE.sheetLabel,
     fontWeight: '700',
   },
   dateChip: {
@@ -233,5 +266,6 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     ...typography.caption,
+    fontSize: TYPE.dateChip,
   },
 });

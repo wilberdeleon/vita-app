@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Animated, PanResponder, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale, VitaSheet } from '../../../components/ui';
 import { vitaHaptic } from '../../../lib/haptics';
 import { radii, spacing, typography } from '../../../theme/tokens';
@@ -28,6 +28,7 @@ import {
   visibleTools,
   type QuickToolsPrefs,
 } from '../quickTools';
+import { TYPE } from '../widget';
 
 type Props = {
   visible: boolean;
@@ -38,8 +39,19 @@ type Props = {
   onClose: () => void;
 };
 
-/** Every row is the same height, which is what makes the drag arithmetic exact. */
+/**
+ * Every row is the same height, which is what makes the drag arithmetic exact.
+ *
+ * It scales with the system text size rather than being fixed: a control that
+ * clips its own label at an accessibility text size is not an accessible
+ * control. Uniform is what the arithmetic needs — constant is not.
+ */
 const ROW_HEIGHT = 64;
+const TOOL_ROW_HEIGHT = 52;
+
+function scaledRow(base: number, fontScale: number): number {
+  return Math.round(base * Math.min(Math.max(fontScale, 1), 2));
+}
 
 const SIZE_LABELS: Record<ModuleSize, string> = { square: 'Square', wide: 'Wide' };
 
@@ -84,6 +96,9 @@ export function CustomizeHomeSheet({
 }: Props) {
   const { surfaces } = useTheme();
   const reducedMotion = useReducedMotion();
+  const { fontScale } = useWindowDimensions();
+  const rowHeight = scaledRow(ROW_HEIGHT, fontScale);
+  const toolRowHeight = scaledRow(TOOL_ROW_HEIGHT, fontScale);
 
   /** The row being dragged, and how far it has travelled. */
   const [dragging, setDragging] = useState<DashboardModuleId | null>(null);
@@ -123,13 +138,13 @@ export function CustomizeHomeSheet({
              */
             const current = layoutRef.current;
             const from = current.order.indexOf(id);
-            const shift = Math.round((gesture.dy - offsetRef.current) / ROW_HEIGHT);
+            const shift = Math.round((gesture.dy - offsetRef.current) / rowHeight);
             if (shift === 0) return;
 
             const to = Math.max(0, Math.min(current.order.length - 1, from + shift));
             if (to === from) return;
 
-            offsetRef.current += (to - from) * ROW_HEIGHT;
+            offsetRef.current += (to - from) * rowHeight;
             drag.setValue(gesture.dy - offsetRef.current);
             vitaHaptic('selection');
             onChange(reorderModule(current, from, to));
@@ -150,7 +165,7 @@ export function CustomizeHomeSheet({
           },
         }),
       ),
-    [layout.order, drag, onChange, reducedMotion],
+    [layout.order, drag, onChange, reducedMotion, rowHeight],
   );
 
   const shownTools = visibleTools(tools).length;
@@ -175,6 +190,7 @@ export function CustomizeHomeSheet({
               key={id}
               style={[
                 styles.row,
+                { height: rowHeight },
                 index > 0 && styles.divided,
                 index > 0 && { borderTopColor: surfaces.border },
                 isDragging && {
@@ -312,7 +328,7 @@ export function CustomizeHomeSheet({
               key={toolId}
               style={[
                 styles.row,
-                styles.toolRow,
+                { height: toolRowHeight },
                 index > 0 && styles.divided,
                 index > 0 && { borderTopColor: surfaces.border },
               ]}
@@ -405,6 +421,7 @@ export function CustomizeHomeSheet({
 const styles = StyleSheet.create({
   intro: {
     ...typography.caption,
+    fontSize: TYPE.sheetCaption,
     marginTop: spacing.m,
   },
   list: {
@@ -415,7 +432,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.m,
     paddingVertical: spacing.s,
-    height: ROW_HEIGHT,
   },
   divided: {
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -425,13 +441,11 @@ const styles = StyleSheet.create({
   },
   sectionHeading: {
     ...typography.micro,
+    fontSize: TYPE.sectionHeading,
     letterSpacing: 0.8,
   },
   toolIntro: {
     marginTop: spacing.xs,
-  },
-  toolRow: {
-    height: 52,
   },
   toggle: {
     minWidth: 26,
@@ -443,6 +457,7 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.bodyMedium,
+    fontSize: TYPE.sheetLabel,
   },
   sizes: {
     flexDirection: 'row',
@@ -456,10 +471,12 @@ const styles = StyleSheet.create({
   },
   sizeLabel: {
     ...typography.micro,
+    fontSize: TYPE.sheetChip,
     fontWeight: '600',
   },
   fixed: {
     ...typography.micro,
+    fontSize: TYPE.sheetChip,
   },
   moves: {
     flexDirection: 'row',
@@ -487,6 +504,7 @@ const styles = StyleSheet.create({
   },
   note: {
     ...typography.caption,
+    fontSize: TYPE.sheetCaption,
   },
   reset: {
     alignSelf: 'flex-start',
@@ -494,6 +512,7 @@ const styles = StyleSheet.create({
   },
   resetLabel: {
     ...typography.captionMedium,
+    fontSize: TYPE.sheetCaption,
     fontWeight: '600',
   },
 });

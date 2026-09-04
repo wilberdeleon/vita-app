@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale } from '../../../components/ui';
 import { radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { QUICK_TOOL_REGISTRY, visibleTools, type QuickToolsPrefs } from '../quickTools';
-import { TOOL_TILE_HEIGHT } from '../widget';
+import { TYPE, isCompactSquare, toolTileHeight } from '../widget';
 
 type Props = {
   tools: QuickToolsPrefs;
@@ -30,7 +30,11 @@ type Props = {
  */
 export function QuickTools({ tools }: Props) {
   const { surfaces } = useTheme();
+  const { fontScale } = useWindowDimensions();
   const shown = visibleTools(tools);
+  const tileHeight = toolTileHeight(fontScale);
+  /* A second line beats a clipped word — the tiles stay equal either way. */
+  const labelLines = isCompactSquare(fontScale) ? 2 : 1;
 
   if (shown.length === 0) return null;
 
@@ -61,13 +65,13 @@ export function QuickTools({ tools }: Props) {
             // a flex basis handed to it never reaches this row.
             <View key={id} style={styles.slot}>
               <PressableScale
-                style={[styles.tile, { borderColor: surfaces.border }]}
+                style={[styles.tile, { borderColor: surfaces.border, height: tileHeight }]}
                 onPress={() => router.push(tool.route)}
                 accessibilityLabel={tool.name}
                 accessibilityHint={tool.hint}
               >
                 <Ionicons name={tool.icon} size={19} color={tool.color} />
-                <Text style={[styles.label, { color: surfaces.text }]} numberOfLines={1}>
+                <Text style={[styles.label, { color: surfaces.text }]} numberOfLines={labelLines}>
                   {tool.label}
                 </Text>
               </PressableScale>
@@ -90,10 +94,12 @@ const styles = StyleSheet.create({
   },
   heading: {
     ...typography.micro,
+    fontSize: TYPE.sectionHeading,
     letterSpacing: 0.8,
   },
   all: {
     ...typography.caption,
+    fontSize: TYPE.quietLink,
   },
   row: {
     flexDirection: 'row',
@@ -108,10 +114,12 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     borderWidth: 1,
     borderRadius: radii.control,
-    height: TOOL_TILE_HEIGHT,
+    paddingHorizontal: spacing.xs,
   },
   label: {
     ...typography.caption,
+    fontSize: TYPE.toolLabel,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });

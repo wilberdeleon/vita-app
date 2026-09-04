@@ -92,6 +92,17 @@ For each screen: what generic pattern is there now · what role it should take �
 - **A shortcut must mean what its label says.** The `Scan` tile pointed at the logging scanner while meaning the future evaluating one — a working button that quietly misrepresents the product is worse than an absent one. Applies to anything 5.6 or 5.8 adds.
 - **`__DEV__` previews for states real data cannot reach**, built from local constants — never by seeding real records.
 
+**Patterns 5.3D added:**
+
+- **Live reflow without re-rendering.** Freeze the rendered order for the gesture and *translate* every widget to where the candidate order would put it. Re-rendering a grid mid-drag moves the dragged cell out from under the finger, which is the trap 5.3C avoided by deferring to release.
+- **Commit before the settle, never in its completion callback.** When every element already sits at its new position, committing changes nothing on screen — and an interrupted animation can no longer leave the UI and the stored state disagreeing.
+- **Put drag arithmetic in pure functions.** It is the only way a gesture gets verified in an environment that cannot perform one. 19 tests here; the component keeps only the gesture and the lift.
+- **Require real entry into a slot before proposing a swap** (a fifth of the cell on each edge). Hysteresis falls out for free once the test runs against candidate slots rather than home positions.
+- **VITA respects platform text-size settings by default.** No `allowFontScaling={false}`, anywhere. Fixed footprints scale with the text (damped, and still one shared value so a set stays equal), and decorative visuals step aside before text collides.
+- **Information scales without limit; ornament may be capped.** `maxFontSizeMultiplier` on a quote or a wordmark is legitimate and must be documented and tested; on anything that states a fact it is not. Truncation is for secondary labels only — a figure wraps.
+- **A type bump belongs to the screen that proves it**, not to `theme/tokens.ts`. Home carries its own `TYPE` map; later identity slices adopt the sizes deliberately rather than inheriting them by surprise.
+- **Still open for 5.7:** `FloatingDock` crops its labels at accessibility text sizes, alongside the `PressableScale` flex trap.
+
 **Patterns 5.3C added:**
 
 - **A widget grid needs one geometry, and it is set by the busiest cell.** Per-module heights make a grid breathe with its data; one shared footprint with the quiet modules centring in the space is what holds still. Clamp **both** bounds — `flex: 1` resolves a flex basis of 0 and beats a plain `height`.

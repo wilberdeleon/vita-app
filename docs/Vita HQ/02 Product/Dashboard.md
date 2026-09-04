@@ -6,7 +6,23 @@
 
 ---
 
-## Sprint 5 slice 5.3C — direct manipulation and polish (2026-09-03, awaiting founder device review)
+## Sprint 5 slice 5.3D — final interaction and typography (2026-09-03, awaiting founder decision)
+
+**Dragging a widget now shows you where it will land.** Hold one and it lifts and follows your finger; the widgets around it slide out of the way *while you are still holding it*, so you can see the new arrangement before you let go. Release and it settles into place.
+
+**The remove button moved to the top-right corner**, where every home screen puts it. It still only removes the widget from Home — your Water entries, meals and routines are never touched, and Customize Home puts any widget straight back.
+
+**Everything reads a size larger.** The greeting, the quote, the widget labels and values, Quick Tools and Customize Home all went up one step. The screen is as dense as it was; it is simply easier to read.
+
+**Julius Caesar now belongs to the quote.** The credit is set in the same classical serif, italic, tucked under the end of the line in a quieter gold — one object rather than a caption.
+
+**VITA now follows your iPhone's text-size setting.** Turn it up and the widgets grow to match, the ring and the calorie bar step aside to give the words room, and figures wrap instead of being cut off. The quote is the one thing that stops growing — it is decoration, and past a point it was pushing the day's real numbers off the screen. Nothing you can read is ever abbreviated, and VoiceOver says exactly the same thing at every size.
+
+**Known, not yet fixed:** at the largest text sizes the bottom navigation bar still crops its own labels. It belongs to the app shell rather than to Home, so it is queued rather than changed here.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3D.
+
+## Sprint 5 slice 5.3C — direct manipulation and polish (2026-09-03, superseded by 5.3D)
 
 **You rearrange Home on Home.** Hold any widget: the grid starts to jiggle, each widget grows a small remove control, and you can drag one onto another to swap them. `Done` at the top leaves. Customize Home is still there and still does more — it is the only way to bring a hidden widget back, change a size, or reorder without using a gesture — but the everyday shuffle no longer means finding a sheet.
 
