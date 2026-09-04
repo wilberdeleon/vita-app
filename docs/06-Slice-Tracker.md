@@ -2038,11 +2038,11 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | ✅ Founder-approved on device 2026-09-02 — **5.1 locked** |
 | 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ✅ Founder-approved on device 2026-09-03 |
 | 5.2A | Water Custom Amount Keyboard Polish | A Done key for the number pad, and the press-opacity regression it exposed | ✅ Founder-approved · 5.2 closed |
-| 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | 🟡 Data work approved; composition revised in 5.3A |
-| 5.3A | Dashboard Composition + Customization | Denser composition, Quick Tools, Today's Schedule, Customize Home, dock contrast fix | 🟡 Concepts approved; composition revised in 5.3B |
-| 5.3B | Dashboard Widget Layout + Density | Two-column widget grid, square/wide sizes, drag reorder, quote, Food Scanner correction | 🟡 Concepts approved; geometry, tools and editing revised in 5.3C |
-| 5.3C | Dashboard Direct Manipulation + Visual Polish | Shared square footprint, Quick Tools customization, Food Scanner reinstated, serif quote, daypart accents, on-Home edit mode | 🟡 Direction approved; interaction and typography refined in 5.3D |
-| 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | 🟡 Implemented — awaiting founder final Dashboard decision |
+| 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | ✅ Approved — founder device review, 2026-09-04. **Dashboard locked.** |
+| 5.3A | Dashboard Composition + Customization | Denser composition, Quick Tools, Today's Schedule, Customize Home, dock contrast fix | ✅ Accepted subpass of 5.3 |
+| 5.3B | Dashboard Widget Layout + Density | Two-column widget grid, square/wide sizes, drag reorder, quote, Food Scanner correction | ✅ Accepted subpass of 5.3 |
+| 5.3C | Dashboard Direct Manipulation + Visual Polish | Shared square footprint, Quick Tools customization, Food Scanner reinstated, serif quote, daypart accents, on-Home edit mode | ✅ Accepted subpass of 5.3 |
+| 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | ✅ Accepted subpass of 5.3 |
 | 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
 | 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
 | 5.6 | Tools Integration | Sprint 4's existing working Tools under the new language — behaviour frozen | ⬜ Not started |
@@ -2172,7 +2172,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder verification: passed. Slice 5.2 is closed.**
 
-### Slice 5.3 — Dashboard Identity Redesign 🟡
+### Slice 5.3 — Dashboard Identity Redesign ✅
 
 **Implemented 2026-09-03. Awaiting founder device review — not approved.**
 
@@ -2204,7 +2204,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the data work is approved, the composition is not.** Real-data-only, the fixture removal, the provider wiring, Tools integration and the slogan removal all stand. What was rejected was the shape — an oversized greeting, two large side-by-side boxes, and too much empty vertical space. Addressed in 5.3A.
 
-### Slice 5.3A — Dashboard Composition + Customization 🟡
+### Slice 5.3A — Dashboard Composition + Customization ✅
 
 **Implemented 2026-09-03. Awaiting founder device review — not approved.** Composition only: **no fixture returned**, and every figure still comes from the feature that owns it.
 
@@ -2242,7 +2242,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the architecture is approved, the composition is not.** Real-data-only, fixture cleanup, persistence, Quick Tools, Today's Schedule and the identity all stand. What was rejected: Home still felt empty, every module was the same long horizontal strip, and the arrangement was still ours rather than the user's. Addressed in 5.3B.
 
-### Slice 5.3B — Dashboard Widget Layout + Density 🟡
+### Slice 5.3B — Dashboard Widget Layout + Density ✅
 
 **Implemented 2026-09-03. Awaiting founder device review — not approved.** Composition and customization only; **no fixture returned** and every figure still comes from the feature that owns it.
 
@@ -2274,7 +2274,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the grid is approved, five things were not.** Square widgets sized themselves independently, Quick Tools could not be customised, the Food Scanner omission was reversed, the quote read as ordinary app copy, and rearranging still required finding a sheet. All addressed in 5.3C.
 
-### Slice 5.3C — Dashboard Direct Manipulation + Visual Polish 🟡
+### Slice 5.3C — Dashboard Direct Manipulation + Visual Polish ✅
 
 **Implemented 2026-09-03. Awaiting founder device review — not approved.** Geometry, customization and interaction only; **no fixture returned**, no domain code touched, and every figure still comes from the feature that owns it. The whole diff is `features/dashboard/` plus its route.
 
@@ -2306,7 +2306,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
 
-### Slice 5.3D — Dashboard Final Interaction + Typography Polish 🟡
+### Slice 5.3D — Dashboard Final Interaction + Typography Polish ✅
 
 **Implemented 2026-09-03. Awaiting the founder's final Dashboard decision.** Interaction and presentation only — no composition change, no new module, **no fixture returned**, no domain code touched. The diff is `features/dashboard/` plus its route and the docs.
 
@@ -2340,5 +2340,17 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Device coverage limit, unchanged and stated plainly.** The Simulator MCP still refuses with a spurious Xcode-configuration error — `xcode-select -p` already points at `/Applications/Xcode.app/Contents/Developer` — so this environment can deep-link and screenshot but **cannot tap, hold or drag**. Edit mode, the jiggle, the lift, the live reflow and the settle are covered by 19 geometry tests and 20 route tests, **not by device**. One trap worth recording: after changing the simulator's text size, Expo Go repaints without re-laying-out, which looked exactly like a clipping defect until a cold relaunch showed clean layout — always terminate and relaunch before judging a Dynamic Type screenshot.
 
-**Still to verify — founder, on a real device:** whether the drag now feels alive, whether the neighbours move early enough to show where a widget will land, whether the settle is the right length, whether the top-right `×` is where the hand expects it, and whether the new type sizes are the right step.
+**Founder device review, 2026-09-04: approved.** 5.3D closes the Dashboard.
+
+### Slice 5.3 — closed ✅
+
+**Founder-approved on real device, 2026-09-04. The Dashboard direction is locked.**
+
+5.3 shipped across five passes and each earlier one was a genuine correction rather than a restatement — the fixture removal in 5.3, the composition in 5.3A, the widget grid in 5.3B, the geometry and editing in 5.3C, the interaction and typography in 5.3D. **All five are accepted as one approved whole**; 5.3A–5.3D are subpasses of 5.3, not separate deliverables.
+
+**The locked state.** A compact VITA header · a time-aware greeting with a daypart accent · the quote treatment, `I came, I saw, I conquered.` and `— Julius Caesar` · the calendar date chip · **real-data-only widgets** · Fuel wide by default over a Water | Peptides square pair · square/wide sizing with one shared square geometry · Quick Tools carrying Calculator, Injection Sites and the Food Scanner shortcut · Today's Schedule · customizable visibility, size and order, persisted · long-press edit mode with the jiggle and top-right remove affordances · live drag with neighbour reflow · the accessible non-drag reorder in Customize Home · Dynamic Type support · Dark and Light · Reduce Motion · the dock contrast fix from 5.3A.
+
+**These are settled, not open questions.** They are reopened only if a future audit finds a real defect — not to revisit a decision already made. Two known items already carried forward for **5.7**, both recorded above and neither a Dashboard defect: `PressableScale` does not propagate `flex` to its parent row, and `FloatingDock` crops its labels at accessibility text sizes.
+
+**No runtime change accompanied this approval.** The approved build is `f4ead5a` on `sprint-5-identity-interaction`; the branch is **not merged**, by standing instruction.
 

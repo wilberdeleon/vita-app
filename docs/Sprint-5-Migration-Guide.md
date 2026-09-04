@@ -49,7 +49,7 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.3 — Dashboard — ✅ IMPLEMENTED 2026-09-03 · composition revised in 5.3A
+# Slice 5.3 — Dashboard — ✅ APPROVED / CLOSED 2026-09-04 · locked through subpasses 5.3A–5.3D
 
 *Founder review approved the data work and rejected the composition. 5.3A kept every fixture removal and rebuilt the shape: eyebrow greeting, three horizontal strips, Quick Tools, Today's Schedule, and a persisted Customize Home. Patterns worth carrying are listed below.*
 

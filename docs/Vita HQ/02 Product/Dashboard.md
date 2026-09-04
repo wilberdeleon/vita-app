@@ -6,7 +6,19 @@
 
 ---
 
-## Sprint 5 slice 5.3D — final interaction and typography (2026-09-03, awaiting founder decision)
+## Approved and locked (2026-09-04)
+
+**The Dashboard is founder-approved on a real device and its direction is locked.** It arrived through five passes — 5.3, then the 5.3A composition correction, the 5.3B widget grid, the 5.3C geometry and editing pass, and the 5.3D interaction and typography pass — and all five are accepted as one whole.
+
+**What Home is now:** a compact VITA header with a time-aware greeting tinted to the hour, the quote *I came, I saw, I conquered.* credited to Julius Caesar, and today's date. Below it, widgets showing **only real data** — Fuel wide by default over a Water and Peptides pair — then Quick Tools (Calculator, Injection Sites, Food Scanner) and Today's Schedule. You choose which sections appear, how big they are and in what order, either by holding a widget and dragging it or through Customize Home. It follows your iPhone's text-size setting, works in Dark and Light, and respects Reduce Motion.
+
+These are settled decisions. They change only if a future audit finds a real defect.
+
+Two known items are queued for a later slice and neither is a Dashboard fault: a shared button component does not pass layout width to its parent row, and the bottom navigation bar crops its labels at the largest text sizes.
+
+---
+
+## Sprint 5 slice 5.3D — final interaction and typography (2026-09-03, approved 2026-09-04)
 
 **Dragging a widget now shows you where it will land.** Hold one and it lifts and follows your finger; the widgets around it slide out of the way *while you are still holding it*, so you can see the new arrangement before you let go. Release and it settles into place.
 
@@ -50,7 +62,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3C.
 
 Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3B.
 
-## Sprint 5 slice 5.3A — composition and customization (2026-09-03, awaiting founder device review)
+## Sprint 5 slice 5.3A — composition and customization (2026-09-03, approved as a subpass)
 
 **The data work from 5.3 stands; the shape changed.** Home was too sparse and its greeting too large, so the greeting became a small uppercase line, the three domains became compact horizontal strips, and the space that freed went to things that are actually useful.
 
@@ -66,7 +78,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3B.
 
 Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3A.
 
-## Sprint 5 slice 5.3 — the Dashboard identity redesign (2026-09-03, awaiting founder device review)
+## Sprint 5 slice 5.3 — the Dashboard identity redesign (2026-09-03, approved 2026-09-04)
 
 **Home became a daily control surface rather than a report.** It opens with a time-aware greeting and the date, then three domains you can act on, then a quiet route to Tools.
 
@@ -82,24 +94,30 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3A.
 
 Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3.
 
-## Current state (verified in repo, Sprint 0 — mock data)
+## Historical state — Sprint 0, superseded by slice 5.3
 
-Built in Slice 0.4, refined in 0.11–0.12. Components live in `src/features/dashboard/`:
+**Kept for history only. None of this is still in the app**, and the mock data described here was deleted in slice 5.3 — see *Approved and locked* at the top of this page for what Home actually is.
 
-- **Greeting card** with the VITA mark and a time-of-day greeting (`greeting.ts` — added in Slice 0.11).
-- **Daily summary / progress** (`DailyProgressCard` primitive) — calories and macros for today.
-- **Quick stats row** (`QuickStatsRow`) — at-a-glance stats including water (entry point to the [[Water]] flow).
-- **Journey card** (`JourneyCard`) — current [[Journey Stages|Journey Stage]] surface.
+Built in Slice 0.4, refined in 0.11–0.12:
+
+- **Greeting card** with the VITA mark and a time-of-day greeting (`greeting.ts`, added in 0.11 — the one piece of this that survives).
+- **Daily summary / progress** (`DailyProgressCard`) — calories and macros for today.
+- **Quick stats row** (`QuickStatsRow`) — at-a-glance stats including water.
+- **Journey card** (`JourneyCard`) — a [[Journey Stages|Journey Stage]] surface.
 - **Meals** with per-meal icons (`mealIcons.ts`).
-- Data is mock: fixtures in `mock.ts` served through `api.ts`.
+- Data was mock: fixtures in `mock.ts` served through `api.ts`. **Both files, and every component above except the greeting, were removed in 5.3** — they showed steps, sleep, workouts, a streak and a Journey stage that no feature produced.
 
-## Target state
+## Target state — Sprint 1, superseded by slice 5.3
+
+**Historical.** The plan below was to elevate the Sprint 0 mock components to production quality. Slice 5.3 took a different route the founders approved: those components were **removed** rather than polished, because the data behind them did not exist. Home is now real-data-only.
 
 **Sprint 1** of the [[Roadmap]] — ✅ **complete (2026-08-02)**; see [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what actually shipped. As originally planned, eight slices: Layout, Greeting Card, Today's Summary, Health Metrics, Journey Preview, Meals Preview, Floating Navigation, Dashboard Polish. This elevates the existing mock components above (GreetingCard, DailyProgressCard, QuickStatsRow, JourneyCard) to production quality rather than building from zero — live data once [[Supabase & Database|Supabase]] connects. Founder priority right now: **Dashboard polish** under the [[Design Bible|premium glass direction]].
 
 ## Sprint 5 direction — VITA Identity & Interaction (founder direction, 2026-09-01)
 
-**⚠️ Direction, not implementation authorization.** Slice 5.2 — Dashboard Identity Redesign is **draft** and needs founder approval plus a Sprint 5 architecture audit. Nothing below is built. Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
+**✅ Delivered and approved (2026-09-04).** This direction was audited, re-planned as slice **5.3**, built across 5.3–5.3D and approved on a real device. The record below is kept as the brief it was; *Approved and locked* at the top of this page is what shipped. Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
+
+Two notes on how it resolved: **Reference did not ship** as a Quick Tool (a dead entry is worse than a short list), and the **Food Scanner shortcut did**, routing to the existing Fuel barcode scanner — it opens the scanner that looks a food up so it can be logged, and claims nothing more. **Journey is not a Home module**; no Journey data exists yet.
 
 **Keep:** the time-aware greeting — *Good morning, Wilber* · *Good afternoon, Wilber* · *Good evening, Wilber* · *Good night, Wilber*.
 
