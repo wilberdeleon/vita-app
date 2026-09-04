@@ -12,9 +12,22 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * Reference tile and no Coming Soon** — slice 4.2 settled that a dead entry
  * is worse than a short list, and 5.8 owns BMI.
  *
- * The scanner route was read from the codebase rather than guessed: Fuel's
- * own quick actions push `/fuel/scan`, and this is the same production
- * screen with no new scanning work of any kind.
+ * ## The Food Scanner is deliberately absent
+ *
+ * Slice 5.3A shipped a `Scan` tile pointing at `/fuel/scan`, and the founder
+ * review corrected it: on Home, *Food Scanner* means the future scanner that
+ * **evaluates** a product and produces the planned VITA food score.
+ * `/fuel/scan` is the barcode lookup used to *log* a food — a different
+ * feature that happens to use the same camera.
+ *
+ * Pointing the tile at it would have been the worst of the options: the
+ * button works, so nothing looks broken, while the product quietly means
+ * something else than it says. The evaluating scanner does not exist, its
+ * scoring methodology is explicitly unauthorised, and neither is being built
+ * here — so the tile is **omitted entirely** rather than shown disabled. A
+ * greyed row still advertises a feature, and Home does not advertise.
+ *
+ * Two tools is the honest list. It gets a third when there is a third.
  *
  * Colour follows the domain each tool serves — the convention slice 4.2
  * established on the Tools hub, where a tool's icon colour tracks its domain
@@ -37,14 +50,6 @@ const TOOLS = [
     color: palette.peptide,
     route: '/tools/injection-sites',
   },
-  {
-    id: 'scanner',
-    label: 'Scan',
-    spoken: 'Food Scanner',
-    icon: 'barcode-outline',
-    color: palette.primary,
-    route: '/fuel/scan',
-  },
 ] as const;
 
 /**
@@ -57,9 +62,9 @@ const TOOLS = [
  * would have replaced meaningful state with navigation. Utilities have no
  * state to replace.
  *
- * Three across, sized by flex so they hold at the narrowest supported width.
- * **There is no fourth tile**, because there is no fourth tool — padding the
- * row for symmetry is how a Coming Soon gets invented.
+ * Sized by flex so they hold at the narrowest supported width. **The row is
+ * not padded to a fixed count** — it renders exactly the tools that exist,
+ * which is how a Coming Soon never gets invented.
  */
 export function QuickTools() {
   const { surfaces } = useTheme();

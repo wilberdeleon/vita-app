@@ -1,12 +1,43 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../../../components/ui';
-import { routineDayMarkLabel, type TodayRoutine } from '../../../lib/peptides';
+import { routineDayMarkLabel, type RoutineDayMark, type TodayRoutine } from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
+/**
+ * One row, as the section needs it.
+ *
+ * A small view model rather than the domain type, for two reasons: the
+ * component has no business knowing what a `ResolvedSetup` is, and a
+ * `__DEV__` preview can construct four of these to show the founders what a
+ * populated schedule looks like without going anywhere near real data. There
+ * is no `time` field, and that is the point — see below.
+ */
+export type ScheduleItem = {
+  id: string;
+  name: string;
+  /** The user's own configured amount, e.g. `1 mg`. Never a recommendation. */
+  amount: string | null;
+  mark: RoutineDayMark;
+  onOpen: () => void;
+};
+
+/** Maps today's routines into rows. The only production source. */
+export function scheduleItemsFromRoutines(today: readonly TodayRoutine[]): ScheduleItem[] {
+  return today.map((item) => ({
+    id: item.setup.id,
+    name: item.name,
+    amount: item.setup.routineAmount
+      ? `${item.setup.routineAmount.authored.amount} ${item.setup.routineAmount.authored.unit}`
+      : null,
+    mark: item.mark,
+    onOpen: () => router.push(`/peptides/routine/${encodeURIComponent(item.setup.id)}`),
+  }));
+}
+
 type Props = {
-  today: readonly TodayRoutine[];
+  items: readonly ScheduleItem[];
   isLoading: boolean;
 };
 
@@ -42,7 +73,7 @@ type Props = {
  * Tapping a row opens that routine, where the real Taken flow lives. The
  * logging sheet is not rebuilt here.
  */
-export function TodaySchedule({ today, isLoading }: Props) {
+export function TodaySchedule({ items, isLoading }: Props) {
   const { surfaces } = useTheme();
 
   if (isLoading) return null;
@@ -51,14 +82,12 @@ export function TodaySchedule({ today, isLoading }: Props) {
     <View style={styles.section}>
       <Text style={[styles.heading, { color: surfaces.textTertiary }]}>TODAY'S SCHEDULE</Text>
 
-      {today.length === 0 ? (
+      {items.length === 0 ? (
         <Text style={[styles.empty, { color: surfaces.textTertiary }]}>Nothing scheduled today</Text>
       ) : (
         <View style={styles.list}>
-          {today.map((item, index) => {
-            const amount = item.setup.routineAmount
-              ? `${item.setup.routineAmount.authored.amount} ${item.setup.routineAmount.authored.unit}`
-              : null;
+          {items.map((item, index) => {
+            const amount = item.amount;
             const state = routineDayMarkLabel(item.mark);
             const tint =
               item.mark === 'taken'
@@ -69,8 +98,8 @@ export function TodaySchedule({ today, isLoading }: Props) {
 
             return (
               <PressableScale
-                key={item.setup.id}
-                onPress={() => router.push(`/peptides/routine/${encodeURIComponent(item.setup.id)}`)}
+                key={item.id}
+                onPress={item.onOpen}
                 accessibilityLabel={`${item.name}${amount ? `, ${amount}` : ''}. ${state}. Opens the routine`}
                 style={[
                   styles.row,

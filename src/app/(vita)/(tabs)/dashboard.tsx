@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '../../../components/ui';
 import { CustomizeHomeSheet } from '../../../features/dashboard/components/CustomizeHomeSheet';
@@ -7,11 +7,14 @@ import { DashboardHeader } from '../../../features/dashboard/components/Dashboar
 import { FuelStrip } from '../../../features/dashboard/components/FuelStrip';
 import { PeptidesModule } from '../../../features/dashboard/components/PeptidesModule';
 import { QuickTools } from '../../../features/dashboard/components/QuickTools';
-import { TodaySchedule } from '../../../features/dashboard/components/TodaySchedule';
+import {
+  TodaySchedule,
+  scheduleItemsFromRoutines,
+} from '../../../features/dashboard/components/TodaySchedule';
 import { WaterModule } from '../../../features/dashboard/components/WaterModule';
-import { buildDailySummary } from '../../../features/dashboard/dailySummary';
 import { useGreeting } from '../../../features/dashboard/greeting';
-import { visibleModules, type DashboardModuleId } from '../../../features/dashboard/modules';
+import { buildGrid, sizeOf, type DashboardModuleId } from '../../../features/dashboard/modules';
+import { currentQuote } from '../../../features/dashboard/quote';
 import { useDashboardLayout } from '../../../features/dashboard/useDashboardLayout';
 import { useAuth } from '../../../features/auth/AuthProvider';
 import { formatLogDateShort } from '../../../lib/daily';
@@ -21,42 +24,41 @@ import { useWaterToday } from '../../../lib/water';
 import { spacing } from '../../../theme/tokens';
 
 /**
- * Home — a daily control surface.
+ * Home — a widget dashboard the user arranges.
  *
- * ## What the 5.3A review changed
+ * ## What 5.3B changed
  *
- * The composition, not the data. Slice 5.3's fixture removal stands entirely:
- * nothing here is invented, and the modules still read the features' own
- * engines. What the founders rejected was the *shape* — a 26px greeting over
- * two tall boxes and a strip, with a screen of air beneath it.
+ * The composition again, and only the composition. Slice 5.3's fixture
+ * removal and 5.3A's real-data wiring both stand untouched: nothing here is
+ * invented. What the founders rejected in 5.3A was that every module was the
+ * same long horizontal strip, that Home was still sparse, and that the
+ * arrangement was fixed by us rather than chosen by them.
  *
- * So the greeting became an eyebrow, three domains became horizontal strips
- * at a third of the height, and the space that bought went to two sections
- * that carry real information: the three utilities people actually reach for,
- * and the day's actual schedule. Density came from **showing more of what is
- * true**, never from padding.
+ * So modules now have **two designed shapes** and sit in a **two-column
+ * grid**. Water and Peptides ship as squares side by side under a wide Fuel,
+ * and any of the three can be switched, reordered or hidden — with the choice
+ * persisted. A quote gives the header some character, which is also why
+ * nothing else on the screen tries to.
  *
- * ## Home is the user's, within limits
+ * ## Placement follows order, never stored coordinates
  *
- * Every content module can be hidden or reordered, and the choice persists.
- * Someone who does not take peptides can switch that module and the schedule
- * off, and Home stops mentioning them — which no amount of tuning defaults
- * could have achieved for everyone.
+ * `buildGrid` derives rows from the visible modules and their spans: a wide
+ * module takes a row, two squares share one, and a square with no partner
+ * keeps its column rather than being stretched into a layout nobody designed.
+ * Hiding a module simply removes it and the grid reflows — hide Peptides and
+ * the next square pairs with Water, with no placeholder and no gap.
  *
- * The header is not customisable: branding, greeting, date and Settings
- * orient the screen, and one of them is the way out of it. `visibleModules`
- * decides the rest, so this file has no opinion about order.
+ * Because nothing stores a position, what the user arranged and what Home
+ * renders cannot disagree.
  *
- * ## Still true from 5.3
+ * ## Still true, and non-negotiable
  *
  * Every figure comes from `useWaterToday()`, `useDailyNutrition()` or
  * `usePeptides()` — Home stores nothing and derives nothing, so it cannot
  * drift from the features and needs no refresh. Actions open the feature that
- * owns them; `/water?add=1` opens Water ready to log rather than rebuilding
- * logging here. **Movement is still absent, because no movement domain
- * exists** — it is not a hidden module and not a disabled row, because
- * offering to show something VITA cannot produce is the tease the founders
- * ruled out.
+ * owns them. **Movement is absent because no movement domain exists**, and it
+ * is not offered as a disabled widget: advertising what the app cannot do is
+ * the tease the founders ruled out.
  */
 export default function Dashboard() {
   const greeting = useGreeting();
@@ -68,22 +70,22 @@ export default function Dashboard() {
 
   const [customizing, setCustomizing] = useState(false);
 
-  const summary = buildDailySummary({
-    peptidesUnanswered: peptides.today.filter((item) => item.mark === 'unconfirmed').length,
-    peptidesScheduled: peptides.today.length,
-    hasWaterGoal: water.hasGoal,
-    isWaterGoalMet: water.isGoalMet,
-    waterRemainingLabel: water.remainingLabel,
-    mealsLogged: fuel.mealsLoggedCount,
-  });
+  const scheduleItems = useMemo(
+    () => scheduleItemsFromRoutines(peptides.today),
+    [peptides.today],
+  );
+
+  const rows = buildGrid(layout);
 
   const render = (id: DashboardModuleId) => {
+    const size = sizeOf(layout, id);
+
     switch (id) {
       case 'water':
         return (
           <WaterModule
-            key={id}
             today={water}
+            size={size}
             onAdd={() => router.push('/water?add=1')}
             onOpen={() => router.push('/water')}
           />
@@ -91,58 +93,65 @@ export default function Dashboard() {
       case 'peptides':
         return (
           <PeptidesModule
-            key={id}
             today={peptides.today}
             isEmpty={peptides.isEmpty}
             isLoading={peptides.isLoading}
+            size={size}
             onOpen={() => router.push('/peptides')}
           />
         );
       case 'fuel':
         return (
           <FuelStrip
-            key={id}
             today={fuel}
+            size={size}
             onOpen={() => router.push('/fuel')}
             onLog={() => router.push('/fuel/add')}
           />
         );
       case 'quickTools':
-        return <QuickTools key={id} />;
+        return <QuickTools />;
       case 'schedule':
-        return <TodaySchedule key={id} today={peptides.today} isLoading={peptides.isLoading} />;
+        return <TodaySchedule items={scheduleItems} isLoading={peptides.isLoading} />;
     }
   };
 
   return (
-    <Screen dockClearance contentGap={spacing.xl} topInset={false}>
+    <Screen dockClearance contentGap={spacing.m} topInset={false}>
       <DashboardHeader
         greeting={greeting}
         firstName={user?.firstName ?? 'there'}
         dateLabel={formatLogDateShort(fuel.logDate)}
-        summary={summary}
+        quote={currentQuote()}
         onCustomize={() => setCustomizing(true)}
       />
 
-      {/*
-        * Rendered in exactly the saved order, with *consecutive* strips
-        * grouped so they sit tighter to each other than to the sections
-        * around them — spacing says "these belong together" without drawing
-        * a container around them.
-        *
-        * Grouping only runs, never all strips: filtering strips into one
-        * block would silently ignore a reorder that moved a section between
-        * them, so what the user arranged and what Home renders could differ.
-        */}
-      {groupStrips(visibleModules(layout)).map((group, index) =>
-        group.length > 1 ? (
-          <View key={`group-${index}`} style={styles.strips}>
-            {group.map(render)}
+      {rows.map((row) => {
+        /*
+         * A square with no partner keeps its own column and leaves the other
+         * empty, rather than being stretched across the row. Stretching it
+         * would render the square design at wide proportions — a layout
+         * nobody drew and the user did not ask for.
+         */
+        const lonelySquare = row.length === 1 && sizeOf(layout, row[0]) === 'square';
+
+        return (
+          <View key={row.join('-')} style={styles.row}>
+            {row.map((id) => (
+              /*
+               * Each cell carries the flex, because `PressableScale` applies
+               * its style to an inner animated view — a span handed to a
+               * module directly never reaches this row. A cell is the natural
+               * structure for a grid anyway; the primitive fix stays 5.7's.
+               */
+              <View key={id} style={styles.cell}>
+                {render(id)}
+              </View>
+            ))}
+            {lonelySquare ? <View style={styles.cell} /> : null}
           </View>
-        ) : (
-          render(group[0])
-        ),
-      )}
+        );
+      })}
 
       <CustomizeHomeSheet
         visible={customizing}
@@ -154,29 +163,13 @@ export default function Dashboard() {
   );
 }
 
-/** The three domain strips, which share a rhythm. Sections do not. */
-function isStrip(id: DashboardModuleId): boolean {
-  return id === 'water' || id === 'peptides' || id === 'fuel';
-}
-
-/**
- * Splits the visible modules into runs, so adjacent strips can share a
- * tighter gap while the saved order is preserved exactly.
- */
-function groupStrips(ids: DashboardModuleId[]): DashboardModuleId[][] {
-  const groups: DashboardModuleId[][] = [];
-
-  for (const id of ids) {
-    const current = groups[groups.length - 1];
-    if (current && isStrip(id) && isStrip(current[0])) current.push(id);
-    else groups.push([id]);
-  }
-
-  return groups;
-}
-
 const styles = StyleSheet.create({
-  strips: {
-    gap: spacing.s,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.m,
+  },
+  cell: {
+    flex: 1,
   },
 });

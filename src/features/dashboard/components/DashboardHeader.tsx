@@ -7,52 +7,52 @@ import { VitaMark } from '../../../components/shell/VitaMark';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { Greeting } from '../greeting';
+import type { Quote } from '../quote';
 
 type Props = {
   greeting: Greeting;
   firstName: string;
   /** Today, compact — "Thu, Sep 3". */
   dateLabel: string;
-  /** The one factual line, or null when there is nothing worth saying. */
-  summary: string | null;
+  quote: Quote;
   onCustomize: () => void;
 };
 
 /**
- * The top of Home: who, when, what today holds, and the two controls.
+ * The top of Home: branding, greeting, a line of character, and the date.
  *
- * **The greeting is context, not a headline** (founder review of 5.3). It ran
- * at 26px and still dominated the first viewport; it is now an eyebrow — small,
- * uppercase, in the brand gold — which is the weight a salutation earns. The
- * space that bought goes to the summary line and the modules below.
+ * **One composition, not three stacked blocks** (founder review of 5.3A). The
+ * greeting sat a full 20pt below the wordmark, which read as two unrelated
+ * headers; the whole group is now tight enough to scan as a unit.
  *
- * It stays time-aware, and it is still the only warmth on the screen.
+ * **The greeting stays an eyebrow.** Small, uppercase, gold, time-aware. It
+ * was a 26px headline in 5.3 and that was the first thing the founders
+ * rejected; it is not going back.
  *
- * **The line under it is a fact, never encouragement.** `1 routine scheduled ·
- * 28 fl oz to go` is worth reading; `Stay on track` is not, and neither is a
- * score assembled out of numbers held for other purposes. When the domains
- * have nothing to report the line is simply absent — see `dailySummary.ts`.
+ * **The quote is where VITA's personality lives now**, which is exactly why
+ * nothing else on the screen tries to have any. A quote someone is on record
+ * as having said is content; `Stay on track` is the app commenting on your
+ * behaviour, and that is the thing that has been removed twice. The
+ * attribution is deliberately much quieter than the line — it credits without
+ * competing.
  *
- * **The date is a chip, and deliberately inert.** It reads as a small utility
- * because that is what it is: there is no calendar destination in VITA, and
- * styling it as a button that goes nowhere would be the dead-affordance
- * problem Settings was cleaned of in slice 4.1. It is a label with a border,
- * announced as text.
+ * **The date chip is inert and announced as text.** VITA has no calendar
+ * destination, and styling a control that goes nowhere is the dead-affordance
+ * problem slice 4.1 cleaned out of Settings.
  *
- * **Two controls, and they are different things.** Settings stays top-right,
- * exactly where the founders fixed it. *Customize* sits beside it and changes
- * this screen only — it is not a second settings entry, and the header itself
- * (branding, greeting, date, Settings) is structural and cannot be hidden.
+ * **Two controls, and they are different things.** Settings stays top-right
+ * where the founders fixed it; `•••` changes this screen only. The header
+ * itself is structural and cannot be hidden or reordered.
  */
-export function DashboardHeader({ greeting, firstName, dateLabel, summary, onCustomize }: Props) {
+export function DashboardHeader({ greeting, firstName, dateLabel, quote, onCustomize }: Props) {
   const insets = useSafeAreaInsets();
   const { surfaces } = useTheme();
 
   return (
-    <View style={{ paddingTop: insets.top + spacing.s }}>
+    <View style={{ paddingTop: insets.top + spacing.xs }}>
       <View style={styles.bar}>
         <View style={styles.brand}>
-          <VitaMark size={30} color={palette.gold} />
+          <VitaMark size={28} color={palette.gold} />
           <Text style={[styles.wordmark, { color: surfaces.text }]}>VITA</Text>
         </View>
 
@@ -61,7 +61,7 @@ export function DashboardHeader({ greeting, firstName, dateLabel, summary, onCus
             onPress={onCustomize}
             hitSlop={10}
             accessibilityLabel="Customize Home"
-            accessibilityHint="Choose which sections appear and their order"
+            accessibilityHint="Choose which sections appear, their size and their order"
             style={styles.control}
           >
             <Ionicons name="ellipsis-horizontal" size={20} color={surfaces.text} />
@@ -78,16 +78,22 @@ export function DashboardHeader({ greeting, firstName, dateLabel, summary, onCus
         </View>
       </View>
 
-      <View style={styles.context}>
-        <View style={styles.contextText}>
-          <Text style={[styles.greeting, { color: palette.gold }]} numberOfLines={1}>
-            {greeting.label.toUpperCase()}, {firstName.toUpperCase()}
+      {/* Tight to the bar above — the founders' specific note on 5.3A. */}
+      <Text style={[styles.greeting, { color: palette.gold }]} numberOfLines={1}>
+        {greeting.label.toUpperCase()}, {firstName.toUpperCase()}
+      </Text>
+
+      <View style={styles.row}>
+        <View
+          style={styles.quoteBlock}
+          accessible
+          accessibilityRole="text"
+          accessibilityLabel={`${quote.text} — ${quote.attribution}`}
+        >
+          <Text style={[styles.quote, { color: surfaces.text }]}>{quote.text}</Text>
+          <Text style={[styles.attribution, { color: surfaces.textTertiary }]}>
+            {quote.attribution}
           </Text>
-          {summary ? (
-            <Text style={[styles.summary, { color: surfaces.text }]} numberOfLines={2}>
-              {summary}
-            </Text>
-          ) : null}
         </View>
 
         <View
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 44,
+    minHeight: 40,
   },
   brand: {
     flexDirection: 'row',
@@ -118,7 +124,7 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     ...typography.title,
-    fontSize: 22,
+    fontSize: 21,
     letterSpacing: 5,
   },
   controls: {
@@ -130,25 +136,32 @@ const styles = StyleSheet.create({
     minWidth: 28,
     alignItems: 'center',
   },
-  context: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.m,
-    marginTop: spacing.l,
-  },
-  contextText: {
-    flex: 1,
-    gap: spacing.xs,
-  },
   greeting: {
     ...typography.micro,
     letterSpacing: 1.2,
     fontWeight: '600',
+    marginTop: spacing.s,
   },
-  summary: {
-    ...typography.bodyMedium,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.m,
+    marginTop: spacing.xs,
+  },
+  quoteBlock: {
+    flex: 1,
+    gap: 1,
+  },
+  quote: {
+    ...typography.heading,
+    fontSize: 18,
     fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  attribution: {
+    ...typography.caption,
+    fontSize: 12,
   },
   dateChip: {
     flexDirection: 'row',

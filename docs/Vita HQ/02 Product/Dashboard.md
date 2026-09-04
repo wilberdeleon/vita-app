@@ -6,6 +6,18 @@
 
 ---
 
+## Sprint 5 slice 5.3B — widget layout (2026-09-03, awaiting founder device review)
+
+**Home became a widget dashboard you arrange.** Modules now come in two real shapes — a square and a wide — laid out in two columns. It ships as Fuel wide, then Water and Peptides side by side as squares, then Quick Tools and Today's Schedule.
+
+**You choose the arrangement.** Customize Home lets you show or hide any section, switch Water, Peptides and Fuel between square and wide, and reorder everything — by dragging a handle or with arrows, whichever suits. `Reset Layout` puts it all back. The choice survives a relaunch, and an existing arrangement is kept when the app learns new tricks.
+
+**The header carries a quote.** `I came, I saw, I conquered. — Julius Caesar` sits under the greeting. It is content rather than a slogan about your behaviour, and it is the only personality on the screen — everything else stays factual.
+
+**The Scan shortcut was removed, deliberately.** On Home, *Food Scanner* means the future scanner that evaluates a product and gives it a VITA score. That does not exist yet, and the tile had been pointing at the barcode scanner used to *log* food — a different feature. Quick Tools now lists the two tools that are real, and gets a third when there is one.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3B.
+
 ## Sprint 5 slice 5.3A — composition and customization (2026-09-03, awaiting founder device review)
 
 **The data work from 5.3 stands; the shape changed.** Home was too sparse and its greeting too large, so the greeting became a small uppercase line, the three domains became compact horizontal strips, and the space that freed went to things that are actually useful.

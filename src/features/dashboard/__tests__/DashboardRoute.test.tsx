@@ -311,13 +311,12 @@ describe('the Peptides module', () => {
 /* ── Tools ──────────────────────────────────────────────────────────────── */
 
 describe('Tools discoverability', () => {
-  it('offers exactly the three approved tools, each to a real route', async () => {
+  it('offers the tools that exist, each to a real route', async () => {
     const tree = await mount(fakeWater());
 
     for (const [label, route] of [
       ['Peptide Calculator', '/tools/peptide-calculator'],
       ['Injection Sites', '/tools/injection-sites'],
-      ['Food Scanner', '/fuel/scan'],
     ] as const) {
       const tile = control(tree, label);
       expect(tile).toBeDefined();
@@ -325,6 +324,26 @@ describe('Tools discoverability', () => {
       await act(async () => tile!.props.onPress());
       expect(mockPush).toHaveBeenCalledWith(route);
     }
+  });
+
+  it('does not offer a Food Scanner, and never points one at the logging scanner', async () => {
+    /*
+     * On Home, *Food Scanner* means the future scanner that evaluates a
+     * product and produces the planned VITA score. `/fuel/scan` is the
+     * barcode lookup used to *log* a food — a different feature sharing a
+     * camera. Wiring the tile to it would leave a button that works while
+     * the product quietly means something else, which is worse than absence.
+     */
+    const tree = await mount(fakeWater());
+
+    expect(control(tree, 'Food Scanner')).toBeUndefined();
+    expect(screen(tree)).not.toContain('Scan');
+
+    const targets = tree.root.findAll((node) => typeof node.props?.onPress === 'function');
+    for (const target of targets) {
+      await act(async () => target.props.onPress?.());
+    }
+    expect(mockPush).not.toHaveBeenCalledWith('/fuel/scan');
   });
 
   it('keeps the full Tools destination reachable without a second module', async () => {
@@ -421,27 +440,39 @@ describe('the summary line', () => {
     expect(screen(tree)).toContain('48 fl oz to go');
   });
 
-  it('says hydration is complete without praising anyone', async () => {
+  it('says the goal is reached in the module, without praising anyone', async () => {
     const tree = await mount(
       fakeWater({
         goal: createWaterGoal(64, 'floz'),
         entries: [createWaterEntry({ amount: 64, unit: 'floz' })],
       }),
     );
-    expect(screen(tree)).toContain('hydration complete');
-  });
-
-  it('is simply absent when there is nothing factual to say', async () => {
-    // No goal, no routines, nothing logged — a filler line would be worse
-    // than the space it takes.
-    const rendered = screen(await mount(fakeWater()));
-    expect(rendered).not.toMatch(/to go|complete|scheduled ·/);
+    expect(screen(tree)).toContain('Goal reached');
   });
 
   it('never assembles a score out of the numbers it holds', async () => {
     const rendered = screen(await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }))).toLowerCase();
     for (const word of ['score', 'readiness', 'of 4', '% complete']) {
       expect(rendered).not.toContain(word);
+    }
+  });
+});
+
+/* ── the quote ──────────────────────────────────────────────────────────── */
+
+describe('the quote', () => {
+  it('shows the approved quote and its attribution', async () => {
+    const rendered = screen(await mount(fakeWater()));
+    expect(rendered).toContain('I came, I saw, I conquered.');
+    expect(rendered).toContain('Julius Caesar');
+  });
+
+  it('is the only personality on the screen', async () => {
+    // A quote someone is on record as saying is content; the app commenting
+    // on your behaviour is the thing that has been removed twice.
+    const rendered = screen(await mount(fakeWater())).toLowerCase();
+    for (const slogan of ['stay on track', 'keep going', "you've got this", 'locked in', 'crush']) {
+      expect(rendered).not.toContain(slogan);
     }
   });
 });
@@ -484,11 +515,50 @@ describe('Customize Home', () => {
 
     expect(control(tree, 'Move Water up')).toBeDefined();
     expect(control(tree, 'Move Water down')).toBeDefined();
-    expect(control(tree, 'Move Peptides up')).toBeDefined();
+    expect(control(tree, 'Move Fuel down')).toBeDefined();
 
-    await act(async () => control(tree, 'Move Peptides up')!.props.onPress());
-    // Water was first; Peptides has taken its place.
-    expect(control(tree, 'Move Peptides up')!.props.disabled).toBe(true);
+    // Fuel ships first; moving Water up twice puts it there instead.
+    await act(async () => control(tree, 'Move Water up')!.props.onPress());
+    expect(control(tree, 'Move Water up')!.props.disabled).toBe(true);
+  });
+
+  it('offers a size choice only where a real design exists', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    for (const label of ['Water, Square', 'Water, Wide', 'Fuel, Square', 'Fuel, Wide']) {
+      expect(control(tree, label)).toBeDefined();
+    }
+    // Lists need width; a square form would be the wide layout squeezed.
+    expect(control(tree, "Today's Schedule, Square")).toBeUndefined();
+    expect(control(tree, 'Quick Tools, Square')).toBeUndefined();
+  });
+
+  it('switches a module between square and wide, and Home follows', async () => {
+    const tree = await mount(
+      fakeWater({ goal: createWaterGoal(64, 'floz'), entries: [createWaterEntry({ amount: 32, unit: 'floz' })] }),
+    );
+
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Water, Wide')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    // Same real state, different shape — the wide layout puts the remaining
+    // amount on the value line.
+    expect(screen(tree)).toContain('50%');
+    expect(screen(tree)).toContain('32 fl oz to go');
+  });
+
+  it('restores the shipped layout from Reset', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    await act(async () => control(tree, 'Hide Quick Tools')!.props.onPress());
+    await act(async () => control(tree, 'Reset Home layout to default')!.props.onPress());
+
+    expect(control(tree, 'Hide Quick Tools')).toBeDefined();
+    await act(async () => control(tree, 'Close')!.props.onPress());
+    expect(screen(tree)).toContain('QUICK TOOLS');
   });
 
   it('leaves the header alone — it is not a customisable module', async () => {
@@ -516,7 +586,6 @@ describe('accessibility', () => {
       /^Peptides,/,
       'Peptide Calculator',
       'Injection Sites',
-      'Food Scanner',
       'All tools',
       'Customize Home',
       'Settings',

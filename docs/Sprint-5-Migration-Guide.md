@@ -1,6 +1,6 @@
 # Sprint 5 — Screen Migration Guide
 
-# Status: 5.1 and 5.2 approved and locked · 5.3 implemented, awaiting device review · 5.4–5.8 not started
+# Status: 5.1 and 5.2 approved and locked · 5.3 → 5.3B implemented, awaiting device review · 5.4–5.8 not started
 
 This is the map slice 5.1 owed the slices that follow it, so each is mechanical rather than exploratory. **Each remaining slice still requires its own founder authorization.** Sections are updated with what actually happened as they ship, so a later slice reads the outcome rather than only the plan.
 
@@ -83,6 +83,14 @@ For each screen: what generic pattern is there now · what role it should take �
 - **Home surfaces actions; features own them.** `/water?add=1` — a param the feature reads once as initial state — is the pattern for opening a feature ready to act, without duplicating its flow.
 - **`flex` on `PressableScale` still does not work.** Hit a third time. **5.7 should fix the primitive.**
 - ~~**Open finding for 5.7:** `FloatingDock` active Home tab.~~ **Fixed in 5.3A** — Home's tint resolves through the theme.
+
+**Patterns 5.3B added:**
+
+- **A widget grid beats a fixed composition** when the user's mix of features varies. Order plus span, no stored coordinates — placement can never disagree with what was arranged.
+- **Two sizes means two designs.** A square is not a wide one squeezed; a module that has no square design says so by not offering one.
+- **Drag without a dependency.** `PanResponder` + `Animated` reorder a uniform-height single-column list fine. Arrows stay as the accessible path, never as a second-class fallback.
+- **A shortcut must mean what its label says.** The `Scan` tile pointed at the logging scanner while meaning the future evaluating one — a working button that quietly misrepresents the product is worse than an absent one. Applies to anything 5.6 or 5.8 adds.
+- **`__DEV__` previews for states real data cannot reach**, built from local constants — never by seeding real records.
 
 **Patterns 5.3A added:**
 

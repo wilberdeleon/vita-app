@@ -4,29 +4,34 @@ import { PressableScale, ProgressBar } from '../../../components/ui';
 import type { DailyNutrition } from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
+import type { ModuleSize } from '../modules';
 
 type Props = {
   today: DailyNutrition;
+  size: ModuleSize;
   onOpen: () => void;
   onLog: () => void;
 };
 
 /**
- * Fuel on Home — the third shape.
+ * Fuel on Home — a bar in both shapes, and wide by default.
  *
- * A bar, because calories are one number travelling along one axis, and
- * because Water already owns the ring and Peptides the count. Matching the
- * other two strips in height keeps the group reading as a set while the
- * accents keep the domains apart.
+ * The bar is Fuel's identity here because calories are one number travelling
+ * along one axis; Water owns the ring and Peptides the count. Wide is the
+ * shipped default at the founders' direction, so Home opens with one
+ * prominent module above a pair.
+ *
+ * **The two layouts are designed, not stretched.** Wide runs the bar the full
+ * width beneath a single row; square stacks the figure over the meal count
+ * with a shorter bar. Neither is the other squeezed.
  *
  * **Every figure is real** and comes from `useDailyNutrition()` — the engine
  * Fuel itself reads, so Home and Fuel cannot disagree. An empty day says so
- * rather than showing a plausible number.
- *
- * **No score of any kind.** Not a VITA Score, not a grade, not a rating; none
- * is authorised and none is invented here.
+ * rather than showing a plausible number, and **no score of any kind** is
+ * computed here: not a VITA Score, not a grade, not a rating. None is
+ * authorised and none is invented.
  */
-export function FuelStrip({ today, onOpen, onLog }: Props) {
+export function FuelStrip({ today, size, onOpen, onLog }: Props) {
   const { surfaces } = useTheme();
 
   const consumed = Math.round(today.nutrition.calories);
@@ -43,73 +48,140 @@ export function FuelStrip({ today, onOpen, onLog }: Props) {
         ? `${over.toLocaleString()} cal over`
         : `${remaining.toLocaleString()} cal left`;
 
-  // Short enough to share a line with the value and an action button.
   const detail = today.isLoading
     ? ''
     : today.isEmpty
       ? 'No meals'
       : `${today.mealsLoggedCount} of ${today.totalMealSlots} meals`;
 
+  const spoken = `Fuel, ${value}, ${
+    today.isEmpty ? 'no meals logged yet' : detail
+  }. Opens Fuel`;
+
+  /* Decorative — the module states the same figures in words. Rendered only
+     against a real target: a bar with nothing to fill is the "empty track
+     reads as complete" problem in miniature. */
+  const bar =
+    target > 0 ? (
+      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <ProgressBar progress={progress} color={palette.primary} height={3} />
+      </View>
+    ) : null;
+
+  const logAction = (
+    <PressableScale
+      onPress={onLog}
+      haptic="selection"
+      hitSlop={6}
+      accessibilityLabel="Log food"
+      style={[styles.action, { borderColor: surfaces.border }]}
+    >
+      <Ionicons name="add" size={14} color={palette.primary} />
+      <Text style={[styles.actionLabel, { color: surfaces.text }]}>Log</Text>
+    </PressableScale>
+  );
+
+  if (size === 'square') {
+    return (
+      <PressableScale
+        style={[styles.square, { borderColor: surfaces.border }]}
+        onPress={onOpen}
+        accessibilityLabel={spoken}
+      >
+        <View style={styles.head}>
+          <Ionicons name="flame" size={14} color={palette.primary} />
+          <Text style={[styles.label, { color: surfaces.textSecondary }]}>Fuel</Text>
+        </View>
+
+        <View style={styles.squareBody}>
+          <Text style={[styles.squareValue, { color: surfaces.text }]} numberOfLines={2} adjustsFontSizeToFit>
+            {value}
+          </Text>
+          <Text style={[styles.squareDetail, { color: surfaces.textTertiary }]} numberOfLines={1}>
+            {detail}
+          </Text>
+        </View>
+
+        {bar}
+        {logAction}
+      </PressableScale>
+    );
+  }
+
   return (
     <PressableScale
-      style={[styles.strip, { borderColor: surfaces.border }]}
+      style={[styles.wide, { borderColor: surfaces.border }]}
       onPress={onOpen}
-      accessibilityLabel={`Fuel, ${value}, ${
-        today.isEmpty ? 'no meals logged yet' : detail
-      }. Opens Fuel`}
+      accessibilityLabel={spoken}
     >
-      <View style={styles.row}>
+      <View style={styles.wideRow}>
         <View style={[styles.badge, { backgroundColor: `${palette.primary}1A` }]}>
           <Ionicons name="flame" size={16} color={palette.primary} />
         </View>
 
-        <View style={styles.text}>
+        <View style={styles.wideText}>
           <Text style={[styles.label, { color: surfaces.textSecondary }]}>Fuel</Text>
-          <Text style={[styles.value, { color: surfaces.text }]} numberOfLines={1}>
+          <Text style={[styles.wideValue, { color: surfaces.text }]} numberOfLines={1}>
             {value}
             {detail ? <Text style={[styles.detail, { color: surfaces.textTertiary }]}> · {detail}</Text> : null}
           </Text>
         </View>
 
-        <PressableScale
-          onPress={onLog}
-          haptic="selection"
-          hitSlop={6}
-          accessibilityLabel="Log food"
-          style={[styles.action, { borderColor: surfaces.border }]}
-        >
-          <Ionicons name="add" size={14} color={palette.primary} />
-          <Text style={[styles.actionLabel, { color: surfaces.text }]}>Log</Text>
-        </PressableScale>
+        {logAction}
       </View>
 
-      {/*
-        * Decorative — the strip states the same figures in words. Rendered
-        * only against a real target: a bar with nothing to fill is the
-        * "empty track reads as complete" problem in miniature.
-        */}
-      {target > 0 ? (
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <ProgressBar progress={progress} color={palette.primary} height={3} />
-        </View>
-      ) : null}
+      {bar}
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  strip: {
+  square: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: radii.glassLarge,
+    padding: spacing.m,
+    alignItems: 'center',
+    gap: spacing.s,
+    minHeight: 168,
+  },
+  wide: {
     borderWidth: 1,
     borderRadius: radii.card,
-    paddingVertical: spacing.m,
-    paddingHorizontal: spacing.m,
+    padding: spacing.m,
     gap: spacing.s,
     minHeight: 64,
   },
-  row: {
+  wideRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.m,
+  },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+  },
+  label: {
+    ...typography.micro,
+    letterSpacing: 0.6,
+  },
+  squareBody: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    alignSelf: 'stretch',
+  },
+  squareValue: {
+    ...typography.heading,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  squareDetail: {
+    ...typography.caption,
+    textAlign: 'center',
   },
   badge: {
     width: 40,
@@ -118,15 +190,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  text: {
+  wideText: {
     flex: 1,
     gap: 1,
   },
-  label: {
-    ...typography.micro,
-    letterSpacing: 0.6,
-  },
-  value: {
+  wideValue: {
     ...typography.bodyMedium,
     fontWeight: '700',
   },
@@ -137,6 +205,7 @@ const styles = StyleSheet.create({
   action: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.xs,
     borderWidth: 1,
     borderRadius: radii.pill,

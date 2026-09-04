@@ -11,6 +11,10 @@ import {
   SectionHeader,
   VitaSheet,
 } from '../../components/ui';
+import {
+  TodaySchedule,
+  type ScheduleItem,
+} from '../../features/dashboard/components/TodaySchedule';
 import { WaterVessel } from '../../features/water/components/WaterVessel';
 import { vitaHaptic } from '../../lib/haptics';
 import { palette, radii, spacing, typography } from '../../theme/tokens';
@@ -47,8 +51,26 @@ import { useTheme } from '../../theme/ThemeProvider';
  * 3. **the surface roles** — the same content at four weights, side by side,
  *    which is the fastest way to see whether "card soup" has merely become
  *    "glass soup";
- * 4. **type and press** — the supporting vocabulary.
+ * 4. **type and press** — the supporting vocabulary;
+ * 5. **a populated Today's Schedule** — added in 5.3B so the founders can see
+ *    what that section looks like with rows in it. Real Home shows an empty
+ *    schedule until real routines exist, and seeding real ones just to take a
+ *    screenshot would put invented records in someone's actual peptide
+ *    history. These rows are local constants that touch nothing.
  */
+
+/**
+ * Sample schedule rows. `__DEV__`-only, local, and written nowhere.
+ *
+ * Note what is *not* here: a time. Routines schedule by day, so a preview
+ * that showed `9:00 PM` would be demonstrating a design VITA cannot honestly
+ * ship. The states are the domain's own marks.
+ */
+const PREVIEW_SCHEDULE: ScheduleItem[] = [
+  { id: 'preview-1', name: '5-Amino-1MQ', amount: '1 mg', mark: 'unconfirmed', onOpen: () => {} },
+  { id: 'preview-2', name: 'BPC-157', amount: '250 mcg', mark: 'taken', onOpen: () => {} },
+  { id: 'preview-3', name: 'Retatrutide', amount: '2 mg', mark: 'skipped', onOpen: () => {} },
+];
 
 /** Prototype-only. Not VITA's default, and not written anywhere. */
 const PROTOTYPE_GOAL_FLOZ = 64;
@@ -266,6 +288,15 @@ export default function IdentityPrototype() {
             of scaling — feedback stays, movement goes.
           </Text>
         </PressableScale>
+      </View>
+
+      {/* ── 6. Today's Schedule, populated ───────────────────────────────
+        * Home cannot show this state until real routines exist, and seeding
+        * some would write into real history. Local rows, no persistence.
+        */}
+      <View style={styles.section}>
+        <SectionHeader title="Today's Schedule — populated preview" />
+        <TodaySchedule items={PREVIEW_SCHEDULE} isLoading={false} />
       </View>
 
       <Text style={[styles.footer, { color: surfaces.textTertiary }]}>

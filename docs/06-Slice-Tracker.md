@@ -2039,7 +2039,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ✅ Founder-approved on device 2026-09-03 |
 | 5.2A | Water Custom Amount Keyboard Polish | A Done key for the number pad, and the press-opacity regression it exposed | ✅ Founder-approved · 5.2 closed |
 | 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | 🟡 Data work approved; composition revised in 5.3A |
-| 5.3A | Dashboard Composition + Customization | Denser composition, Quick Tools, Today's Schedule, Customize Home, dock contrast fix | 🟡 Implemented — awaiting founder device review |
+| 5.3A | Dashboard Composition + Customization | Denser composition, Quick Tools, Today's Schedule, Customize Home, dock contrast fix | 🟡 Concepts approved; composition revised in 5.3B |
+| 5.3B | Dashboard Widget Layout + Density | Two-column widget grid, square/wide sizes, drag reorder, quote, Food Scanner correction | 🟡 Implemented — awaiting founder device review |
 | 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
 | 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
 | 5.6 | Tools Integration | Sprint 4's existing working Tools under the new language — behaviour frozen | ⬜ Not started |
@@ -2237,5 +2238,35 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Device coverage limit.** Screenshots are the first-run state — this environment cannot seed feature data or tap the simulator, so populated Home, a scheduled routine in Today's Schedule, and hide/reorder-then-relaunch are covered by 48 route tests and 15 layout tests rather than by screenshot.
 
-**Still to verify — founder, on a real device:** whether Home now feels full without being cluttered, whether the greeting is subtle enough, whether Today's Schedule earns its place, and whether Customize Home feels intuitive.
+**Founder device review: the architecture is approved, the composition is not.** Real-data-only, fixture cleanup, persistence, Quick Tools, Today's Schedule and the identity all stand. What was rejected: Home still felt empty, every module was the same long horizontal strip, and the arrangement was still ours rather than the user's. Addressed in 5.3B.
+
+### Slice 5.3B — Dashboard Widget Layout + Density 🟡
+
+**Implemented 2026-09-03. Awaiting founder device review — not approved.** Composition and customization only; **no fixture returned** and every figure still comes from the feature that owns it.
+
+**A two-column widget grid.** Modules now have **two genuinely designed shapes** rather than one stretched: `square` and `wide`. `buildGrid` derives rows from the visible modules and their spans — a wide module takes a row, two squares share one, and **a square with no partner keeps its column beside an empty cell rather than being promoted to wide**, because stretching would render the square design at proportions nobody drew. Nothing stores a position, so what the user arranged and what Home renders cannot disagree.
+
+**Default: Fuel wide, then Water | Peptides square, then Quick Tools and Today's Schedule** — the founders' suggested composition.
+
+**Header compressed, and a quote added.** The greeting now sits directly under the wordmark (the specific 5.3A note) and the founder-approved `I came, I saw, I conquered. — Julius Caesar` follows it, with the date chip alongside. The quote ships as data with a `currentQuote()` accessor so a curated library can grow into it; there is no network call and no rotation through unverified material. **Because the quote carries the personality, the factual summary line was removed** — §36 allows it, and both would have overcrowded the header.
+
+**Drag-to-reorder, with no new dependency.** The audit found neither `react-native-gesture-handler` nor `react-native-reanimated` installed. Adding two native dependencies to reorder five rows was not justifiable and was not necessary: the drag changes *order* in a single-column list of uniform-height rows, which `PanResponder` and `Animated` — React Native core — do exactly. **The arrows stayed**: they are not a fallback that lost to drag, they are the accessible path, and a gesture-only reorder would be unusable by exactly the people who most need a customisable Home. `Reset Layout` restores the shipped order, sizes and visibility.
+
+**Size is offered only where a design exists.** Quick Tools and Today's Schedule are wide-only and say so; offering a square would mean shipping the wide layout squeezed.
+
+**Migration is silent and lossless.** Every layout saved by 5.3A has no `sizes` field; `normalizeLayout` adopts defaults while keeping the order and visibility the user chose. A size a module has no design for is corrected rather than stored.
+
+**The Food Scanner tile was removed, and this is the important correction.** 5.3A routed `Scan` to `/fuel/scan`. The founder review clarified that on Home *Food Scanner* means the **future** scanner that evaluates a product and produces the planned VITA score — `/fuel/scan` is the barcode lookup used to *log* a food, a different feature sharing a camera. Pointing at it was the worst option available: the button works, so nothing looks broken, while the product quietly means something else than it says. The evaluating scanner does not exist and its scoring is explicitly unauthorised, so the tile is **omitted entirely** rather than shown disabled — a greyed row still advertises a feature. Quick Tools ships two tools, and gets a third when there is a third. A test asserts Home never navigates to `/fuel/scan`.
+
+**A populated Today's Schedule can be inspected safely.** The `__DEV__` identity route now renders three sample rows from local constants — no persistence, no touching real peptide history. They deliberately carry **no times**, because routines schedule by day and a preview showing `9:00 PM` would demonstrate a design VITA cannot honestly ship.
+
+**Movement is still absent** — no activity domain exists, and it is not offered as a disabled widget.
+
+**`PressableScale`'s flex trap was assessed under §57 and left alone.** The grid does depend on flex propagation, but each cell is a wrapper that a grid needs anyway, so the workaround costs nothing here; changing a primitive used across ~10 screens that this environment cannot visually verify was the wrong risk. **It stays 5.7's.** The 5.3A dock contrast fix is preserved.
+
+**Validation.** `npm test` **50 suites / 1309 tests** (1287 → 1309) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged · iOS export clean · **no dependency added** · verified in Expo Go: Dark, Light, and the Customize sheet.
+
+**Device coverage limit.** Screenshots are the first-run state — this environment cannot seed feature data or tap the simulator, so populated widgets, square↔wide switching on device, drag, and hide-then-relaunch are covered by 70 route tests and 32 layout tests rather than by screenshot.
+
+**Still to verify — founder, on a real device:** whether Home is finally full enough, whether the quote lands, whether the squares read well, whether square↔wide switching feels useful, and whether dragging feels natural.
 
