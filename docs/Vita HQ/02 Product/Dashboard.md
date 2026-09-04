@@ -6,6 +6,22 @@
 
 ---
 
+## Sprint 5 slice 5.3 — the Dashboard identity redesign (2026-09-03, awaiting founder device review)
+
+**Home became a daily control surface rather than a report.** It opens with a time-aware greeting and the date, then three domains you can act on, then a quiet route to Tools.
+
+**Everything shown is real.** The old Home displayed steps, sleep, workouts, a streak, a Journey stage and two of its four "goal pillars" from a fixture file — plausible numbers rendered to every user forever. All of it is gone. Water, Fuel and Peptides now read the features' own engines, so Home cannot disagree with them and updates the moment you come back from logging something. Where a domain has nothing real to say, Home says so plainly instead of filling the space.
+
+**Both slogans are gone.** *Build with intention.* was the largest type in the app and said nothing about anyone's day; *Your day, your direction.* sat under it. Neither was replaced. The greeting stays, and stays time-aware.
+
+**Three domains, three shapes** — Water a ring, Peptides a tally of today's marks, Fuel a bar. A person should be able to tell them apart without reading a word, which five identical metric tiles made impossible.
+
+**Tools is discoverable from Home for the first time**, as one quiet row naming the two tools that exist. Home is not a launcher and did not become one.
+
+**Peptides wording on Home follows the feature's own rules**: scheduled rather than due, an unanswered day stays unanswered, and nothing is scored.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3.
+
 ## Current state (verified in repo, Sprint 0 — mock data)
 
 Built in Slice 0.4, refined in 0.11–0.12. Components live in `src/features/dashboard/`:

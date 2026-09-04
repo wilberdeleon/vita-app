@@ -1,6 +1,6 @@
 # Sprint 5 — Screen Migration Guide
 
-# Status: slice 5.1 approved and locked · slice 5.2 implemented, awaiting device review · 5.3–5.8 not started
+# Status: 5.1 and 5.2 approved and locked · 5.3 implemented, awaiting device review · 5.4–5.8 not started
 
 This is the map slice 5.1 owed the slices that follow it, so each is mechanical rather than exploratory. **Each remaining slice still requires its own founder authorization.** Sections are updated with what actually happened as they ship, so a later slice reads the outcome rather than only the plan.
 
@@ -49,7 +49,10 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.3 — Dashboard
+# Slice 5.3 — Dashboard — ✅ IMPLEMENTED 2026-09-03 (awaiting founder device review)
+
+*Outcome: the fixture removal was larger than planned — six of fourteen displayed values were invented, which deleted `mock.ts`, `api.ts`, `types.ts` and nine components. `GlassSurface` on Home went 6 → 0. See the Slice Tracker.*
+
 
 **Files:** `src/app/(vita)/(tabs)/dashboard.tsx` · `features/dashboard/components/*` · `features/dashboard/mock.ts`
 
@@ -68,6 +71,16 @@ For each screen: what generic pattern is there now · what role it should take �
 **Frozen:** `useDailyNutrition`, `useWaterToday`, `usePeptideSummary` and everything behind them. Home derives; it never computes its own totals.
 
 **Watch:** `DASHBOARD_FIXTURE` also supplies `firstName` and `journey`. Removing fixtures means deciding what Home says when a domain has no feature yet — the honest answer is *nothing*, not a placeholder.
+
+**Resolved:** `firstName` moved to `useAuth()`, the app's identity boundary, rather than being deleted — it is the one displayed value that is about the user rather than about their data, and it becomes real when Supabase auth lands. Journey was omitted entirely.
+
+**Patterns 5.3 established for the slices that follow:**
+
+- **One shape per domain.** Water is a ring, Peptides a tally, Fuel a bar. Two features that behave differently must not read as the same module in two colours — 5.4 should give Peptides Home its own shape rather than borrowing one.
+- **A summary screen inherits the source feature's wording rules in full.** Peptides on Home carries Sprint 3's *scheduled not due*, *unanswered stays unanswered*, *nothing is scored* without softening. 5.4 and 5.5 must not relax them either.
+- **Home surfaces actions; features own them.** `/water?add=1` — a param the feature reads once as initial state — is the pattern for opening a feature ready to act, without duplicating its flow.
+- **`flex` on `PressableScale` still does not work.** Hit a third time. **5.7 should fix the primitive.**
+- **Open finding for 5.7:** `FloatingDock` gives the active Home tab `palette.ink`, invisible on the near-black dark background and fine in Light.
 
 ---
 

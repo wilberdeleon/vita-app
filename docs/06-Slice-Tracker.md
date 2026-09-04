@@ -2037,8 +2037,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | 🟡 Identity direction founder-approved on device; polished in 5.1A, awaiting the 5.1A review that locks it |
 | 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | ✅ Founder-approved on device 2026-09-02 — **5.1 locked** |
 | 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ✅ Founder-approved on device 2026-09-03 |
-| 5.2A | Water Custom Amount Keyboard Polish | A Done key for the number pad, and the press-opacity regression it exposed | 🟡 Implemented — awaiting founder verification |
-| 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | ⬜ Not started |
+| 5.2A | Water Custom Amount Keyboard Polish | A Done key for the number pad, and the press-opacity regression it exposed | ✅ Founder-approved · 5.2 closed |
+| 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | 🟡 Implemented — awaiting founder device review |
 | 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
 | 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
 | 5.6 | Tools Integration | Sprint 4's existing working Tools under the new language — behaviour frozen | ⬜ Not started |
@@ -2144,7 +2144,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: approved.** Water is the first production feature in the Sprint 5 identity and it stands.
 
-### Slice 5.2A — Water Custom Amount Keyboard Polish 🟡
+### Slice 5.2A — Water Custom Amount Keyboard Polish ✅
 
 **Implemented 2026-09-03. Awaiting founder verification.** Closeout polish on one item, plus one regression it uncovered.
 
@@ -2165,4 +2165,38 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Validation.** `npm test` **49 suites / 1245 tests** (1232 → 1245; +13) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged · iOS export clean · **no dependency added** · diff boundary: Water plus the two shared primitives named above.
 
 **Device coverage limit, stated plainly.** The disabled-button fix was confirmed on device. **The accessory bar itself was not** — presenting the keyboard requires a tap this environment cannot perform, and `InputAccessoryView` inside a `Modal` is a combination no VITA screen has previously exercised. Its behaviour is covered by tests, but **whether the bar actually appears above the number pad is the one thing founder verification has to confirm.**
+
+**Founder verification: passed. Slice 5.2 is closed.**
+
+### Slice 5.3 — Dashboard Identity Redesign 🟡
+
+**Implemented 2026-09-03. Awaiting founder device review — not approved.**
+
+**A data-source audit came before any layout.** Of the fourteen things the old Home displayed, **six were fixtures**: steps (`6,842`), sleep (`6.4 h`), workouts (`1 / 3`), a streak (`12`), the entire Journey card, and the Movement and Recovery goal pillars — every one a plausible number shown to every user forever. The founder ruling settled it: real data or nothing. `features/dashboard/mock.ts`, `api.ts` and `types.ts` are deleted, and with them `HomeHeader`, `HomeSummaryCard`, `JourneyCard`, `MacrosCard`, `MacroRow`, `QuickStatsRow`, `MetricTile`, `MealRow` and `JourneySection`.
+
+**Both slogans are gone and nothing replaced them.** `Build with intention.` was 34px/800 — the largest type in the app — for a line that said nothing about the user's day. The greeting stays, stays time-aware, and now sits at 26px above a quiet date line.
+
+**The name moved to `useAuth()`.** It was a Dashboard-owned constant, which is a screen inventing a fact about the user; the auth provider is the app's identity boundary and becomes real when Supabase lands, with no change to Home.
+
+**Three domains, three shapes.** Water is a ring, Peptides a tally of day marks, Fuel a horizontal bar. The old screen's five identical metric tiles are exactly what made unrelated things read alike; a person should be able to tell the domains apart without reading a word. Every figure comes from `useWaterToday()`, `useDailyNutrition()` and `usePeptides()` — the features' own engines — so Home cannot disagree with them and updates with no refresh or polling.
+
+**The order is fixed, not adaptive.** Ranking domains by urgency was considered and rejected: deciding a dose outranks hydration today would require VITA to hold an opinion about which matters more, which is the first step toward the compliance semantics the product refuses. A stable order is also better to live with.
+
+**Peptides wording carries Sprint 3's rules unchanged** — *scheduled* never *due*, an unanswered day stays unanswered and is never converted to skipped, and nothing is scored. Colour never carries state alone: the marks are decorative and the count says the same thing in words.
+
+**Tools is discoverable without Home becoming a launcher** — one row, one destination, the two real tools named in the subtitle. No BMI, no Reference, no Coming Soon.
+
+**Surfaces:** `GlassSurface` on Home **6 → 0**; `Card` **0 → 0**. Every module is a bordered surface or direct content, and the Tools row is a hairline. Glass returns to what the founder ruling reserved it for — the dock.
+
+**Home surfaces actions; features own them.** *Add* opens `/water?add=1` and Water reads the param once as initial state; Water keeps sole ownership of logging, including goal-reached detection and failure handling. Rebuilding that on Home for one saved tap is the duplication the architecture rules forbid.
+
+**One layout trap hit for the third time.** `flex: 1` handed to `PressableScale` never reaches the row, so the two modules first rendered at different widths. Wrapped, as in `MetricTile` and the 5.1A quick-adds. **5.7 should fix the primitive rather than the callers.**
+
+**Reported, not fixed — a pre-existing dock defect.** `FloatingDock` gives the active Home tab `palette.ink` (`#1C1F1A`), which is very nearly invisible on the near-black dark background; the label is perfectly legible in Light. Confirmed on device in both themes. It is theme-parity failure on a founder-approved decision (*Home is navigation, neutral ink*), it lives in shared app shell rather than in Dashboard, and changing an approved colour decision is a founder call — so it is recorded here for 5.7 rather than changed.
+
+**Validation.** `npm test` **49 suites / 1259 tests** (1245 → 1259) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged · iOS export clean · **no dependency added** · verified in Expo Go, Dark and Light.
+
+**Device coverage limit.** Screenshots show the sparse first-run state, since this environment cannot seed Water, Fuel or Peptide data. Populated states — real hydration progress, a scheduled dose, meals logged — are covered by twenty route tests mounting the real screen over real providers, and are the first thing for founder review.
+
+**Still to verify — founder, on a real device:** whether Home is useful immediately, whether the three domains read as distinct, whether Tools feels discoverable without being a launcher, whether the greeting is the right weight, and whether the screen feels too empty on a day with little logged.
 

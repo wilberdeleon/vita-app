@@ -1,160 +1,127 @@
 import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { useWindowDimensions } from 'react-native';
-import { Screen, Section, SectionHeader } from '../../../components/ui';
-import { HomeHeader } from '../../../features/dashboard/components/HomeHeader';
-import { HomeSummaryCard } from '../../../features/dashboard/components/HomeSummaryCard';
-import { JourneyCard } from '../../../features/dashboard/components/JourneyCard';
-import { MacrosCard } from '../../../features/dashboard/components/MacrosCard';
-import { MealRow } from '../../../features/dashboard/components/MealRow';
-import { QuickStatsRow } from '../../../features/dashboard/components/QuickStatsRow';
-import { getDashboard } from '../../../features/dashboard/api';
+import { StyleSheet, View } from 'react-native';
+import { Screen } from '../../../components/ui';
+import { DashboardHeader } from '../../../features/dashboard/components/DashboardHeader';
+import { FuelStrip } from '../../../features/dashboard/components/FuelStrip';
+import { PeptidesModule } from '../../../features/dashboard/components/PeptidesModule';
+import { ToolsRow } from '../../../features/dashboard/components/ToolsRow';
+import { WaterModule } from '../../../features/dashboard/components/WaterModule';
 import { useGreeting } from '../../../features/dashboard/greeting';
-import type { CalorieSummary, GoalPillar, MealSlotSummary, QuickStat } from '../../../features/dashboard/types';
-import { MACROS, roundForDisplay, useDailyNutrition } from '../../../lib/nutrition';
+import { useAuth } from '../../../features/auth/AuthProvider';
+import { formatLogDateLong } from '../../../lib/daily';
+import { useDailyNutrition } from '../../../lib/nutrition';
+import { usePeptides } from '../../../lib/peptides';
 import { useWaterToday } from '../../../lib/water';
-import { palette, spacing } from '../../../theme/tokens';
-import { useTheme } from '../../../theme/ThemeProvider';
-
-/** Narrower iPhones (SE-class) get a slightly tighter outer margin than the rest of the 24–30px directional range. */
-const NARROW_WIDTH_BREAKPOINT = 380;
+import { spacing } from '../../../theme/tokens';
 
 /**
- * Home reads nutrition from the same engine as Fuel (slice 2.5).
+ * Home — a daily control surface, not a report.
  *
- * Everything nutrition-related below is *derived* here into the view models
- * Home's approved components already expect — no second set of totals is
- * calculated. **Water joined it in slice 3.4**, read from `src/lib/water`, so
- * Home, Fuel, and the Water screen cannot disagree about how much someone has
- * had today. `getDashboard()` still supplies the domains with no feature
- * behind them: the greeting name, Journey, steps, sleep, workouts, streak, and
- * the Movement and Recovery pillars.
+ * ## What this replaced, and why so little survived
  *
- * The dependency runs one way — Water domain → Home. Nothing in `src/lib/water`
- * knows Home exists.
+ * The Dashboard before slice 5.3 was six stacked frosted cards: a greeting
+ * with two slogans, a goals summary, a Journey card, a macros card, five
+ * metric tiles, and four meal rows. It read as an analytics page, it had **no
+ * action affordance above the fold**, and more than half of what it showed
+ * was invented — steps, sleep, workouts, a streak, a Journey stage, and two
+ * of four "goal pillars" all came from `DASHBOARD_FIXTURE`. The founder
+ * ruling was unambiguous: *if real data exists, use it; if it doesn't, don't
+ * fabricate activity to make a module look populated.* That deleted the
+ * fixture file, and with it most of the old screen.
+ *
+ * ## Every number here comes from a feature's own engine
+ *
+ * `useWaterToday()`, `useDailyNutrition()` and `usePeptides()` — the same
+ * hooks Water, Fuel and Peptides read. Home derives nothing and stores
+ * nothing; there is no dashboard state, no aggregate cache, and no second
+ * copy of a total that could drift from the screen it came from. Because
+ * these are the live providers, logging a drink or marking a dose taken is
+ * reflected here the moment you come back, with no refresh and no polling.
+ *
+ * The name comes from `useAuth()` — the app's identity boundary — rather than
+ * from a screen-owned constant.
+ *
+ * ## The composition, and why it is fixed rather than adaptive
+ *
+ * Water and Peptides sit side by side because both are *today* state you can
+ * act on; Fuel is a full-width strip below them; Tools is a quiet row at the
+ * foot. Mixed shapes, deliberately: a ring, a tally, a bar. Nothing here is a
+ * grid of equal destinations, which is what would make Home a launcher.
+ *
+ * **The order does not change with the data.** Ranking the domains by
+ * urgency was considered and rejected: to decide that a scheduled dose
+ * outranks hydration today, VITA would have to hold an opinion about which
+ * matters more — which is the first step toward the compliance and urgency
+ * semantics this product explicitly refuses. A fixed order is also simply
+ * better to live with: the thing you reach for is where it was yesterday.
+ * The modules change; their places do not.
+ *
+ * ## Home surfaces actions; features own them
+ *
+ * *Add* opens Water with its sheet already up, via a query param Water reads
+ * — Water keeps sole ownership of logging, including the goal-reached
+ * detection and the failure handling that go with it. Rebuilding that here
+ * would be the duplication the architecture rules forbid, for one saved tap.
+ * Fuel and Peptides likewise get a door, not a copy of their flows.
  */
 export default function Dashboard() {
-  const data = getDashboard();
-  const today = useDailyNutrition();
-  const water = useWaterToday();
   const greeting = useGreeting();
-  const { width } = useWindowDimensions();
-  const { scheme } = useTheme();
-  const horizontalInset = width < NARROW_WIDTH_BREAKPOINT ? 24 : 28;
-  const tone = scheme === 'dark' ? 'light' : 'dark';
-
-  const consumed = roundForDisplay(today.nutrition);
-
-  const calories = useMemo<CalorieSummary>(
-    () => ({
-      current: consumed.calories,
-      goal: today.targets.calories,
-      macros: MACROS.map((macro) => ({
-        label: macro.label,
-        current: consumed[macro.key],
-        goal: today.targets[macro.key],
-        unit: macro.unit,
-        color: palette[macro.key],
-      })),
-    }),
-    [consumed, today.targets],
-  );
-
-  /**
-   * Nutrition and Water are recomputed from their real domains. Movement and
-   * Recovery have no feature behind them yet, so they keep their fixture
-   * values rather than being silently redefined — the "N of 4 goals complete"
-   * count must stay honest about what it actually knows, and pretending
-   * otherwise for two of four pillars would make the whole count meaningless.
-   *
-   * Nutrition counts as complete once the day's calorie target is reached.
-   * That is a product-semantics choice, not a derived fact — flagged for
-   * founder confirmation.
-   */
-  const goals = useMemo<GoalPillar[]>(
-    () =>
-      data.goals.map((goal) => {
-        if (goal.id === 'nutrition') {
-          return {
-            ...goal,
-            complete: today.targets.calories > 0 && consumed.calories >= today.targets.calories,
-          };
-        }
-        if (goal.id === 'water') {
-          /**
-           * Complete only when the user has a goal *and* has reached it.
-           * `isGoalMet` is already false when no goal exists, so a user who
-           * has never set one is never marked complete — and equally is never
-           * told they failed something they never chose. `GoalPillar` has no
-           * third state and does not need one for that to be honest: an unset
-           * goal is simply not a met goal.
-           */
-          return { ...goal, complete: water.isGoalMet };
-        }
-        return goal;
-      }),
-    [data.goals, consumed.calories, today.targets.calories, water.isGoalMet],
-  );
-
-  /**
-   * The Water tile, on real state.
-   *
-   * The old fixture claimed `5 / 8` to every user forever. It now shows the
-   * day's real total in the user's own unit, and its accent bar shows progress
-   * only when there is a goal to progress toward — `useWaterToday().progress`
-   * is already 0 without one, so nothing is fabricated. Tapping opens Water.
-   */
-  const quickStats = useMemo<QuickStat[]>(
-    () =>
-      data.quickStats.map((stat) =>
-        stat.id === 'water'
-          ? {
-              ...stat,
-              value: water.isLoading ? '—' : water.totalLabel,
-              progress: water.progress,
-              onPress: () => router.push('/water'),
-            }
-          : stat,
-      ),
-    [data.quickStats, water.isLoading, water.totalLabel, water.progress],
-  );
-
-  /**
-   * All four slots always render, empty ones included — that is Home's
-   * approved presentation, and an empty day simply reads as four zeroed
-   * rows rather than needing a new empty state. Fuel's Food Log is where
-   * per-entry detail lives; Home aggregates each meal to a total and a
-   * count.
-   */
-  const mealSlots = useMemo<MealSlotSummary[]>(
-    () =>
-      today.meals.map((meal) => ({
-        slot: meal.slot,
-        kcal: Math.round(meal.nutrition.calories),
-        itemCount: meal.itemCount,
-      })),
-    [today.meals],
-  );
+  const { user } = useAuth();
+  const water = useWaterToday();
+  const fuel = useDailyNutrition();
+  const peptides = usePeptides();
 
   return (
-    <Screen dockClearance contentGap={spacing.xxxl} topInset={false} horizontalInset={horizontalInset}>
-      <HomeHeader greeting={greeting} firstName={data.firstName} />
+    <Screen dockClearance contentGap={spacing.xxl} topInset={false}>
+      <DashboardHeader
+        greeting={greeting}
+        firstName={user?.firstName ?? 'there'}
+        dateLabel={formatLogDateLong(fuel.logDate)}
+      />
 
-      <HomeSummaryCard calories={calories} goals={goals} />
+      {/*
+        * Each module is wrapped, because `PressableScale` applies its `style`
+        * to an inner animated view — a `flex: 1` handed to it never reaches
+        * this row, and the pair renders at two different widths. Third time
+        * this trap has been hit (`MetricTile`, the 5.1A quick-adds, here);
+        * 5.7 should fix the primitive rather than the callers.
+        */}
+      <View style={styles.pair}>
+        <View style={styles.half}>
+          <WaterModule
+            today={water}
+            onAdd={() => router.push('/water?add=1')}
+            onOpen={() => router.push('/water')}
+          />
+        </View>
+        <View style={styles.half}>
+          <PeptidesModule
+            today={peptides.today}
+            isEmpty={peptides.isEmpty}
+            isLoading={peptides.isLoading}
+            onOpen={() => router.push('/peptides')}
+          />
+        </View>
+      </View>
 
-      <JourneyCard journey={data.journey} />
+      <FuelStrip
+        today={fuel}
+        onOpen={() => router.push('/fuel')}
+        onLog={() => router.push('/fuel/add')}
+      />
 
-      <MacrosCard macros={calories.macros} />
-
-      <Section header={<SectionHeader title="Health Metrics" tone={tone} />}>
-        <QuickStatsRow stats={quickStats} />
-      </Section>
-
-      <Section header={<SectionHeader title="Today's Meals" tone={tone} />}>
-        {mealSlots.map((meal) => (
-          <MealRow key={meal.slot} meal={meal} />
-        ))}
-      </Section>
+      <ToolsRow onOpen={() => router.push('/tools')} />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  pair: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.m,
+  },
+  half: {
+    flex: 1,
+  },
+});

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale, Screen, ScreenHeader, useToast } from '../../../components/ui';
@@ -66,7 +66,16 @@ export default function Water() {
   const { showToast } = useToast();
   const { surfaces } = useTheme();
 
-  const [adding, setAdding] = useState(false);
+  /**
+   * Home can ask Water to open with the sheet already up (`/water?add=1`).
+   *
+   * The param is read once, as the initial state, rather than watched: Water
+   * owns the sheet from that point on, and a param that kept re-opening it
+   * after a close would make the screen fight the user. Home asks; Water
+   * decides — which is what keeps logging in exactly one place.
+   */
+  const { add } = useLocalSearchParams<{ add?: string }>();
+  const [adding, setAdding] = useState(add === '1');
 
   /**
    * One haptic per log, and the more specific one wins.
