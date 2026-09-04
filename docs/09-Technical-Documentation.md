@@ -73,6 +73,25 @@ The test for whether something belongs here: does more than one feature read it,
 
 **Extension point.** BMI adds a body-weight unit and a height unit here, and **Sprint 6**'s Journey / Weight reads the same weight unit — which is what makes them app-level rather than tool-level. They are **not added before something reads them**: a persisted preference with no consumer is one the user can set and never observe.
 
+## Dashboard preferences and editing (Sprint 5 slices 5.3A–5.3C)
+
+Home owns two persisted UI preferences, and they are the worked example of a **screen-owned** preference — the counterpart to the app-level rule above.
+
+**Two records, two keys.** `vita:v1:dashboard:layout` holds which modules show, their order and their sizes; `vita:v1:dashboard:tools` holds the Quick Tools order and visibility. They are separate because they change for different reasons at different times, and a single record would let either write drop the other's state — the same failure mode `PreferencesRepository.save()` has, which is precisely why neither lives there. Both keys come from the shared `singletonKey` helper.
+
+**`usePersistedPrefs<T>(key, normalize, fallback)`** (`features/dashboard/`) is the shared hook: read once on mount, write on change, fire-and-forget. A failed write is deliberately silent — the change already applies for the session, and an alert about a preference that re-applies on the next tap is more alarming than the loss. `setValue` accepts a `useState`-style updater, resolved through a ref so the setter's identity stays stable; Home's drag handler depends on that, because a handler held for the life of a gesture must not write back a layout from the render that created it.
+
+**Every stored record is untrusted.** `normalizeLayout` and `normalizeQuickTools` drop unknown ids, collapse duplicates, **append entries a stored order predates** (which is how a newly shipped module or tool appears with no migration step), correct a size a module has no design for, and fall back wholesale only when nothing is usable. This is what makes adding a module or a tool a registry change rather than a migration.
+
+**Placement is derived, never stored.** `buildGrid` reads order and span; nothing persists a coordinate, so what the user arranged and what Home renders cannot disagree.
+
+**Editing uses React Native core only** — no `react-native-gesture-handler`, no `react-native-reanimated`. Two gestures exist, and they are deliberately different:
+
+- **Customize Home's list drag** reorders *live*, because it is a single column of uniform-height rows (`ROW_HEIGHT`), which makes the arithmetic exact. The nested Quick Tools section sits below that list rather than expanding a row, so the row height stays uniform.
+- **The grid's drag reorders on release.** Continuous reflow across a two-column grid would mean recomputing rows, re-measuring every cell and compensating the gesture baseline on each crossing. Widgets measure with `measureInWindow` and **re-measure on entering edit mode**, so all rectangles come from one frame; the delta is applied to the dragged widget's own rectangle, which makes the comparison scroll-invariant.
+
+**Long press is threaded into the feature modules, not layered over them.** React Native gives the responder to the innermost pressable, and `Pressable` suppresses `onPress` once a long press fires — which is both why a wrapper alone cannot work and why holding a widget does not also navigate. A blocking overlay is used only *while* editing, to stop a grab firing a module's own button.
+
 ## UI conventions
 
 **Units are cased by role.** A **configuration field label** names its unit in capitals — `Vial Amount (MG)`, `Reconstitution Volume (ML)`, `Amount (MG)` — matching the founder's requested styling on setup surfaces. Every **displayed value** stays lowercase — `2 mg`, `250 mcg`, `20 units`, `1.2 mL`, `10 mg/mL`. Nothing else uppercases a unit; in particular the conversion reference, history rows, and log sheets are all values and stay lowercase.

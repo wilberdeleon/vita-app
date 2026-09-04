@@ -19,11 +19,22 @@ import {
   type DashboardModuleId,
   type ModuleSize,
 } from '../modules';
+import {
+  DEFAULT_QUICK_TOOLS,
+  QUICK_TOOL_REGISTRY,
+  isToolHidden,
+  moveTool,
+  toggleTool,
+  visibleTools,
+  type QuickToolsPrefs,
+} from '../quickTools';
 
 type Props = {
   visible: boolean;
   layout: DashboardLayout;
   onChange: (next: DashboardLayout) => void;
+  tools: QuickToolsPrefs;
+  onToolsChange: (next: QuickToolsPrefs) => void;
   onClose: () => void;
 };
 
@@ -53,10 +64,24 @@ const SIZE_LABELS: Record<ModuleSize, string> = { square: 'Square', wide: 'Wide'
  * Today's Schedule are wide-only and say so by having no control, rather than
  * offering a square that would be the wide layout squeezed.
  *
+ * **Quick Tools configure below the modules, not inside the row.** Which
+ * shortcuts appear is a second, smaller decision than which sections appear,
+ * so it sits in its own section rather than expanding a row — which also
+ * keeps every draggable row exactly `ROW_HEIGHT` tall, and the drag
+ * arithmetic above exact. The Quick Tools row shows how many are on, so the
+ * link between the two is visible from the list.
+ *
  * Changes apply and persist as they are made — there is no Save button, so
  * closing the sheet cannot lose anything.
  */
-export function CustomizeHomeSheet({ visible, layout, onChange, onClose }: Props) {
+export function CustomizeHomeSheet({
+  visible,
+  layout,
+  onChange,
+  tools,
+  onToolsChange,
+  onClose,
+}: Props) {
   const { surfaces } = useTheme();
   const reducedMotion = useReducedMotion();
 
@@ -127,6 +152,8 @@ export function CustomizeHomeSheet({ visible, layout, onChange, onClose }: Props
       ),
     [layout.order, drag, onChange, reducedMotion],
   );
+
+  const shownTools = visibleTools(tools).length;
 
   return (
     <VitaSheet visible={visible} onClose={onClose} title="Customize Home">
@@ -216,7 +243,9 @@ export function CustomizeHomeSheet({ visible, layout, onChange, onClose }: Props
                     })}
                   </View>
                 ) : (
-                  <Text style={[styles.fixed, { color: surfaces.textTertiary }]}>Wide</Text>
+                  <Text style={[styles.fixed, { color: surfaces.textTertiary }]}>
+                    {id === 'quickTools' ? `Wide · ${shownTools} shown` : 'Wide'}
+                  </Text>
                 )}
               </View>
 
@@ -266,6 +295,91 @@ export function CustomizeHomeSheet({ visible, layout, onChange, onClose }: Props
         })}
       </View>
 
+      <View style={styles.toolSection}>
+        <Text style={[styles.sectionHeading, { color: surfaces.textTertiary }]}>QUICK TOOLS</Text>
+        <Text style={[styles.intro, styles.toolIntro, { color: surfaces.textTertiary }]}>
+          {isHidden(layout, 'quickTools')
+            ? 'Quick Tools is hidden. Turn it on above to see these.'
+            : 'Which shortcuts appear, and in what order.'}
+        </Text>
+
+        {tools.order.map((toolId, index) => {
+          const tool = QUICK_TOOL_REGISTRY[toolId];
+          const hidden = isToolHidden(tools, toolId);
+
+          return (
+            <View
+              key={toolId}
+              style={[
+                styles.row,
+                styles.toolRow,
+                index > 0 && styles.divided,
+                index > 0 && { borderTopColor: surfaces.border },
+              ]}
+            >
+              <PressableScale
+                onPress={() => {
+                  vitaHaptic('selection');
+                  onToolsChange(toggleTool(tools, toolId));
+                }}
+                hitSlop={6}
+                accessibilityLabel={hidden ? `Show ${tool.name}` : `Hide ${tool.name}`}
+                accessibilityState={{ checked: !hidden }}
+                style={styles.toggle}
+              >
+                <Ionicons
+                  name={hidden ? 'ellipse-outline' : 'checkmark-circle'}
+                  size={22}
+                  color={hidden ? surfaces.textTertiary : surfaces.text}
+                />
+              </PressableScale>
+
+              <View style={styles.text}>
+                <Text
+                  style={[styles.label, { color: hidden ? surfaces.textTertiary : surfaces.text }]}
+                  numberOfLines={1}
+                >
+                  {tool.name}
+                </Text>
+              </View>
+
+              {/*
+                * Arrows only. There is no drag handle here because these rows
+                * are not the uniform-height list the drag arithmetic above
+                * depends on, and three items reorder perfectly well by tap.
+                */}
+              <View style={styles.moves}>
+                <PressableScale
+                  onPress={() => {
+                    vitaHaptic('selection');
+                    onToolsChange(moveTool(tools, toolId, 'up'));
+                  }}
+                  disabled={index === 0}
+                  hitSlop={6}
+                  accessibilityLabel={`Move ${tool.name} up`}
+                  style={[styles.move, index === 0 && styles.disabled]}
+                >
+                  <Ionicons name="chevron-up" size={17} color={surfaces.textSecondary} />
+                </PressableScale>
+
+                <PressableScale
+                  onPress={() => {
+                    vitaHaptic('selection');
+                    onToolsChange(moveTool(tools, toolId, 'down'));
+                  }}
+                  disabled={index === tools.order.length - 1}
+                  hitSlop={6}
+                  accessibilityLabel={`Move ${tool.name} down`}
+                  style={[styles.move, index === tools.order.length - 1 && styles.disabled]}
+                >
+                  <Ionicons name="chevron-down" size={17} color={surfaces.textSecondary} />
+                </PressableScale>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+
       <View style={styles.footer}>
         <Text style={[styles.note, { color: surfaces.textTertiary }]}>
           The VITA header, greeting and Settings always stay.
@@ -275,6 +389,7 @@ export function CustomizeHomeSheet({ visible, layout, onChange, onClose }: Props
           onPress={() => {
             vitaHaptic('selection');
             onChange(DEFAULT_LAYOUT);
+            onToolsChange(DEFAULT_QUICK_TOOLS);
           }}
           hitSlop={8}
           accessibilityLabel="Reset Home layout to default"
@@ -304,6 +419,19 @@ const styles = StyleSheet.create({
   },
   divided: {
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  toolSection: {
+    marginTop: spacing.l,
+  },
+  sectionHeading: {
+    ...typography.micro,
+    letterSpacing: 0.8,
+  },
+  toolIntro: {
+    marginTop: spacing.xs,
+  },
+  toolRow: {
+    height: 52,
   },
   toggle: {
     minWidth: 26,

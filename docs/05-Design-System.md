@@ -373,6 +373,34 @@ Dark is the primary identity reference. **Light is real and must not feel like a
 
 **Verify on a real device, in both themes.** Desk review does not catch this class of defect.
 
+**Every accent drawn for dark has to be re-picked for light.** Brand gold on `paper` measures roughly **1.7:1** — well under the 3:1 WCAG asks of large text — and it shipped that way in 5.3C until the device pass caught it. The fix is a deepened version of the same hue per scheme, not a different colour and not the absence of one. Assume any decorative accent needs a scheme pair.
+
+---
+
+## 17 — Widget grids
+
+Added in 5.3C, for Home and anything that follows it.
+
+**One geometry, shared by every cell of a size.** Per-module heights make a grid breathe with its data; the shape is the container, not the content. **The shared value is set by the busiest cell, not the average** — the quieter modules centre themselves in the space rather than shrinking to fit.
+
+**Clamp both bounds.** `flex: 1` resolves a flex basis of 0 on the main axis and beats a plain `height`; a minimum alone lets a busy cell grow. `minHeight` and `maxHeight` together are what actually pins a footprint.
+
+**Two sizes means two designs.** A square is not a wide one squeezed, and a module with no square design says so by not offering one.
+
+**Placement follows order and span — never stored coordinates.** What the user arranged and what the screen renders then cannot disagree.
+
+## 18 — Edit modes
+
+**A long press belongs on the innermost pressable.** React Native gives the responder to the deepest view, so a wrapper above a pressable module never sees the hold. `Pressable` suppresses `onPress` once a long press fires, which is also what stops a hold from both rearranging and navigating. **A transparent overlay is the wrong instinct**: one that can receive a hold receives every tap, and the module's own buttons stop working. A blocking overlay is correct only *while* the mode is active.
+
+**A mode entered by gesture needs a visible, labelled way out.** Tapping empty space is neither discoverable nor reachable by voice. The exit replaces the controls it supersedes rather than joining them.
+
+**The gesture is a shortcut; the accessible surface stays complete.** A hold is unavailable to someone using VoiceOver or a switch, so everything the gesture does must remain reachable without one.
+
+**Say what actually happens.** *Remove from Home*, never *Delete*, when nothing is destroyed.
+
+**Motion carries no meaning.** The jiggle stays under half a degree and does not run at all under Reduced Motion; the controls and the outline are what carry the state.
+
 ---
 
 ## What this document still owes

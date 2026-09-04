@@ -5,6 +5,7 @@ import type { TodayRoutine } from '../../../lib/peptides';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { ModuleSize } from '../modules';
+import { SQUARE_HEIGHT, SQUARE_RADIUS, WIDE_RADIUS } from '../widget';
 
 type Props = {
   today: readonly TodayRoutine[];
@@ -12,6 +13,14 @@ type Props = {
   isLoading: boolean;
   size: ModuleSize;
   onOpen: () => void;
+  /**
+   * Enters Home's edit mode. Lives on this module's own root pressable
+   * because React Native gives the innermost pressable the responder — a
+   * wrapper above it would never see the hold — and because `Pressable`
+   * suppresses `onPress` once a long press fires, so holding a widget cannot
+   * also open the feature.
+   */
+  onLongPress?: () => void;
 };
 
 /**
@@ -36,7 +45,7 @@ type Props = {
  * The violet dot marks that something is outstanding and the words say so
  * too, because colour is not a state a screen reader can read.
  */
-export function PeptidesModule({ today, isEmpty, isLoading, size, onOpen }: Props) {
+export function PeptidesModule({ today, isEmpty, isLoading, size, onOpen, onLongPress }: Props) {
   const { surfaces } = useTheme();
 
   const unanswered = today.filter((item) => item.mark === 'unconfirmed');
@@ -86,6 +95,8 @@ export function PeptidesModule({ today, isEmpty, isLoading, size, onOpen }: Prop
       <PressableScale
         style={[styles.square, { borderColor: surfaces.border }]}
         onPress={onOpen}
+        onLongPress={onLongPress}
+        delayLongPress={450}
         accessibilityLabel={spoken}
       >
         <View style={styles.head}>
@@ -117,6 +128,8 @@ export function PeptidesModule({ today, isEmpty, isLoading, size, onOpen }: Prop
     <PressableScale
       style={[styles.wide, { borderColor: surfaces.border }]}
       onPress={onOpen}
+      onLongPress={onLongPress}
+      delayLongPress={450}
       accessibilityLabel={spoken}
     >
       {badge}
@@ -139,18 +152,28 @@ const styles = StyleSheet.create({
   square: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: radii.glassLarge,
+    borderRadius: SQUARE_RADIUS,
     padding: spacing.m,
     alignItems: 'center',
     gap: spacing.s,
-    minHeight: 168,
+    /*
+     * One shared footprint — see `widget.ts`. A widget must not resize because
+     * its feature happened to have less to say today.
+     *
+     * Both bounds, not `height`: `flex: 1` above resolves a flex basis of 0 on
+     * the main axis, which would win over a plain height and collapse the
+     * cell. Clamping the range pins the footprint whatever the flex maths
+     * decides, in either direction.
+     */
+    minHeight: SQUARE_HEIGHT,
+    maxHeight: SQUARE_HEIGHT,
   },
   wide: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.m,
     borderWidth: 1,
-    borderRadius: radii.card,
+    borderRadius: WIDE_RADIUS,
     padding: spacing.m,
     minHeight: 64,
   },

@@ -29,7 +29,8 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-import { Text } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StyleSheet, Text, type TextStyle, type ViewStyle } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Dashboard from '../../../app/(vita)/(tabs)/dashboard';
@@ -43,6 +44,8 @@ import { createWaterGoal } from '../../../lib/water/model/goals';
 import type { WaterEntry, WaterGoal, WaterPreferences } from '../../../lib/water/model/types';
 import { WaterProvider } from '../../../lib/water/state/WaterProvider';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
+import { greetingForHour } from '../greeting';
+import { QUOTE_FONT, SQUARE_HEIGHT, daypartAccent } from '../widget';
 
 const TODAY = todayLogDate();
 
@@ -112,6 +115,12 @@ afterEach(async () => {
   mounted = null;
   mockPush.mockClear();
   if (tree) await act(async () => tree.unmount());
+  /*
+   * Home's layout and Quick Tools preferences persist, which is the point of
+   * them — but it means one test's customisation would otherwise be the next
+   * test's starting state. Every case here begins from the shipped default.
+   */
+  await AsyncStorage.clear();
 });
 
 function texts(tree: ReactTestRenderer): string[] {
@@ -131,6 +140,30 @@ function control(tree: ReactTestRenderer, label: string | RegExp) {
   return tree.root.findAll(
     (node) => typeof node.props?.onPress === 'function' && matches(String(node.props.accessibilityLabel ?? '')),
   )[0];
+}
+
+/** A pressable that can be held, by the name a screen reader announces. */
+function holdable(tree: ReactTestRenderer, label: RegExp) {
+  return tree.root.findAll(
+    (node) =>
+      typeof node.props?.onLongPress === 'function' &&
+      label.test(String(node.props.accessibilityLabel ?? '')),
+  )[0];
+}
+
+/** The resolved style of a node, with registered styles flattened out. */
+function styleOf(node: { props: Record<string, unknown> }): ViewStyle & TextStyle {
+  return (StyleSheet.flatten(node.props.style as ViewStyle) ?? {}) as ViewStyle & TextStyle;
+}
+
+/** The `Text` whose rendered content is exactly `value`. */
+function textNode(tree: ReactTestRenderer, value: string) {
+  return tree.root.findAllByType(Text).find((node) => {
+    const children = Array.isArray(node.props.children)
+      ? node.props.children
+      : [node.props.children];
+    return children.join('') === value;
+  });
 }
 
 /* ── the greeting ───────────────────────────────────────────────────────── */
@@ -326,24 +359,38 @@ describe('Tools discoverability', () => {
     }
   });
 
-  it('does not offer a Food Scanner, and never points one at the logging scanner', async () => {
+  it('offers the Food Scanner, pointed at the barcode scanner that exists', async () => {
     /*
-     * On Home, *Food Scanner* means the future scanner that evaluates a
-     * product and produces the planned VITA score. `/fuel/scan` is the
-     * barcode lookup used to *log* a food — a different feature sharing a
-     * camera. Wiring the tile to it would leave a button that works while
-     * the product quietly means something else, which is worse than absence.
+     * **Reversed by founder ruling in 5.3C.** 5.3B omitted this tile on the
+     * grounds that *Food Scanner* would come to mean the future evaluating
+     * scanner, and that `/fuel/scan` — the barcode lookup used to log a food
+     * — was a different feature sharing a camera. The founders decided the
+     * shortcut is worth having now, so the tile ships and routes there.
      */
     const tree = await mount(fakeWater());
 
-    expect(control(tree, 'Food Scanner')).toBeUndefined();
-    expect(screen(tree)).not.toContain('Scan');
+    const tile = control(tree, 'Food Scanner');
+    expect(tile).toBeDefined();
+    await act(async () => tile!.props.onPress());
+    expect(mockPush).toHaveBeenCalledWith('/fuel/scan');
+  });
 
-    const targets = tree.root.findAll((node) => typeof node.props?.onPress === 'function');
-    for (const target of targets) {
-      await act(async () => target.props.onPress?.());
+  it('claims nothing the scanner does not do', async () => {
+    /*
+     * The part of the old rule that survives the reversal: a shortcut may be
+     * a navigation convenience, but it may not overstate where it goes. The
+     * scanner looks a product up so it can be logged. No VITA Score is
+     * authorised, so nothing here may promise a score, a grade or a rating.
+     */
+    const tree = await mount(fakeWater());
+    const rendered = screen(tree).toLowerCase();
+
+    for (const claim of ['score', 'grade', 'rating', 'rank', 'analy']) {
+      expect(rendered).not.toContain(claim);
     }
-    expect(mockPush).not.toHaveBeenCalledWith('/fuel/scan');
+
+    const spoken = String(control(tree, 'Food Scanner')!.props.accessibilityHint ?? '');
+    expect(spoken).toBe('Opens the food barcode scanner');
   });
 
   it('keeps the full Tools destination reachable without a second module', async () => {
@@ -364,7 +411,9 @@ describe('Tools discoverability', () => {
 
   it('advertises nothing that does not exist yet', async () => {
     const rendered = screen(await mount(fakeWater())).toLowerCase();
-    for (const word of ['bmi', 'coming soon', 'research library', 'scanner']) {
+    // `scanner` left out deliberately — the barcode scanner does exist, and
+    // 5.3C put a shortcut to it here.
+    for (const word of ['bmi', 'coming soon', 'research library']) {
       expect(rendered).not.toContain(word);
     }
   });
@@ -608,5 +657,268 @@ describe('accessibility', () => {
     // that the distinct spoken names are all present.
     const names = new Set(targets.map((node) => node.props.accessibilityLabel));
     expect(names.size).toBeGreaterThanOrEqual(6);
+  });
+});
+
+/* ── square widget geometry (5.3C) ──────────────────────────────────────── */
+
+describe('square widgets', () => {
+  it('gives Water, Peptides and Fuel the same footprint', async () => {
+    /*
+     * Founder ruling, 5.3C. In 5.3B each module set its own `minHeight`, so
+     * Peptides — which has the least to say — sat visibly shorter than Water
+     * beside it. A grid of widgets has to hold still.
+     */
+    const tree = await mount(fakeWater());
+
+    // Fuel ships wide; make it a square so all three can be compared.
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Fuel, Square')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    for (const label of [/^Water,/, /^Peptides,/, /^Fuel,/]) {
+      const style = styleOf(control(tree, label)!);
+      expect(style.minHeight).toBe(SQUARE_HEIGHT);
+      expect(style.maxHeight).toBe(SQUARE_HEIGHT);
+    }
+  });
+
+  it('keeps that footprint whether or not there is data', async () => {
+    // The empty and populated states are the same object; only the contents
+    // differ. A widget must not shrink because a day happens to be quiet.
+    const empty = await mount(fakeWater());
+    const emptyHeight = styleOf(control(empty, /^Water,/)!).minHeight;
+    await act(async () => empty.unmount());
+    mounted = null;
+
+    const full = await mount(
+      fakeWater({
+        goal: createWaterGoal(64, 'floz'),
+        entries: [createWaterEntry({ amount: 32, unit: 'floz' })],
+      }),
+    );
+    expect(styleOf(control(full, /^Water,/)!).minHeight).toBe(emptyHeight);
+    expect(emptyHeight).toBe(SQUARE_HEIGHT);
+  });
+
+  it('pins the footprint at both ends, so content cannot push it either way', async () => {
+    // A minimum alone is what 5.3B had, and it let a busy widget grow.
+    const tree = await mount(fakeWater());
+    for (const label of [/^Water,/, /^Peptides,/]) {
+      const style = styleOf(control(tree, label)!);
+      expect(style.minHeight).toBe(style.maxHeight);
+    }
+  });
+});
+
+/* ── the quote, as a quotation (5.3C) ───────────────────────────────────── */
+
+describe('quote typography', () => {
+  it('sets the line in a serif, italic, and not as body text', async () => {
+    const tree = await mount(fakeWater());
+    const quote = textNode(tree, 'I came, I saw, I conquered.');
+    expect(quote).toBeDefined();
+
+    const style = styleOf(quote!);
+    expect(style.fontFamily).toBe(QUOTE_FONT);
+    expect(style.fontStyle).toBe('italic');
+    // Restrained, not shouted: the serif carries it without extra weight.
+    expect(style.fontWeight).toBe('400');
+  });
+
+  it('attributes with an em dash, quietly', async () => {
+    const tree = await mount(fakeWater());
+    const attribution = textNode(tree, '— Julius Caesar');
+    expect(attribution).toBeDefined();
+    expect(styleOf(attribution!).fontSize).toBeLessThan(Number(styleOf(textNode(tree, 'I came, I saw, I conquered.')!).fontSize));
+  });
+
+  it('reads as one quotation to a screen reader, not two fragments', async () => {
+    const tree = await mount(fakeWater());
+    const spoken = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .map((node) => String(node.props.accessibilityLabel));
+    expect(spoken).toContain('I came, I saw, I conquered. — Julius Caesar');
+  });
+});
+
+/* ── the greeting's colour (5.3C) ───────────────────────────────────────── */
+
+describe('the daypart accent', () => {
+  it('tints the greeting with the colour for the current period', async () => {
+    const tree = await mount(fakeWater());
+    const period = greetingForHour(new Date().getHours()).period;
+
+    const greeting = tree.root
+      .findAllByType(Text)
+      .find((node) =>
+        (Array.isArray(node.props.children) ? node.props.children : [node.props.children])
+          .join('')
+          .startsWith('GOOD '),
+      );
+    expect(greeting).toBeDefined();
+    // The suite renders light; the accents have a legible value per scheme.
+    expect(styleOf(greeting!).color).toBe(daypartAccent(period, 'light'));
+  });
+
+  it('says the time of day in words as well as colour', async () => {
+    // Colour is decoration on text that already carries the meaning; nothing
+    // here is only available to someone who can see the hue.
+    expect(screen(await mount(fakeWater()))).toMatch(
+      /GOOD (MORNING|AFTERNOON|EVENING|NIGHT), WILBER/,
+    );
+  });
+});
+
+/* ── customizing Quick Tools (5.3C) ─────────────────────────────────────── */
+
+describe('Quick Tools customization', () => {
+  it('lists every tool in Customize Home, with how many are on', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    const rendered = screen(tree);
+    for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner']) {
+      expect(rendered).toContain(name);
+    }
+    expect(rendered).toContain('3 shown');
+  });
+
+  it('hides one tool from Home and brings it back', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Hide Food Scanner')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    expect(control(tree, 'Food Scanner')).toBeUndefined();
+    expect(control(tree, 'Peptide Calculator')).toBeDefined();
+
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Show Food Scanner')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+    expect(control(tree, 'Food Scanner')).toBeDefined();
+  });
+
+  it('drops the whole section rather than showing a heading over nothing', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner']) {
+      await act(async () => control(tree, `Hide ${name}`)!.props.onPress());
+    }
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    expect(screen(tree)).not.toContain('QUICK TOOLS');
+    expect(control(tree, 'All tools')).toBeUndefined();
+  });
+
+  it('reorders tools by tap, because three items do not need a drag', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    expect(control(tree, 'Move Peptide Calculator up')!.props.disabled).toBe(true);
+    await act(async () => control(tree, 'Move Food Scanner up')!.props.onPress());
+    expect(control(tree, 'Move Food Scanner up')!.props.disabled).toBe(false);
+    await act(async () => control(tree, 'Move Food Scanner up')!.props.onPress());
+    expect(control(tree, 'Move Food Scanner up')!.props.disabled).toBe(true);
+  });
+
+  it('remembers the choice across a return to Home', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Hide Injection Sites')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    await act(async () => tree.unmount());
+    mounted = null;
+
+    // A preference that reset on navigation is not a preference.
+    const returned = await mount(fakeWater());
+    expect(control(returned, 'Injection Sites')).toBeUndefined();
+    expect(control(returned, 'Peptide Calculator')).toBeDefined();
+  });
+
+  it('restores the tools along with the layout on Reset', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Hide Food Scanner')!.props.onPress());
+    await act(async () => control(tree, 'Reset Home layout to default')!.props.onPress());
+
+    expect(control(tree, 'Hide Food Scanner')).toBeDefined();
+  });
+});
+
+/* ── edit mode (5.3C) ───────────────────────────────────────────────────── */
+
+describe('rearranging on Home', () => {
+  it('enters edit mode from a hold on a widget', async () => {
+    const tree = await mount(fakeWater());
+
+    // Nothing announces itself as removable until the hold.
+    expect(control(tree, 'Remove Water from Home')).toBeUndefined();
+
+    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+
+    for (const label of ['Remove Water from Home', 'Remove Peptides from Home', 'Remove Fuel from Home']) {
+      expect(control(tree, label)).toBeDefined();
+    }
+  });
+
+  it('offers a visible, labelled way out', async () => {
+    /*
+     * A mode entered by gesture needs an exit that is not also a gesture —
+     * tapping empty space is neither discoverable nor reachable by voice.
+     */
+    const tree = await mount(fakeWater());
+    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+
+    const done = control(tree, 'Done rearranging Home');
+    expect(done).toBeDefined();
+    // The header's two icons stand down while it is there, so the top of the
+    // screen never carries three competing controls.
+    expect(control(tree, 'Customize Home')).toBeUndefined();
+
+    await act(async () => done!.props.onPress());
+    expect(control(tree, 'Customize Home')).toBeDefined();
+    expect(control(tree, 'Remove Water from Home')).toBeUndefined();
+  });
+
+  it('removes a widget from Home without destroying anything', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+    await act(async () => control(tree, 'Remove Water from Home')!.props.onPress());
+    await act(async () => control(tree, 'Done rearranging Home')!.props.onPress());
+
+    expect(control(tree, /^Water,/)).toBeUndefined();
+
+    // It is hidden, not deleted — Customize Home offers it straight back.
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Show Water')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+    expect(control(tree, /^Water,/)).toBeDefined();
+  });
+
+  it('says "remove", never "delete", because no data is touched', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+
+    const spoken = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .map((node) => String(node.props.accessibilityLabel).toLowerCase());
+    expect(spoken.some((label) => label.includes('delete'))).toBe(false);
+  });
+
+  it('keeps Customize Home as the complete, accessible surface', async () => {
+    /*
+     * The gesture is a shortcut, not a replacement. Hiding, resizing and
+     * reordering all remain reachable without a pointer — a hold is
+     * unavailable to someone using VoiceOver or a switch, and Home is the
+     * screen they can least afford to be locked out of arranging.
+     */
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    for (const label of ['Hide Water', 'Move Water up', 'Water, Wide', 'Hide Food Scanner']) {
+      expect(control(tree, label)).toBeDefined();
+    }
   });
 });

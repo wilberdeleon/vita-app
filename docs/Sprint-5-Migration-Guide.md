@@ -92,6 +92,17 @@ For each screen: what generic pattern is there now · what role it should take �
 - **A shortcut must mean what its label says.** The `Scan` tile pointed at the logging scanner while meaning the future evaluating one — a working button that quietly misrepresents the product is worse than an absent one. Applies to anything 5.6 or 5.8 adds.
 - **`__DEV__` previews for states real data cannot reach**, built from local constants — never by seeding real records.
 
+**Patterns 5.3C added:**
+
+- **A widget grid needs one geometry, and it is set by the busiest cell.** Per-module heights make a grid breathe with its data; one shared footprint with the quiet modules centring in the space is what holds still. Clamp **both** bounds — `flex: 1` resolves a flex basis of 0 and beats a plain `height`.
+- **Two persisted preferences, two keys.** The layout and the Quick Tools order change for different reasons; one record would let either write drop the other's state. `usePersistedPrefs` is the shared hook, and it takes a `useState`-style updater so a gesture handler can stay stable.
+- **A shortcut may be a navigation convenience; it may not overstate where it goes.** The Food Scanner reversal kept the claim rule while dropping the omission — the tile ships, and tests assert its wording promises no score, grade or rating.
+- **One typographic break is how a quotation stops reading as app copy.** Check what the platform already ships before bundling a face; here `expo-font` was configured with nothing in it.
+- **Any colour drawn for dark surfaces must be re-picked for light.** Brand gold on `paper` measures ~1.7:1. Deepen the hue rather than dropping the colour — 5.4 through 5.8 should assume every accent needs a scheme pair.
+- **Long press belongs on the innermost pressable, not on an overlay.** RN gives the responder to the deepest view, and an overlay that can receive a hold also eats every tap. `Pressable` suppressing `onPress` after a long press is what stops a hold from also navigating. Blocking overlays are correct only *while* a mode is active.
+- **Drop-on-release beats live reflow** where the gesture cannot be tested by hand — one decision from one final position. Measure in window coordinates and re-measure on entering the mode so every rectangle comes from one frame.
+- **A gesture-entered mode needs a labelled exit**, and the accessible surface it shortcuts must stay complete. A hold is unreachable with VoiceOver.
+
 **Patterns 5.3A added:**
 
 - **Horizontal strips beat boxes for a summary surface.** Three domains at ~64pt each fit where two boxes did, and the height freed paid for two more sections. 5.4 should reach for a strip before a card.

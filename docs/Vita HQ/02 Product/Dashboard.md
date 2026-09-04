@@ -6,7 +6,23 @@
 
 ---
 
-## Sprint 5 slice 5.3B — widget layout (2026-09-03, awaiting founder device review)
+## Sprint 5 slice 5.3C — direct manipulation and polish (2026-09-03, awaiting founder device review)
+
+**You rearrange Home on Home.** Hold any widget: the grid starts to jiggle, each widget grows a small remove control, and you can drag one onto another to swap them. `Done` at the top leaves. Customize Home is still there and still does more — it is the only way to bring a hidden widget back, change a size, or reorder without using a gesture — but the everyday shuffle no longer means finding a sheet.
+
+**Square widgets are all the same size now.** Water, Peptides and Fuel share one footprint, whether or not they have anything to report. A widget no longer shrinks because its feature happened to be quiet today.
+
+**Quick Tools is yours too.** Choose which shortcuts appear and in what order, from inside Customize Home. Hide all of them and the section disappears rather than leaving an empty heading.
+
+**The Scan shortcut is back** — founder decision, reversing the removal in 5.3B. It opens the barcode scanner used to look a food up so it can be logged, and it says exactly that. It does not score, grade or rate anything; that scanner does not exist yet, and nothing here pretends otherwise.
+
+**The quote reads like a quotation.** Set in a classical serif, in italic, with the attribution on its own line after an em dash. No new font was added — it is one iOS already carries.
+
+**The greeting changes colour with the hour** — gold in the morning, amber in the afternoon, violet at dusk, indigo at night. The words still say the time of day, so nothing depends on seeing the colour.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3C.
+
+## Sprint 5 slice 5.3B — widget layout (2026-09-03, superseded by 5.3C)
 
 **Home became a widget dashboard you arrange.** Modules now come in two real shapes — a square and a wide — laid out in two columns. It ships as Fuel wide, then Water and Peptides side by side as squares, then Quick Tools and Today's Schedule.
 
@@ -14,7 +30,7 @@
 
 **The header carries a quote.** `I came, I saw, I conquered. — Julius Caesar` sits under the greeting. It is content rather than a slogan about your behaviour, and it is the only personality on the screen — everything else stays factual.
 
-**The Scan shortcut was removed, deliberately.** On Home, *Food Scanner* means the future scanner that evaluates a product and gives it a VITA score. That does not exist yet, and the tile had been pointing at the barcode scanner used to *log* food — a different feature. Quick Tools now lists the two tools that are real, and gets a third when there is one.
+**The Scan shortcut was removed, deliberately.** On Home, *Food Scanner* means the future scanner that evaluates a product and gives it a VITA score. That does not exist yet, and the tile had been pointing at the barcode scanner used to *log* food — a different feature. Quick Tools now lists the two tools that are real, and gets a third when there is one. **Reversed in 5.3C** — the founders decided the shortcut is worth having, on the condition it never claims more than the scanner does.
 
 Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3B.
 

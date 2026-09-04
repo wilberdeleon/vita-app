@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View, type LayoutRectangle } from 'react-native';
 import { Screen } from '../../../components/ui';
 import { CustomizeHomeSheet } from '../../../features/dashboard/components/CustomizeHomeSheet';
 import { DashboardHeader } from '../../../features/dashboard/components/DashboardHeader';
+import { EditableWidget } from '../../../features/dashboard/components/EditableWidget';
 import { FuelStrip } from '../../../features/dashboard/components/FuelStrip';
 import { PeptidesModule } from '../../../features/dashboard/components/PeptidesModule';
 import { QuickTools } from '../../../features/dashboard/components/QuickTools';
@@ -13,18 +14,38 @@ import {
 } from '../../../features/dashboard/components/TodaySchedule';
 import { WaterModule } from '../../../features/dashboard/components/WaterModule';
 import { useGreeting } from '../../../features/dashboard/greeting';
-import { buildGrid, sizeOf, type DashboardModuleId } from '../../../features/dashboard/modules';
+import {
+  MODULE_REGISTRY,
+  buildGrid,
+  reorderModule,
+  sizeOf,
+  toggleModule,
+  type DashboardModuleId,
+} from '../../../features/dashboard/modules';
 import { currentQuote } from '../../../features/dashboard/quote';
-import { useDashboardLayout } from '../../../features/dashboard/useDashboardLayout';
+import {
+  useDashboardLayout,
+  useQuickTools,
+} from '../../../features/dashboard/useDashboardLayout';
 import { useAuth } from '../../../features/auth/AuthProvider';
 import { formatLogDateShort } from '../../../lib/daily';
 import { useDailyNutrition } from '../../../lib/nutrition';
 import { usePeptides } from '../../../lib/peptides';
 import { useWaterToday } from '../../../lib/water';
+import { vitaHaptic } from '../../../lib/haptics';
 import { spacing } from '../../../theme/tokens';
 
 /**
  * Home — a widget dashboard the user arranges.
+ *
+ * ## What 5.3C changed
+ *
+ * Home is now arranged **on Home**. Hold any widget and the grid enters edit
+ * mode: widgets jiggle, each grows a remove control, and one can be dragged
+ * onto another to trade places. `Done` in the header leaves. Customize Home
+ * stays and is still the complete, accessible surface — it is the only way to
+ * bring a hidden widget back, to change a size, or to reorder without a
+ * pointer — but the common rearrangement no longer requires finding a sheet.
  *
  * ## What 5.3B changed
  *
@@ -67,8 +88,60 @@ export default function Dashboard() {
   const fuel = useDailyNutrition();
   const peptides = usePeptides();
   const { layout, setLayout } = useDashboardLayout();
+  const { tools, setTools } = useQuickTools();
 
   const [customizing, setCustomizing] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  /*
+   * Where each widget sits on screen, captured when edit mode is entered.
+   * A ref, not state: it is read once at the end of a gesture and must never
+   * cause a render — re-rendering the grid mid-drag is what would make the
+   * drag fight itself.
+   */
+  const rects = useRef<Partial<Record<DashboardModuleId, LayoutRectangle>>>({});
+
+  const handleMeasure = useCallback((id: DashboardModuleId, rect: LayoutRectangle) => {
+    rects.current[id] = rect;
+  }, []);
+
+  /**
+   * Resolve a drop: whichever widget the dragged one's centre finished over
+   * trades places with it. Landing on nothing — a gap, the header, its own
+   * cell — leaves the order alone, which is what makes a small accidental
+   * movement harmless.
+   */
+  const handleDrop = useCallback(
+    (id: DashboardModuleId, dx: number, dy: number) => {
+      const from = rects.current[id];
+      if (!from) return;
+
+      const x = from.x + from.width / 2 + dx;
+      const y = from.y + from.height / 2 + dy;
+
+      const target = (Object.keys(rects.current) as DashboardModuleId[]).find((other) => {
+        if (other === id) return false;
+        const rect = rects.current[other];
+        if (!rect) return false;
+        return x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+      });
+      if (!target) return;
+
+      setLayout((current) => {
+        const fromIndex = current.order.indexOf(id);
+        const toIndex = current.order.indexOf(target);
+        if (fromIndex === -1 || toIndex === -1) return current;
+        return reorderModule(current, fromIndex, toIndex);
+      });
+      vitaHaptic('confirm');
+    },
+    [setLayout],
+  );
+
+  const enterEditing = useCallback(() => {
+    vitaHaptic('selection');
+    setEditing(true);
+  }, []);
 
   const scheduleItems = useMemo(
     () => scheduleItemsFromRoutines(peptides.today),
@@ -88,6 +161,7 @@ export default function Dashboard() {
             size={size}
             onAdd={() => router.push('/water?add=1')}
             onOpen={() => router.push('/water')}
+            onLongPress={enterEditing}
           />
         );
       case 'peptides':
@@ -98,6 +172,7 @@ export default function Dashboard() {
             isLoading={peptides.isLoading}
             size={size}
             onOpen={() => router.push('/peptides')}
+            onLongPress={enterEditing}
           />
         );
       case 'fuel':
@@ -107,10 +182,11 @@ export default function Dashboard() {
             size={size}
             onOpen={() => router.push('/fuel')}
             onLog={() => router.push('/fuel/add')}
+            onLongPress={enterEditing}
           />
         );
       case 'quickTools':
-        return <QuickTools />;
+        return <QuickTools tools={tools} />;
       case 'schedule':
         return <TodaySchedule items={scheduleItems} isLoading={peptides.isLoading} />;
     }
@@ -123,7 +199,9 @@ export default function Dashboard() {
         firstName={user?.firstName ?? 'there'}
         dateLabel={formatLogDateShort(fuel.logDate)}
         quote={currentQuote()}
+        editing={editing}
         onCustomize={() => setCustomizing(true)}
+        onDoneEditing={() => setEditing(false)}
       />
 
       {rows.map((row) => {
@@ -145,7 +223,19 @@ export default function Dashboard() {
                * structure for a grid anyway; the primitive fix stays 5.7's.
                */
               <View key={id} style={styles.cell}>
-                {render(id)}
+                <EditableWidget
+                  id={id}
+                  label={MODULE_REGISTRY[id].label}
+                  editing={editing}
+                  onLongPress={enterEditing}
+                  onRemove={() => {
+                    setLayout((current) => toggleModule(current, id));
+                  }}
+                  onMeasure={handleMeasure}
+                  onDrop={handleDrop}
+                >
+                  {render(id)}
+                </EditableWidget>
               </View>
             ))}
             {lonelySquare ? <View style={styles.cell} /> : null}
@@ -157,6 +247,8 @@ export default function Dashboard() {
         visible={customizing}
         layout={layout}
         onChange={setLayout}
+        tools={tools}
+        onToolsChange={setTools}
         onClose={() => setCustomizing(false)}
       />
     </Screen>

@@ -5,12 +5,21 @@ import type { DailyNutrition } from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { ModuleSize } from '../modules';
+import { SQUARE_HEIGHT, SQUARE_RADIUS, WIDE_RADIUS } from '../widget';
 
 type Props = {
   today: DailyNutrition;
   size: ModuleSize;
   onOpen: () => void;
   onLog: () => void;
+  /**
+   * Enters Home's edit mode. Lives on this module's own root pressable
+   * because React Native gives the innermost pressable the responder — a
+   * wrapper above it would never see the hold — and because `Pressable`
+   * suppresses `onPress` once a long press fires, so holding a widget cannot
+   * also open the feature.
+   */
+  onLongPress?: () => void;
 };
 
 /**
@@ -31,7 +40,7 @@ type Props = {
  * computed here: not a VITA Score, not a grade, not a rating. None is
  * authorised and none is invented.
  */
-export function FuelStrip({ today, size, onOpen, onLog }: Props) {
+export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
   const { surfaces } = useTheme();
 
   const consumed = Math.round(today.nutrition.calories);
@@ -86,6 +95,8 @@ export function FuelStrip({ today, size, onOpen, onLog }: Props) {
       <PressableScale
         style={[styles.square, { borderColor: surfaces.border }]}
         onPress={onOpen}
+        onLongPress={onLongPress}
+        delayLongPress={450}
         accessibilityLabel={spoken}
       >
         <View style={styles.head}>
@@ -112,6 +123,8 @@ export function FuelStrip({ today, size, onOpen, onLog }: Props) {
     <PressableScale
       style={[styles.wide, { borderColor: surfaces.border }]}
       onPress={onOpen}
+      onLongPress={onLongPress}
+      delayLongPress={450}
       accessibilityLabel={spoken}
     >
       <View style={styles.wideRow}>
@@ -139,15 +152,25 @@ const styles = StyleSheet.create({
   square: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: radii.glassLarge,
+    borderRadius: SQUARE_RADIUS,
     padding: spacing.m,
     alignItems: 'center',
     gap: spacing.s,
-    minHeight: 168,
+    /*
+     * One shared footprint — see `widget.ts`. A widget must not resize because
+     * its feature happened to have less to say today.
+     *
+     * Both bounds, not `height`: `flex: 1` above resolves a flex basis of 0 on
+     * the main axis, which would win over a plain height and collapse the
+     * cell. Clamping the range pins the footprint whatever the flex maths
+     * decides, in either direction.
+     */
+    minHeight: SQUARE_HEIGHT,
+    maxHeight: SQUARE_HEIGHT,
   },
   wide: {
     borderWidth: 1,
-    borderRadius: radii.card,
+    borderRadius: WIDE_RADIUS,
     padding: spacing.m,
     gap: spacing.s,
     minHeight: 64,

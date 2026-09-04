@@ -5,6 +5,7 @@ import type { WaterToday } from '../../../lib/water';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { ModuleSize } from '../modules';
+import { SQUARE_HEIGHT, SQUARE_RADIUS, WIDE_RADIUS } from '../widget';
 
 type Props = {
   today: WaterToday;
@@ -12,6 +13,14 @@ type Props = {
   /** Opens Water with the Add Water sheet already up. */
   onAdd: () => void;
   onOpen: () => void;
+  /**
+   * Enters Home's edit mode. Lives on this module's own root pressable
+   * because React Native gives the innermost pressable the responder — a
+   * wrapper above it would never see the hold — and because `Pressable`
+   * suppresses `onPress` once a long press fires, so holding a widget cannot
+   * also open the feature.
+   */
+  onLongPress?: () => void;
 };
 
 /**
@@ -31,7 +40,7 @@ type Props = {
  * fraction of, so the module shows the day's real total and offers to set
  * one. A ring at 0% would say the user is failing a goal they never chose.
  */
-export function WaterModule({ today, size, onAdd, onOpen }: Props) {
+export function WaterModule({ today, size, onAdd, onOpen, onLongPress }: Props) {
   const { surfaces } = useTheme();
   const { hasGoal, percent, isGoalMet, remainingLabel, totalLabel, isLoading } = today;
 
@@ -76,6 +85,8 @@ export function WaterModule({ today, size, onAdd, onOpen }: Props) {
       <PressableScale
         style={[styles.square, { borderColor: surfaces.border }]}
         onPress={onOpen}
+        onLongPress={onLongPress}
+        delayLongPress={450}
         accessibilityLabel={spoken}
       >
         <View style={styles.head}>
@@ -92,13 +103,13 @@ export function WaterModule({ today, size, onAdd, onOpen }: Props) {
           */}
         {hasGoal
           ? ring(
-              64,
-              6,
+              56,
+              5,
               <Text style={[styles.ringValue, { color: surfaces.text }]} numberOfLines={1}>
                 {value}
               </Text>,
             )
-          : ring(64, 6, <Ionicons name="water" size={20} color={palette.water} />)}
+          : ring(56, 5, <Ionicons name="water" size={19} color={palette.water} />)}
 
         <View style={styles.squareText}>
           {!hasGoal ? (
@@ -120,6 +131,8 @@ export function WaterModule({ today, size, onAdd, onOpen }: Props) {
     <PressableScale
       style={[styles.wide, { borderColor: surfaces.border }]}
       onPress={onOpen}
+      onLongPress={onLongPress}
+      delayLongPress={450}
       accessibilityLabel={spoken}
     >
       {ring(40, 4, <Ionicons name="water" size={14} color={palette.water} />)}
@@ -143,18 +156,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     // A touch rounder than the wide strip — a square widget is more of an
     // object and reads better with a softer corner.
-    borderRadius: radii.glassLarge,
+    borderRadius: SQUARE_RADIUS,
     padding: spacing.m,
     alignItems: 'center',
     gap: spacing.s,
-    minHeight: 168,
+    /*
+     * One shared footprint — see `widget.ts`. A widget must not resize because
+     * its feature happened to have less to say today.
+     *
+     * Both bounds, not `height`: `flex: 1` above resolves a flex basis of 0 on
+     * the main axis, which would win over a plain height and collapse the
+     * cell. Clamping the range pins the footprint whatever the flex maths
+     * decides, in either direction.
+     */
+    minHeight: SQUARE_HEIGHT,
+    maxHeight: SQUARE_HEIGHT,
   },
   wide: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.m,
     borderWidth: 1,
-    borderRadius: radii.card,
+    borderRadius: WIDE_RADIUS,
     padding: spacing.m,
     minHeight: 64,
   },
