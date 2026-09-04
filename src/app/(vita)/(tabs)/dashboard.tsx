@@ -1,68 +1,62 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Screen } from '../../../components/ui';
+import { CustomizeHomeSheet } from '../../../features/dashboard/components/CustomizeHomeSheet';
 import { DashboardHeader } from '../../../features/dashboard/components/DashboardHeader';
 import { FuelStrip } from '../../../features/dashboard/components/FuelStrip';
 import { PeptidesModule } from '../../../features/dashboard/components/PeptidesModule';
-import { ToolsRow } from '../../../features/dashboard/components/ToolsRow';
+import { QuickTools } from '../../../features/dashboard/components/QuickTools';
+import { TodaySchedule } from '../../../features/dashboard/components/TodaySchedule';
 import { WaterModule } from '../../../features/dashboard/components/WaterModule';
+import { buildDailySummary } from '../../../features/dashboard/dailySummary';
 import { useGreeting } from '../../../features/dashboard/greeting';
+import { visibleModules, type DashboardModuleId } from '../../../features/dashboard/modules';
+import { useDashboardLayout } from '../../../features/dashboard/useDashboardLayout';
 import { useAuth } from '../../../features/auth/AuthProvider';
-import { formatLogDateLong } from '../../../lib/daily';
+import { formatLogDateShort } from '../../../lib/daily';
 import { useDailyNutrition } from '../../../lib/nutrition';
 import { usePeptides } from '../../../lib/peptides';
 import { useWaterToday } from '../../../lib/water';
 import { spacing } from '../../../theme/tokens';
 
 /**
- * Home — a daily control surface, not a report.
+ * Home — a daily control surface.
  *
- * ## What this replaced, and why so little survived
+ * ## What the 5.3A review changed
  *
- * The Dashboard before slice 5.3 was six stacked frosted cards: a greeting
- * with two slogans, a goals summary, a Journey card, a macros card, five
- * metric tiles, and four meal rows. It read as an analytics page, it had **no
- * action affordance above the fold**, and more than half of what it showed
- * was invented — steps, sleep, workouts, a streak, a Journey stage, and two
- * of four "goal pillars" all came from `DASHBOARD_FIXTURE`. The founder
- * ruling was unambiguous: *if real data exists, use it; if it doesn't, don't
- * fabricate activity to make a module look populated.* That deleted the
- * fixture file, and with it most of the old screen.
+ * The composition, not the data. Slice 5.3's fixture removal stands entirely:
+ * nothing here is invented, and the modules still read the features' own
+ * engines. What the founders rejected was the *shape* — a 26px greeting over
+ * two tall boxes and a strip, with a screen of air beneath it.
  *
- * ## Every number here comes from a feature's own engine
+ * So the greeting became an eyebrow, three domains became horizontal strips
+ * at a third of the height, and the space that bought went to two sections
+ * that carry real information: the three utilities people actually reach for,
+ * and the day's actual schedule. Density came from **showing more of what is
+ * true**, never from padding.
  *
- * `useWaterToday()`, `useDailyNutrition()` and `usePeptides()` — the same
- * hooks Water, Fuel and Peptides read. Home derives nothing and stores
- * nothing; there is no dashboard state, no aggregate cache, and no second
- * copy of a total that could drift from the screen it came from. Because
- * these are the live providers, logging a drink or marking a dose taken is
- * reflected here the moment you come back, with no refresh and no polling.
+ * ## Home is the user's, within limits
  *
- * The name comes from `useAuth()` — the app's identity boundary — rather than
- * from a screen-owned constant.
+ * Every content module can be hidden or reordered, and the choice persists.
+ * Someone who does not take peptides can switch that module and the schedule
+ * off, and Home stops mentioning them — which no amount of tuning defaults
+ * could have achieved for everyone.
  *
- * ## The composition, and why it is fixed rather than adaptive
+ * The header is not customisable: branding, greeting, date and Settings
+ * orient the screen, and one of them is the way out of it. `visibleModules`
+ * decides the rest, so this file has no opinion about order.
  *
- * Water and Peptides sit side by side because both are *today* state you can
- * act on; Fuel is a full-width strip below them; Tools is a quiet row at the
- * foot. Mixed shapes, deliberately: a ring, a tally, a bar. Nothing here is a
- * grid of equal destinations, which is what would make Home a launcher.
+ * ## Still true from 5.3
  *
- * **The order does not change with the data.** Ranking the domains by
- * urgency was considered and rejected: to decide that a scheduled dose
- * outranks hydration today, VITA would have to hold an opinion about which
- * matters more — which is the first step toward the compliance and urgency
- * semantics this product explicitly refuses. A fixed order is also simply
- * better to live with: the thing you reach for is where it was yesterday.
- * The modules change; their places do not.
- *
- * ## Home surfaces actions; features own them
- *
- * *Add* opens Water with its sheet already up, via a query param Water reads
- * — Water keeps sole ownership of logging, including the goal-reached
- * detection and the failure handling that go with it. Rebuilding that here
- * would be the duplication the architecture rules forbid, for one saved tap.
- * Fuel and Peptides likewise get a door, not a copy of their flows.
+ * Every figure comes from `useWaterToday()`, `useDailyNutrition()` or
+ * `usePeptides()` — Home stores nothing and derives nothing, so it cannot
+ * drift from the features and needs no refresh. Actions open the feature that
+ * owns them; `/water?add=1` opens Water ready to log rather than rebuilding
+ * logging here. **Movement is still absent, because no movement domain
+ * exists** — it is not a hidden module and not a disabled row, because
+ * offering to show something VITA cannot produce is the tease the founders
+ * ruled out.
  */
 export default function Dashboard() {
   const greeting = useGreeting();
@@ -70,58 +64,119 @@ export default function Dashboard() {
   const water = useWaterToday();
   const fuel = useDailyNutrition();
   const peptides = usePeptides();
+  const { layout, setLayout } = useDashboardLayout();
 
-  return (
-    <Screen dockClearance contentGap={spacing.xxl} topInset={false}>
-      <DashboardHeader
-        greeting={greeting}
-        firstName={user?.firstName ?? 'there'}
-        dateLabel={formatLogDateLong(fuel.logDate)}
-      />
+  const [customizing, setCustomizing] = useState(false);
 
-      {/*
-        * Each module is wrapped, because `PressableScale` applies its `style`
-        * to an inner animated view — a `flex: 1` handed to it never reaches
-        * this row, and the pair renders at two different widths. Third time
-        * this trap has been hit (`MetricTile`, the 5.1A quick-adds, here);
-        * 5.7 should fix the primitive rather than the callers.
-        */}
-      <View style={styles.pair}>
-        <View style={styles.half}>
+  const summary = buildDailySummary({
+    peptidesUnanswered: peptides.today.filter((item) => item.mark === 'unconfirmed').length,
+    peptidesScheduled: peptides.today.length,
+    hasWaterGoal: water.hasGoal,
+    isWaterGoalMet: water.isGoalMet,
+    waterRemainingLabel: water.remainingLabel,
+    mealsLogged: fuel.mealsLoggedCount,
+  });
+
+  const render = (id: DashboardModuleId) => {
+    switch (id) {
+      case 'water':
+        return (
           <WaterModule
+            key={id}
             today={water}
             onAdd={() => router.push('/water?add=1')}
             onOpen={() => router.push('/water')}
           />
-        </View>
-        <View style={styles.half}>
+        );
+      case 'peptides':
+        return (
           <PeptidesModule
+            key={id}
             today={peptides.today}
             isEmpty={peptides.isEmpty}
             isLoading={peptides.isLoading}
             onOpen={() => router.push('/peptides')}
           />
-        </View>
-      </View>
+        );
+      case 'fuel':
+        return (
+          <FuelStrip
+            key={id}
+            today={fuel}
+            onOpen={() => router.push('/fuel')}
+            onLog={() => router.push('/fuel/add')}
+          />
+        );
+      case 'quickTools':
+        return <QuickTools key={id} />;
+      case 'schedule':
+        return <TodaySchedule key={id} today={peptides.today} isLoading={peptides.isLoading} />;
+    }
+  };
 
-      <FuelStrip
-        today={fuel}
-        onOpen={() => router.push('/fuel')}
-        onLog={() => router.push('/fuel/add')}
+  return (
+    <Screen dockClearance contentGap={spacing.xl} topInset={false}>
+      <DashboardHeader
+        greeting={greeting}
+        firstName={user?.firstName ?? 'there'}
+        dateLabel={formatLogDateShort(fuel.logDate)}
+        summary={summary}
+        onCustomize={() => setCustomizing(true)}
       />
 
-      <ToolsRow onOpen={() => router.push('/tools')} />
+      {/*
+        * Rendered in exactly the saved order, with *consecutive* strips
+        * grouped so they sit tighter to each other than to the sections
+        * around them — spacing says "these belong together" without drawing
+        * a container around them.
+        *
+        * Grouping only runs, never all strips: filtering strips into one
+        * block would silently ignore a reorder that moved a section between
+        * them, so what the user arranged and what Home renders could differ.
+        */}
+      {groupStrips(visibleModules(layout)).map((group, index) =>
+        group.length > 1 ? (
+          <View key={`group-${index}`} style={styles.strips}>
+            {group.map(render)}
+          </View>
+        ) : (
+          render(group[0])
+        ),
+      )}
+
+      <CustomizeHomeSheet
+        visible={customizing}
+        layout={layout}
+        onChange={setLayout}
+        onClose={() => setCustomizing(false)}
+      />
     </Screen>
   );
 }
 
+/** The three domain strips, which share a rhythm. Sections do not. */
+function isStrip(id: DashboardModuleId): boolean {
+  return id === 'water' || id === 'peptides' || id === 'fuel';
+}
+
+/**
+ * Splits the visible modules into runs, so adjacent strips can share a
+ * tighter gap while the saved order is preserved exactly.
+ */
+function groupStrips(ids: DashboardModuleId[]): DashboardModuleId[][] {
+  const groups: DashboardModuleId[][] = [];
+
+  for (const id of ids) {
+    const current = groups[groups.length - 1];
+    if (current && isStrip(id) && isStrip(current[0])) current.push(id);
+    else groups.push([id]);
+  }
+
+  return groups;
+}
+
 const styles = StyleSheet.create({
-  pair: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: spacing.m,
-  },
-  half: {
-    flex: 1,
+  strips: {
+    gap: spacing.s,
   },
 });

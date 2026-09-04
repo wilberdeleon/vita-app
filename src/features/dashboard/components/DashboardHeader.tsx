@@ -1,77 +1,165 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenHeader } from '../../../components/ui';
-import { palette, spacing, typography } from '../../../theme/tokens';
+import { PressableScale } from '../../../components/ui';
+import { VitaMark } from '../../../components/shell/VitaMark';
+import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { Greeting } from '../greeting';
 
 type Props = {
   greeting: Greeting;
   firstName: string;
-  /** Today, as a person reads it — "Wednesday, September 3". */
+  /** Today, compact — "Thu, Sep 3". */
   dateLabel: string;
+  /** The one factual line, or null when there is nothing worth saying. */
+  summary: string | null;
+  onCustomize: () => void;
 };
 
 /**
- * The top of Home: who, when, and nothing else.
+ * The top of Home: who, when, what today holds, and the two controls.
  *
- * **Both slogans are gone.** `Build with intention.` sat at 34px/800 — the
- * largest type anywhere in the app — and `YOUR DAY, YOUR DIRECTION.` beneath
- * it. The most visually dominant element on VITA's home screen was a line
- * that said nothing about the user's day. Neither was replaced with another
- * slogan; the space they held now belongs to the modules below.
+ * **The greeting is context, not a headline** (founder review of 5.3). It ran
+ * at 26px and still dominated the first viewport; it is now an eyebrow — small,
+ * uppercase, in the brand gold — which is the weight a salutation earns. The
+ * space that bought goes to the summary line and the modules below.
  *
- * **The greeting stays and stays time-aware** — morning, afternoon, evening,
- * night, re-evaluated every minute so a screen left open across a boundary
- * flips on its own. It is the one piece of warmth on the screen and the
- * founders asked for it explicitly.
+ * It stays time-aware, and it is still the only warmth on the screen.
  *
- * **The name comes from `useAuth()`, not from a Dashboard fixture.** That is
- * the app's identity boundary: it reports a mock user today and a real one
- * when Supabase auth lands, and Home will not need to change. The fixture it
- * replaces was a Dashboard-owned constant, which is a different and worse
- * thing — a screen inventing a fact about the user.
+ * **The line under it is a fact, never encouragement.** `1 routine scheduled ·
+ * 28 fl oz to go` is worth reading; `Stay on track` is not, and neither is a
+ * score assembled out of numbers held for other purposes. When the domains
+ * have nothing to report the line is simply absent — see `dailySummary.ts`.
  *
- * The date is a genuinely useful line and costs one row. It is deliberately
- * quiet: it orients, it is not the subject.
+ * **The date is a chip, and deliberately inert.** It reads as a small utility
+ * because that is what it is: there is no calendar destination in VITA, and
+ * styling it as a button that goes nowhere would be the dead-affordance
+ * problem Settings was cleaned of in slice 4.1. It is a label with a border,
+ * announced as text.
+ *
+ * **Two controls, and they are different things.** Settings stays top-right,
+ * exactly where the founders fixed it. *Customize* sits beside it and changes
+ * this screen only — it is not a second settings entry, and the header itself
+ * (branding, greeting, date, Settings) is structural and cannot be hidden.
  */
-export function DashboardHeader({ greeting, firstName, dateLabel }: Props) {
+export function DashboardHeader({ greeting, firstName, dateLabel, summary, onCustomize }: Props) {
   const insets = useSafeAreaInsets();
-  const { scheme, surfaces } = useTheme();
-  const tone = scheme === 'dark' ? 'light' : 'dark';
+  const { surfaces } = useTheme();
 
   return (
     <View style={{ paddingTop: insets.top + spacing.s }}>
-      <ScreenHeader title="VITA" brand settings tone={tone} markColor={palette.gold} />
+      <View style={styles.bar}>
+        <View style={styles.brand}>
+          <VitaMark size={30} color={palette.gold} />
+          <Text style={[styles.wordmark, { color: surfaces.text }]}>VITA</Text>
+        </View>
 
-      <View style={styles.greeting}>
-        <Text style={[styles.line, { color: surfaces.text }]} numberOfLines={2}>
-          {greeting.label}, {firstName}.
-        </Text>
-        <Text style={[styles.date, { color: surfaces.textTertiary }]} numberOfLines={1}>
-          {dateLabel}
-        </Text>
+        <View style={styles.controls}>
+          <PressableScale
+            onPress={onCustomize}
+            hitSlop={10}
+            accessibilityLabel="Customize Home"
+            accessibilityHint="Choose which sections appear and their order"
+            style={styles.control}
+          >
+            <Ionicons name="ellipsis-horizontal" size={20} color={surfaces.text} />
+          </PressableScale>
+
+          <PressableScale
+            onPress={() => router.push('/settings')}
+            hitSlop={10}
+            accessibilityLabel="Settings"
+            style={styles.control}
+          >
+            <Ionicons name="settings-outline" size={20} color={surfaces.text} />
+          </PressableScale>
+        </View>
+      </View>
+
+      <View style={styles.context}>
+        <View style={styles.contextText}>
+          <Text style={[styles.greeting, { color: palette.gold }]} numberOfLines={1}>
+            {greeting.label.toUpperCase()}, {firstName.toUpperCase()}
+          </Text>
+          {summary ? (
+            <Text style={[styles.summary, { color: surfaces.text }]} numberOfLines={2}>
+              {summary}
+            </Text>
+          ) : null}
+        </View>
+
+        <View
+          style={[styles.dateChip, { borderColor: surfaces.border }]}
+          accessible
+          accessibilityRole="text"
+          accessibilityLabel={`Today, ${dateLabel}`}
+        >
+          <Ionicons name="calendar-outline" size={13} color={surfaces.textTertiary} />
+          <Text style={[styles.dateLabel, { color: surfaces.textSecondary }]}>{dateLabel}</Text>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  greeting: {
-    marginTop: spacing.xl,
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+  },
+  wordmark: {
+    ...typography.title,
+    fontSize: 22,
+    letterSpacing: 5,
+  },
+  controls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.l,
+  },
+  control: {
+    minWidth: 28,
+    alignItems: 'center',
+  },
+  context: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.m,
+    marginTop: spacing.l,
+  },
+  contextText: {
+    flex: 1,
     gap: spacing.xs,
   },
-  line: {
-    /**
-     * Large enough to be the screen's opening statement, small enough not to
-     * be its subject. The old headline ran to 34/800 for a slogan; the
-     * subject of Home is what the modules say, not the salutation.
-     */
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.4,
+  greeting: {
+    ...typography.micro,
+    letterSpacing: 1.2,
+    fontWeight: '600',
   },
-  date: {
+  summary: {
+    ...typography.bodyMedium,
+    fontWeight: '600',
+  },
+  dateChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderWidth: 1,
+    borderRadius: radii.chip,
+    paddingHorizontal: spacing.m,
+    paddingVertical: 6,
+  },
+  dateLabel: {
     ...typography.caption,
   },
 });

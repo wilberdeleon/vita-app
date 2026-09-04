@@ -140,11 +140,11 @@ describe('the greeting', () => {
     const tree = await mount(fakeWater());
     const rendered = screen(tree);
 
-    expect(rendered).toMatch(/Good (morning|afternoon|evening|night), Wilber\./);
-    // The date orients; it is not the subject.
-    expect(rendered).toMatch(
-      /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), [A-Z][a-z]+ \d{1,2}/,
-    );
+    // An eyebrow, not a headline (5.3A): small, uppercase, and above a
+    // factual line rather than being the line.
+    expect(rendered).toMatch(/GOOD (MORNING|AFTERNOON|EVENING|NIGHT), WILBER/);
+    // The date is a compact chip — context, not the subject.
+    expect(rendered).toMatch(/(Mon|Tue|Wed|Thu|Fri|Sat|Sun), [A-Z][a-z]{2} \d{1,2}/);
   });
 
   it('carries no slogan, and no replacement for one', async () => {
@@ -252,7 +252,10 @@ describe('the Fuel strip', () => {
   it('states an empty day honestly', async () => {
     const tree = await mount(fakeWater());
 
-    expect(screen(tree)).toContain('No meals logged yet');
+    // Terse on screen so it does not truncate beside the action; the spoken
+    // label carries the full phrase.
+    expect(screen(tree)).toContain('No meals');
+    expect(control(tree, /^Fuel,.*no meals logged yet/)).toBeDefined();
     expect(control(tree, 'Log food')).toBeDefined();
   });
 
@@ -308,15 +311,36 @@ describe('the Peptides module', () => {
 /* ── Tools ──────────────────────────────────────────────────────────────── */
 
 describe('Tools discoverability', () => {
-  it('names the tools that exist and offers exactly one way in', async () => {
+  it('offers exactly the three approved tools, each to a real route', async () => {
     const tree = await mount(fakeWater());
 
-    expect(screen(tree)).toContain('Peptide Calculator · Injection Sites');
-    // One destination, not a grid of utilities — Home is not a launcher.
-    expect(control(tree, /Tools and Reference/)).toBeDefined();
+    for (const [label, route] of [
+      ['Peptide Calculator', '/tools/peptide-calculator'],
+      ['Injection Sites', '/tools/injection-sites'],
+      ['Food Scanner', '/fuel/scan'],
+    ] as const) {
+      const tile = control(tree, label);
+      expect(tile).toBeDefined();
+      mockPush.mockClear();
+      await act(async () => tile!.props.onPress());
+      expect(mockPush).toHaveBeenCalledWith(route);
+    }
+  });
 
-    await act(async () => control(tree, /Tools and Reference/)!.props.onPress());
+  it('keeps the full Tools destination reachable without a second module', async () => {
+    // A Quick Tools section *and* a Tools row would be the duplication the
+    // authorization warned against; one quiet link is the whole answer.
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'All tools')!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/tools');
+  });
+
+  it('offers no fourth tile invented for symmetry', async () => {
+    const rendered = screen(await mount(fakeWater()));
+    expect(rendered).toContain('QUICK TOOLS');
+    for (const absent of ['BMI', 'Reference', 'Coming Soon']) {
+      expect(rendered).not.toContain(absent);
+    }
   });
 
   it('advertises nothing that does not exist yet', async () => {
@@ -352,6 +376,132 @@ describe('staying current', () => {
   });
 });
 
+/* ── Today's Schedule ───────────────────────────────────────────────────── */
+
+describe("Today's Schedule", () => {
+  it('says nothing is scheduled, compactly, when there is nothing', async () => {
+    const tree = await mount(fakeWater());
+    const rendered = screen(tree);
+
+    expect(rendered).toContain("TODAY'S SCHEDULE");
+    expect(rendered).toContain('Nothing scheduled today');
+  });
+
+  it('invents no clock times, because routines have none', async () => {
+    /*
+     * Routines schedule by *day*. A setup may carry an optional reminder
+     * time, but that is a notification the user asked for, not when a dose
+     * is due — putting it in a schedule column would quietly promote it into
+     * one. So no row carries a time until the domain has a real one.
+     */
+    const rendered = screen(await mount(fakeWater()));
+    expect(rendered).not.toMatch(/\d{1,2}:\d{2}\s?(AM|PM)/i);
+  });
+
+  it('invents no activity rows', async () => {
+    // The reference image showed walks and workouts; VITA has no movement
+    // domain, so a schedule cannot honestly contain one.
+    const rendered = screen(await mount(fakeWater())).toLowerCase();
+    for (const word of ['walk', 'workout', 'chest', 'run ', 'steps']) {
+      expect(rendered).not.toContain(word);
+    }
+  });
+});
+
+/* ── the daily summary line ─────────────────────────────────────────────── */
+
+describe('the summary line', () => {
+  it('states real remaining hydration', async () => {
+    const tree = await mount(
+      fakeWater({
+        goal: createWaterGoal(64, 'floz'),
+        entries: [createWaterEntry({ amount: 16, unit: 'floz' })],
+      }),
+    );
+    expect(screen(tree)).toContain('48 fl oz to go');
+  });
+
+  it('says hydration is complete without praising anyone', async () => {
+    const tree = await mount(
+      fakeWater({
+        goal: createWaterGoal(64, 'floz'),
+        entries: [createWaterEntry({ amount: 64, unit: 'floz' })],
+      }),
+    );
+    expect(screen(tree)).toContain('hydration complete');
+  });
+
+  it('is simply absent when there is nothing factual to say', async () => {
+    // No goal, no routines, nothing logged — a filler line would be worse
+    // than the space it takes.
+    const rendered = screen(await mount(fakeWater()));
+    expect(rendered).not.toMatch(/to go|complete|scheduled ·/);
+  });
+
+  it('never assembles a score out of the numbers it holds', async () => {
+    const rendered = screen(await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }))).toLowerCase();
+    for (const word of ['score', 'readiness', 'of 4', '% complete']) {
+      expect(rendered).not.toContain(word);
+    }
+  });
+});
+
+/* ── customizing Home ───────────────────────────────────────────────────── */
+
+describe('Customize Home', () => {
+  it('opens from the header, separately from Settings', async () => {
+    const tree = await mount(fakeWater());
+
+    // Both controls exist and are different things.
+    expect(control(tree, 'Settings')).toBeDefined();
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    // The sheet lists every module by name.
+    const rendered = screen(tree);
+    for (const label of ['Water', 'Peptides', 'Fuel', 'Quick Tools', "Today's Schedule"]) {
+      expect(rendered).toContain(label);
+    }
+  });
+
+  it('hides a module from Home, and brings it back', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    await act(async () => control(tree, 'Hide Quick Tools')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+    expect(screen(tree)).not.toContain('QUICK TOOLS');
+
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Show Quick Tools')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+    expect(screen(tree)).toContain('QUICK TOOLS');
+  });
+
+  it('reorders with buttons that say what they do', async () => {
+    // Reordering is reachable by every input method, not just a pointer.
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    expect(control(tree, 'Move Water up')).toBeDefined();
+    expect(control(tree, 'Move Water down')).toBeDefined();
+    expect(control(tree, 'Move Peptides up')).toBeDefined();
+
+    await act(async () => control(tree, 'Move Peptides up')!.props.onPress());
+    // Water was first; Peptides has taken its place.
+    expect(control(tree, 'Move Peptides up')!.props.disabled).toBe(true);
+  });
+
+  it('leaves the header alone — it is not a customisable module', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+
+    for (const absent of ['Hide Settings', 'Hide VITA', 'Hide Greeting']) {
+      expect(control(tree, absent)).toBeUndefined();
+    }
+    expect(screen(tree)).toContain('always stay');
+  });
+});
+
 /* ── accessibility ──────────────────────────────────────────────────────── */
 
 describe('accessibility', () => {
@@ -364,7 +514,12 @@ describe('accessibility', () => {
       /^Fuel,/,
       'Log food',
       /^Peptides,/,
-      /Tools and Reference/,
+      'Peptide Calculator',
+      'Injection Sites',
+      'Food Scanner',
+      'All tools',
+      'Customize Home',
+      'Settings',
     ]) {
       expect(control(tree, label)).toBeDefined();
     }

@@ -11,14 +11,27 @@ type DockItem = {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
-  /** Active tint — Atlas owns purple, everything else is VITA orange. */
-  color: string;
+  /** Active tint, or `null` to follow the theme's primary text. */
+  color: string | null;
 };
 
-// Active tints follow the permanent domain hierarchy: Home is navigation
-// (neutral ink), Fuel orange, Journey green, Atlas purple.
+/**
+ * Active tints follow the permanent domain hierarchy: Home is navigation,
+ * Fuel orange, Journey green, Atlas purple.
+ *
+ * **Home's tint is resolved per theme rather than fixed** (slice 5.3A). It
+ * was `palette.ink` (`#1C1F1A`), which is the right neutral in Light and
+ * very nearly invisible against the near-black dark background — so the one
+ * tab that was *selected* was the hardest to see, and Home is the tab a
+ * person is on most. `null` here means "the theme's own primary text",
+ * resolved below; Light is unchanged in practice, since `surfaces.text`
+ * (`#1B1B1B`) is a shade off the ink it replaces.
+ *
+ * This is the class of defect the Design System warns about directly:
+ * a single fixed value that inverts its own hierarchy in one theme.
+ */
 const DOCK_ITEMS: DockItem[] = [
-  { route: 'dashboard', label: 'Home', icon: 'home-outline', activeIcon: 'home', color: palette.ink },
+  { route: 'dashboard', label: 'Home', icon: 'home-outline', activeIcon: 'home', color: null },
   { route: 'fuel', label: 'Fuel', icon: 'flame-outline', activeIcon: 'flame', color: palette.primary },
   { route: 'journey', label: 'Journey', icon: 'trending-up-outline', activeIcon: 'trending-up', color: palette.journey },
   { route: 'atlas', label: 'Atlas', icon: 'planet-outline', activeIcon: 'planet', color: palette.peptide },
@@ -36,12 +49,13 @@ const DOCK_ITEMS: DockItem[] = [
  */
 export function FloatingDock({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const { scheme } = useTheme();
+  const { scheme, surfaces } = useTheme();
   const inactiveColor = scheme === 'dark' ? 'rgba(255,255,255,0.65)' : palette.textSecondary;
 
   const items = DOCK_ITEMS.map((item) => {
     const routeIndex = state.routes.findIndex((route) => route.name === item.route);
     const active = state.index === routeIndex;
+    const activeColor = item.color ?? surfaces.text;
     return (
       <Pressable
         key={item.route}
@@ -51,8 +65,8 @@ export function FloatingDock({ state, navigation }: BottomTabBarProps) {
         accessibilityState={{ selected: active }}
         accessibilityLabel={item.label}
       >
-        <Ionicons name={active ? item.activeIcon : item.icon} size={22} color={active ? item.color : inactiveColor} />
-        <Text style={[styles.label, { color: inactiveColor }, active && { color: item.color, fontWeight: '600' }]}>
+        <Ionicons name={active ? item.activeIcon : item.icon} size={22} color={active ? activeColor : inactiveColor} />
+        <Text style={[styles.label, { color: inactiveColor }, active && { color: activeColor, fontWeight: '600' }]}>
           {item.label}
         </Text>
       </Pressable>

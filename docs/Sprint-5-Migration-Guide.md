@@ -49,7 +49,9 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.3 — Dashboard — ✅ IMPLEMENTED 2026-09-03 (awaiting founder device review)
+# Slice 5.3 — Dashboard — ✅ IMPLEMENTED 2026-09-03 · composition revised in 5.3A
+
+*Founder review approved the data work and rejected the composition. 5.3A kept every fixture removal and rebuilt the shape: eyebrow greeting, three horizontal strips, Quick Tools, Today's Schedule, and a persisted Customize Home. Patterns worth carrying are listed below.*
 
 *Outcome: the fixture removal was larger than planned — six of fourteen displayed values were invented, which deleted `mock.ts`, `api.ts`, `types.ts` and nine components. `GlassSurface` on Home went 6 → 0. See the Slice Tracker.*
 
@@ -80,7 +82,16 @@ For each screen: what generic pattern is there now · what role it should take �
 - **A summary screen inherits the source feature's wording rules in full.** Peptides on Home carries Sprint 3's *scheduled not due*, *unanswered stays unanswered*, *nothing is scored* without softening. 5.4 and 5.5 must not relax them either.
 - **Home surfaces actions; features own them.** `/water?add=1` — a param the feature reads once as initial state — is the pattern for opening a feature ready to act, without duplicating its flow.
 - **`flex` on `PressableScale` still does not work.** Hit a third time. **5.7 should fix the primitive.**
-- **Open finding for 5.7:** `FloatingDock` gives the active Home tab `palette.ink`, invisible on the near-black dark background and fine in Light.
+- ~~**Open finding for 5.7:** `FloatingDock` active Home tab.~~ **Fixed in 5.3A** — Home's tint resolves through the theme.
+
+**Patterns 5.3A added:**
+
+- **Horizontal strips beat boxes for a summary surface.** Three domains at ~64pt each fit where two boxes did, and the height freed paid for two more sections. 5.4 should reach for a strip before a card.
+- **Density comes from more truth, not more padding.** Quick Tools and Today's Schedule filled Home because they are real; nothing was stretched.
+- **A section may only aggregate what a domain actually holds.** Today's Schedule carries no times because routines schedule by day — a reminder time is a different concept and putting it in a schedule column would promote it into one. Same discipline applies to anything 5.5 adds.
+- **`useDashboardLayout` is the model for a screen-owned UI preference**: its own key, an untrusted-input normaliser, and no coupling to `AppPreferences` (whose `save()` writes the whole record).
+- **Reorder with buttons, not drag** — no native dependency, and accessible by construction.
+- **Still open for 5.7:** `flex` handed to `PressableScale` does not reach its parent row. Hit four times now; every call site works around it with a wrapper.
 
 ---
 

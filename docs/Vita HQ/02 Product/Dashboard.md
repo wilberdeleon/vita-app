@@ -6,6 +6,22 @@
 
 ---
 
+## Sprint 5 slice 5.3A — composition and customization (2026-09-03, awaiting founder device review)
+
+**The data work from 5.3 stands; the shape changed.** Home was too sparse and its greeting too large, so the greeting became a small uppercase line, the three domains became compact horizontal strips, and the space that freed went to things that are actually useful.
+
+**A factual line under the greeting** — `1 routine scheduled · 28 fl oz to go` — built only from what the app already knows, and simply absent when there is nothing to say. Beside it, a compact date chip.
+
+**Quick Tools** puts the Peptide Calculator, Injection Sites and the Food Scanner one tap from Home.
+
+**Today's Schedule** lists what is actually scheduled today, which today means peptide routines — the only thing in VITA with a day attached. It shows no clock times, because routines schedule by day and a reminder is a different thing from a dose being due.
+
+**Home is now yours.** A `•••` control opens Customize Home, where any section can be hidden or reordered, and the choice survives a relaunch. Someone who does not take peptides can switch that module and the schedule off and Home stops mentioning them. The VITA header, greeting, date and Settings always stay.
+
+**Movement is still not shown**, because VITA has no activity data. It is not offered as a disabled option either — that would advertise something the app cannot do.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.3A.
+
 ## Sprint 5 slice 5.3 — the Dashboard identity redesign (2026-09-03, awaiting founder device review)
 
 **Home became a daily control surface rather than a report.** It opens with a time-aware greeting and the date, then three domains you can act on, then a quiet route to Tools.

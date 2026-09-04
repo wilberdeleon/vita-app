@@ -6,181 +6,150 @@ import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
 type Props = {
-  /** Routines scheduled today, exactly as `usePeptides()` groups them. */
   today: readonly TodayRoutine[];
-  /** True when the user has no routines at all yet. */
   isEmpty: boolean;
   isLoading: boolean;
   onOpen: () => void;
 };
 
 /**
- * Peptides on Home — what today asks of you, stated as fact.
+ * Peptides on Home — what today holds, named.
  *
- * **Deliberately not a ring and not a bar.** Water is a ring, Fuel is a bar,
- * and this is a count with a row of day marks. Three domains that behave
- * nothing alike should not read as the same module in three colours — that
- * sameness is the whole diagnosis Sprint 5 exists to fix.
+ * **Reshaped and made more useful after the 5.3 founder review.** It was a
+ * tall box saying only how many were scheduled; it is now a strip that also
+ * names the routine and its amount when there is exactly one thing
+ * outstanding, which is the common case and the one where a name saves a tap.
+ * With several outstanding it summarises and lets Today's Schedule carry the
+ * list — a Dashboard module is not the place for a full routine roster.
  *
- * ## The wording is load-bearing
+ * ## The wording rules are Sprint 3's, unchanged
  *
- * Every rule Sprint 3 set for Peptides applies here and none of them is
- * softened for a summary:
+ * - **"Scheduled", never "due"** as an obligation. A schedule is what the
+ *   user planned, not something VITA enforces.
+ * - **An unanswered day stays unanswered** — never *missed*, *late* or
+ *   *overdue*, and never converted to *skipped*. Absence of a response is not
+ *   a response.
+ * - **Nothing is scored.** No adherence, no streak, no percentage.
+ * - **The amount shown is the user's own routine amount**, read back from
+ *   what they configured. It is not a recommendation, and VITA has none.
  *
- * - **"Scheduled", never "due"** in the sense of an obligation. A schedule is
- *   what the user planned, not something VITA is enforcing.
- * - **An unanswered day is unanswered.** No *missed*, no *late*, no
- *   *overdue*, and never converted to *skipped* — absence of a response is
- *   not a response, which is a distinction the domain draws explicitly.
- * - **Nothing is scored.** No adherence, no streak, no percentage, no
- *   compliance language of any kind.
- *
- * The marks are a factual tally of today: taken, skipped, and unanswered,
- * each drawn once per routine. Colour alone never carries them — the count
- * line says the same thing in words, because a row of coloured dots is
- * meaningless to a screen reader and to anyone who cannot separate the hues.
- *
- * **This module stays compact on purpose.** Slice 5.4 redesigns Peptides
- * Home; building that here first would mean building it twice.
+ * The violet dot marks that something is outstanding; the words say so too,
+ * because colour alone is not a state a screen reader or a colour-blind user
+ * can read.
  */
 export function PeptidesModule({ today, isEmpty, isLoading, onOpen }: Props) {
   const { surfaces } = useTheme();
 
-  const taken = today.filter((item) => item.mark === 'taken').length;
-  const skipped = today.filter((item) => item.mark === 'skipped').length;
-  const unanswered = today.length - taken - skipped;
+  const unanswered = today.filter((item) => item.mark === 'unconfirmed');
+  const only = unanswered.length === 1 ? unanswered[0] : null;
 
-  const headline = isLoading
+  const value = isLoading
     ? '—'
     : today.length === 0
       ? isEmpty
         ? 'No routines yet'
         : 'Nothing scheduled'
-      : unanswered > 0
-        ? `${unanswered} scheduled`
-        : 'All answered';
+      : unanswered.length === 0
+        ? 'All answered'
+        : unanswered.length === 1
+          ? '1 scheduled'
+          : `${unanswered.length} scheduled`;
 
-  const detail = isLoading
-    ? ''
-    : today.length === 0
-      ? isEmpty
-        ? 'Add one to start tracking'
-        : 'Nothing scheduled today'
-      : [taken > 0 ? `${taken} taken` : null, skipped > 0 ? `${skipped} skipped` : null]
-          .filter(Boolean)
-          .join(' · ') || 'Not answered yet';
+  /** The routine's own configured amount, e.g. `1 mg`. Never a suggestion. */
+  const amount = only?.setup.routineAmount
+    ? `${only.setup.routineAmount.authored.amount} ${only.setup.routineAmount.authored.unit}`
+    : null;
+
+  /*
+   * Only shown when it adds something the value line does not already say.
+   * `No routines yet · Add one to start tracking` is one fact written twice,
+   * and on a strip it truncates the second half into nonsense.
+   */
+  const detail = isLoading || today.length === 0
+    ? null
+    : only
+      ? [only.name, amount].filter(Boolean).join(' · ')
+      : `${today.length} today`;
 
   return (
     <PressableScale
-      style={[styles.module, { borderColor: surfaces.border }]}
+      style={[styles.strip, { borderColor: surfaces.border }]}
       onPress={onOpen}
-      accessibilityLabel={`Peptides, ${headline}${detail ? `, ${detail}` : ''}. Opens Peptides`}
+      accessibilityLabel={`Peptides, ${value}${detail ? `, ${detail}` : ''}. ${
+        isEmpty ? 'Opens Peptides to add one' : 'Opens Peptides'
+      }`}
     >
-      <View style={styles.head}>
-        <Ionicons name="medical" size={15} color={palette.peptide} />
-        <Text style={[styles.title, { color: surfaces.textSecondary }]}>Peptides</Text>
-      </View>
-
-      <View style={styles.body}>
-        <Text style={[styles.headline, { color: surfaces.text }]} numberOfLines={1} adjustsFontSizeToFit>
-          {headline}
-        </Text>
-
-        {today.length > 0 ? (
+      <View style={[styles.badge, { backgroundColor: `${palette.peptide}1A` }]}>
+        <Ionicons name="medical" size={16} color={palette.peptide} />
+        {unanswered.length > 0 ? (
           <View
-            style={styles.marks}
+            style={[styles.dot, { backgroundColor: palette.peptide, borderColor: surfaces.background }]}
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
-          >
-            {today.map((item) => (
-              <View
-                key={item.setup.id}
-                style={[
-                  styles.mark,
-                  item.mark === 'taken'
-                    ? { backgroundColor: palette.peptide }
-                    : item.mark === 'skipped'
-                      ? { backgroundColor: palette.routineSkipped }
-                      : { borderWidth: 1, borderColor: surfaces.textTertiary },
-                ]}
-              />
-            ))}
-          </View>
+          />
         ) : null}
+      </View>
 
-        <Text style={[styles.detail, { color: surfaces.textTertiary }]} numberOfLines={2}>
-          {detail}
+      <View style={styles.text}>
+        <Text style={[styles.label, { color: surfaces.textSecondary }]}>Peptides</Text>
+        <Text style={[styles.value, { color: surfaces.text }]} numberOfLines={1}>
+          {value}
+          {detail ? <Text style={[styles.detail, { color: surfaces.textTertiary }]}> · {detail}</Text> : null}
         </Text>
       </View>
 
-      <View style={[styles.action, { borderTopColor: surfaces.border }]}>
-        <View style={styles.actionInner}>
-          <Text style={[styles.actionLabel, { color: surfaces.text }]}>
-            {isEmpty ? 'Add peptide' : 'View'}
-          </Text>
-          <Ionicons name="chevron-forward" size={13} color={surfaces.textTertiary} />
-        </View>
-      </View>
+      <Text style={[styles.link, { color: surfaces.textTertiary }]}>
+        {isEmpty ? 'Add' : 'View'}
+      </Text>
+      <Ionicons name="chevron-forward" size={14} color={surfaces.textTertiary} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  module: {
-    flex: 1,
+  strip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.m,
     borderWidth: 1,
     borderRadius: radii.card,
-    paddingTop: spacing.m,
-    gap: spacing.m,
-  },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+    paddingVertical: spacing.m,
     paddingHorizontal: spacing.m,
+    minHeight: 64,
   },
-  title: {
-    ...typography.captionMedium,
-  },
-  body: {
+  badge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
-    gap: spacing.s,
-    paddingHorizontal: spacing.m,
-    // Holds the module level with Water's ring so the pair reads as a row
-    // rather than as two unrelated blocks of different height.
-    minHeight: 78,
     justifyContent: 'center',
   },
-  headline: {
-    ...typography.heading,
-    textAlign: 'center',
+  dot: {
+    position: 'absolute',
+    top: 1,
+    right: 1,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    borderWidth: 1.5,
   },
-  marks: {
-    flexDirection: 'row',
-    gap: spacing.xs,
+  text: {
+    flex: 1,
+    gap: 1,
   },
-  mark: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+  label: {
+    ...typography.micro,
+    letterSpacing: 0.6,
+  },
+  value: {
+    ...typography.bodyMedium,
+    fontWeight: '700',
   },
   detail: {
     ...typography.caption,
-    textAlign: 'center',
+    fontWeight: '400',
   },
-  action: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  actionInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.m,
-    minHeight: 44,
-  },
-  actionLabel: {
+  link: {
     ...typography.captionMedium,
-    fontWeight: '600',
   },
 });

@@ -2038,7 +2038,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | ✅ Founder-approved on device 2026-09-02 — **5.1 locked** |
 | 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ✅ Founder-approved on device 2026-09-03 |
 | 5.2A | Water Custom Amount Keyboard Polish | A Done key for the number pad, and the press-opacity regression it exposed | ✅ Founder-approved · 5.2 closed |
-| 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | 🟡 Implemented — awaiting founder device review |
+| 5.3 | Dashboard Identity Redesign | Real data only, no generic slogans, action-first composition, Tools destination | 🟡 Data work approved; composition revised in 5.3A |
+| 5.3A | Dashboard Composition + Customization | Denser composition, Quick Tools, Today's Schedule, Customize Home, dock contrast fix | 🟡 Implemented — awaiting founder device review |
 | 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
 | 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
 | 5.6 | Tools Integration | Sprint 4's existing working Tools under the new language — behaviour frozen | ⬜ Not started |
@@ -2198,5 +2199,43 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Device coverage limit.** Screenshots show the sparse first-run state, since this environment cannot seed Water, Fuel or Peptide data. Populated states — real hydration progress, a scheduled dose, meals logged — are covered by twenty route tests mounting the real screen over real providers, and are the first thing for founder review.
 
-**Still to verify — founder, on a real device:** whether Home is useful immediately, whether the three domains read as distinct, whether Tools feels discoverable without being a launcher, whether the greeting is the right weight, and whether the screen feels too empty on a day with little logged.
+**Founder device review: the data work is approved, the composition is not.** Real-data-only, the fixture removal, the provider wiring, Tools integration and the slogan removal all stand. What was rejected was the shape — an oversized greeting, two large side-by-side boxes, and too much empty vertical space. Addressed in 5.3A.
+
+### Slice 5.3A — Dashboard Composition + Customization 🟡
+
+**Implemented 2026-09-03. Awaiting founder device review — not approved.** Composition only: **no fixture returned**, and every figure still comes from the feature that owns it.
+
+**The greeting became an eyebrow.** `Good night, Wilber.` at 26px is now `GOOD NIGHT, WILBER` in small uppercase gold, with a factual line beneath it and a compact date chip beside it. The chip is deliberately inert and announced as text — VITA has no calendar destination, and styling a button that goes nowhere is the dead-affordance problem slice 4.1 cleaned out of Settings.
+
+**The daily summary is facts or nothing.** `1 routine scheduled · 28 fl oz to go`, built from state the domains already hold. When there is nothing factual to say the line is absent rather than filled — and it is never a synthetic score, which is what the old `N of 4 goals complete` was.
+
+**Three domains became horizontal strips**, roughly a third of the previous height, each keeping its own shape: Water a ring, Peptides a badge with an outstanding dot, Fuel a bar. Peptides also gained real usefulness — with exactly one thing outstanding it names the routine and its configured amount, which is the common case and the one where a name saves a tap.
+
+**Density came from showing more of what is true**, never from padding: the height the strips freed went to **Quick Tools** (Peptide Calculator · Injection Sites · Food Scanner, all to real routes — `/fuel/scan` was read from the codebase, not guessed) and **Today's Schedule**.
+
+**Today's Schedule carries no times, and that is the honest answer.** Routines schedule **by day**; a setup may hold an optional `reminder.timeLocal`, but that is a notification the user asked for, not when a dose is due, and putting it in a schedule column would quietly promote it into one. Rows show name, configured amount and the domain's own state label — including `No response`, kept verbatim per the Sprint 3 rule that absence of a response is not a response. Its only source is peptide routines, because that is VITA's only domain with a day attached: Water has a target not an appointment, Fuel has slots not times, and Movement has no domain at all.
+
+**Movement is still absent — and is not offered as a hidden or disabled module.** An audit found no activity domain of any kind; the only `steps`/`workout` matches in `src/lib` are peptide research text. Listing it as unavailable would tease functionality that does not exist. It becomes a module the day a real source does.
+
+**Customize Home** — a `VitaSheet` from a `•••` control beside Settings. Show, hide and reorder the five content modules; persists across relaunch under its own key `vita:v1:dashboard:layout`. **Reordering is move-up/move-down buttons, not dragging**: drag would mean adding `react-native-gesture-handler` *and* `react-native-reanimated` — two native dependencies — to move five rows, and a drag target is pointer-only until custom accessibility actions are built on top of it. Buttons work with every input method and announce exactly what they do.
+
+**Why its own key rather than app preferences.** Two reasons. The preferences module's own rule is that it holds what *no single feature owns*, and Home owns this. More concretely, `PreferencesRepository.save()` writes the whole record and `ThemeProvider` calls it as `save({ themeMode })` — any field added alongside would be erased the next time someone changed their theme, which would mean editing founder-approved Sprint 4 code to carry a preference it has no reason to know about.
+
+**A stored layout is treated as untrusted input**: unknown ids dropped, duplicates collapsed, modules missing from a saved order appended in default order (so a *new* module appears for existing users rather than vanishing), and an unusable order falling back to the default. Hiding everything is allowed and is not corruption — the header and the Customize control remain, so the choice is never a trap.
+
+**The header is not customisable.** Branding, greeting, date and Settings orient the screen and one of them is the way out of it.
+
+**Dock contrast fixed, as directed.** `FloatingDock` gave the active Home tab `palette.ink` — right in Light, very nearly invisible on the near-black dark background, so the selected tab was the hardest to see. Home's tint now resolves through the theme; Light is unchanged in practice (`surfaces.text` is a shade off the ink it replaces). Scope held to the defect: no other dock work.
+
+**`ToolsRow` removed** — a Quick Tools section *and* a Tools row would be the duplication the authorization warned against. One quiet `All tools` link keeps `/tools` reachable, and Settings still lists it.
+
+**Also fixed:** three strip details truncated mid-word on the first device render (`Add one to start…`, `No meals logg…`). Copy tightened, with the full wording kept in the spoken labels.
+
+**`PressableScale`'s flex trap was not fixed** — it was hit again here (Quick Tools tiles) and worked around with wrappers. Changing a primitive used across ~10 files was judged the wrong risk to take inside a Dashboard slice; **it remains 5.7's.**
+
+**Validation.** `npm test` **50 suites / 1287 tests** (1259 → 1287; +28) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged · iOS export clean · **no dependency added** · verified in Expo Go: Dark, Light, and the Customize sheet.
+
+**Device coverage limit.** Screenshots are the first-run state — this environment cannot seed feature data or tap the simulator, so populated Home, a scheduled routine in Today's Schedule, and hide/reorder-then-relaunch are covered by 48 route tests and 15 layout tests rather than by screenshot.
+
+**Still to verify — founder, on a real device:** whether Home now feels full without being cluttered, whether the greeting is subtle enough, whether Today's Schedule earns its place, and whether Customize Home feels intuitive.
 

@@ -101,6 +101,20 @@ export function formatLogDateLong(logDate: LogDate): string {
 }
 
 /**
+ * A log date, compact — "Thu, Sep 3".
+ *
+ * The abbreviated sibling of `formatLogDateLong`, for places where the date
+ * is context rather than a heading — Home's date chip is the first. Written
+ * out by hand for the same reason as the others: Hermes' Intl support varies
+ * by platform and engine build, and a chip that silently reads `2026-09-03`
+ * on somebody's phone is not worth the dependency for one string.
+ */
+export function formatLogDateShort(logDate: LogDate): string {
+  const date = fromLogDate(logDate);
+  return `${WEEKDAYS[date.getDay()].slice(0, 3)}, ${MONTHS[date.getMonth()].slice(0, 3)} ${date.getDate()}`;
+}
+
+/**
  * A calendar date with its year — "24 August 2026".
  *
  * The year is the whole reason this exists alongside `formatLogDateLong`. A
