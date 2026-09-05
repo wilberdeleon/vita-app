@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1C1F1A"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -34,6 +29,15 @@
         "expo-camera",
         {
           "cameraPermission": "VITA uses the camera to scan food barcodes so you can log packaged foods without typing."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#1C1F1A",
+          "enableFullScreenImage_legacy": true
         }
       ]
     ]

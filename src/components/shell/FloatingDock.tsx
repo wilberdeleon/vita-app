@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Tabs } from 'expo-router';
+import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassSurface } from '../ui/GlassSurface';
@@ -47,7 +48,22 @@ const DOCK_ITEMS: DockItem[] = [
  * shared chrome, not per-screen content, so one consistent treatment is
  * correct now that every screen's background can be light or dark.
  */
-export function FloatingDock({ state, navigation }: BottomTabBarProps) {
+/**
+ * The props Expo Router hands a custom `tabBar`, derived from the `Tabs`
+ * component that renders this dock rather than named from a separate
+ * package.
+ *
+ * This used to be `BottomTabBarProps` imported from
+ * `@react-navigation/bottom-tabs`. Expo Router 56 vendors React Navigation
+ * inside itself and no longer depends on those packages, so that import
+ * resolves to nothing — and re-adding the standalone package would describe
+ * a *different* navigator than the one Expo Router now runs. Reading the
+ * type off `Tabs['tabBar']` tracks whatever Expo Router actually passes, so
+ * `state` and `navigation` below stay exactly as typed as before.
+ */
+type FloatingDockProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
+
+export function FloatingDock({ state, navigation }: FloatingDockProps) {
   const insets = useSafeAreaInsets();
   const { scheme, surfaces } = useTheme();
   const inactiveColor = scheme === 'dark' ? 'rgba(255,255,255,0.65)' : palette.textSecondary;
