@@ -34,7 +34,7 @@
 - [ ] TypeScript strict; no unexplained `any`
 - [ ] Mock data only via `api.ts` boundaries
 - [ ] No secrets in git; env handling correct
-- [ ] Expo APIs match SDK 54 (check versioned docs, not memory)
+- [ ] Expo APIs match SDK 57 (check versioned docs, not memory)
 - [ ] Accessibility roles/labels on interactive elements
 
 ## 5 — Verification

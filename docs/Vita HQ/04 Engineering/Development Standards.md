@@ -17,7 +17,7 @@
 5. **Never redesign the product without founder approval.**
 6. One slice at a time; when uncertain, **ask before building** — assumptions are discouraged.
 7. Update the right document with every change (see the documentation map in [[Claude Workflow]]).
-8. Expo code is written against the **versioned SDK 54 docs**, never from memory ([[Tech Stack]]).
+8. Expo code is written against the **versioned SDK 57 docs**, never from memory ([[Tech Stack]]).
 
 ## Working standards
 

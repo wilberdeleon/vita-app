@@ -6,7 +6,7 @@ Single source of truth for implementation details: stack, architecture rules, an
 
 ## Stack (founder-approved, July 2026)
 
-- **Platform:** Native-first — Expo SDK 54 / React Native, managed workflow, EAS builds. TypeScript throughout (strict mode). SDK 54 is pinned to match the current App Store Expo Go client (54.x) so founders can test on real iPhones; upgrade the SDK only when the App Store Expo Go supports it.
+- **Platform:** Native-first — Expo SDK 57 / React Native, managed workflow, EAS builds. TypeScript throughout (strict mode). SDK 57 is pinned to match the current App Store Expo Go client (57.x) so founders can test on real iPhones; upgrade the SDK only when the App Store Expo Go supports it. *(Moved 54 → 57 on 2026-09-05 when the App Store client advanced and stopped opening SDK 54 projects — see Changelog.)*
 - **Navigation:** Expo Router (file-based) in `src/app/`.
 - **Backend:** Supabase (auth, database, storage). Schema changes via numbered migrations in `supabase/migrations/`.
 - **Deliberately not pre-committed:** state-management library and component library. These are per-slice decisions made when a slice needs them.
