@@ -8,7 +8,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
-import { Appearance, type ColorSchemeName } from 'react-native';
+import { Appearance } from 'react-native';
 import {
   DEFAULT_THEME_MODE,
   asyncStoragePreferencesRepository,
@@ -56,7 +56,18 @@ type Theme = {
   shadows: typeof shadows;
 };
 
-function resolveScheme(mode: ThemeMode, systemScheme: ColorSchemeName): ColorScheme {
+/**
+ * Exactly what `Appearance.getColorScheme()` hands back, derived from the
+ * function itself rather than restated. React Native widened that return
+ * type (RN 0.83 reports `null | undefined` alongside the scheme, and renamed
+ * the "no preference" member), and deriving it here means the next such
+ * change lands without another edit. Only `'dark'` is ever tested below, so
+ * every other member — light, unspecified, null, undefined — resolves to
+ * light exactly as it always did.
+ */
+type SystemScheme = ReturnType<typeof Appearance.getColorScheme>;
+
+function resolveScheme(mode: ThemeMode, systemScheme: SystemScheme): ColorScheme {
   if (mode === 'system') {
     return systemScheme === 'dark' ? 'dark' : 'light';
   }
@@ -84,7 +95,7 @@ type Props = PropsWithChildren<{
 
 export function ThemeProvider({ children, repository = asyncStoragePreferencesRepository }: Props) {
   const [mode, setModeState] = useState<ThemeMode>(DEFAULT_THEME_MODE);
-  const [systemScheme, setSystemScheme] = useState<ColorSchemeName>(Appearance.getColorScheme());
+  const [systemScheme, setSystemScheme] = useState<SystemScheme>(Appearance.getColorScheme());
   /**
    * False until the stored appearance has been read. Nothing renders before
    * that — see the early return below.
