@@ -24,7 +24,9 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 
 **That alignment session happened on 2026-09-01 and this page now reflects it.** The founder-directed identity sprint is on the roadmap as **Sprint 5 — VITA Identity & Interaction**, inserted ahead of Journey; Journey / Weight moves to Sprint 6, Journey / Photos to Sprint 7, Atlas to Sprint 8, and the final polish sprint to **Sprint 9 — Final Polish / Motion / Launch Experience**.
 
-**Sprint 5 is next: planned, not opened.** No redesign implementation is authorized. Its proposed slice structure (5.1–5.8) is **draft**, pending a Sprint 5 architecture audit and founder approval. Design brief: repo `docs/Sprint-5-Identity-Brief.md`, marked **DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL**.
+**Sprint 5 is 🟡 in progress**, opened 2026-09-02 on branch `sprint-5-identity-interaction`, founder-authorized against the approved **Sprint 5 Planning & Architecture Audit** (repo `docs/Sprint-5-Planning-Audit.md`). **Slices 5.1 (VITA Design Language + Identity Prototype), 5.2 (Interactive [[Water]] Experience) and 5.3 ([[Dashboard]] Identity Redesign) are founder-approved on device and locked.** 5.4 — [[Peptides]] Home Redesign is next and needs its own authorization.
+
+**⚠️ Scope amended 2026-09-04.** The founders ruled that **Sprint 5 must apply the identity language across every already-built product area before [[My Journey|Journey]] begins**, and that the resulting system is the **baseline for all future VITA feature work**, Journey included. **[[Fuel]] gains a dedicated identity slice (5.6)**; Tools becomes **Tools + [[Settings]] (5.7)**; Motion, [[BMI Calculator|BMI]] and the founder audit each shift one number. **Ten slices, 5.1–5.10** — nothing cut. **Sprint 6 begins only after 5.10 passes founder real-device review.** The amendment is recorded in the audit's §S.3.
 
 *The prior sequencing warning here — that Fuel and Journey were swapped in build order but not renumbered — is resolved. The 2026-08-17 restructure renumbered them properly; the 2026-08-21 reorder moved Water + Peptides ahead of Journey; the 2026-09-01 reorder then moved Settings + Tools & Reference ahead of Journey too.*
 
@@ -41,8 +43,8 @@ The repository's own roadmap doc (`vita-app/docs/04-Master-Roadmap.md`) mirrors 
 | 2 — [[Fuel]] | Build the smartest nutrition experience possible | ✅ Complete |
 | 3 — [[Water]] + [[Peptides]] | Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure | ✅ Complete |
 | **4 — [[Settings]] + Tools Foundation** | Settings architecture and a top-level Tools destination — the foundation later Tools are built into | ✅ Complete |
-| **5 — VITA Identity & Interaction** | **Establish how VITA looks, behaves, responds and communicates interaction — the language Journey is built in** | ⬜ **Next** |
-| 6 — [[My Journey\|Journey]] / Weight | The weight half of the Journey experience, and the core Journey data architecture | ⬜ Planned |
+| **5 — VITA Identity & Interaction** | **Establish the VITA visual and interaction language and apply it across every already-built product area — the language Journey is built in** | 🟡 **In progress** — 5.1, 5.2, 5.3 approved |
+| 6 — [[My Journey\|Journey]] / Weight | The weight half of the Journey experience, and the core Journey data architecture — **gated on slice 5.10** | ⬜ Planned |
 | 7 — [[My Journey\|Journey]] / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
 | 8 — [[Atlas]] | Transform Atlas into a true AI health coach | ⬜ Planned |
 | 9 — Final Polish / Motion / Launch Experience | App-wide finishing motion, consistency, edge cases, and the launch experience | ⬜ Planned |
@@ -245,7 +247,36 @@ Detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` → Sprint 4.
 
 ---
 
-## Sprint 5 — VITA Identity & Interaction ⬜ Next
+## Sprint 5 — VITA Identity & Interaction 🟡 In progress
+
+**Status: opened 2026-09-02, branch `sprint-5-identity-interaction`. Slices 5.1, 5.2 and 5.3 are founder-approved on device and locked; 5.4 is next. Slices 5.4–5.10 are planned and each needs its own authorization.**
+
+### Amended 2026-09-04 — the identity must reach every built surface
+
+**Sprint 5 must apply the new VITA Identity & Interaction language across all already-built current product areas before [[My Journey|Journey]] begins.** The system it establishes is the **baseline for all future VITA feature work**, Journey included.
+
+The ruling followed founder review of production [[Water]] and [[Dashboard]] — the first two real features in the new language. With two surfaces migrated and the rest untouched, VITA reads as two products, and shipping Journey into that state would add a third. **[[Fuel]] gains a dedicated identity slice it never had**, and Tools becomes **Tools + [[Settings]]**, because Settings is an equally built product surface.
+
+| # | Slice | Status |
+|---|---|---|
+| 5.1 | VITA Design Language + Identity Prototype | ✅ Approved and locked |
+| 5.2 | Interactive [[Water]] Experience | ✅ Approved and locked |
+| 5.3 | [[Dashboard]] Identity Redesign | ✅ Approved and locked |
+| 5.4 | [[Peptides]] Home Redesign | ⬜ **Next** |
+| 5.5 | Routine + [[Injection Site Tracking\|Injection Site]] Experience | ⬜ Planned |
+| 5.6 | **[[Fuel]] Identity Refresh** *(new)* | ⬜ Planned |
+| 5.7 | **Tools + [[Settings]] Identity Integration** | ⬜ Planned |
+| 5.8 | Motion + Microinteraction Unification | ⬜ Planned |
+| 5.9 | [[BMI Calculator|BMI]] Calculator | ⬜ Planned |
+| 5.10 | Founder Identity Audit — **gates Sprint 6** | ⬜ Planned |
+
+**Nothing was cut** — one slice added, one broadened, four renumbered by one.
+
+**Slice 5.10 reviews** Dashboard · Water · Peptides Home · Routine · Injection Sites · Fuel · Tools · Settings · shared motion and microinteraction behaviour · BMI · Light/Dark · Dynamic Type · Reduce Motion · accessibility · visual coherence · feature distinctiveness · card/surface discipline. **Primary founder question: *"Does current VITA now feel like one coherent product?"***
+
+**One product language, not one identical layout.** Features share the premium dark foundation, direct-content hierarchy, restrained surfaces, feature colors, purposeful motion, tactile interaction, accessibility and real-data-only presentation — **not each other's layouts.** Water looks like Water, Peptides like Peptides, Fuel like Fuel, Journey like Journey. **Dashboard's widget-customization model is Home's own pattern**, not a template for other screens. **Dynamic Type:** VITA respects the platform text-size setting by default and builds no custom control.
+
+*The pre-opening framing follows, as written 2026-09-01.*
 
 **Status: planned, not opened. No implementation is authorized.**
 
@@ -265,7 +296,7 @@ Detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` → Sprint 4.
 
 **[[BMI Calculator|BMI]] remains planned and is not cancelled** — deferred until the new language exists so it is designed once, in the new VITA system.
 
-**Proposed slices — DRAFT, pending founder approval and a Sprint 5 architecture audit. Not implementation-authorized.**
+**Proposed slices — the 2026-09-01 draft. Superseded** by the approved audit (§S.2, nine slices) and then by the 2026-09-04 amendment (§S.3, ten slices) — see the table above.
 
 | # | Slice (draft) |
 |---|---|
@@ -278,7 +309,7 @@ Detail: [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` → Sprint 4.
 | 5.7 | Motion + Microinteraction Pass |
 | 5.8 | Founder Review / Identity Audit — *"Would I genuinely want to use this app every day?"* |
 
-**Journey does not begin without explicit founder approval after 5.8.**
+**Journey does not begin without explicit founder approval after the terminal audit — slice 5.10 since the 2026-09-04 amendment, written here as 5.8.**
 
 ---
 
@@ -465,7 +496,7 @@ Updated against the current sprint set (2026-08-17 restructure, reordered 2026-0
 
 ## Current priority
 
-**Sprint 5 — VITA Identity & Interaction is next.** Sprint 3 is complete and merged into `main` (`2bac43b`, 2026-09-01); **Sprint 4 — Settings + Tools Foundation is complete**, opened and closed 2026-09-01 on `sprint-4-settings-tools-reference`. Sprint 5 is **planned, not opened**: its slice structure is draft, and it **requires its own founder authorization plus a Sprint 5 architecture audit before any planning or implementation begins**. No redesign work starts before that. *(Superseded text follows, from before Sprint 4 opened.)* Strictly sequential, one sprint at a time, consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level.
+**Sprint 5 — VITA Identity & Interaction is in progress**, opened 2026-09-02 on `sprint-5-identity-interaction`. Slices 5.1, 5.2 and 5.3 are founder-approved and locked; **5.4 — Peptides Home Redesign is next** and needs its own authorization. Sprint 3 is merged into `main` (`2bac43b`) and Sprint 4 merged as `8dce19c`. **Sprint 6 — Journey / Weight does not begin until slice 5.10 passes founder real-device review.** *(Superseded text follows, from before Sprint 4 opened.)* Strictly sequential, one sprint at a time, consistent with [[Core Principles]] #7 ("Build in Slices") applied at the sprint level.
 
 ## Remaining unscheduled ideas
 

@@ -311,9 +311,11 @@ Future reminder work — unscheduled, and **not** automatically Sprint 4 scope:
 - Taken / Skipped actions from a notification
 - Reminder delivery on the configured schedule days
 
-## Sprint 5 direction — Peptides Home, Routine, and injection sites (founder direction, 2026-09-01)
+## Sprint 5 direction — Peptides Home, Routine, and injection sites (founder direction, 2026-09-01; slice numbers confirmed 2026-09-02)
 
-**⚠️ Direction, not implementation authorization.** Slices 5.4 and 5.5 are **draft** and need founder approval plus a Sprint 5 architecture audit. **No business-logic rewrite is implied anywhere below.** Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
+**⚠️ Direction, not implementation authorization.** **Slice 5.4 — Peptides Home Redesign is the next slice in Sprint 5** and still needs its own founder authorization; **slice 5.5 — Routine + Injection Site Experience** follows it. Neither has started. Their numbers were unchanged by the 2026-09-04 amendment that expanded the sprint to ten slices. The screen-by-screen map is repo `docs/Sprint-5-Migration-Guide.md` → Slices 5.4 and 5.5.
+
+**Peptides should look like Peptides.** It adopts the shared VITA language — the same one [[Water]] and [[Dashboard]] now use — **not their layouts**, and it does not acquire Home's widget-customization model. **No business-logic rewrite is implied anywhere below.** Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
 
 **Peptides Home.** Peptide tracking works; the presentation currently feels administrative and information-heavy. The redesigned hierarchy should prioritise immediate comprehension of one question — **what do I need to do today?** — and more clearly distinguish **due · completed · upcoming · routine management** rather than giving everything equal visual priority.
 

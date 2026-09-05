@@ -1,6 +1,26 @@
 # Sprint 5 — Screen Migration Guide
 
-# Status: 5.1 and 5.2 approved and locked · 5.3 → 5.3B implemented, awaiting device review · 5.4–5.8 not started
+# Status: 5.1, 5.2 and 5.3 approved and locked · 5.4 next · 5.5–5.10 not started
+
+**⚠️ Amended 2026-09-04.** The founders ruled that **Sprint 5 must apply the identity across every already-built product area before Journey begins.** Two changes to this guide: a **Fuel** section was added (Fuel had none — it was never in Sprint 5), and **Tools** became **Tools + Settings**. Motion, BMI and the founder audit each moved one number. The authoritative structure is `docs/Sprint-5-Planning-Audit.md` §S.3.
+
+**Migration order:**
+
+| Order | Surface | Slice | State |
+|---|---|---|---|
+| 1 | Water | 5.2 | ✅ Approved and locked |
+| 2 | Dashboard | 5.3 | ✅ Approved and locked |
+| 3 | Peptides Home | 5.4 | ⬜ **Next** |
+| 4 | Routine / Injection Sites | 5.5 | ⬜ Planned |
+| 5 | Fuel | 5.6 | ⬜ Planned |
+| 6 | Tools / Settings | 5.7 | ⬜ Planned |
+| 7 | Shared interaction / motion | 5.8 | ⬜ Planned |
+| 8 | BMI | 5.9 | ⬜ Planned |
+| 9 | Founder identity audit | 5.10 | ⬜ Planned |
+
+**Journey follows afterward**, in Sprint 6, and inherits this language rather than inventing a new one.
+
+**One product language, not one identical layout.** Every row above adopts the shared language — premium dark foundation, direct-content hierarchy, restrained surfaces, feature colors, purposeful motion, tactile interaction, accessibility, real-data-only presentation. None of them adopts another feature's layout: Water looks like Water, Fuel looks like Fuel. **Dashboard's widget-customization model is Home's own pattern and is not migrated outward.**
 
 This is the map slice 5.1 owed the slices that follow it, so each is mechanical rather than exploratory. **Each remaining slice still requires its own founder authorization.** Sections are updated with what actually happened as they ship, so a later slice reads the outcome rather than only the plan.
 
@@ -45,7 +65,7 @@ For each screen: what generic pattern is there now · what role it should take �
 - **A structural control inside a sheet takes the neutral tone**, not the domain colour — `UnitSelector`'s new `tone` prop is the pattern.
 - **Progressive disclosure for a secondary list**: a one-line summary that is useful on its own (`Today's log · 3 drinks`), expanding in place. Directly applicable to Peptides' Active/Inactive and Routine's details.
 - **Never signal success before the write lands.** If another feature's provider cannot report persistence, that is a finding, not a reason to fire the haptic anyway.
-- **`flex` belongs on a wrapper around `PressableScale`**, never on it. Hit three times now; 5.7 should fix the primitive.
+- **`flex` belongs on a wrapper around `PressableScale`**, never on it. Hit three times now; the motion-unification slice should fix the primitive — **5.8** since the 2026-09-04 amendment, written here as 5.7.
 
 ---
 
@@ -81,7 +101,7 @@ For each screen: what generic pattern is there now · what role it should take �
 - **One shape per domain.** Water is a ring, Peptides a tally, Fuel a bar. Two features that behave differently must not read as the same module in two colours — 5.4 should give Peptides Home its own shape rather than borrowing one.
 - **A summary screen inherits the source feature's wording rules in full.** Peptides on Home carries Sprint 3's *scheduled not due*, *unanswered stays unanswered*, *nothing is scored* without softening. 5.4 and 5.5 must not relax them either.
 - **Home surfaces actions; features own them.** `/water?add=1` — a param the feature reads once as initial state — is the pattern for opening a feature ready to act, without duplicating its flow.
-- **`flex` on `PressableScale` still does not work.** Hit a third time. **5.7 should fix the primitive.**
+- **`flex` on `PressableScale` still does not work.** Hit a third time. **The motion-unification slice should fix the primitive — 5.8 since the 2026-09-04 amendment.**
 - ~~**Open finding for 5.7:** `FloatingDock` active Home tab.~~ **Fixed in 5.3A** — Home's tint resolves through the theme.
 
 **Patterns 5.3B added:**
@@ -101,7 +121,7 @@ For each screen: what generic pattern is there now · what role it should take �
 - **VITA respects platform text-size settings by default.** No `allowFontScaling={false}`, anywhere. Fixed footprints scale with the text (damped, and still one shared value so a set stays equal), and decorative visuals step aside before text collides.
 - **Information scales without limit; ornament may be capped.** `maxFontSizeMultiplier` on a quote or a wordmark is legitimate and must be documented and tested; on anything that states a fact it is not. Truncation is for secondary labels only — a figure wraps.
 - **A type bump belongs to the screen that proves it**, not to `theme/tokens.ts`. Home carries its own `TYPE` map; later identity slices adopt the sizes deliberately rather than inheriting them by surprise.
-- **Still open for 5.7:** `FloatingDock` crops its labels at accessibility text sizes, alongside the `PressableScale` flex trap.
+- **Still open for the motion-unification slice (5.8 since the 2026-09-04 amendment):** `FloatingDock` crops its labels at accessibility text sizes, alongside the `PressableScale` flex trap.
 
 **Patterns 5.3C added:**
 
@@ -121,7 +141,7 @@ For each screen: what generic pattern is there now · what role it should take �
 - **A section may only aggregate what a domain actually holds.** Today's Schedule carries no times because routines schedule by day — a reminder time is a different concept and putting it in a schedule column would promote it into one. Same discipline applies to anything 5.5 adds.
 - **`useDashboardLayout` is the model for a screen-owned UI preference**: its own key, an untrusted-input normaliser, and no coupling to `AppPreferences` (whose `save()` writes the whole record).
 - **Reorder with buttons, not drag** — no native dependency, and accessible by construction.
-- **Still open for 5.7:** `flex` handed to `PressableScale` does not reach its parent row. Hit four times now; every call site works around it with a wrapper.
+- **Still open for the motion-unification slice (5.8 since the 2026-09-04 amendment):** `flex` handed to `PressableScale` does not reach its parent row. Hit four times now; every call site works around it with a wrapper.
 
 ---
 
@@ -154,7 +174,7 @@ For each screen: what generic pattern is there now · what role it should take �
 | Preparation — a whole card + header for one vial line | **Disclosed**, merged with details |
 | Actions — Edit / Pause / Remove as a peer card | **Administrative, visually quietest** |
 | Week strip in a card | Kept; presentation only |
-| `TakenSheet`, `RoutineDaySheet` — hand-rolled `Modal`s | Converge onto `VitaSheet` (may slip to 5.7) |
+| `TakenSheet`, `RoutineDaySheet` — hand-rolled `Modal`s | Converge onto `VitaSheet` (may slip to the motion-unification slice, **5.8**) |
 | `SiteSelector` opens a `Modal` **inside** `TakenSheet`'s `Modal` | Layered mode rather than a nested modal |
 | `BodyMap` — selection only | **+ one optional `markers` prop and one layer** for rotation |
 
@@ -170,15 +190,48 @@ Needed and not yet present: a range selector over site history — something lik
 
 ---
 
-# Slice 5.6 — Tools
+# Slice 5.6 — Fuel Identity Refresh
 
-**Files:** `src/app/(vita)/tools/index.tsx` · `peptide-calculator.tsx` · `injection-sites.tsx`
+**New section, added 2026-09-04.** Fuel was never part of Sprint 5's original plan — Sprint 2 built its functionality and its presentation predates the current identity. This slice brings the existing Fuel screens into the same product family.
+
+**Files:** `src/app/(vita)/fuel/` — `index.tsx` · `log.tsx` · `search.tsx` · `food/[id].tsx` · `scan.tsx` and the surfaces around them · `features/fuel/`
+
+| Now | Becomes |
+|---|---|
+| The Sprint 2 refinement already moved Fuel's landing to **rows in a panel, not a grid of cards** | Keep that instinct; carry it into the surface-role vocabulary |
+| `Card` + `SectionHeader` as the default containment for every region | Surface **roles** — hero, action, status, record, reference |
+| Calories and macros as the visual subject by size | One display-size subject per screen, per §L.2 |
+| Search results, Food Detail, the log list as peer panels | Hierarchy by role and disclosure |
+| Empty meal slots | The shared empty-state treatment |
+| Hand-rolled modals in the logging flow | Converge onto `VitaSheet` where the content suits it |
+
+**Shared:** surface roles · typography variants · disclosure · haptics on a successful log · `VitaSheet` · press behaviour · Dynamic Type · Reduce Motion.
+
+**Feature-specific — Fuel should look like Fuel:** the **orange feature identity** · the meal colour language (Breakfast sunrise yellow · Lunch midday orange · Dinner sunset red-orange · Snacks neutral sage) · the three-tier food-visual system and `foodArt.ts` · the calorie ring. **Fuel does not adopt Home's widget-customization model** and is not restyled into Water's or Dashboard's layout.
+
+**Frozen — presentation only, and this is not an architecture rewrite:** `src/lib/nutrition/` in full · the nutrition model and calculated totals · logging · meal editing · the Open Food Facts / USDA provider layer and its attribution · **barcode lookup and the `/fuel/scan` logging flow** · persistence · every existing real behaviour · current calorie and macro semantics, including the `Calories` / `cal` terminology decision.
+
+**The scanner, stated plainly.** `/fuel/scan` is the barcode **lookup and logging** flow. Refreshing its presentation is in scope. **Inventing a product score is not** — no VITA Score exists or is authorized, and the evaluating scanner is a separate deferred feature. The Dashboard `Food Scanner` Quick Tool points at this logging flow and must not be documented as scoring.
+
+**Known carry-in:** `FuelQuickActions` is one of the two outstanding reduce-motion gaps. Fixing it here is welcome; if it is not fixed here it belongs to 5.8.
+
+---
+
+# Slice 5.7 — Tools + Settings
+
+**Broadened 2026-09-04** from *Tools* to *Tools + Settings* — Settings is a built product surface reached the same way, and it was only implied before.
+
+**Files:** `src/app/(vita)/tools/index.tsx` · `peptide-calculator.tsx` · `injection-sites.tsx` · `src/app/(vita)/settings/index.tsx` · `settings/units.tsx`
 
 | Now | Becomes |
 |---|---|
 | Hub: 3 rows' worth of chrome for 2 items | Utility rows, lighter |
 | Injection Sites: 4 stacked `Card`s | Panels + the body map as the feature object |
 | Calculator | Presentation only |
+| Settings: `ListRow` stacks that each carry their own border and shadow, so a list reads as a stack of cards | A flat in-panel row variant — the `ListRow` finding already recorded for the motion slice |
+| Units and Appearance surfaces | The same surface-role vocabulary as every other screen |
+
+**Also frozen for Settings:** current routes · current functionality · **preference persistence** (`vita:v1:settings:prefs` and Water's `vita:v1:water:prefs`) · the honesty rule from slice 4.1 — **no fake rows**; a row that draws a chevron opens something, and a row without a real implementation is not added back to fill space. Settings does **not** acquire a widget-customization model.
 
 **Frozen — behaviour is not reopened:** `/tools` route identity · the hub's two-section structure · calculator math · the Injection Sites boundary text and Site Reference content · the icon-colour convention (*a tool's icon colour tracks the domain it serves; a tool belonging to no domain takes neutral* — this already answers BMI) · **no "Coming Soon" rows**.
 
@@ -186,7 +239,7 @@ Lowest-risk migration in the sprint: the logic behind these screens is inert.
 
 ---
 
-# Slice 5.8 — BMI
+# Slice 5.9 — BMI
 
 **New.** No existing screen to migrate. Full plan survives in `docs/Sprint-4-Planning-Audit.md` §G (UX, `src/lib/bmi/` domain model, non-goals, persistence, visual design, accessibility, the Journey seam).
 
@@ -194,18 +247,22 @@ Built in the new language from the start — that is why it was deferred. It is 
 
 Constraints unchanged: height · weight · result · category range · **no BMI history that shadows Journey** · Journey integration deferred to Sprint 6, which owns stored height and latest weight. Icon takes the **neutral** treatment — BMI belongs to no domain.
 
-Extension point is already documented at `src/lib/preferences/model/types.ts` and now names slice 5.8.
+Extension point is already documented at `src/lib/preferences/model/types.ts`. **Its comment names slice 5.8 and is now stale** — BMI is slice **5.9** since the 2026-09-04 amendment. That is a source comment and this alignment session is docs-only; correct it in the slice that next touches the file.
+
+**No fake health-insight or recommendation engine.** A BMI figure and its standard category range is what the tool reports; it does not interpret, advise, or coach.
 
 ---
 
-# Cross-cutting cleanup for 5.7
+# Cross-cutting cleanup for 5.8
 
 - Reduce-motion gaps: `Toast`, `FuelQuickActions`.
 - Converge `TakenSheet`, `RoutineDaySheet`, `CategorySelector`, `SiteSelector` onto `VitaSheet` — **converge, not rewrite**; their contents are founder-approved.
 - `MetricTile`'s bare `Pressable` + `opacity: 0.8` is a second press language; consolidate onto `PressableScale`.
 - `ListRow` carries its own border and shadow, so a list of rows reads as a stack of cards — needs a flat in-panel variant once a screen needs it.
 - `SectionHeader` variants, if screens have demonstrated the need by then.
-- **Remove the identity prototype and its `__DEV__` Settings row** (slice 5.9 at the latest).
+- **Remove the identity prototype and its `__DEV__` Settings row** (slice **5.10** at the latest).
+- **Inconsistent numeric keyboard accessory tones** — the accessory's Done label was hardcoded to peptide purple until 5.2A made it neutral; audit the remaining call sites.
+- **`FloatingDock` crops its labels at accessibility text sizes** (`Journey` wraps to `Journe/y`) — found on Dashboard, not a Dashboard defect.
 
 ---
 

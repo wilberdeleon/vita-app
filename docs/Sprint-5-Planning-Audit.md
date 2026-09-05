@@ -3,7 +3,9 @@
 
 # ✅ FOUNDER-REVIEWED AND APPROVED — 2026-09-02
 
-**The audit is approved and the §W decisions are ruled on.** The rulings are recorded in **§W** and are authoritative; where an earlier section states a *recommendation* that §W has since ruled on, §W wins. The approved slice structure is in **§S.2**.
+**The audit is approved and the §W decisions are ruled on.** The rulings are recorded in **§W** and are authoritative; where an earlier section states a *recommendation* that §W has since ruled on, §W wins.
+
+**⚠️ Amended 2026-09-04.** The approved slice structure now lives in **§S.3**, which supersedes §S.2 from slice 5.6 onward: **Sprint 5 must apply the identity across every already-built product area before Journey begins.** Fuel gains a dedicated slice, Tools becomes Tools + Settings, and Motion, BMI and the Founder Audit each move one number — ten slices, 5.1–5.10. §S.2 is preserved as the record of the 2026-09-02 approval. Slices 5.1–5.5 are unchanged.
 
 **No slice is open and no implementation has started.** Approval of this plan is not authorization to build: **slice 5.1 requires its own founder authorization** under the normal slice workflow (`docs/03-Build-Handbook.md`).
 
@@ -376,7 +378,7 @@ Presentation only, and **last**: the hub is currently three `ListRow`s' worth of
 
 **BMI is still wanted and is not lost.** It has a complete plan already written — `docs/Sprint-4-Planning-Audit.md` §G (UX, `src/lib/bmi/` domain model, non-goals, persistence, visual design, accessibility, the Journey seam) — which survives intact and needs no re-planning.
 
-**✅ RULED (§W.7): BMI is its own slice — `5.8`, after Tools Integration. Not folded into Tools cleanup.** The audit recommended this and the founder approved it, keeping 5.6 focused on the *existing working* Tools.
+**✅ RULED (§W.7): BMI is its own slice — `5.8`, after Tools Integration. Not folded into Tools cleanup.** *(Renumbered to **5.9** by §S.3, and Tools Integration became Tools + Settings at 5.7.)* The audit recommended this and the founder approved it, keeping 5.6 focused on the *existing working* Tools.
 
 Reasons: (1) 5.6 is a *migration* slice (existing screens → new language, zero new features); BMI is a **new feature with a new domain module** (`src/lib/bmi/`) and new persistence questions. Mixing them makes 5.6's regression surface unbounded. (2) BMI is the **best possible proof of the new language** — a result, a category scale, and a premium visual representation is exactly the "visual object instead of a summary card" case §L proposes; building it in the new system from scratch is why it was deferred in the first place. (3) It has a real dependency on 5.1 and a real seam into Sprint 6 (Journey/Weight owns stored height + latest weight) that a sub-item of a migration slice would blur.
 
@@ -619,9 +621,11 @@ The draft — 5.1 Design Language → 5.2 Dashboard → 5.3 Water → 5.4 Peptid
 3. **BMI gets its own slice** (§K), after Tools.
 4. **Motion should be distributed, then unified.** A pure motion slice at the end tempts every earlier slice to defer polish into it — the "holding pen" failure the Design System explicitly warns against. Each feature slice ships its own motion; the late slice **unifies and fixes gaps** (`PressableScale`, `Toast`, `FuelQuickActions` reduce-motion).
 
-## S.2 ✅ APPROVED SLICE STRUCTURE — founder-ruled 2026-09-02 (§W.6)
+## S.2 APPROVED SLICE STRUCTURE — founder-ruled 2026-09-02 (§W.6)
 
-**This is the authoritative Sprint 5 slice structure.** It supersedes both the draft plan in `docs/Sprint-5-Identity-Brief.md` §8 and this audit's own earlier ten-slice proposal. **No slice is open; each still requires its own founder authorization to begin.**
+> **⚠️ SUPERSEDED FROM 5.6 ONWARD by the founder amendment of 2026-09-04 — see §S.3.** Slices 5.1–5.5 stand exactly as approved here and three of them have shipped. From 5.6 the numbering changed: a **Fuel Identity Refresh** slice was inserted, Tools was broadened to **Tools + Settings**, and Motion, BMI and the Founder Audit each moved one number. This section is preserved as the record of what was approved on 2026-09-02, not as current instruction.
+
+**This was the authoritative Sprint 5 slice structure as of 2026-09-02.** It superseded both the draft plan in `docs/Sprint-5-Identity-Brief.md` §8 and this audit's own earlier ten-slice proposal. **No slice was open; each still requires its own founder authorization to begin.**
 
 | # | Slice | Scope | Depends on |
 |---|---|---|---|
@@ -630,16 +634,86 @@ The draft — 5.1 Design Language → 5.2 Dashboard → 5.3 Water → 5.4 Peptid
 | **5.3** | **Dashboard Identity Redesign** | Real data only — **fixtures removed, nothing fabricated** (§W.3) · no generic slogans · action-first composition · mixed module sizes · Tools destination/module, **not a launcher** (§W.4) | 5.2 |
 | **5.4** | **Peptides Home Redesign** | Today as hero · completed settles in place · Needs-setup inline · Active/Inactive progressive disclosure. **Routine and log state frozen** | 5.1 |
 | **5.5** | **Routine + Injection Site Experience** | Routine hierarchy — immediate action dominant · disclosure for details / preparation / actions · site-logging presentation · **shared `BodyMap` evolution** and rotation visualization (§W.8) | 5.4 |
-| **5.6** | **Tools Integration** | Make Sprint 4's **existing working** Tools visually belong to new VITA. **Behaviour frozen** (§J.1). No new tools | 5.1 |
-| **5.7** | **Motion + Microinteraction Unification** | Clean up inconsistencies once several real features use the vocabulary · fix remaining reduce-motion gaps (`Toast`, `FuelQuickActions`) · converge the four existing sheets onto the shared primitive. **Not Sprint 9** | 5.2–5.6 |
-| **5.8** | **BMI Calculator** | Built from scratch in the new system (§W.7). Per Sprint-4 audit §G: new `src/lib/bmi/`, premium visual representation, **no BMI history that shadows Journey** | 5.6 |
-| **5.9** | **Founder Identity Audit** | Feature work stops. Real-device review, both themes, VoiceOver, reduce-motion. **Journey does not begin until this passes.** | all |
+| **5.6** *(→ 5.7 per §S.3)* | **Tools Integration** | Make Sprint 4's **existing working** Tools visually belong to new VITA. **Behaviour frozen** (§J.1). No new tools | 5.1 |
+| **5.7** *(→ 5.8 per §S.3)* | **Motion + Microinteraction Unification** | Clean up inconsistencies once several real features use the vocabulary · fix remaining reduce-motion gaps (`Toast`, `FuelQuickActions`) · converge the four existing sheets onto the shared primitive. **Not Sprint 9** | 5.2–5.6 |
+| **5.8** *(→ 5.9 per §S.3)* | **BMI Calculator** | Built from scratch in the new system (§W.7). Per Sprint-4 audit §G: new `src/lib/bmi/`, premium visual representation, **no BMI history that shadows Journey** | 5.6 |
+| **5.9** *(→ 5.10 per §S.3, with an expanded review scope)* | **Founder Identity Audit** | Feature work stops. Real-device review, both themes, VoiceOver, reduce-motion. **Journey does not begin until this passes.** | all |
 
 **Nine slices.** Versus the draft's eight: Water moves ahead of Dashboard, BMI is promoted out of Tools, and the motion pass moves earlier so it unifies real usage rather than absorbing deferred polish. The audit's proposed separate "foundation primitives" slice is folded back into 5.1 (§W.6).
 
 **Deferred, not cancelled** (§W.11): richer Food Scanner work · Research Library (gated by Open Question #17) · Dashboard Tools discoverability beyond what the redesigned Home intentionally needs.
 
 **Housekeeping reassigned:** the stale source comments and the dead `PressableCard` (§X.3) were listed against the audit's old 5.2. They now belong to **5.1**, except the comment corrections made as branch-creation housekeeping — see §X.3.
+
+---
+
+## S.3 ✅ FOUNDER AMENDMENT — 2026-09-04 — the identity must reach every built surface
+
+**This is now the authoritative Sprint 5 slice structure.** It amends §S.2 rather than replacing this document: §S.2 is preserved as the record of the 2026-09-02 approval, and everything §S.2 says about slices 5.1–5.5 still stands.
+
+### The ruling
+
+**Sprint 5 must apply the new VITA Identity & Interaction language across all already-built current product areas before Journey begins.** The visual and interaction system established in Sprint 5 is the **baseline for all future VITA feature work**, including Sprint 6 — Journey / Weight.
+
+### Why the scope expanded
+
+The amendment followed founder review of **production Water (5.2) and Dashboard (5.3)** — the first two real features in the new language, both approved on device. Seeing them next to the untouched screens made the gap concrete: with two surfaces in the new language and the rest in the old one, VITA reads as **two products**, and shipping Journey into that state would add a third.
+
+Risk **#1** in §R anticipated the opposite failure — redesigning too many screens at once. This amendment accepts more surface area deliberately, and the mitigation is unchanged: one slice at a time, each with its own authorization and device review, with a terminal audit that can send any of them back.
+
+Two structural gaps the original nine-slice plan left open:
+
+- **Fuel was never in Sprint 5 at all.** Sprint 2 built its functionality and its presentation predates the current identity. `docs/Sprint-5-Migration-Guide.md` had no Fuel section — the omission was real, not an oversight in the guide.
+- **Settings was only implied.** §J scoped "Tools" to `/tools`, but Settings is an equally built product surface and reached the same way.
+
+### The amended structure
+
+| # | Slice | Change from §S.2 |
+|---|---|---|
+| **5.1** | VITA Design Language + Identity Prototype | Unchanged — ✅ shipped and locked (with 5.1A) |
+| **5.2** | Interactive Water Experience | Unchanged — ✅ shipped and locked (with 5.2A) |
+| **5.3** | Dashboard Identity Redesign | Unchanged — ✅ shipped and locked (with 5.3A–5.3D) |
+| **5.4** | Peptides Home Redesign | Unchanged — **next** |
+| **5.5** | Routine + Injection Site Experience | Unchanged |
+| **5.6** | **Fuel Identity Refresh** | **New slice.** Existing Fuel screens into the same product family. Preserved: the nutrition model, logging, meal editing, Open Food Facts, barcode lookup and the log scanner, persistence, current calorie/macro semantics. Potential scope: Fuel Home · meal/log presentation · food detail surfaces · scanner presentation · logging flow · empty states · direct-content hierarchy · orange feature identity · tactile sheets and disclosure. **Not an architecture rewrite** |
+| **5.7** | **Tools + Settings Identity Integration** | Was 5.6 *Tools Integration*, now broadened to name **Settings** explicitly: Settings · Tools hub · Peptide Calculator presentation · Injection Sites presentation not handled by 5.5 · Units / Appearance surfaces · utility navigation hierarchy. **Routes, functionality and preference persistence unchanged; no fake rows** |
+| **5.8** | Motion + Microinteraction Unification | Was 5.7. Runs after Dashboard, Water, Peptides, Fuel, Tools and Settings have adopted the identity. Press behaviour · shared haptic vocabulary · sheet transitions · motion timing · Reduce Motion compliance · the `PressableScale` flex trap · inconsistent numeric-accessory tones · cross-feature polish. **Not for redesigning feature layouts** |
+| **5.9** | BMI Calculator | Was 5.8. §K and §W.7 stand unchanged; only the number moved. **No fake health-insight or recommendation engine** |
+| **5.10** | Founder Identity Audit | Was 5.9, and its review scope is **expanded** — see below |
+
+**Nothing was cut.** One slice added, one broadened, four renumbered.
+
+### §S.3.1 — Identity rollout principle
+
+**Sprint 5 applies one coherent VITA product language, not one identical layout.**
+
+Shared: the premium dark foundation · direct-content hierarchy · restrained surfaces · feature colors · purposeful motion · tactile interaction · accessibility · real-data-only presentation.
+
+Not shared: Water looks like Water · Peptides like Peptides · Fuel like Fuel · Journey like Journey. This restates §O — *feature-specific elements that should intentionally not be shared* — as a sprint-level rule. **Features must not be standardized into identical cards or widgets**, which would reproduce the template sameness §B diagnosed, in a new palette.
+
+**Dashboard's customization model is Dashboard's.** The Apple-widget-style square/wide grid, visibility and order controls, on-Home edit mode and drag reorder approved in 5.3 are a **Home-specific pattern** on the shared identity. They do **not** imply draggable widgets on every screen, and Fuel, Peptides and Settings do not get page-builder layouts.
+
+### §S.3.2 — Dynamic Type policy
+
+**VITA respects the platform text-size setting by default. No custom VITA text-size setting is created** unless a future product need emerges. Every feature identity slice must respect Dynamic Type where practical, avoid clipping, preserve accessibility labels, and **never disable font scaling globally**. Proved on Dashboard in 5.3D; mechanisms in `docs/09-Technical-Documentation.md` → Dynamic Type.
+
+### §S.3.3 — Food Scanner, stated plainly
+
+`/fuel/scan` is the **barcode lookup and logging flow** from Sprint 2. The Dashboard `Food Scanner` Quick Tool opens it. **That is not a claim that food scoring exists.** No VITA Score exists or is authorized; the richer evaluating scanner is a separate deferred feature evolution with an unresolved methodology. Documentation must not conflate the two.
+
+### §S.3.4 — Expanded 5.10 review scope
+
+5.10 must explicitly review: **Dashboard · Water · Peptides Home · Routine · Injection Sites · Fuel · Tools · Settings · shared motion and microinteraction behaviour · BMI · Light / Dark · Dynamic Type · Reduce Motion · accessibility · visual coherence · feature distinctiveness · card/surface discipline.**
+
+**Primary founder question — replacing §V's G7 wording:**
+
+> **"Does current VITA now feel like one coherent product?"**
+
+**Sprint 6 — Journey / Weight does not begin until 5.10 passes founder real-device review.**
+
+### §S.3.5 — Deferred work reconfirmed
+
+Unchanged by this amendment, and still **deferred, not cancelled**: the **Food/Product Scanner scoring evolution** (separate feature; no VITA Score) · the **Research Library** (content-review gated on Open Question #17; factual educational/reference only) · **Atlas's redesign** (its own later sprint — not pulled into Sprint 5). And one clarification: **no real Movement / Activity domain exists in VITA today**, so **no Movement work is scheduled into Sprint 5** — the green "movement / activity" feature colour is a reserved slot in the language, not a shipped feature.
 
 ---
 
@@ -717,9 +791,9 @@ Rationale: three of the sprint's biggest risks (§R.6 motion performance, §R.9 
 | **G2** 🔴 | **5.2** — Water | Does the hero interaction feel premium and not cartoonish? Does the language survive contact with a real feature? |
 | **G3** 🔴 | **5.3** — Dashboard | Is Home action-first and recognizable? Are the fixtures actually gone (§W.3)? Is Tools a destination and not a launcher (§W.4)? |
 | **G4** | **5.4 + 5.5** — Peptides + Routine | *"What do I need to do today?"* — answered at a glance? |
-| **G5** | **5.6 + 5.7** — Tools + Motion unification | Do Tools belong to the same product? Is the interaction vocabulary consistent? |
-| **G6** | **5.8** — BMI | Does a brand-new feature look native to the new identity? |
-| **G7** 🔴 | **5.9** — Founder Identity Audit | *"Would I genuinely want to use this app every day?"* **Gates Sprint 6 / Journey.** |
+| **G5** | **5.6 + 5.7 + 5.8** — Fuel, Tools + Settings, Motion unification *(renumbered by §S.3; Fuel is new)* | Do Fuel, Tools and Settings belong to the same product? Is the interaction vocabulary consistent? |
+| **G6** | **5.9** — BMI *(was 5.8)* | Does a brand-new feature look native to the new identity? |
+| **G7** 🔴 | **5.10** — Founder Identity Audit *(was 5.9)* | **"Does current VITA now feel like one coherent product?"** **Gates Sprint 6 / Journey.** |
 
 **G1, G2, G3 and G7 are hard stops.** G2 replaces the old G3 as the first real-feature gate — a direct consequence of moving Water ahead of Dashboard (§W.6), and the reason that reorder is worth the churn: the identity is judged on a finished feature before four more screens commit to it. G4 and G5 may pair two slices because both are migrations of already-approved behaviour.
 
@@ -767,12 +841,12 @@ The founder approved the audit's substantive changes — **Water before Dashboar
 
 Founder rationale for Water-before-Dashboard, recorded verbatim: *"Water is our best place to prove the new identity because it has a clear visual object and interaction. Once that works, Dashboard can reference that language rather than guessing."*
 
-### W.7 — BMI ✅ APPROVED as its own slice — **5.8**
+### W.7 — BMI ✅ APPROVED as its own slice — **5.8**, renumbered to **5.9** by §S.3
 BMI is no longer part of generic Tools foundation work.
 
 > **Founder: "We specifically delayed it so it could be born in the new identity. Let's actually do that rather than squeezing it into generic Tools cleanup."**
 
-This keeps **5.6 Tools Integration** focused on the *existing working* Tools, and treats BMI as the new feature it is.
+This keeps the Tools slice — **5.7 Tools + Settings Identity Integration** since §S.3, 5.6 Tools Integration when this was written — focused on the *existing working* Tools and Settings, and treats BMI as the new feature it is.
 
 ### W.8 — Injection rotation ✅ RULED
 Build the capability around the **existing shared `BodyMap`**. The standalone **Injection Sites Tool becomes the richest historical / rotation visualization**; **Routine may reuse a smaller contextual weekly representation** later. **Do not create a duplicate body-map implementation.**

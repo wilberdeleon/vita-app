@@ -71,11 +71,13 @@ The test for whether something belongs here: does more than one feature read it,
 
 **`ThemeProvider` holds nothing until it has read.** The provider renders no children until the stored appearance is known — a user whose choice is Light on a device set to Dark would otherwise see the app paint dark and snap one frame later. The hold is bounded: the hydrated flag is set in a `finally`, so a storage failure falls back to System and still mounts the app rather than leaving it blank. A failed *write* keeps the choice for the session and is not surfaced; a toast about a failed preference write would be more alarming than the loss it describes.
 
-**Extension point.** BMI adds a body-weight unit and a height unit here, and **Sprint 6**'s Journey / Weight reads the same weight unit — which is what makes them app-level rather than tool-level. They are **not added before something reads them**: a persisted preference with no consumer is one the user can set and never observe.
+**Extension point.** BMI (**slice 5.9** since the 2026-09-04 amendment — the in-file comment still names 5.8 and is stale) adds a body-weight unit and a height unit here, and **Sprint 6**'s Journey / Weight reads the same weight unit — which is what makes them app-level rather than tool-level. They are **not added before something reads them**: a persisted preference with no consumer is one the user can set and never observe.
 
 ## Dashboard preferences and editing (Sprint 5 slices 5.3A–5.3C)
 
 Home owns two persisted UI preferences, and they are the worked example of a **screen-owned** preference — the counterpart to the app-level rule above.
+
+**This is a Dashboard pattern, not an app-wide one.** The widget grid, sizing, ordering and edit mode described below belong to Home. **No other screen acquires draggable widgets or a page-builder layout** as part of the Sprint 5 identity rollout; `usePersistedPrefs` is reusable, the interaction model is not a template.
 
 **Two records, two keys.** `vita:v1:dashboard:layout` holds which modules show, their order and their sizes; `vita:v1:dashboard:tools` holds the Quick Tools order and visibility. They are separate because they change for different reasons at different times, and a single record would let either write drop the other's state — the same failure mode `PreferencesRepository.save()` has, which is precisely why neither lives there. Both keys come from the shared `singletonKey` helper.
 
@@ -96,7 +98,9 @@ Home owns two persisted UI preferences, and they are the worked example of a **s
 
 ## Dynamic Type (Sprint 5 slice 5.3D)
 
-**VITA respects the device's text-size setting.** No file in `src/` passes `allowFontScaling={false}`, and none may. Dashboard is where the policy was proved; later feature identity slices carry it outward.
+**VITA respects the device's text-size setting.** No file in `src/` passes `allowFontScaling={false}`, and none may. Dashboard is where the policy was proved; later feature identity slices — Peptides (5.4), Routine / Injection Sites (5.5), Fuel (5.6), Tools + Settings (5.7) — carry it outward, and slice 5.10 audits it.
+
+**Founder-approved policy: VITA does not build its own text-size setting.** The platform's accessibility setting is the setting. A custom in-app control is created only if a future product need emerges. Every identity slice must respect Dynamic Type where practical, avoid clipping, and preserve accessibility labels.
 
 Three mechanisms, all in `features/dashboard/widget.ts`:
 

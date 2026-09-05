@@ -17,6 +17,8 @@ tags: [tools, scanner, barcode, food-score, nutrition, ingredients, sprint4]
 
 **⏸️ Deferred at the Sprint 4 closeout, 2026-09-01 — deferred, not cancelled.** Sprint 4 closed as **Settings + Tools Foundation** after its two foundation slices, and this remains a valid product direction. The reason is sequencing, not doubt: this is presentation-heavy work, and the founders are defining a new VITA visual and interaction language next. Building it now would mean designing it twice. It resumes once that language exists — and lands into the `/tools` architecture slice 4.2 already established, where a new tool is a row and a route rather than a question about where it belongs.
 
+**⚠️ Two different things, and documentation must not conflate them (reconfirmed 2026-09-04).** `/fuel/scan` is the **barcode lookup and logging flow** shipped in Sprint 2 — it works, and slice 5.6 may refresh its presentation. **[[Dashboard]]'s `Food Scanner` Quick Tool opens that logging flow.** Neither is a claim that food scoring exists. **This note describes the evaluating scanner** — ingredient analysis, an understandable score, an explanation of why a product scored the way it did, alternatives — which is a **separate deferred feature evolution** with an unresolved methodology. **No VITA Score exists or is authorised.**
+
 **Two things are settled and carry forward.** The **Sprint 2 barcode scanner in [[Fuel]] is untouched and still works** — scanning was never the hard part. And **no VITA Score exists or is authorised**: the scoring methodology remains unresolved, deliberately, and none may be invented. A score is a claim about a product, and VITA has no defensible basis for one yet.
 
 Original note follows. This is likely the largest single item in the Tools set and may require its own slice or a dedicated planning pass.
@@ -90,7 +92,7 @@ Suggested alternatives · personal weighting (allergens, goals) · scanning non-
 
 **Next Step Required:** A dedicated planning pass on the scoring methodology — what it measures, on what data, how it is explained, and what VITA says when it does not know. Not a slice-planning task squeezed into a broader sprint.
 
-**Estimated Sprint:** Unscheduled. Carried past Sprint 4's closeout; **Sprint 5 — VITA Identity & Interaction is not committed to inventing a VITA Score**, and scoring methodology remains a separate founder/product decision. Sprint 5 may redesign how the *existing* scanner fits visually into VITA if and when that is authorized. The Sprint 2 barcode scanner in [[Fuel]] is untouched and still works. May well move to its own sprint.
+**Estimated Sprint:** Unscheduled, and reconfirmed as **deferred, not cancelled**, at the 2026-09-04 Sprint 5 amendment. **Sprint 5 is not committed to inventing a VITA Score**, and scoring methodology remains a separate founder/product decision. Slice 5.6 (Fuel Identity Refresh) covers the **presentation** of the existing scanner only. Sprint 5 may redesign how the *existing* scanner fits visually into VITA if and when that is authorized. The Sprint 2 barcode scanner in [[Fuel]] is untouched and still works. May well move to its own sprint.
 
 **Dependencies:**
 - A defensible scoring methodology (does not exist)

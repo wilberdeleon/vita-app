@@ -85,7 +85,7 @@ Contextual surfacing — showing the calculator to someone who has an active pep
 
 **Next Step Required:** Build the Tools destination first, then evaluate whether discoverability is actually a problem before designing a solution to it.
 
-**Estimated Sprint:** **Sprint 5 — VITA Identity & Interaction**, draft slice 5.2 / 5.6 — **not authorised for implementation**, and the placement question is deliberately still open.
+**Estimated Sprint:** ✅ **Substantially answered by slice 5.3** (Dashboard Identity Redesign, approved 2026-09-04): Home now carries **Quick Tools** — the Peptide Calculator, Injection Sites and a Food Scanner shortcut — with visibility and order customizable by the user. That is the discoverability this note asked for, delivered as a **Home module rather than a launcher**, per founder ruling §W.4. Any remaining Tools-side presentation work belongs to **slice 5.7 (Tools + Settings)**.
 
 **Dependencies:**
 - Sprint 4 Tools destination

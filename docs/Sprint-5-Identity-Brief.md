@@ -1,6 +1,17 @@
 # VITA — Sprint 5 Identity Brief
 
-# ⚠️ DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL
+# ⚠️ HISTORICAL — the pre-audit statement of intent
+
+**Superseded, and preserved.** This brief was the founder-directed statement of intent that opened the Sprint 5 planning work. It has since been superseded in two steps, and **neither the slice plan nor the status language below is current**:
+
+1. **`docs/Sprint-5-Planning-Audit.md` (founder-approved 2026-09-02)** replaced §8's eight-slice draft with an approved nine-slice structure and ruled on eleven decisions in its §W.
+2. **The founder amendment of 2026-09-04 (audit §S.3)** expanded the sprint: **the identity must reach every already-built product area before Journey begins.** Fuel gained a dedicated slice, Tools became Tools + Settings, and the sprint became ten slices, 5.1–5.10.
+
+**Sprint 5 is open and in progress.** Slices 5.1, 5.2 and 5.3 are founder-approved on device and locked; 5.4 is next.
+
+**Read this document for the problem statement, the design principles, the preserved architecture and the non-goals — all of which stand.** For the slice plan, read `docs/04-Master-Roadmap.md` → Sprint 5 or the audit's §S.3. For the language itself, read `docs/05-Design-System.md` → *The VITA Design Language*.
+
+*The original header follows, as written.*
 
 **Status: draft. No implementation has started and none is authorized by this document.**
 
@@ -242,6 +253,25 @@ Sprint 5 does **not** become:
 
 # 8 — Draft slice plan
 
+# ⚠️ SUPERSEDED — do not plan from this table
+
+**Superseded twice: by the approved audit structure (§S.2, 2026-09-02) and then by the founder amendment (§S.3, 2026-09-04).** The current ten-slice structure is:
+
+| # | Slice | State |
+|---|---|---|
+| 5.1 | VITA Design Language + Identity Prototype | ✅ Approved and locked |
+| 5.2 | Interactive Water Experience | ✅ Approved and locked |
+| 5.3 | Dashboard Identity Redesign | ✅ Approved and locked |
+| 5.4 | Peptides Home Redesign | ⬜ Next |
+| 5.5 | Routine + Injection Site Experience | ⬜ Planned |
+| 5.6 | **Fuel Identity Refresh** | ⬜ Planned |
+| 5.7 | **Tools + Settings Identity Integration** | ⬜ Planned |
+| 5.8 | Motion + Microinteraction Unification | ⬜ Planned |
+| 5.9 | BMI Calculator | ⬜ Planned |
+| 5.10 | Founder Identity Audit — **gates Sprint 6 / Journey** | ⬜ Planned |
+
+*The original draft table follows, as written.*
+
 **⚠️ DRAFT. Not implementation-authorized.** A separate Sprint 5 architecture audit may refine dependency order, slice boundaries, whether BMI deserves its own slice, whether Tools integration moves earlier or later, and whether some motion work belongs inside individual slices.
 
 | # | Slice (draft) | Scope |
@@ -265,7 +295,7 @@ Slice 5.8 is a stop, not a formality.
 
 The review covers: identity · comprehension · hierarchy · clutter · usability · discoverability · interaction quality · consistency · motion · accessibility · any remaining generic-template patterns.
 
-**Journey does not begin without explicit founder approval at this gate.**
+**Journey does not begin without explicit founder approval at this gate.** *(The gate is now slice **5.10**, and its primary question was restated on 2026-09-04 as: **"Does current VITA now feel like one coherent product?"**)*
 
 # 10 — Relationship to Sprint 9
 

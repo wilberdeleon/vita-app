@@ -157,9 +157,11 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 ---
 
-## Sprint 5 — VITA Identity & Interaction (founder direction, 2026-09-01) — not yet implemented
+## Sprint 5 — VITA Identity & Interaction (founder direction, 2026-09-01) — superseded by the authored language below
 
-**⚠️ Direction, not approved specification. No implementation is authorized; the sprint is planned, not opened.** The full brief is `docs/Sprint-5-Identity-Brief.md` (**DRAFT / PENDING SPRINT 5 ARCHITECTURE APPROVAL**); the roadmap entry is in `docs/04-Master-Roadmap.md` → Sprint 5. This section exists so the Design System points at that work rather than duplicating it.
+**⚠️ Historical. This section recorded the direction before the sprint opened.** Sprint 5 opened 2026-09-02, and the language it asked for is now authored in ***The VITA Design Language*** further down this document. Slices 5.1, 5.2 and 5.3 are founder-approved and locked. Where this section and the authored language differ, **the authored language wins.**
+
+**Slice ownership, current as of the 2026-09-04 amendment:** 5.1 the design language and its primitives (✅) · 5.2 Water (✅) · 5.3 Dashboard (✅) · 5.4 Peptides Home · 5.5 Routine + Injection Sites · **5.6 Fuel identity** · **5.7 Tools + Settings identity** · **5.8 motion + microinteraction unification** · **5.9 BMI** · **5.10 founder identity audit**. Authoritative structure: `docs/Sprint-5-Planning-Audit.md` §S.3.
 
 **The problem this document must eventually answer.** VITA overuses large rounded surfaces and card containers, so unrelated content arrives at the same visual weight — most screens reach for dark background, large rounded card, text, icon, another rounded card. Features that behave nothing alike look like variations of one template. The 2026-08-18 density direction above identified this on Fuel; Sprint 5 generalizes it to the product.
 
@@ -169,7 +171,7 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 **Non-goals, explicitly:** bright cartoon gamification · random glassmorphism · gradient overload · animation for decoration · a completely different aesthetic · an architecture, business-logic, persistence or repository rewrite · a generic motivational wellness-app redesign.
 
-**Home's status.** Home/Dashboard remains the current visual source of truth until Sprint 5 replaces the language it embodies — and slice 5.2 redesigns Home itself, so the reference and the redesign are the same surface. Until 5.1 and 5.2 are founder-approved, everything above stands unchanged and no new UI invents styling ahead of them.
+**Home's status — resolved.** Home/Dashboard was the visual source of truth until Sprint 5 replaced the language it embodied. **Slice 5.3 redesigned Home and is locked** (founder device review, 2026-09-04), so *The VITA Design Language* below is now the reference, and Home is one of its worked examples rather than its source.
 
 ---
 
@@ -177,11 +179,31 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 # The VITA Design Language (slice 5.1)
 
-# ⚠️ DIRECTION FOUNDER-APPROVED — EXECUTION AWAITING 5.1A REVIEW
+# ✅ FOUNDER-APPROVED AND LOCKED — direction 2026-09-02, execution locked by 5.1A
 
-**The identity direction is approved** (founder device review, 2026-09-02): direct-on-background as the default, cards earning their use, glass as rare, feature-specific visual objects, restrained feature colour, the neutral primary action, one display-size subject per screen, `VitaSheet`, the `PressableScale` evolution, restrained haptics, the RN Animated motion foundation, reduce-motion support, and the vessel as a percentage-of-goal object with no capacity semantics.
+**Locked, and proved on two production features.** 5.1A closed the execution review, **5.2 (Water)** and **5.3 (Dashboard)** shipped in this language and are both founder-approved on device. This is now VITA's language, and — per the founder ruling of 2026-09-04 — **the baseline every remaining Sprint 5 slice migrates onto, and the baseline Sprint 6 / Journey inherits.**
 
-**The execution is not yet locked.** Slice 5.1A applied the visual refinements the review asked for and awaits its own device review. Until that passes, production screens are not migrated — slice 5.2 (Water) is the first that does. The founder *rulings* it is built on (surface hierarchy, the vessel as percentage-of-goal, restrained haptics) are approved and are recorded in `docs/Sprint-5-Planning-Audit.md` §W. **The execution below is not.** Until that review passes, production screens are not migrated onto this language — slice 5.2 (Water) is the first that does.
+## The rollout rule — one product language, not one identical layout
+
+**Sprint 5 applies one coherent VITA product language. It does not standardize screens into one layout.**
+
+**Shared by every feature:** the premium dark foundation · direct-content hierarchy · restrained surfaces · feature colors · purposeful motion · tactile interaction · the accessibility floor · real-data-only presentation.
+
+**Deliberately not shared:** Water looks like Water · Peptides looks like Peptides · Fuel looks like Fuel · Journey will look like Journey. This is §14 (*feature-specific vs shared*) stated as a rollout rule: **features must not be standardized into identical cards or widgets**, which would reproduce the old template sameness in a new palette.
+
+**Dashboard's customization model belongs to Dashboard.** The square/wide widget grid, visibility and order controls, on-Home edit mode and drag reorder approved in 5.3 are a **Home-specific interaction pattern** built on this language. They do **not** imply draggable widgets on every screen, and Fuel, Peptides, Tools and Settings do not get page-builder layouts.
+
+## Dynamic Type policy — founder-approved
+
+**VITA respects the platform's text-size accessibility setting by default. No custom VITA text-size setting is created** unless a future product need emerges.
+
+Every feature identity slice must: respect Dynamic Type where practical · avoid clipping · preserve accessibility labels · **never disable font scaling globally** (no `allowFontScaling={false}` anywhere in `src/`). Proved on Dashboard in 5.3D; the mechanisms are in `docs/09-Technical-Documentation.md` → Dynamic Type.
+
+---
+
+*The approval note as originally written follows.* **The identity direction is approved** (founder device review, 2026-09-02): direct-on-background as the default, cards earning their use, glass as rare, feature-specific visual objects, restrained feature colour, the neutral primary action, one display-size subject per screen, `VitaSheet`, the `PressableScale` evolution, restrained haptics, the RN Animated motion foundation, reduce-motion support, and the vessel as a percentage-of-goal object with no capacity semantics.
+
+~~**The execution is not yet locked.**~~ **Locked.** Slice 5.1A applied the visual refinements the review asked for and was founder-approved on device 2026-09-02; 5.2 (Water) was the first production screen migrated, and 5.3 (Dashboard) followed. The founder *rulings* it is built on (surface hierarchy, the vessel as percentage-of-goal, restrained haptics) are approved and are recorded in `docs/Sprint-5-Planning-Audit.md` §W. **The execution below is not.** Until that review passes, production screens are not migrated onto this language — slice 5.2 (Water) is the first that does.
 
 ## 1 — Surface roles
 
@@ -308,7 +330,7 @@ Timings live in `theme/tokens.ts` → `motion`, so components stop inventing the
 
 **The degradation rule: land on the final state directly. Never play a shorter version of the same animation.** Where feedback would otherwise vanish entirely, substitute a non-moving equivalent — `PressableScale` fades rather than scales, and `VitaSheet` presents without sliding.
 
-Honoured by: `ProgressBar` · `WaterLevelPanel` · `PressableScale` (5.1) · `VitaSheet` (5.1) · `WaterVessel` (5.1). **Still outstanding: `Toast`, `FuelQuickActions`** — scheduled for slice 5.7.
+Honoured by: `ProgressBar` · `WaterLevelPanel` · `PressableScale` (5.1) · `VitaSheet` (5.1) · `WaterVessel` (5.1). **Still outstanding: `Toast`, `FuelQuickActions`** — scheduled for slice **5.8**, the motion + microinteraction unification pass. *(This read 5.7 before the 2026-09-04 amendment inserted the Fuel identity slice at 5.6.)*
 
 ## 10 — Haptics
 
@@ -434,6 +456,7 @@ Added in 5.3C, for Home and anything that follows it.
 ## What this document still owes
 
 - `SectionHeader` variants (proposed in 5.1, built when a screen's slice needs them)
+- A flat in-panel `ListRow` variant — today each row carries its own border and shadow, so a list reads as a stack of cards (**5.7**, when Settings and the Tools hub need it)
 - Iconography
 - The full component state matrix
 - App-shell and dock specification beyond current behaviour

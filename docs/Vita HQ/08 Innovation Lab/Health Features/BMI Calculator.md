@@ -17,7 +17,7 @@ tags: [tools, bmi, calculator, weight, height, reference]
 
 **⏸️ Deferred at the Sprint 4 closeout, 2026-09-01 — deferred, not cancelled.** Sprint 4 closed as **Settings + Tools Foundation** after its two foundation slices, and this remains a valid product direction. The reason is sequencing, not doubt: this is presentation-heavy work, and the founders are defining a new VITA visual and interaction language next. Building it now would mean designing it twice. It resumes once that language exists — and lands into the `/tools` architecture slice 4.2 already established, where a new tool is a row and a route rather than a question about where it belongs.
 
-**Carried into Sprint 5 — VITA Identity & Interaction by the roadmap alignment of 2026-09-01. Still planned. Explicitly not cancelled — the founders want it.** It may land in draft slice 5.6 (Tools Integration) or in a dedicated adjacent slice after the design language is approved; that is a Sprint 5 architecture-audit decision and no slice number is assigned yet.
+**Carried into Sprint 5 — VITA Identity & Interaction. Still planned. Explicitly not cancelled — the founders want it.** It has a slice number now: **5.9**, its own slice rather than folded into Tools, per founder ruling §W.7 of the Sprint 5 Planning Audit. It is built from scratch in the established VITA design language — which is exactly why it was deferred out of Sprint 4. **The design language it will be built in now exists** (slice 5.1, approved and locked), and BMI is the best test of whether that language works for a feature it did not come from.
 
 **No implementation details are assigned beyond that.** The presentation questions this note already raises — how the category and scale read without becoming a verdict — are exactly the ones the new visual language should answer first.
 
@@ -88,7 +88,7 @@ Low direct value; real compounding value. It makes **Tools** a place worth retur
 
 **Next Step Required:** Decide how the category and scale are presented without reading as a verdict, and whether anything is persisted — **once the Sprint 5 design language exists**, not before. That language is precisely what should answer it.
 
-**Estimated Sprint:** **Sprint 5 — VITA Identity & Interaction** — Tools Integration, or a dedicated adjacent slice, after the design language is approved. *(Was Sprint 4 — Settings + Tools & Reference; deferred at that sprint's closeout.)*
+**Estimated Sprint:** **Sprint 5 — VITA Identity & Interaction, slice 5.9.** Confirmed as its own slice by founder ruling §W.7 (2026-09-02), numbered 5.8 then and **renumbered to 5.9** by the 2026-09-04 amendment that inserted the Fuel identity slice at 5.6. *(Was Sprint 4 — Settings + Tools & Reference; deferred at that sprint's closeout.)* **No fake health-insight or recommendation engine** — a BMI figure and its standard category range is what the tool reports.
 
 **Dependencies:**
 - The Tools destination (met — Sprint 4 slice 4.2)

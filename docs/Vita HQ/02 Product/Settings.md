@@ -68,6 +68,18 @@ A future **[[Research Library]] / Reference** layer, at concept level only: rese
 
 **Settings → Tools & Reference** as the primary path — **implemented in slice 4.2**, at `/tools`. A future [[Dashboard]]/Home shortcut into Tools is a **saved product idea only, if product design supports it** — exact placement is deliberately undecided, **no Dashboard card is authorised**, and the founders deferred it again at Sprint 4 authorization.
 
+## Sprint 5 direction — Tools + Settings Identity Integration, slice 5.7 (founder ruling, 2026-09-04)
+
+**⚠️ Direction, not implementation authorization.** Slice 5.7 is planned and needs its own founder authorization. Full detail: repo `docs/Sprint-5-Migration-Guide.md` → Slice 5.7.
+
+**Settings is named explicitly now.** The earlier plan scoped this slice to *Tools*; the founder ruling of 2026-09-04 — that **Sprint 5 must apply the identity across every already-built product area before [[My Journey|Journey]] begins** — broadened it, because Settings is an equally built product surface reached the same way.
+
+**Scope:** Settings · the Tools hub · the [[Peptide Dose Calculator|Peptide Calculator]]'s presentation · any [[Injection Site Tracking|Injection Sites]] presentation not already handled by slice 5.5 · the Units and Appearance surfaces · the utility navigation hierarchy.
+
+**Preserved and not reopened:** current routes · current functionality · **current preference persistence** (`vita:v1:settings:prefs`, and Water's `vita:v1:water:prefs` behind the Units screen) · **no fake rows** — the slice 4.1 honesty rule stands, and a row without a real implementation is not added back to fill space.
+
+**Settings does not acquire [[Dashboard]]'s widget-customization model.** That is a Home-specific interaction pattern, not a template.
+
 ## Future ideas
 
 - ~~Appearance controls for the Light/Dark theme system~~ — shipped, and **persistent** as of slice 4.1

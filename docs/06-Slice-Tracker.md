@@ -2043,14 +2043,35 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.3B | Dashboard Widget Layout + Density | Two-column widget grid, square/wide sizes, drag reorder, quote, Food Scanner correction | ✅ Accepted subpass of 5.3 |
 | 5.3C | Dashboard Direct Manipulation + Visual Polish | Shared square footprint, Quick Tools customization, Food Scanner reinstated, serif quote, daypart accents, on-Home edit mode | ✅ Accepted subpass of 5.3 |
 | 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | ✅ Accepted subpass of 5.3 |
-| 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ Not started |
-| 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Not started |
-| 5.6 | Tools Integration | Sprint 4's existing working Tools under the new language — behaviour frozen | ⬜ Not started |
-| 5.7 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps | ⬜ Not started |
-| 5.8 | BMI Calculator | Built from scratch in the new system | ⬜ Not started |
-| 5.9 | Founder Identity Audit | Real-device review, both themes, VoiceOver, reduce-motion | ⬜ Not started |
+| 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ **NEXT** — not started, needs its own authorization |
+| 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Planned |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ Planned |
+| 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
+| 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
+| 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
+| 5.10 | Founder Identity Audit | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | ⬜ Planned |
 
-**Journey does not begin without explicit founder approval after 5.9.**
+**Journey does not begin without explicit founder approval after 5.10.**
+
+### Scope amended 2026-09-04 — founder ruling
+
+**Sprint 5 must apply the new VITA Identity & Interaction language across all already-built current product areas before Journey begins**, and the resulting system is the **baseline for all future VITA feature work**, Journey included.
+
+The ruling followed founder review of production Water and Dashboard: with two features in the new language and the rest in the old one, the app reads as two products, and shipping Journey into that state would add a third. **Fuel gains a dedicated identity slice it never had**, and Tools becomes **Tools + Settings**, because Settings is a built product surface too.
+
+| # | Was (audit §S.2) | Now |
+|---|---|---|
+| 5.6 | Tools Integration | **Fuel Identity Refresh** (new) |
+| 5.7 | Motion + Microinteraction Unification | **Tools + Settings Identity Integration** |
+| 5.8 | BMI Calculator | **Motion + Microinteraction Unification** |
+| 5.9 | Founder Identity Audit | **BMI Calculator** |
+| 5.10 | — | **Founder Identity Audit** |
+
+**Nothing was cut.** One slice added, one broadened, four renumbered. 5.4 and 5.5 are unchanged. The amendment is recorded in `docs/Sprint-5-Planning-Audit.md` §S.3, which supersedes §S.2's numbering from 5.6 onward without erasing it.
+
+**Two rulings recorded alongside it.** **(1) One product language, not one identical layout** — Water looks like Water, Peptides like Peptides, Fuel like Fuel, Journey like Journey; features share the language, not the layout, and must not be standardized into identical cards or widgets. **(2) Dashboard's widget customization is Dashboard's own pattern** — it does not imply draggable widgets on every screen, and Fuel, Peptides and Settings do not get square/wide page-builder layouts.
+
+**Findings carried forward now belong to 5.8**, not 5.7: `PressableScale`'s `flex` trap, `FloatingDock` label cropping at accessibility text sizes, the `Toast` and `FuelQuickActions` reduce-motion gaps, the numeric-accessory tone inconsistency, and converging the four hand-rolled sheets onto `VitaSheet`. Removing the identity prototype and its `__DEV__` Settings row now falls to **5.10** at the latest.
 
 ### Slice 5.1 — VITA Design Language + Identity Prototype 🟡
 
@@ -2350,7 +2371,11 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **The locked state.** A compact VITA header · a time-aware greeting with a daypart accent · the quote treatment, `I came, I saw, I conquered.` and `— Julius Caesar` · the calendar date chip · **real-data-only widgets** · Fuel wide by default over a Water | Peptides square pair · square/wide sizing with one shared square geometry · Quick Tools carrying Calculator, Injection Sites and the Food Scanner shortcut · Today's Schedule · customizable visibility, size and order, persisted · long-press edit mode with the jiggle and top-right remove affordances · live drag with neighbour reflow · the accessible non-drag reorder in Customize Home · Dynamic Type support · Dark and Light · Reduce Motion · the dock contrast fix from 5.3A.
 
-**These are settled, not open questions.** They are reopened only if a future audit finds a real defect — not to revisit a decision already made. Two known items already carried forward for **5.7**, both recorded above and neither a Dashboard defect: `PressableScale` does not propagate `flex` to its parent row, and `FloatingDock` crops its labels at accessibility text sizes.
+**These are settled, not open questions.** They are reopened only if a future audit finds a real defect — not to revisit a decision already made. Two known items already carried forward for the motion-unification slice — **5.8 since the 2026-09-04 amendment, recorded as 5.7 when this was written** — both noted above and neither a Dashboard defect: `PressableScale` does not propagate `flex` to its parent row, and `FloatingDock` crops its labels at accessibility text sizes.
+
+**Dashboard's customization model is Dashboard's own.** The square/wide widgets, visibility and order controls, on-Home edit mode and drag reorder approved here are a **Home-specific interaction pattern** built on the shared VITA identity. They do not imply that Fuel, Peptides, Tools or Settings acquire draggable widgets or page-builder layouts.
+
+**The `Food Scanner` Quick Tool opens the existing Fuel barcode scanner** for scanning and logging a food. **It is not a claim that food scoring exists** — no VITA Score exists or is authorized, and the richer evaluating scanner remains a separate deferred feature evolution.
 
 **No runtime change accompanied this approval.** The approved build is `f4ead5a` on `sprint-5-identity-interaction`; the branch is **not merged**, by standing instruction.
 

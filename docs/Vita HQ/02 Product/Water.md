@@ -24,7 +24,9 @@ A compact **seven-day strip** gives light context. It shows **daily volume, not 
 
 Engineering detail: repo `docs/09-Technical-Documentation.md` → "Water architecture", and `docs/06-Slice-Tracker.md` → slice 3.2.
 
-## Sprint 5 slice 5.2 — the interactive Water experience (2026-09-03, awaiting founder device review)
+## Sprint 5 slice 5.2 — the interactive Water experience (2026-09-03, ✅ founder-approved on device; closed by 5.2A)
+
+*Water is the **first complete feature built in the VITA identity language**, and it is now the reference the later identity slices are measured against.*
 
 **Water is the first production feature rebuilt in the Sprint 5 identity.** The presentation and the logging interaction changed; the hydration engine did not. Millilitres are still canonical, entries still snapshot what the user typed, the goal is still stored as the pair they authored, and there is still no default goal.
 
@@ -80,7 +82,7 @@ Water came through the closeout audit with **one defect and no functional proble
 
 **One consistency note, not a defect.** Water's strip is a *"Last 7 days"* rolling bar chart while the Peptides routine strip is a Monday-to-Sunday calendar. The two are different objects doing different jobs — a volume trend versus a week you can mark days on — and Water's label says exactly what it shows. Recorded so the difference reads as deliberate rather than as drift.
 
-## Sprint 5 direction — Interactive Water Experience (founder direction, 2026-09-01)
+## Sprint 5 direction — Interactive Water Experience (founder direction, 2026-09-01) *(historical — superseded by what shipped above)*
 
 **⚠️ Direction, not implementation authorization.** Slice 5.3 is **draft** and needs founder approval plus a Sprint 5 architecture audit. Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
 

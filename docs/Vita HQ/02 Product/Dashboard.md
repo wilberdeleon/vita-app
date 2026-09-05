@@ -113,7 +113,12 @@ Built in Slice 0.4, refined in 0.11–0.12:
 
 **Sprint 1** of the [[Roadmap]] — ✅ **complete (2026-08-02)**; see [[Current Sprint]] and repo `docs/06-Slice-Tracker.md` for what actually shipped. As originally planned, eight slices: Layout, Greeting Card, Today's Summary, Health Metrics, Journey Preview, Meals Preview, Floating Navigation, Dashboard Polish. This elevates the existing mock components above (GreetingCard, DailyProgressCard, QuickStatsRow, JourneyCard) to production quality rather than building from zero — live data once [[Supabase & Database|Supabase]] connects. Founder priority right now: **Dashboard polish** under the [[Design Bible|premium glass direction]].
 
-## Sprint 5 direction — VITA Identity & Interaction (founder direction, 2026-09-01)
+## Two clarifications recorded at the 5.3 approval (2026-09-04)
+
+- **Home's customization model is Dashboard's own.** The square/wide widget grid, visibility and order controls, on-Home edit mode and drag reorder are a **Home-specific interaction pattern** built on the shared VITA identity. They do **not** imply that [[Fuel]], [[Peptides]], Tools or [[Settings]] get draggable widgets or page-builder layouts. Sprint 5 applies **one product language, not one identical layout**.
+- **The `Food Scanner` Quick Tool opens the existing Fuel barcode scanner** for scanning and logging a food. **It is not a claim that food scoring exists** — no VITA Score exists or is authorised, and the evaluating scanner ([[Food & Product Scanner]]) remains a separate deferred feature evolution. Documentation must keep the two apart.
+
+## Sprint 5 direction — VITA Identity & Interaction (founder direction, 2026-09-01) *(historical — superseded by what shipped above)*
 
 **✅ Delivered and approved (2026-09-04).** This direction was audited, re-planned as slice **5.3**, built across 5.3–5.3D and approved on a real device. The record below is kept as the brief it was; *Approved and locked* at the top of this page is what shipped. Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
 

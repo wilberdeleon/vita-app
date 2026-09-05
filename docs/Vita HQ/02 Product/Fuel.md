@@ -54,6 +54,20 @@ Two constraints already settled as direction: presentation must **not depend on 
 
 Full proposal: [[Contextual Food Visuals]].
 
+## Sprint 5 direction — Fuel Identity Refresh, slice 5.6 (founder ruling, 2026-09-04)
+
+**⚠️ Direction, not implementation authorization.** Slice 5.6 is planned and needs its own founder authorization. Full detail: repo `docs/Sprint-5-Migration-Guide.md` → Slice 5.6.
+
+**Why Fuel gained a slice it did not originally have.** Sprint 2 built Fuel's functionality and Fuel's presentation predates the current VITA identity. When the founders ruled on 2026-09-04 that **Sprint 5 must apply the identity across every already-built product area before [[My Journey|Journey]] begins**, Fuel was the largest surface with no slice — the Screen Migration Guide had no Fuel section at all.
+
+**This is not a Fuel architecture rewrite.** Preserved and not reopened: the nutrition model · logging · meal editing · the Open Food Facts integration · **barcode lookup and the `/fuel/scan` logging flow** · persistence · every existing real behaviour · current calorie and macro semantics, including the *Calories* / *cal* terminology decision.
+
+**Potential visual / interaction scope:** Fuel Home · meal and log presentation · food detail surfaces · scanner presentation where appropriate · the logging flow · empty states · direct-content hierarchy · **orange feature identity** · tactile sheets and progressive disclosure where they genuinely help.
+
+**Fuel should look like Fuel.** It adopts the shared VITA language — premium dark foundation, direct-content hierarchy, restrained surfaces, feature colors, purposeful motion, tactile interaction, accessibility, real-data-only presentation — **not another feature's layout.** The meal colour language, the three-tier food visual system and the calorie ring stay Fuel's own. **Fuel does not acquire [[Dashboard]]'s widget-customization model**, which is a Home-specific pattern.
+
+**The scanner, stated plainly.** `/fuel/scan` is the **barcode lookup and logging** flow. Refreshing its presentation is in scope; **inventing a product score is not.** The Dashboard *Food Scanner* Quick Tool opens this logging flow — it is not a claim that food scoring exists. **No VITA Score exists or is authorised**, and the richer evaluating scanner ([[Food & Product Scanner]]) remains a separate deferred feature evolution.
+
 ## Future ideas
 
 - AI meal planning via Atlas — [[Atlas Capabilities]]
