@@ -274,9 +274,9 @@ describe('routine state', () => {
 
     const home = await mount(<Peptides />, fake.repository);
     const rendered = screen(home);
-    expect(rendered).toContain('NEEDS SETUP');
-    expect(rendered).toContain('BPC-157');
-    expect(rendered).toContain('Setup needed');
+    // 5.4: one compact notice naming the routine, in place of a section
+    // header over a card over a row.
+    expect(rendered).toContain('Finish setting up BPC-157');
   });
 
   it('becomes active when its setup is saved', async () => {
@@ -346,11 +346,17 @@ describe('routine state', () => {
     ]);
     const tree = await mount(<Peptides />, fake.repository);
 
+    /*
+     * Slice 5.4 replaced four identical uppercase headers with a hierarchy:
+     * Today is the unlabelled hero region, unfinished setups are one notice,
+     * and the rest is a single quieter "Your routines". The *grouping* is
+     * unchanged — that is what this test is really about.
+     */
     const rendered = screen(tree);
-    expect(rendered).toContain('TODAY');
-    expect(rendered).toContain('NEEDS SETUP');
-    expect(rendered).toContain('ACTIVE');
-    expect(rendered).toContain('INACTIVE');
+    expect(rendered).toContain('1 scheduled today');
+    expect(rendered).toContain('Finish setting up Retatrutide');
+    expect(rendered).toContain('Your routines');
+    expect(rendered).toContain('Inactive · 1');
 
     // BPC-157 is today's; it must be named once on the whole screen.
     expect(texts(tree).filter((line) => line === 'BPC-157')).toHaveLength(1);
@@ -410,10 +416,11 @@ describe('pre-3.9 setups', () => {
 
     const tree = await mount(<Peptides />, realRepository);
     // The fixture is a daily routine, so a migrated *active* setup surfaces
-    // under Today — which is the whole point: it loaded as running, not as
+    // in Today — which is the whole point: it loaded as running, not as
     // something still waiting to be configured.
-    expect(screen(tree)).toContain('TODAY');
-    expect(screen(tree)).not.toContain('Setup needed');
+    expect(screen(tree)).toContain('1 scheduled today');
+    expect(screen(tree)).not.toContain('need setup');
+    expect(screen(tree)).not.toContain('Finish setting up');
   });
 });
 
@@ -525,7 +532,7 @@ describe('the daily routine', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
     await type(tree, /^Amount in mg/, '2');
     await press(tree, 'Confirm Taken');
 
@@ -541,7 +548,7 @@ describe('the daily routine', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as skipped');
+    await pressByLabel(tree, 'Mark Retatrutide as skipped');
 
     expect(fake.statuses()[0].state).toBe('skipped');
     // Skipping means it did not happen. Writing a log would invert that.
@@ -553,14 +560,14 @@ describe('the daily routine', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as skipped');
+    await pressByLabel(tree, 'Mark Retatrutide as skipped');
 
     const labels = tree.root
       .findAll((node) => typeof node.props?.onPress === 'function')
       .map((node) => String(node.props?.accessibilityLabel ?? ''));
 
-    expect(labels).not.toContain('Record Retatrutide as taken');
-    expect(labels).not.toContain('Record Retatrutide as skipped');
+    expect(labels).not.toContain('Mark Retatrutide as taken');
+    expect(labels).not.toContain('Mark Retatrutide as skipped');
     expect(labels).toContain("Change today's status for Retatrutide");
   });
 
@@ -603,7 +610,7 @@ describe('taken integrity', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
     await type(tree, /^Amount in mg/, '2');
     await press(tree, 'Confirm Taken');
 
@@ -617,7 +624,7 @@ describe('taken integrity', () => {
     const tree = await mount(<Peptides />, fake.repository);
     fake.failLogWrites(true);
 
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
     await type(tree, /^Amount in mg/, '2');
     await press(tree, 'Confirm Taken');
 
@@ -631,7 +638,7 @@ describe('taken integrity', () => {
     const fake = repositoryWith([setupFixture()], [manual]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
     await type(tree, /^Amount in mg/, '2');
     await press(tree, 'Confirm Taken');
     expect(fake.logs()).toHaveLength(2);
@@ -649,7 +656,7 @@ describe('taken integrity', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as skipped');
+    await pressByLabel(tree, 'Mark Retatrutide as skipped');
     await pressByLabel(tree, "Change today's status for Retatrutide");
 
     expect(fake.statuses()).toHaveLength(0);
@@ -665,7 +672,7 @@ describe('taken integrity', () => {
     const fake = repositoryWith([setupFixture()], manuals);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as skipped');
+    await pressByLabel(tree, 'Mark Retatrutide as skipped');
     await pressByLabel(tree, "Change today's status for Retatrutide");
 
     expect(fake.logs()).toHaveLength(3);
@@ -756,8 +763,9 @@ describe('needs setup', () => {
     const fake = repositoryWith([setupFixture({ routineState: 'needs-setup', active: false })]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    expect(screen(tree)).toContain('Setup needed');
-    await pressByLabel(tree, 'Retatrutide. Setup needed. Opens setup');
+    // One compact notice now, not a header over a card over a row.
+    expect(screen(tree)).toContain('Finish setting up Retatrutide');
+    await pressByLabel(tree, 'Finish setting up Retatrutide');
     expect(mockPush).toHaveBeenCalledWith('/peptides/setup/setup-1');
   });
 
@@ -771,9 +779,9 @@ describe('needs setup', () => {
     mounted = null;
 
     const home = await mount(<Peptides />, fake.repository);
-    expect(screen(home)).not.toContain('Setup needed');
-    // Saving made it a running daily routine, so it appears under Today.
-    expect(screen(home)).toContain('TODAY');
+    expect(screen(home)).not.toContain('Finish setting up');
+    // Saving made it a running daily routine, so it appears in Today.
+    expect(screen(home)).toContain('1 scheduled today');
   });
 });
 
@@ -830,7 +838,7 @@ describe('setup simplification', () => {
     // from the number the user actually records.
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<Peptides />, fake.repository);
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
 
     const units = tree.root.findAll((node) =>
       /^Amount unit, (mg|mcg)$/.test(String(node.props?.accessibilityLabel ?? '')),
@@ -980,14 +988,17 @@ describe("today's actions", () => {
    * as already-answered.
    */
   it.each([
-    ['the peptides screen', () => <Peptides />],
-    ['the routine screen', () => <RoutineDetail />],
-  ])('presents Taken and Skipped as two available choices on %s', async (_name, element) => {
+    // Peptides Home moved to "Mark …" in 5.4, the wording the authorization
+    // fixed. The routine screen still says "Record …" and is 5.5's to change;
+    // the safety property under test is identical on both.
+    ['the peptides screen', () => <Peptides />, 'Mark'],
+    ['the routine screen', () => <RoutineDetail />, 'Record'],
+  ])('presents Taken and Skipped as two available choices on %s', async (_name, element, verb) => {
     mockRouteId = 'setup-1';
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(element(), fake.repository);
 
-    for (const label of ['Record Retatrutide as taken', 'Record Retatrutide as skipped']) {
+    for (const label of [`${verb} Retatrutide as taken`, `${verb} Retatrutide as skipped`]) {
       const [node] = tree.root.findAll(
         (n) => typeof n.props?.onPress === 'function' && n.props?.accessibilityLabel === label,
       );
@@ -1024,7 +1035,7 @@ describe('a compound added by the catalog expansion', () => {
 
     const home = await mount(<Peptides />, fake.repository);
     const rendered = screen(home);
-    expect(rendered).toContain('NEEDS SETUP');
+    expect(rendered).toContain('Finish setting up Setmelanotide');
     expect(rendered).toContain('Setmelanotide');
   });
 
@@ -1068,7 +1079,7 @@ describe('routine amount', () => {
   it('fills the daily flow in from the routine, not from a recommendation', async () => {
     const fake = repositoryWith([WITH_AMOUNT()]);
     const tree = await mount(<Peptides />, fake.repository);
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
 
     // Stated, not asked for — and the conversion comes with it.
     expect(screen(tree)).toContain('2 mg');
@@ -1080,7 +1091,7 @@ describe('routine amount', () => {
     const fake = repositoryWith([WITH_AMOUNT()]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
     await press(tree, 'Confirm Taken');
 
     const log = fake.logs()[0];
@@ -1092,7 +1103,7 @@ describe('routine amount', () => {
   it('still asks when the routine has no amount', async () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<Peptides />, fake.repository);
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
 
     // Someone who tracks a schedule but not an amount is a real user.
     expect(screen(tree)).not.toContain('From your routine');
@@ -1106,7 +1117,7 @@ describe('routine amount', () => {
     const fake = repositoryWith([WITH_AMOUNT()]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
     await pressByLabel(tree, 'Change amount for today');
     await type(tree, /^Amount in mg/, '2.5');
     await press(tree, 'Confirm Taken');
@@ -1158,7 +1169,7 @@ describe('the daily time', () => {
       setupFixture({ routineAmount: { amountMcg: 2000, authored: { amount: 2, unit: 'mg' } } }),
     ]);
     const tree = await mount(<Peptides />, fake.repository);
-    await pressByLabel(tree, 'Record Retatrutide as taken');
+    await pressByLabel(tree, 'Mark Retatrutide as taken');
 
     const field = tree.root
       .findAllByType(TextInput)
@@ -1348,8 +1359,8 @@ describe('removing a routine', () => {
 
     const home = await mount(<Peptides />, fake.repository);
     const rendered = screen(home);
-    expect(rendered).not.toContain('Setup needed');
-    expect(rendered).toContain('No peptides in your routine');
+    expect(rendered).not.toContain('Finish setting up');
+    expect(rendered).toContain('No routines yet');
   });
 
   it('preserves every administration, in full', async () => {
@@ -1496,8 +1507,8 @@ describe('Today and Active never show the same routine twice', () => {
     const tree = await mount(<Peptides />, fake.repository);
 
     const rendered = screen(tree);
-    expect(rendered).toContain('TODAY');
-    expect(rendered).not.toContain('ACTIVE');
+    expect(rendered).toContain('1 scheduled today');
+    expect(rendered).not.toContain('Your routines');
     expect(named(tree, 'Retatrutide')).toBe(1);
   });
 
@@ -1515,8 +1526,8 @@ describe('Today and Active never show the same routine twice', () => {
     const tree = await mount(<Peptides />, fake.repository);
 
     const rendered = screen(tree);
-    expect(rendered).toContain('ACTIVE');
-    expect(rendered).not.toContain('TODAY');
+    expect(rendered).toContain('Your routines');
+    expect(rendered).toContain('Nothing scheduled today');
     expect(named(tree, 'Retatrutide')).toBe(1);
   });
 
@@ -1526,14 +1537,15 @@ describe('Today and Active never show the same routine twice', () => {
     const fake = repositoryWith([setupFixture({ schedule: { kind: 'asNeeded' } })]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    expect(screen(tree)).toContain('ACTIVE');
+    expect(screen(tree)).toContain('Your routines');
+    expect(screen(tree)).toContain('As needed');
     expect(named(tree, 'Retatrutide')).toBe(1);
   });
 
   it('keeps a routine with no schedule at all under Active', async () => {
     const fake = repositoryWith([setupFixture({ schedule: undefined })]);
     const tree = await mount(<Peptides />, fake.repository);
-    expect(screen(tree)).toContain('ACTIVE');
+    expect(screen(tree)).toContain('Your routines');
     expect(named(tree, 'Retatrutide')).toBe(1);
   });
 
@@ -1550,16 +1562,17 @@ describe('Today and Active never show the same routine twice', () => {
     const tree = await mount(<Peptides />, fake.repository);
 
     const lines = texts(tree);
-    const todayIndex = lines.indexOf('TODAY');
-    const activeIndex = lines.indexOf('ACTIVE');
-    expect(todayIndex).toBeGreaterThanOrEqual(0);
-    expect(activeIndex).toBeGreaterThan(todayIndex);
+    const summaryIndex = lines.indexOf('1 scheduled today');
+    const routinesIndex = lines.indexOf('Your routines');
+    expect(summaryIndex).toBeGreaterThanOrEqual(0);
+    expect(routinesIndex).toBeGreaterThan(summaryIndex);
 
-    // A is above the Active header; B and C are below it. Each appears once.
-    expect(lines.indexOf('Retatrutide')).toBeGreaterThan(todayIndex);
-    expect(lines.indexOf('Retatrutide')).toBeLessThan(activeIndex);
-    expect(lines.indexOf('BPC-157')).toBeGreaterThan(activeIndex);
-    expect(lines.indexOf('Ipamorelin')).toBeGreaterThan(activeIndex);
+    // A is in Today, above the management region; B and C are below it. Each
+    // appears exactly once.
+    expect(lines.indexOf('Retatrutide')).toBeGreaterThan(summaryIndex);
+    expect(lines.indexOf('Retatrutide')).toBeLessThan(routinesIndex);
+    expect(lines.indexOf('BPC-157')).toBeGreaterThan(routinesIndex);
+    expect(lines.indexOf('Ipamorelin')).toBeGreaterThan(routinesIndex);
     for (const name of ['Retatrutide', 'BPC-157', 'Ipamorelin']) {
       expect(named(tree, name)).toBe(1);
     }
@@ -1570,8 +1583,8 @@ describe('Today and Active never show the same routine twice', () => {
     const fake = repositoryWith([setupFixture({ schedule: { kind: 'daily' } })]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    // The Today card names its state; what matters is that it still routes.
-    await pressByLabel(tree, 'Retatrutide. No response. Opens the routine');
+    // The Today item names its state; what matters is that it still routes.
+    await pressByLabel(tree, 'Retatrutide, scheduled today');
     expect(mockPush).toHaveBeenCalledWith('/peptides/routine/setup-1');
   });
 
@@ -1597,10 +1610,13 @@ describe('Today and Active never show the same routine twice', () => {
     const tree = await mount(<Peptides />, fake.repository);
 
     const rendered = screen(tree);
-    expect(rendered).toContain('NEEDS SETUP');
-    expect(rendered).toContain('INACTIVE');
-    expect(rendered).toContain('TODAY');
-    // A paused routine is never deduplicated against Today — it is not active.
+    expect(rendered).toContain('Finish setting up Retatrutide');
+    expect(rendered).toContain('Inactive · 1');
+    expect(rendered).toContain('1 scheduled today');
+
+    // A paused routine is never deduplicated against Today — it is not
+    // active. Inactive is collapsed in 5.4, so it is named once opened.
+    await pressByLabel(tree, 'Inactive, 1');
     expect(named(tree, 'BPC-157')).toBe(1);
   });
 
@@ -1610,7 +1626,8 @@ describe('Today and Active never show the same routine twice', () => {
     ]);
     const tree = await mount(<Peptides />, fake.repository);
 
-    expect(screen(tree)).toContain('INACTIVE');
-    expect(screen(tree)).not.toContain('TODAY');
+    expect(screen(tree)).toContain('Inactive · 1');
+    expect(screen(tree)).toContain('Nothing scheduled today');
+    expect(screen(tree)).not.toContain('Scheduled today');
   });
 });

@@ -6,6 +6,26 @@
 
 ---
 
+## Sprint 5 slice 5.4 — Peptides Home redesigned (2026-09-04, awaiting founder device review)
+
+**Peptides Home now answers one question first: what is scheduled today, and what can I do about it?**
+
+**Today is the screen.** Every routine scheduled today sits at the top with its name, the amount you configured, and its state. If you have not answered it yet, **Taken** and **Skipped** are right there — no navigating, no opening anything. Three routines means three sets of buttons, not a summary telling you there are three.
+
+**It looks like Peptides, not like Water in violet.** Water is a vessel because hydration is a quantity that fills up. A peptide day is a set of separate events, each with a state, so the shape of Peptides is the state itself — a filled violet tick for taken, an amber ring and dash for skipped, an open violet ring for a day you have not answered. Every one of those also says what it is in words.
+
+**Unfinished setups are one quiet line** — *Finish setting up BPC-157* — instead of a heading over a card over a row. Nothing has gone wrong when a setup is incomplete, so nothing warns you.
+
+**Everything else folds down.** *Your routines* lists what is running, quietly, with its schedule and amount; paused routines sit behind *Inactive · 2* until you open them. Pause, Resume and Remove stay on the routine itself, where there is room to explain them.
+
+**What has not changed, and will not.** *Scheduled today* — never *due*. Taken and Skipped are both outlined and neither is pre-selected, because a filled Taken looked like it had already been pressed. A day you have not answered stays unanswered; it never quietly becomes *skipped*. Nothing is scored — no adherence, no streak, no percentage. And VITA still recommends no dose, no protocol and no injection site: it reads back the routine you wrote.
+
+**Answering here updates Home immediately** — the Peptides widget and Today's Schedule both follow, with no refresh.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.4.
+
+---
+
 ## Current state (verified in repo, Sprint 3 slice 3.5 — real setups)
 
 **Peptides became a real feature on 2026-08-23.** The first two layers of the three-part model are built and persisted: **Peptide Definition** (what the compound is) and **User Peptide Setup** (how this user tracks it). A user can browse or search an **18-entry built-in catalog**, add a **Custom** entry, configure a setup, edit it, deactivate it, and reactivate it — all surviving a restart.
@@ -313,11 +333,11 @@ Future reminder work — unscheduled, and **not** automatically Sprint 4 scope:
 
 ## Sprint 5 direction — Peptides Home, Routine, and injection sites (founder direction, 2026-09-01; slice numbers confirmed 2026-09-02)
 
-**⚠️ Direction, not implementation authorization.** **Slice 5.4 — Peptides Home Redesign is the next slice in Sprint 5** and still needs its own founder authorization; **slice 5.5 — Routine + Injection Site Experience** follows it. Neither has started. Their numbers were unchanged by the 2026-09-04 amendment that expanded the sprint to ten slices. The screen-by-screen map is repo `docs/Sprint-5-Migration-Guide.md` → Slices 5.4 and 5.5.
+**Slice 5.4 — Peptides Home Redesign is built** (2026-09-04, awaiting device review — see the section at the top of this page). **Slice 5.5 — Routine + Injection Site Experience** follows it and has not started. Their numbers were unchanged by the 2026-09-04 amendment that expanded the sprint to ten slices. The screen-by-screen map is repo `docs/Sprint-5-Migration-Guide.md` → Slices 5.4 and 5.5.
 
 **Peptides should look like Peptides.** It adopts the shared VITA language — the same one [[Water]] and [[Dashboard]] now use — **not their layouts**, and it does not acquire Home's widget-customization model. **No business-logic rewrite is implied anywhere below.** Full brief: repo `docs/Sprint-5-Identity-Brief.md`.
 
-**Peptides Home.** Peptide tracking works; the presentation currently feels administrative and information-heavy. The redesigned hierarchy should prioritise immediate comprehension of one question — **what do I need to do today?** — and more clearly distinguish **due · completed · upcoming · routine management** rather than giving everything equal visual priority.
+**Peptides Home.** ✅ Delivered in 5.4. The brief as written asked to distinguish *due · completed · upcoming · routine management*; what shipped uses **scheduled** rather than *due*, which is the sprint's binding wording — a schedule is what the user planned, not something VITA enforces.
 
 **Routine.** The principle is **immediate action first, administrative detail second.** A possible top state, *not yet a required literal layout*: the peptide name · *Routine amount · Today* · primary **Mark as Taken** · secondary **Skip** · then progressive disclosure of Routine Details, History, Preparation and Edit Routine.
 

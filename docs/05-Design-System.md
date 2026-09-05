@@ -453,6 +453,24 @@ Added in 5.3C, for Home and anything that follows it.
 
 ---
 
+## 21 — Naming a control
+
+**One action, one name.** Two controls that do the same thing under the same label are redundant to read and, to a screen-reader user moving between them, ambiguous — they sound like a choice when there is none. Pick the platform-conventional position and stop there. Peptides Home dropped a second *Add to Routine* for exactly this reason in 5.4.
+
+**A spoken label may spell out what the eye reads as an abbreviation.** `1 mg` is the right thing to render; VoiceOver pronounces it "em gee". Give the label the words — *1 milligram* — and keep the mapping in the feature, never in a frozen domain module. Singular and plural both matter.
+
+---
+
+## 22 — Where a feature's identity comes from
+
+**From its own domain, not from a decoration budget.** Water is a vessel because hydration is a continuous quantity filling toward a goal. Peptides is discrete scheduled events each carrying a state, so its motif is the state mark itself — the tick, dash and open ring the domain had already settled on. Neither was chosen for looking good; each is the shape of the thing.
+
+**A feature that does not need a hero illustration should not get one.** A vial render or a molecule graphic would be decoration standing in for identity. When the content is the most important thing on the screen, the content is the hero.
+
+The test: put the screen beside the others and ask both questions. *Does it belong to VITA?* and *Is it unmistakably this feature rather than the last one recoloured?* A screen that fails the second is the "same layout in a different hue" failure the sprint exists to avoid.
+
+---
+
 ## What this document still owes
 
 - `SectionHeader` variants (proposed in 5.1, built when a screen's slice needs them)

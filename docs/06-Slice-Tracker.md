@@ -2034,7 +2034,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 
 | # | Slice | Objective | Status |
 |---|-------|-----------|--------|
-| 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | 🟡 Identity direction founder-approved on device; polished in 5.1A, awaiting the 5.1A review that locks it |
+| 5.1 | VITA Design Language + Identity Prototype | Author the design language, build the minimal primitives it requires, and prove it in a coded prototype | ✅ Founder-approved on device 2026-09-02 — **locked** by the 5.1A review |
 | 5.1A | Identity Prototype Visual Polish | Quick-add layout, vessel refinement, liquid settle, hydration copy, CTA treatment | ✅ Founder-approved on device 2026-09-02 — **5.1 locked** |
 | 5.2 | Interactive Water Experience | First complete feature in the new language — hydration object, quick-add sheet, haptics, history disclosure | ✅ Founder-approved on device 2026-09-03 |
 | 5.2A | Water Custom Amount Keyboard Polish | A Done key for the number pad, and the press-opacity regression it exposed | ✅ Founder-approved · 5.2 closed |
@@ -2043,7 +2043,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.3B | Dashboard Widget Layout + Density | Two-column widget grid, square/wide sizes, drag reorder, quote, Food Scanner correction | ✅ Accepted subpass of 5.3 |
 | 5.3C | Dashboard Direct Manipulation + Visual Polish | Shared square footprint, Quick Tools customization, Food Scanner reinstated, serif quote, daypart accents, on-Home edit mode | ✅ Accepted subpass of 5.3 |
 | 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | ✅ Accepted subpass of 5.3 |
-| 5.4 | Peptides Home Redesign | Today as hero, completed settles in place, routines progressively disclosed | ⬜ **NEXT** — not started, needs its own authorization |
+| 5.4 | Peptides Home Redesign | Today as hero, one setup notice, routines progressively disclosed | 🟡 Implemented — awaiting founder device review |
 | 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Planned |
 | 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ Planned |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
@@ -2326,6 +2326,40 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.4 — Peptides Home Redesign 🟡
+
+**Implemented 2026-09-04. Awaiting founder device review — not approved.** Presentation, hierarchy and interaction only.
+
+**Zero changes under `src/lib/peptides/`.** Every group still comes from `usePeptides()` — `today`, `needsSetup`, `active`, `inactive` — and every write still goes through `markTaken`, `markSkipped`, `clearRoutineDay` and `restoreRoutineDay`. The diff is `features/peptides/` plus the one route.
+
+**What was demoted.** Four uppercase section headers over three visually identical `Card` panels. `TODAY`, `NEEDS SETUP`, `ACTIVE` and `INACTIVE` carried the same weight, so the one region you can *act* in looked exactly like the two you can only browse — which is why the screen read as routine-management software. `TodayRoutineCard` is deleted; `EmptyState`, `SectionHeader` and `Card` are gone from this screen entirely.
+
+**Today dominates, directly on the background.** Each scheduled routine shows its name at 19pt, the user's own amount, its state, and — unanswered — Taken and Skipped, reachable without navigating. Weight comes from type, the state mark and the action pair rather than from a container. **Every scheduled routine renders in full**: collapsing three into `3 scheduled today` would remove the actions that are the point of the screen. One factual header line counts what is open and what is answered.
+
+**Peptides now looks like Peptides, not Water in purple.** Water is a vessel because hydration is a continuous quantity; Peptides is **discrete scheduled events with a state each**, so the motif is the state itself — `RoutineMark` draws the tick, dash and open ring the domain settled on in 3.9 rather than inventing a second vocabulary. Violet marks state and action; the screen is not painted in it. **No hero illustration**: a vial render would be decoration standing in for identity, and Today is the hero.
+
+**Unfinished setup is one notice.** A header, a card and a row per routine — for what is usually a single item — became `Finish setting up <name>`, or a count when there are several. No warning colour and no alert glyph: unfinished is not wrong.
+
+**Your routines is one quieter region**, with paused routines behind `Inactive · N`, collapsed and announcing expanded/collapsed. Pause, Resume and Remove stay on the routine itself; 5.5 owns that screen.
+
+**Safety, unchanged and now pinned by its own tests.** Taken and Skipped are both outlined with `selected: false` on each — a filled *Taken* read as *already taken* before anyone touched it, which is the most consequential misreading available here. *Scheduled today*, never *due*. **No response stays distinct from Skipped.** Nothing is scored, no dose or protocol or site is recommended, and the authored amount is read back untouched.
+
+**Accessibility.** Spoken labels spell the unit out — `Retatrutide, 1 milligram, scheduled today` — because VoiceOver reads `mg` as "em gee"; `spokenAmount` is presentation-only and lives in the feature, not the frozen domain. Actions are `Mark <name> as taken` / `as skipped` (§36's wording; the routine screen still says *Record* and is 5.5's to change). A long name truncates visually at two lines and stays complete in its label.
+
+**One way to add, not two.** The header `+` only. A second control lower down would be the same action under the same name twice — redundant to read and ambiguous to hear.
+
+**Haptics: `confirm` on a recorded Skipped, and on a Taken only when the write landed.** Peptides had none before this slice and `TakenSheet` fires none of its own, so nothing double-fires.
+
+**A `__DEV__` preview route, `/peptides-preview`.** Twelve scenarios — no routines, nothing today, one, three, taken, skipped, mixed, needs setup, inactive, as-needed, long names, everything — rendering the **real production screen** over an in-memory repository created fresh per scenario. Founder QA of a populated Today would otherwise mean seeding invented administrations into real peptide history. Removed with the rest of the Sprint 5 scaffolding in 5.9.
+
+**Two defects the device pass caught and fixed.** `Change` sat at the screen's left margin under the mark, reading as a control belonging to the screen rather than to the routine above it — now aligned with the name. The preview's own scenario bar painted the system default through in Dark mode.
+
+**Validation.** `npm test` **54 suites / 1426 tests** (1396 → 1426) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` unchanged · iOS export clean · **no dependency added** · **zero `src/lib` changes** · verified in Expo Go: Dark, Light, and accessibility-large Dynamic Type across the preview scenarios.
+
+**Observation for the founder, not changed.** With mixed states, Today lists routines in the domain's alphabetical order, so an unanswered routine can sit below answered ones. Re-ordering Today to lead with what is still open is a real design question — it was not part of this authorization, and it is a one-line presentation change if wanted.
+
+**Still to verify — founder, on a real device:** whether Today reads as the hero, whether the state marks land, whether the setup notice is discoverable enough, whether *Your routines* is the right weight, and whether three or four scheduled routines stay comfortable.
 
 ### Slice 5.3D — Dashboard Final Interaction + Typography Polish ✅
 

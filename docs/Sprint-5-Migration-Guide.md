@@ -145,7 +145,7 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.4 — Peptides Home
+# Slice 5.4 — Peptides Home — ✅ IMPLEMENTED 2026-09-04 (awaiting founder device review)
 
 **File:** `src/app/(vita)/peptides/index.tsx` · `features/peptides/components/TodayRoutineCard.tsx`
 
@@ -159,7 +159,15 @@ For each screen: what generic pattern is there now · what role it should take �
 
 **Shared:** surface roles · disclosure · haptics on Taken.
 **Feature-specific:** the Taken/Skipped control pair — **both outlined, neither pre-selected**, because a filled Taken read as *already taken*. That is a safety decision, not a style one. Keep *"Scheduled today"*, never *"due"*.
-**Frozen:** `usePeptides()` and its `today` / `needsSetup` / `active` / `inactive` grouping, `markTaken`, `markSkipped`, `clearRoutineDay`, `restoreRoutineDay`. This is a regrouping of what the hook already returns.
+**Frozen:** `usePeptides()` and its `today` / `needsSetup` / `active` / `inactive` grouping, `markTaken`, `markSkipped`, `clearRoutineDay`, `restoreRoutineDay`. This is a regrouping of what the hook already returns — and it stayed that way: **zero changes under `src/lib/peptides/`**.
+
+**Patterns 5.4 added:**
+
+- **A feature's motif should come from its own domain, not from a decoration budget.** Water is a vessel because hydration is a continuous quantity; Peptides is discrete events with a state each, so its identity is the state mark the domain already defined in 3.9. When a feature does not need a hero illustration, the content is the hero. 5.5 and 5.6 should look for the equivalent before reaching for an image.
+- **One action, one name.** Two controls doing the same thing under the same label are redundant to read and ambiguous to hear. Pick the platform-conventional position and stop.
+- **A spoken label may spell out what the eye reads as an abbreviation.** `1 mg` is correct on screen; VoiceOver says "em gee". Presentation-only, and it belongs in the feature, not in a frozen domain.
+- **A `__DEV__` preview over an in-memory repository** renders the real production screen in states real data cannot reach, without seeding anything. Cheaper and safer than fixtures, and it is what let Dark, Light and Dynamic Type be checked across twelve states.
+- **`flex` on `PressableScale` still does not reach its parent row.** Hit a fifth time, worked around with a wrapper again. **5.7 should fix the primitive.**
 
 ---
 

@@ -1,42 +1,64 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  Button,
-  Card,
-  EmptyState,
-  Screen,
-  ScreenHeader,
-  SectionHeader,
-  useToast,
-} from '../../../components/ui';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale, Screen, ScreenHeader, useToast } from '../../../components/ui';
+import { NeedsSetupNotice } from '../../../features/peptides/components/NeedsSetupNotice';
+import { RoutineList } from '../../../features/peptides/components/RoutineList';
 import { TakenSheet } from '../../../features/peptides/components/TakenSheet';
-import { TodayRoutineCard } from '../../../features/peptides/components/TodayRoutineCard';
+import { TodayRoutine } from '../../../features/peptides/components/TodayRoutine';
+import { vitaHaptic } from '../../../lib/haptics';
 import {
   usePeptideContext,
   usePeptides,
   type ResolvedSetup,
-  type TodayRoutine,
+  type TodayRoutine as TodayRoutineModel,
 } from '../../../lib/peptides';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
 /**
- * Peptides — the user's routines.
+ * Peptides — what is scheduled today, and what you can do about it.
  *
- * **Rebuilt around routine states** (slice 3.9). The screen used to be two
- * lists, Active and Inactive, and the daily question — *am I doing this
- * today?* — could only be answered by opening a setup and reading a schedule.
- * Now the top of the screen is today, and everything else is ordered by how
- * much attention it wants: unfinished setup, running routines, paused ones.
+ * ## Slice 5.4: a presentation and hierarchy redesign
  *
- * **Sections vanish when empty** rather than sitting there as headings over
- * nothing. A screen of empty labels reads as broken; a screen that shows only
- * what exists reads as calm.
+ * **Nothing under `src/lib/peptides/` changed.** Every group on this screen
+ * still comes from `usePeptides()` — `today`, `needsSetup`, `active`,
+ * `inactive` — and every write still goes through `markTaken`,
+ * `markSkipped`, `clearRoutineDay` and `restoreRoutineDay`. This slice
+ * regroups what the hook already returns.
  *
- * **Nothing is scored.** No adherence, no streak, no percentage, no "missed".
- * A scheduled day the user has not answered says exactly that.
+ * ## What it replaced
+ *
+ * Four uppercase section headers over three visually identical card panels.
+ * `TODAY`, `NEEDS SETUP`, `ACTIVE` and `INACTIVE` all carried the same
+ * weight, so the one region you can *act* in looked exactly like the two you
+ * can only browse — the "card soup" the sprint exists to remove, and the
+ * reason the screen read as routine-management software.
+ *
+ * ## The hierarchy now
+ *
+ * **Today dominates.** Each routine scheduled today sits directly on the
+ * background with its name, the user's own amount, its state and — when
+ * unanswered — Taken and Skipped, both reachable without navigating anywhere.
+ * Unfinished setups collapse to a single notice. Everything else folds into
+ * one quieter *Your routines* region, with paused routines behind a count.
+ *
+ * ## Identity
+ *
+ * Peptides is not Water in purple. Water is a vessel because hydration is a
+ * continuous quantity; Peptides is **discrete scheduled events with a state
+ * each**, so its motif is the state mark itself — the tick, dash and open
+ * ring the domain settled on in 3.9. Violet marks state and action; the
+ * screen is not painted in it, and there is no hero illustration, because
+ * Today is the hero.
+ *
+ * ## What this screen will not do
+ *
+ * No recommended dose, no protocol, no next-injection suggestion, no
+ * adherence percentage, no compliance score, no site recommendation, no
+ * urgency. **Nothing is scored.** VITA reflects the routine its user
+ * authored; it does not choose treatment. *Scheduled today* — never *due*.
  */
 export default function Peptides() {
   const peptides = usePeptides();
@@ -45,13 +67,16 @@ export default function Peptides() {
   const { showToast } = useToast();
   const { surfaces } = useTheme();
 
-  const [taking, setTaking] = useState<TodayRoutine | null>(null);
+  const [taking, setTaking] = useState<TodayRoutineModel | null>(null);
 
   const openRoutine = (item: ResolvedSetup) =>
     router.push(`/peptides/routine/${encodeURIComponent(item.setup.id)}`);
 
-  const skip = async (item: TodayRoutine) => {
+  const skip = async (item: TodayRoutineModel) => {
     await markSkipped(item.setup.id, today);
+    // One haptic per completed state change. Peptides had none before 5.4;
+    // `TakenSheet` fires nothing of its own, so nothing double-fires.
+    vitaHaptic('confirm');
     showToast({ message: `${item.name} · skipped today` });
   };
 
@@ -63,7 +88,7 @@ export default function Peptides() {
    * back what it removed — including the administration a *Taken* created —
    * so restoring puts the whole thing back exactly as it was.
    */
-  const change = async (item: TodayRoutine) => {
+  const change = async (item: TodayRoutineModel) => {
     const removed = await clearRoutineDay(item.setup.id, today);
     if (!removed) return;
     showToast({
@@ -73,172 +98,123 @@ export default function Peptides() {
     });
   };
 
-  const hasAnything = !peptides.isEmpty && !peptides.isLoading;
+  const scheduled = peptides.today;
+  const unanswered = scheduled.filter((item) => item.mark === 'unconfirmed').length;
+  const answered = scheduled.length - unanswered;
+
+  /**
+   * The header's one factual line.
+   *
+   * Counts of things that exist, in the sprint's approved vocabulary. No
+   * score, no streak, no percentage, and nothing that reads as pressure.
+   */
+  const summary = peptides.isLoading
+    ? null
+    : scheduled.length === 0
+      ? 'Nothing scheduled today'
+      : unanswered === 0
+        ? 'All answered'
+        : answered > 0
+          ? `${unanswered} scheduled today · ${answered} answered`
+          : `${unanswered} scheduled today`;
+
+  const hasRoutines = !peptides.isEmpty && !peptides.isLoading;
 
   return (
-    <Screen>
-      <ScreenHeader title="Peptides" back />
+    <Screen contentGap={spacing.xl}>
+      {/*
+        * One way in, in the place the platform puts it. A second `Add`
+        * control lower down would be the same action under the same name
+        * twice — redundant to read and ambiguous to hear.
+        */}
+      <ScreenHeader
+        title="Peptides"
+        back
+        action={
+          hasRoutines ? (
+            <PressableScale
+              onPress={() => router.push('/peptides/catalog')}
+              hitSlop={10}
+              accessibilityLabel="Add to Routine"
+              accessibilityHint="Opens the peptide catalog"
+            >
+              <Ionicons name="add" size={24} color={surfaces.text} />
+            </PressableScale>
+          ) : undefined
+        }
+      />
 
       {peptides.error ? (
         <Text style={[styles.error, { color: palette.fat }]}>{peptides.error}</Text>
       ) : null}
 
+      {/*
+        * No routines at all. Purposeful and short — this is not the place to
+        * teach the catalog, which is one tap away and explains itself.
+        */}
       {peptides.isEmpty && !peptides.isLoading ? (
-        <EmptyState
-          icon="flask-outline"
-          title="No peptides in your routine"
-          body="Add one to start tracking it."
-        />
+        <View style={styles.empty}>
+          <Text style={[styles.emptyTitle, { color: surfaces.text }]}>No routines yet</Text>
+          <Text style={[styles.emptyBody, { color: surfaces.textTertiary }]}>
+            Add a peptide to start tracking it.
+          </Text>
+          {/*
+            * A filled CTA rather than the shared `Button`, for one reason:
+            * `Button` takes no `accessibilityLabel`, and an empty state's
+            * single action is the last place to leave a control unnamed.
+            * Changing that primitive belongs to a slice that owns it.
+            */}
+          <PressableScale
+            onPress={() => router.push('/peptides/catalog')}
+            haptic="selection"
+            style={[styles.cta, { backgroundColor: palette.peptide }]}
+            accessibilityLabel="Add to Routine"
+            accessibilityHint="Opens the peptide catalog"
+          >
+            <Ionicons name="add" size={18} color={palette.textOnColor} />
+            <Text style={[styles.ctaLabel, { color: palette.textOnColor }]}>Add to Routine</Text>
+          </PressableScale>
+        </View>
       ) : null}
 
-      {peptides.today.length > 0 ? (
-        <>
-          <SectionHeader title="Today" />
-          <View style={styles.stack}>
-            {peptides.today.map((item) => (
-              <TodayRoutineCard
-                key={item.setup.id}
-                routine={item}
-                takenAt={
-                  item.status?.linkedLogId
-                    ? logsForSetup(item.setup.id).find(
-                        (entry) => entry.id === item.status?.linkedLogId,
-                      )?.loggedAt
-                    : undefined
-                }
-                onTaken={() => setTaking(item)}
-                onSkipped={() => void skip(item)}
-                onChange={() => void change(item)}
-                onOpen={() => openRoutine(item)}
-              />
-            ))}
-          </View>
-        </>
-      ) : null}
-
-      {peptides.needsSetup.length > 0 ? (
-        <>
-          <SectionHeader title="Needs setup" />
-          <Card style={styles.panel}>
-            {peptides.needsSetup.map((item, index) => (
-              <Pressable
-                key={item.setup.id}
-                onPress={() => router.push(`/peptides/setup/${encodeURIComponent(item.setup.id)}`)}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.name}. Setup needed. Opens setup`}
-                style={[
-                  styles.row,
-                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border },
-                ]}
-              >
-                <View style={styles.rowText}>
-                  <Text style={[styles.rowName, { color: surfaces.text }]}>{item.name}</Text>
-                  {/* Unfinished, not wrong — stated plainly rather than as a
-                      warning, because nothing has gone bad here. */}
-                  <Text style={[styles.rowMeta, { color: surfaces.textTertiary }]}>Setup needed</Text>
-                </View>
-                <Text style={[styles.rowAction, { color: palette.peptide }]}>Finish Setup</Text>
-                <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
-              </Pressable>
-            ))}
-          </Card>
-        </>
-      ) : null}
-
-      {/* Everything running that Today is not already asking about. A
-          routine scheduled today appears once, at the top, where it can be
-          answered — not twice on one screen. */}
-      {peptides.active.length > 0 ? (
-        <>
-          <SectionHeader title="Active" />
-          <Card style={styles.panel}>
-            {peptides.active.map((item, index) => (
-              <Pressable
-                key={item.setup.id}
-                onPress={() => openRoutine(item)}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.name}. ${item.scheduleLabel ?? 'No schedule set'}. Opens the routine`}
-                style={[
-                  styles.row,
-                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border },
-                ]}
-              >
-                <View style={styles.rowText}>
-                  <Text style={[styles.rowName, { color: surfaces.text }]}>{item.name}</Text>
-                  <Text style={[styles.rowMeta, { color: surfaces.textTertiary }]}>
-                    {item.scheduleLabel ?? 'No schedule set'}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
-              </Pressable>
-            ))}
-          </Card>
-        </>
+      {hasRoutines && summary ? (
+        <Text style={[styles.summary, { color: surfaces.textSecondary }]}>{summary}</Text>
       ) : null}
 
       {/*
-        * `today` counts as active for this empty state (3.10A).
-        *
-        * Since Active now excludes whatever Today is already showing, a user
-        * whose one routine is scheduled today has an empty Active list — and
-        * without this the screen would announce "Nothing active right now"
-        * directly beneath the routine it was asking them to record.
+        * Today — the hero region, and the only place a day gets answered.
+        * Every scheduled routine renders in full: collapsing three routines
+        * into "3 scheduled today" would take away the actions that are the
+        * whole point of the screen.
         */}
-      {hasAnything &&
-      peptides.today.length === 0 &&
-      peptides.active.length === 0 &&
-      peptides.needsSetup.length === 0 ? (
-        <EmptyState
-          icon="flask-outline"
-          title="Nothing active right now"
-          body="Your paused routines are below, ready when you are."
-        />
+      {scheduled.length > 0 ? (
+        <View style={styles.today}>
+          {scheduled.map((item) => (
+            <TodayRoutine
+              key={item.setup.id}
+              routine={item}
+              takenAt={
+                item.status?.linkedLogId
+                  ? logsForSetup(item.setup.id).find(
+                      (entry) => entry.id === item.status?.linkedLogId,
+                    )?.loggedAt
+                  : undefined
+              }
+              onTaken={() => setTaking(item)}
+              onSkipped={() => void skip(item)}
+              onChange={() => void change(item)}
+              onOpen={() => openRoutine(item)}
+            />
+          ))}
+        </View>
       ) : null}
 
-      {/* Secondary by design: a long list of paused routines should never be
-          the thing this screen is mostly about. */}
-      {peptides.inactive.length > 0 ? (
-        <>
-          <SectionHeader title="Inactive" />
-          <Card style={styles.panel}>
-            {peptides.inactive.map((item, index) => (
-              <Pressable
-                key={item.setup.id}
-                onPress={() => openRoutine(item)}
-                accessibilityRole="button"
-                accessibilityLabel={`${item.name}. Paused. Opens the routine`}
-                style={[
-                  styles.row,
-                  index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border },
-                ]}
-              >
-                <View style={styles.rowText}>
-                  <Text style={[styles.rowName, { color: surfaces.textSecondary }]}>{item.name}</Text>
-                  <Text style={[styles.rowMeta, { color: surfaces.textTertiary }]}>Paused</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
-              </Pressable>
-            ))}
-          </Card>
-        </>
-      ) : null}
-
-      {/* After the lists, not between them. A full-width button wedged
-          between Active and Inactive broke the scan down the routines. */}
-      <Button
-        label="Add Peptide"
-        icon="add"
-        color={palette.peptide}
-        onPress={() => router.push('/peptides/catalog')}
+      <NeedsSetupNotice
+        pending={peptides.needsSetup}
+        onOpen={(item) => router.push(`/peptides/setup/${encodeURIComponent(item.setup.id)}`)}
       />
 
-      {/*
-        * The boundary is stated where it is actually load-bearing — on the
-        * catalog pages that describe compounds, and on the Injection Sites
-        * tool. Repeating it under a list of the user's own routines added a
-        * third voice saying the same thing and made the screen read as
-        * nervous about itself.
-        */}
+      <RoutineList active={peptides.active} inactive={peptides.inactive} onOpen={openRoutine} />
 
       {taking ? (
         <TakenSheet
@@ -253,6 +229,9 @@ export default function Peptides() {
             const routine = taking;
             setTaking(null);
             const entry = await markTaken(routine.setup.id, draft);
+            // Only on a write that landed — a vibration saying "recorded"
+            // over a failed save is worse than none.
+            vitaHaptic(entry ? 'confirm' : 'warn');
             showToast({
               message: entry
                 ? `${routine.name} · recorded`
@@ -266,31 +245,42 @@ export default function Peptides() {
 }
 
 const styles = StyleSheet.create({
-  stack: {
-    gap: spacing.s,
+  summary: {
+    ...typography.bodyMedium,
+    fontSize: 15.5,
+    marginTop: -spacing.s,
   },
-  panel: {
-    paddingVertical: spacing.xs,
+  today: {
+    gap: spacing.xl,
   },
-  row: {
+  empty: {
+    gap: spacing.m,
+    alignItems: 'flex-start',
+    paddingTop: spacing.xl,
+  },
+  emptyTitle: {
+    ...typography.heading,
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  emptyBody: {
+    ...typography.caption,
+    fontSize: 14.5,
+  },
+  cta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.s,
+    borderRadius: 999,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.m,
-    minHeight: 44,
+    minHeight: 48,
+    marginTop: spacing.xs,
   },
-  rowText: {
-    flex: 1,
-    gap: 2,
-  },
-  rowName: {
+  ctaLabel: {
     ...typography.bodyMedium,
-  },
-  rowMeta: {
-    ...typography.caption,
-  },
-  rowAction: {
-    ...typography.caption,
+    fontSize: 16,
+    fontWeight: '600',
   },
   error: {
     ...typography.caption,
