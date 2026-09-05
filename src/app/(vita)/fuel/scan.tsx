@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   scrimBusy: {

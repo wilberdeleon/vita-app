@@ -165,7 +165,7 @@ export function VitaSheet({
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     /**
      * Deeper than the 0.4 the existing sheets use. On a near-black app a
      * shallow scrim leaves the sheet and the screen behind it at almost the

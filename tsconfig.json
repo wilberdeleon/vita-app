@@ -1,6 +1,15 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    /**
+     * TypeScript 6 (pulled in by Expo SDK 56) no longer auto-includes every
+     * `@types/*` package it finds in `node_modules`; a package only supplies
+     * globals if it is named here. Jest's `describe`/`it`/`expect` and the
+     * `jest` namespace are globals in every test file, so `@types/jest` has
+     * to be declared. Types reached through an `import` — React, React
+     * Native, the Expo modules — are unaffected and still resolve normally.
+     */
+    "types": ["jest"]
   }
 }
