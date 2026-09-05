@@ -39,7 +39,8 @@
           "backgroundColor": "#1C1F1A",
           "enableFullScreenImage_legacy": true
         }
-      ]
+      ],
+      "expo-status-bar"
     ]
   }
 }

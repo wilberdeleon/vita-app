@@ -39,16 +39,6 @@ const DOCK_ITEMS: DockItem[] = [
 ];
 
 /**
- * The VITA floating dock — custom tab bar for the four core destinations.
- * Renders as one universal frosted-glass pill on every tab (founders,
- * 2026-07-18 clean redesign) — floating, detached from the edges, soft
- * shadow, generous radius, premium blur, in the style of VisionOS/Apple
- * Music rather than a flat Android-style bar. Previously glass only behind
- * Home's mountain background with a plain solid pill elsewhere; the dock is
- * shared chrome, not per-screen content, so one consistent treatment is
- * correct now that every screen's background can be light or dark.
- */
-/**
  * The props Expo Router hands a custom `tabBar`, derived from the `Tabs`
  * component that renders this dock rather than named from a separate
  * package.
@@ -63,6 +53,16 @@ const DOCK_ITEMS: DockItem[] = [
  */
 type FloatingDockProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
+/**
+ * The VITA floating dock — custom tab bar for the four core destinations.
+ * Renders as one universal frosted-glass pill on every tab (founders,
+ * 2026-07-18 clean redesign) — floating, detached from the edges, soft
+ * shadow, generous radius, premium blur, in the style of VisionOS/Apple
+ * Music rather than a flat Android-style bar. Previously glass only behind
+ * Home's mountain background with a plain solid pill elsewhere; the dock is
+ * shared chrome, not per-screen content, so one consistent treatment is
+ * correct now that every screen's background can be light or dark.
+ */
 export function FloatingDock({ state, navigation }: FloatingDockProps) {
   const insets = useSafeAreaInsets();
   const { scheme, surfaces } = useTheme();
