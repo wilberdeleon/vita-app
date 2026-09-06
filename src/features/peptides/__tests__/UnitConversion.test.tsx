@@ -102,8 +102,14 @@ async function enterVial(tree: ReactTestRenderer, vial: string, water: string) {
   await type(tree, /reconstitution volume/i, water);
 }
 
+/*
+ * `mode="new"` throughout: slice 5.5 collapsed Preparation for a routine that
+ * is already configured, and leaves it open for one that has never been set
+ * up — which is exactly the state "Track this peptide" opens, and the state
+ * the conversion behaviour below describes.
+ */
 const SURFACES: Array<[string, () => Promise<ReactTestRenderer>]> = [
-  ['inline setup form', () => mount(<SetupForm onChange={() => undefined} />)],
+  ['inline setup form', () => mount(<SetupForm mode="new" onChange={() => undefined} />)],
   ['standalone tool', () => mount(<StandalonePeptideCalculator />)],
 ];
 
@@ -469,7 +475,7 @@ describe('the setup form persists milligrams and nothing else', () => {
   it('emits canonical micrograms from a milligram vial', async () => {
     const emitted: Array<Record<string, unknown>> = [];
     const tree = await mount(
-      <SetupForm onChange={(value) => emitted.push(value as Record<string, unknown>)} />,
+      <SetupForm mode="new" onChange={(value) => emitted.push(value as Record<string, unknown>)} />,
     );
 
     await enterVial(tree, '20', '2');
@@ -484,7 +490,7 @@ describe('the setup form persists milligrams and nothing else', () => {
   });
 
   it('has no vial unit control to get wrong', async () => {
-    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
     expect(
       tree.root.findAll((node) => node.props?.accessibilityLabel === 'Vial unit'),
     ).toHaveLength(0);
@@ -493,7 +499,7 @@ describe('the setup form persists milligrams and nothing else', () => {
   it('never emits the custom amount', async () => {
     const emitted: Array<Record<string, unknown>> = [];
     const tree = await mount(
-      <SetupForm onChange={(value) => emitted.push(value as Record<string, unknown>)} />,
+      <SetupForm mode="new" onChange={(value) => emitted.push(value as Record<string, unknown>)} />,
     );
     await enterVial(tree, '10', '1');
     await type(tree, /^Custom amount,/, '2');
@@ -509,7 +515,7 @@ describe('the setup form persists milligrams and nothing else', () => {
 describe('the inline surface specifically', () => {
   it('needs no saved setup', async () => {
     // A brand-new form, exactly as "Track this peptide" opens it.
-    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
     await enterVial(tree, '10', '1');
     expect(screen(tree)).toContain('1 mg = 10 units');
   });
@@ -517,6 +523,7 @@ describe('the inline surface specifically', () => {
   it('reads a saved setup’s vial without any further input', async () => {
     const tree = await mount(
       <SetupForm
+        mode="new"
         initial={{
           id: 'setup-1',
           definitionId: 'catalog:retatrutide',
@@ -538,7 +545,7 @@ describe('the inline surface specifically', () => {
 
   it('persists nothing from the conversion', async () => {
     const emitted: unknown[] = [];
-    const tree = await mount(<SetupForm onChange={(value) => emitted.push(value)} />);
+    const tree = await mount(<SetupForm mode="new" onChange={(value) => emitted.push(value)} />);
     await enterVial(tree, '10', '1');
 
     expect(screen(tree)).toContain('1 mg = 10 units');
@@ -550,39 +557,57 @@ describe('the inline surface specifically', () => {
     }
   });
 
-  it('sits inside the vial group rather than beside it', async () => {
+  it('sits inside the preparation group rather than beside it', async () => {
     /**
-     * The founder's §9–11 hierarchy, asserted as a shape rather than as a
-     * screenshot: **three** section headers, in order, and nothing else
-     * shouting at that weight.
+     * The hierarchy, asserted as a shape rather than as a screenshot.
      *
      * NAME went in 3.9 (a routine is named by its definition) and PREFERRED
-     * UNIT in 3.9A — it asked, out of context and up front, a question that
-     * only matters beside the amount being recorded. SCHEDULE, REMINDER and
-     * START DATE were demoted to field labels in 3.10A: they are fields of
-     * the routine, not groups of their own, and seven equally loud headings
-     * made a setup form read like five stacked modules.
+     * UNIT in 3.9A. SCHEDULE, REMINDER and START DATE were demoted to field
+     * labels in 3.10A: they are fields of the routine, not groups of their
+     * own. **Slice 5.5 removed the uppercase headers entirely** — the form is
+     * now Routine, then a disclosed *More options*, then a disclosed
+     * *Preparation* that the conversion lives inside.
      */
-    const tree = await mount(<SetupForm onChange={() => undefined} />);
-    const headings = texts(tree).filter((line) => line === line.toUpperCase() && /^[A-Z ]{3,}$/.test(line));
-    expect(headings).toEqual(['VIAL', 'ROUTINE', 'NOTES']);
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
+    const shouting = texts(tree).filter(
+      (line) => line === line.toUpperCase() && /^[A-Z ]{3,}$/.test(line),
+    );
+    expect(shouting).toEqual([]);
+
+    const lines = texts(tree);
+    expect(lines.indexOf('Routine')).toBeLessThan(lines.indexOf('More options'));
+    expect(lines.indexOf('More options')).toBeLessThan(lines.indexOf('Preparation'));
+    // The conversion sits under Preparation, with the vial it derives from.
+    expect(lines.indexOf('Preparation')).toBeLessThan(lines.indexOf('Unit conversion'));
   });
 
   it('keeps every routine control present, just no longer shouting', async () => {
-    // The hierarchy change must not have removed anything (§13).
-    const tree = await mount(<SetupForm onChange={() => undefined} />);
-    const rendered = screen(tree);
+    // The hierarchy change must not have removed anything — the same rule
+    // 3.10A set, re-checked after 5.5 collapsed two of the groups.
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
+
+    // Visible on load: what people actually come here to change.
     for (const label of [
-      'Vial Amount (MG)',
-      'Reconstitution Volume (ML)',
-      'Unit conversion',
       'Amount (MG)',
       'Schedule',
       'Reminder',
-      'Start date',
+      // Preparation is open for a routine that has never been configured.
+      'Vial Amount (MG)',
+      'Reconstitution Volume (ML)',
+      'Unit conversion',
     ]) {
-      expect(rendered).toContain(label);
+      expect(screen(tree)).toContain(label);
     }
+
+    // And nothing was dropped — start date and notes are one tap away.
+    const [more] = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /^More options/.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+    await act(async () => more.props.onPress());
+    expect(screen(tree)).toContain('Start date');
+    expect(screen(tree)).toContain('Date (YYYY-MM-DD)');
   });
 });
 
@@ -649,7 +674,7 @@ describe.each(SURFACES)('%s — asks in the product’s own words', (_name, rend
  */
 describe('units are cased by role, not by accident', () => {
   it('caps the unit in every configuration label on the setup form', async () => {
-    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
     const rendered = screen(tree);
     expect(rendered).toContain('Vial Amount (MG)');
     expect(rendered).toContain('Reconstitution Volume (ML)');
@@ -658,7 +683,7 @@ describe('units are cased by role, not by accident', () => {
   });
 
   it('leaves displayed values in lowercase, where they belong', async () => {
-    const tree = await mount(<SetupForm onChange={() => undefined} />);
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
     await enterVial(tree, '10', '1');
     const rendered = screen(tree);
     expect(rendered).toContain('1 mg = 10 units');

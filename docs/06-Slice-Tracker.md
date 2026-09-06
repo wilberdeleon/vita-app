@@ -2044,7 +2044,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.3C | Dashboard Direct Manipulation + Visual Polish | Shared square footprint, Quick Tools customization, Food Scanner reinstated, serif quote, daypart accents, on-Home edit mode | ✅ Accepted subpass of 5.3 |
 | 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | ✅ Accepted subpass of 5.3 |
 | 5.4 | Peptides Home Redesign | Today as hero, one setup notice, routines progressively disclosed | 🟡 Implemented — awaiting founder device review |
-| 5.5 | Routine + Injection Site Experience | Immediate action dominant, shared `BodyMap` evolution, rotation visualization | ⬜ Planned |
+| 5.5 | Routine + Injection Site Experience | Today first, progressive disclosure, weekly site history on the shared `BodyMap` | 🟡 Implemented — awaiting founder device review |
 | 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ Planned |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
@@ -2326,6 +2326,40 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.5 — Routine + Injection Site Experience 🟡
+
+**Implemented 2026-09-05. Awaiting founder device review — not approved.** Hierarchy, disclosure and one new visualization. **Zero changes under `src/lib/peptides/`.**
+
+**Nothing was removed.** Taken, Skipped, Change, week navigation, history, Add Log, View All History, vial, reconstitution, unit conversion, custom conversion, routine amount, schedule, reminder, start date, notes, Pause, Resume, Remove and Edit are all still present and still reach the same provider operations. What changed is what is visible on arrival.
+
+**Routine leads with Today.** State, the user's own amount, and one decision, directly on the background. Then the week strip (out of its card), then the last **one or two** administrations, then — only when this routine has site-tagged logs — where they landed. *Routine details*, *Preparation* and *Manage routine* are disclosed, each summarising itself in a line: `1 mg · Daily`, `20 mg vial · 2 mL`. The six equally weighted blocks behind four uppercase `SectionHeader`s are gone, and so are the `Card` panels around them.
+
+**Recent History became Recent activity.** Three filled `LogRow` pills under a header, with *View All History* and *Add Log* competing at equal weight, became two divider-separated rows, a compact `+` in the section header, and one quiet *View all history*. `LogRow`'s card treatment stays on the full history screen, where the rows are the content. An empty history is one line — `No activity yet` — not a container.
+
+**Edit Routine was the founders' main complaint, and is one form still.** Amount, schedule and reminder are visible; *More options* holds start date and notes; *Preparation* holds the vial, the water, the conversion and the custom conversion, collapsed behind `20 mg vial · 2 mL`. **Open by default only for a routine that has never been configured** — `mode` changes that default and nothing else. Nothing was duplicated: one component, one set of fields, one Save.
+
+**Save is neutral now** (§31). VITA's colour rule since 5.1 is that the primary control is the app's one neutral treatment and the feature colour is carried by the objects and state around it; a saturated purple block across the bottom of every setup screen was violet doing a job it had not earned. Same guard, same disabled condition, same call.
+
+**`TakenSheet` got its Done key** — the gap 5.2A recorded against whichever slice owned the daily flow. `NumericKeyboardAccessory` renders **inside the sheet's own Modal**, because `InputAccessoryView` is matched within the presented view; a bar behind the sheet never reaches its keyboard. **Done dismisses the keyboard and nothing else** — it does not save, does not close, and does not touch the amount, site, time or notes.
+
+**Injection Sites became a weekly history.** The shared `BodyMap` gained an optional `markers` layer — passed nothing, it behaves exactly as before, which is how the site picker is untouched. **One marker per place, never a stack**: two administrations at the left thigh are one circle reading `2`. A single log shows its weekday initial instead. One violet for every compound; a colour per peptide would look like it meant something clinical. Week navigation is Monday-to-Sunday, shared with the routine strip so the two cannot disagree.
+
+**Everything the map says is also written out.** A body drawing is not an accessible interface on its own, so each marker's zone speaks a full sentence and a *This week* list beneath repeats it as rows that open their own logs. **The all-time record is still reachable** — narrowing the default view is not the same as removing history, so the pre-5.5 list is disclosed underneath, and tapping a zone still reports when it was last used.
+
+**No rotation engine, and the tests say so.** No recommended next site, no avoid, no rest period, no spacing advice, no scoring. One parameterised test sweeps all three screens for fourteen forbidden phrases and for any percentage.
+
+**Dynamic Type is platform behaviour, not a second design.** There is one layout per screen and iOS scales it. Nothing passes `allowFontScaling={false}`; there are no fixed heights around text, and no alternate large-text component exists — a test asserts the same screen renders at `fontScale` 1.9.
+
+**Two defects the device pass caught and fixed.** `Disclosure`'s header collapsed to a bare chevron with no title — the `PressableScale` flex trap, **hit for the sixth time**, worked around with a wrapper again. And the routine's site context drew one chip per *log*, so five administrations at one place produced five identical chips; it groups by place now, like the map.
+
+**The `__DEV__` preview grew a `&screen=`** — `home`, `routine`, `edit`, `sites` — so all three screens can be reviewed over the same seeded week without leaving the sandbox. Three site-specific scenarios were added.
+
+**Validation.** `npm test` **56 suites / 1476 tests** (1426 → 1476) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · iOS export clean · **no dependency added** · **zero `src/lib` changes** · verified in Expo Go on SDK 57: Dark, Light, and accessibility-large.
+
+**Environment note.** The simulator carried Expo Go 54 and the branch is now SDK 57, so device QA needed Expo Go 57 installed first. Worth knowing before the next device pass.
+
+**Still to verify — founder, on a real device:** whether Routine now answers *what happened today* first, whether two recent entries is the right number, whether *Preparation* collapsed is a relief or a hiding place, whether the site markers read at a glance, and whether the neutral Save feels right.
 
 ### Slice 5.4 — Peptides Home Redesign 🟡
 

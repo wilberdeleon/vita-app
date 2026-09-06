@@ -236,9 +236,10 @@ describe('Injection Sites after migration', () => {
     expect(rendered).toContain('Injection Sites');
     expect(rendered).toContain('Front');
     expect(rendered).toContain('Back');
-    // `SectionHeader` uppercases its title.
-    expect(rendered).toContain('SITE REFERENCE');
-    expect(rendered).toContain('RECENT SITES');
+    // 5.5 disclosed the reference rather than shouting it under a
+    // `SectionHeader`; the content is unchanged and one tap away.
+    expect(rendered).toContain('Site reference');
+    expect(rendered).toContain('All recorded sites');
   });
 
   /** Still a lens onto history, never a suggestion about where to inject. */

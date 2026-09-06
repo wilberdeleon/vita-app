@@ -471,6 +471,36 @@ The test: put the screen beside the others and ask both questions. *Does it belo
 
 ---
 
+## 23 — Dynamic Type is platform behaviour
+
+**VITA does not create separate large-text versions of screens.** iOS and React Native scale the type; our job is one flexible layout that survives it. There is no VITA text-size setting, and there will not be one until a real product need argues for it.
+
+For every screen: leave font scaling on, avoid rigid heights around text, allow wrapping, truncate only secondary labels, and keep the full accessibility label whatever the visible text does. `allowFontScaling={false}` is for icon glyphs and nothing else; a documented cap on *decoration* (see §19) is the only other exception.
+
+**Large-text screenshots are QA, not implementations.** Test at the default size and at one substantially larger accessibility size, and fix what clips. Do not build an alternate component for it.
+
+---
+
+## 24 — Progressive disclosure earns its collapse
+
+**A section that collapses must summarise itself.** `Preparation · 10 mg vial · 2 mL` answers the question without opening anything, which is what makes collapsing it a kindness rather than a hiding place. A section folded away with nothing to summarise is not disclosure; it is a filing cabinet.
+
+**Default open state may vary by context; the content may not.** One form, one set of fields, and a flag that changes only what starts expanded. Two forms for "new" and "edit" is how the two quietly diverge.
+
+**No animation on disclosure.** Reduce Motion would have to disable it, and a section that slides for some users and appears for others is two designs. The chevron and the announced `expanded` state are the affordance.
+
+---
+
+## 25 — A drawing is not an accessible interface
+
+Anything a figure, map or chart says must **also** exist as text — reachable by a screen reader, scannable by eye, and openable. Not a fallback for a minority: an equal path to the same facts.
+
+**Group marks by place, not by event.** Two records at one location are one mark carrying a count. Stacking is unreadable and untappable; offsetting puts a mark outside the thing it describes.
+
+**A visualization of history must not become a recommendation.** No colour scale of good and bad, no ordering, no "next", no rest periods. A mark means *this happened here*, and the vocabulary stops there.
+
+---
+
 ## What this document still owes
 
 - `SectionHeader` variants (proposed in 5.1, built when a screen's slice needs them)

@@ -159,6 +159,17 @@ function texts(tree: ReactTestRenderer): string[] {
 
 const screen = (tree: ReactTestRenderer) => texts(tree).join(' ');
 
+/** Opens one of slice 5.5's collapsed sections, the way a user does. */
+async function expand(tree: ReactTestRenderer, title: RegExp) {
+  const [target] = tree.root.findAll(
+    (node) =>
+      typeof node.props?.onPress === 'function' &&
+      title.test(String(node.props?.accessibilityLabel ?? '')),
+  );
+  if (!target) throw new Error(`no section matching ${title}`);
+  await act(async () => target.props.onPress());
+}
+
 async function type(tree: ReactTestRenderer, label: RegExp, value: string) {
   const field = tree.root
     .findAllByType(TextInput)
@@ -356,7 +367,8 @@ describe('the setup screen', () => {
     const { repository } = repositoryWith([setup], seeded);
     const tree = await mount(<RoutineDetail />, repository);
 
-    expect(texts(tree)).toContain('RECENT HISTORY');
+    // 5.5 renamed the region and dropped the uppercase header.
+    expect(texts(tree)).toContain('Recent activity');
     expect(screen(tree)).toContain('2 mg');
     expect(screen(tree)).toContain('20 units');
   });
@@ -1269,6 +1281,8 @@ describe('Tools — Injection Sites', () => {
   it('says so plainly when nothing has been recorded', async () => {
     const { repository } = repositoryWith([setupFixture()]);
     const tree = await mount(<InjectionSites />, repository);
+    // 5.5 leads with the week; the all-time list summarises itself.
+    expect(screen(tree)).toContain('No injection sites logged this week');
     expect(screen(tree)).toContain('Nothing recorded yet');
   });
 
@@ -1281,6 +1295,9 @@ describe('Tools — Injection Sites', () => {
       ],
     );
     const tree = await mount(<InjectionSites />, repository);
+    // These logs are dated in August; 5.5's map shows the current week, and
+    // the all-time list beneath it is what aggregates across peptides.
+    await expand(tree, /^All recorded sites/);
 
     const rendered = texts(tree);
     const newest = rendered.findIndex((line) => line.includes('Left Abdomen'));
@@ -1298,6 +1315,7 @@ describe('Tools — Injection Sites', () => {
       [siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('glute-left'))],
     );
     const tree = await mount(<InjectionSites />, repository);
+    await expand(tree, /^All recorded sites/);
     expect(screen(tree)).toContain('Left Glute');
   });
 
@@ -1307,6 +1325,7 @@ describe('Tools — Injection Sites', () => {
       [siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('custom', 'Left Hip'))],
     );
     const tree = await mount(<InjectionSites />, repository);
+    await expand(tree, /^All recorded sites/);
     expect(screen(tree)).toContain('Left Hip');
     expect(screen(tree)).not.toContain('Other · Left Hip');
   });
@@ -1361,7 +1380,9 @@ describe('Tools — Injection Sites', () => {
     const { repository } = repositoryWith([setupFixture()]);
     const tree = await mount(<InjectionSites />, repository);
 
-    expect(texts(tree)).toContain('SITE REFERENCE');
+    // 5.5 disclosed the reference rather than shouting it; content unchanged.
+    expect(texts(tree)).toContain('Site reference');
+    await expand(tree, /^Site reference/);
     // Including Other, so the custom option is explained rather than left
     // as the one entry with no reference line.
     for (const region of ['Abdomen', 'Thigh', 'Upper Arm', 'Glute', 'Other']) {
@@ -1473,6 +1494,9 @@ describe('changing a setup never rewrites what was already recorded', () => {
     mockRouteId = 'setup-1';
     const { repository } = repositoryWith([REDILUTED], [SNAPSHOT]);
     const tree = await mount(<EditPeptideSetup />, repository);
+    // 5.5 collapses Preparation for a configured routine; the conversion is
+    // unchanged, and still derived from the live vial fields.
+    await expand(tree, /^Preparation/);
     // 20 mg in 1 mL is 20 mg/mL, so one milligram is now five units.
     expect(screen(tree)).toContain('1 mg = 5 units');
     expect(screen(tree)).toContain('Concentration · 20 mg/mL');

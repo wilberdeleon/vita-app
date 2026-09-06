@@ -6,6 +6,26 @@
 
 ---
 
+## Sprint 5 slice 5.5 — Routine and injection sites (2026-09-05, awaiting founder device review)
+
+**Opening a routine now answers today first.** The state, the amount you set, and — if you have not answered yet — Taken and Skipped, right at the top. Under that: the week, then the last couple of things you recorded, then where you injected them.
+
+**Everything else folds away, and tells you what is inside before you open it.** *Routine details · 1 mg · Daily*. *Preparation · 20 mg vial · 2 mL*. *Manage routine* holds Edit, Pause and Remove, out of the way of the thing you came to do. **Nothing was removed** — every value, every control and every screen is still there, one tap from where it was.
+
+**Editing a routine no longer shows you everything at once.** Amount, schedule and reminder — the things people actually change — are what you see. Start date and notes sit under *More options*. The vial, the water and the unit conversion sit under *Preparation*, closed, unless the routine has never been set up, in which case that is exactly what you came for.
+
+**The number pad has a Done key now.** It closes the keyboard and does nothing else — your amount, site, time and notes stay exactly as typed, and saving is still a separate, deliberate tap.
+
+**Injection Sites shows your week on the body.** A violet mark where you injected, with the day on it; when you used one place more than once that week, the mark carries the count instead of stacking. Step back and forward a week at a time. Everything on the figure is also written out underneath, and every row opens the log it came from — and your whole history is still there, under *All recorded sites*.
+
+**It will never tell you where to inject.** No recommended site, no next site, no rotation plan, no rest periods, no scoring. It shows you where you have been, and stops.
+
+**The routine screen shows a small version of that** — the places you used this week — only when that routine has sites recorded, and it opens the full tool when you tap it.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5.
+
+---
+
 ## Sprint 5 slice 5.4 — Peptides Home redesigned (2026-09-04, awaiting founder device review)
 
 **Peptides Home now answers one question first: what is scheduled today, and what can I do about it?**
@@ -339,13 +359,13 @@ Future reminder work — unscheduled, and **not** automatically Sprint 4 scope:
 
 **Peptides Home.** ✅ Delivered in 5.4. The brief as written asked to distinguish *due · completed · upcoming · routine management*; what shipped uses **scheduled** rather than *due*, which is the sprint's binding wording — a schedule is what the user planned, not something VITA enforces.
 
-**Routine.** The principle is **immediate action first, administrative detail second.** A possible top state, *not yet a required literal layout*: the peptide name · *Routine amount · Today* · primary **Mark as Taken** · secondary **Skip** · then progressive disclosure of Routine Details, History, Preparation and Edit Routine.
+**Routine.** ✅ Delivered in 5.5. The principle is **immediate action first, administrative detail second.** A possible top state, *not yet a required literal layout*: the peptide name · *Routine amount · Today* · primary **Mark as Taken** · secondary **Skip** · then progressive disclosure of Routine Details, History, Preparation and Edit Routine.
 
-**Optional injection-site logging on Taken.** Explore: Mark as Taken → optional site selection → body map / quick site interaction → confirm. The log can retain date, time, dose, units and injection site. **The existing logging and history architecture is reused, not replaced.**
+**Optional injection-site logging on Taken.** Already built in Sprint 3 and unchanged in 5.5 — the site stays optional and is never pre-selected. Original brief: Mark as Taken → optional site selection → body map / quick site interaction → confirm. The log can retain date, time, dose, units and injection site. **The existing logging and history architecture is reused, not replaced.**
 
-**Injection rotation visualization.** Explore a body visualization of injection locations over a selected week — e.g. Monday right abdomen, Tuesday left thigh, Wednesday right thigh, Friday left abdomen — with markers on the body representation and a tap opening the corresponding log or day detail. Open: front / back · multiple injections at one site · multiple peptides · week filtering · historical filtering · marker overlap · accessibility · whether it lives in Routine, History or Tools. **An exploration target, not guaranteed final UX** — [[Open Questions]] #20.
+**Injection rotation visualization.** ✅ Delivered in 5.5 as a **weekly history**, not a rotation plan — the distinction is the product boundary. Original brief: explore a body visualization of injection locations over a selected week — e.g. Monday right abdomen, Tuesday left thigh, Wednesday right thigh, Friday left abdomen — with markers on the body representation and a tap opening the corresponding log or day detail. Open: front / back · multiple injections at one site · multiple peptides · week filtering · historical filtering · marker overlap · accessibility · whether it lives in Routine, History or Tools. **An exploration target, not guaranteed final UX** — [[Open Questions]] #20.
 
-**Shared body map.** Peptide logging and the standalone [[Injection Site Tracking|Injection Sites]] tool should share the **same** body-map / injection-site primitive. **Do not create an unrelated duplicate implementation** — the existing `BodyMap` work is inspected and evolved.
+**Shared body map.** ✅ Held in 5.5 — `BodyMap` gained an optional marker layer and remains the single implementation. Peptide logging and the standalone [[Injection Site Tracking|Injection Sites]] tool share the **same** body-map / injection-site primitive. **Do not create an unrelated duplicate implementation** — the existing `BodyMap` work is inspected and evolved.
 
 **The product boundary is unchanged and binding.** VITA does **not** become a peptide dosage recommendation or protocol engine. Nothing in this redesign introduces recommended doses, protocols, prescriptive cycles or individualized dosage recommendations.
 

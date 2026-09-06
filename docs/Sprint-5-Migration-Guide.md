@@ -171,7 +171,7 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.5 — Routine + Injection Sites
+# Slice 5.5 — Routine + Injection Sites — ✅ IMPLEMENTED 2026-09-05 (awaiting founder device review)
 
 **Files:** `src/app/(vita)/peptides/routine/[id].tsx` · `features/peptides/components/{TakenSheet,RoutineDaySheet,RoutineDayStrip,SiteSelector,BodyMap,LogRow}.tsx` · `src/app/(vita)/tools/injection-sites.tsx`
 
@@ -195,6 +195,18 @@ Needed and not yet present: a range selector over site history — something lik
 **Accessibility:** markers must not add tappable elements over `BodyMap`'s hit-area partition — that partition fixed a real bug where tapping Left Abdomen selected Center Abdomen. Each marked zone's spoken label carries its own count and dates, and the rotation view ships a plain list equivalent.
 
 **Frozen:** `lib/peptides/model/{sites,routine,logs,schedule,dose,units}.ts`, the log snapshot shape, `BodyMap`'s zone geometry and `HIT_AREAS` partition.
+
+**Patterns 5.5 added:**
+
+- **A disclosure earns its collapse with a summary line.** `Preparation · 10 mg vial · 2 mL` answers the question without opening anything; a section collapsed with nothing to summarise is just hidden. 5.6 should apply the same test before folding anything away.
+- **Context defaults differ; the form does not.** One `SetupForm`, one set of fields, and a `mode` that changes only what opens. Duplicating a form for "new" and "edit" is how the two drift apart.
+- **Extend the shared primitive, never fork it.** `BodyMap` took an optional `markers` prop; passed nothing it behaves exactly as before, which is why the site picker needed no change at all. A `RoutineBodyMap` would have been two figures to keep in sync.
+- **Group markers by place, not by event.** Two logs at one site are one marker reading `2`. Stacking is unreadable and untappable, and offsetting puts a marker outside the thing it describes.
+- **A drawing is not an accessible interface.** Anything a body map, chart or figure says must also exist as text that a screen reader can reach and a person can scan. Not a fallback — an equal.
+- **Narrowing a default view is not removing history.** The weekly map answers the common question; the all-time list stays, disclosed. Ask what the old view answered before replacing it.
+- **`InputAccessoryView` must be rendered inside the Modal that raises the keyboard.** A bar on the screen behind a sheet never appears above the sheet's own keyboard.
+- **Dynamic Type is platform behaviour, not a second design.** One layout per screen; no large-text variants; no `allowFontScaling={false}`; no VITA text-size setting. Large-text screenshots are QA, not implementations.
+- **`flex` on `PressableScale` still does not reach its parent row.** Hit a **sixth** time, and this one shipped a visible defect — a section header that rendered as a bare chevron. **5.7 should fix the primitive.**
 
 ---
 

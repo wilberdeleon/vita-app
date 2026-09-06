@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 import {
   siteKeyLabel,
@@ -9,10 +9,38 @@ import {
 import { palette, spacing } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
+/** One site's worth of recorded history, as the map needs to draw it. */
+export type SiteMarker = {
+  key: InjectionSiteKey;
+  /** How many administrations landed here. Drawn when it is more than one. */
+  count: number;
+  /**
+   * A single letter for the day — `M`, `T`, `W`. Shown only when the site
+   * holds exactly one log, because two logs have two days and one letter
+   * cannot honestly stand for both.
+   */
+  initial?: string;
+  /** Read aloud in place of the visual. The caller composes the sentence. */
+  spoken: string;
+};
+
 type Props = {
   view: BodyView;
   selected?: InjectionSiteKey;
   onSelect: (key: InjectionSiteKey) => void;
+  /**
+   * Optional historical markers (slice 5.5).
+   *
+   * Unset, the map behaves exactly as it did — the picker in `SiteSelector`
+   * passes nothing and is unchanged. Passed, the same figure gains a layer
+   * showing where administrations were actually recorded.
+   *
+   * **These describe history, never a suggestion.** No site is marked as due,
+   * next, preferred, rested or overused; there is no colour scale and no
+   * ordering. A marker means *you logged here*, and that is the entire
+   * vocabulary.
+   */
+  markers?: readonly SiteMarker[];
 };
 
 /** The coordinate space every path and zone below is authored in. */
@@ -218,7 +246,7 @@ export function visibleZoneFor(key: InjectionSiteKey, view: BodyView) {
  * The figure is never the only way to choose. Since 3.8B the fast path is a
  * flat list of every site and this is the optional visual aid beside it.
  */
-export function BodyMap({ view, selected, onSelect }: Props) {
+export function BodyMap({ view, selected, onSelect, markers }: Props) {
   const { surfaces, scheme } = useTheme();
 
   const dark = scheme === 'dark';
@@ -247,6 +275,14 @@ export function BodyMap({ view, selected, onSelect }: Props) {
   const selectedFill = dark ? `${palette.peptide}59` : `${palette.peptide}80`;
 
   const zones = sitesForView(view);
+
+  /*
+   * Only the sites this view can actually draw. A `custom` site has no place
+   * on a figure and a glute has none on the front — both are still real
+   * history, and the caller lists them in words beside the map.
+   */
+  const drawn = (markers ?? []).filter((marker) => zones.includes(marker.key));
+  const markerFor = (key: InjectionSiteKey) => drawn.find((marker) => marker.key === key);
 
   return (
     <View style={styles.wrap}>
@@ -298,7 +334,62 @@ export function BodyMap({ view, selected, onSelect }: Props) {
             />
           );
         })}
+        {/*
+          * Historical markers, one per site (slice 5.5).
+          *
+          * **One marker per place, never a stack.** Two administrations at
+          * the left thigh are one circle reading `2`, not two circles on top
+          * of each other where neither can be read or tapped. The count is
+          * the overlap handling; offsetting them would put a marker outside
+          * the zone it describes.
+          *
+          * Peptide violet throughout, whatever compound it was — a colour per
+          * peptide would turn the body into a legend nobody asked for, and
+          * would imply the colours mean something clinical.
+          */}
+        {drawn.map((marker) => {
+          const zone = zoneFor(marker.key, view);
+          if (!zone) return null;
+          return (
+            <Circle
+              key={`log-${marker.key}`}
+              cx={zone.cx}
+              cy={zone.cy}
+              r={9}
+              fill={palette.peptide}
+              stroke={surfaces.background}
+              strokeWidth={1.5}
+            />
+          );
+        })}
       </Svg>
+
+      {/*
+        * The marker's label as real text rather than SVG `<Text>`, so it
+        * scales with the system text size like everything else and needs no
+        * font handling of its own. Positioned over the circle drawn above and
+        * hidden from assistive technology — the touch target below carries
+        * the whole sentence.
+        */}
+      {drawn.map((marker) => {
+        const zone = zoneFor(marker.key, view);
+        if (!zone) return null;
+        const glyph = marker.count > 1 ? String(marker.count) : (marker.initial ?? '');
+        if (!glyph) return null;
+        return (
+          <Text
+            key={`log-label-${marker.key}`}
+            style={[
+              styles.markerLabel,
+              { left: zone.cx * SCALE - 12, top: zone.cy * SCALE - 8 + spacing.s },
+            ]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            {glyph}
+          </Text>
+        );
+      })}
 
       {/*
        * Touch targets as real views on top of the drawing, rather than
@@ -312,12 +403,15 @@ export function BodyMap({ view, selected, onSelect }: Props) {
       {zones.map((key) => {
         const area = hitAreaFor(key, view);
         if (!area) return null;
+        const marker = markerFor(key);
         return (
           <Pressable
             key={key}
             onPress={() => onSelect(key)}
             accessibilityRole="button"
-            accessibilityLabel={siteKeyLabel(key)}
+            /* With history on the map the zone speaks its own record; without
+               it, the site's name is the whole truth about that rectangle. */
+            accessibilityLabel={marker ? marker.spoken : siteKeyLabel(key)}
             accessibilityState={{ selected: selected === key }}
             style={[styles.hit, { left: area.x, top: area.y, width: area.width, height: area.height }]}
           />
@@ -338,5 +432,13 @@ const styles = StyleSheet.create({
   },
   hit: {
     position: 'absolute',
+  },
+  markerLabel: {
+    position: 'absolute',
+    width: 24,
+    textAlign: 'center',
+    color: palette.textOnColor,
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

@@ -1,11 +1,17 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
+import {
+  EmptyState,
+  PressableScale,
+  Screen,
+  ScreenHeader,
+  useToast,
+} from '../../../../components/ui';
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
 import { SetupForm, type SetupFormValue } from '../../../../features/peptides/components/SetupForm';
 import { formatLabel, usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
-import { palette, spacing, typography } from '../../../../theme/tokens';
+import { spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
 /**
@@ -120,8 +126,14 @@ export default function EditPeptideSetup() {
 
       {/* Keyed on the setup so the form's own draft state rebuilds when a
           different setup is opened, rather than carrying the previous one. */}
+      {/*
+        * A routine that has never been configured opens with Preparation
+        * expanded — that section is why the screen exists for it. One that is
+        * already running opens on the fields people actually change.
+        */}
       <SetupForm
         key={setup.id}
+        mode={needsSetup ? 'new' : 'edit'}
         initial={setup}
         onChange={(next, valid) => {
           setValue(next);
@@ -129,12 +141,35 @@ export default function EditPeptideSetup() {
         }}
       />
 
-      <Button
-        label={needsSetup ? 'Save Setup' : 'Save Changes'}
-        color={palette.peptide}
-        disabled={!isValid || saving}
+      {/*
+        * Neutral, like Water's primary action.
+        *
+        * VITA's colour rule since 5.1: the primary control is the app's one
+        * neutral treatment and the feature colour is carried by the objects
+        * and state around it. A saturated purple block across the bottom of
+        * every setup screen was the feature colour doing a job it had not
+        * earned — and it is violet that marks the routine's state everywhere
+        * else, which is weaker for being everywhere.
+        *
+        * Behaviour is unchanged: same guard, same disabled condition, same
+        * call. A `PressableScale` rather than `Button` because this needs an
+        * explicit spoken label and `Button` takes none.
+        */}
+      <PressableScale
         onPress={() => void save()}
-      />
+        disabled={!isValid || saving}
+        haptic="selection"
+        style={[
+          styles.save,
+          { backgroundColor: surfaces.text },
+          (!isValid || saving) && styles.saveDisabled,
+        ]}
+        accessibilityLabel={needsSetup ? 'Save Setup' : 'Save Changes'}
+      >
+        <Text style={[styles.saveLabel, { color: surfaces.background }]}>
+          {needsSetup ? 'Save Setup' : 'Save Changes'}
+        </Text>
+      </PressableScale>
     </Screen>
   );
 }
@@ -149,5 +184,20 @@ const styles = StyleSheet.create({
   },
   inactive: {
     ...typography.caption,
+  },
+  save: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    paddingVertical: 14,
+    minHeight: 50,
+  },
+  saveDisabled: {
+    opacity: 0.4,
+  },
+  saveLabel: {
+    ...typography.bodyMedium,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

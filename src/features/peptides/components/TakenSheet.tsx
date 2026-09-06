@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, NumericField, SegmentedTabs, TextField } from '../../../components/ui';
+import {
+  Button,
+  NumericField,
+  NumericKeyboardAccessory,
+  SegmentedTabs,
+  TextField,
+} from '../../../components/ui';
 import { formatLogDateLong, fromDateAndTime, toTimeInput, type LogDate } from '../../../lib/daily';
 import {
   MASS_UNITS,
@@ -55,6 +61,24 @@ type Props = {
  * no vial to convert against; the amount is still recorded, simply without a
  * conversion. There is no `— units` placeholder, which would imply a number
  * went missing.
+ *
+ * ## The number pad has a way out (slice 5.5)
+ *
+ * iOS's decimal pad has no return key, so a numeric field inside a sheet can
+ * leave someone with the keyboard covering the very button they need. 5.2A
+ * found this and recorded it against whichever slice owned the daily flow;
+ * this is that slice.
+ *
+ * `NumericKeyboardAccessory` is rendered **inside this Modal**, because
+ * `InputAccessoryView` is matched by `nativeID` within the presented view —
+ * a bar rendered on the screen behind the sheet never appears above the
+ * sheet's own keyboard. `AddWaterSheet` does the same thing inside
+ * `VitaSheet`, which is a Modal too.
+ *
+ * **Done dismisses the keyboard and nothing else.** It does not save, does
+ * not close the sheet, and does not touch the amount, the site, the time or
+ * the notes. Confirming stays an explicit, separate act — which is the whole
+ * reason this flow exists rather than a one-tap log.
  */
 export function TakenSheet({
   visible,
@@ -259,6 +283,13 @@ export function TakenSheet({
             disabled={!valid}
           />
         </ScrollView>
+
+        {/*
+          * One bar for the sheet's numeric field, rendered inside the Modal
+          * so it reaches the keyboard this sheet raises. `Keyboard.dismiss()`
+          * is all it does — nothing here is saved or closed by Done.
+          */}
+        <NumericKeyboardAccessory />
       </View>
     </Modal>
   );

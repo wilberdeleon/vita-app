@@ -4,11 +4,11 @@ import {
   Chip,
   NumericField,
   NumericKeyboardAccessory,
-  SectionHeader,
   SegmentedTabs,
   Stepper,
   TextField,
 } from '../../../components/ui';
+import { Disclosure } from './Disclosure';
 import { isValidLogDate, todayLogDate, type LogDate } from '../../../lib/daily';
 import { UnitConversion } from './UnitConversion';
 import {
@@ -45,6 +45,13 @@ const SCHEDULE_LABELS = ['Daily', 'Selected days', 'Every X days', 'As needed'];
 export type SetupFormValue = PeptideSetupDraft & { active?: boolean };
 
 type Props = {
+  /**
+   * `'new'` for a routine that has never been configured, `'edit'` for one
+   * that is already running. It changes **what opens by default and nothing
+   * else** — every field exists, is reachable, and behaves identically in
+   * both. See the note on `SetupForm`.
+   */
+  mode?: 'new' | 'edit';
   /** Seeds the form once. Empty for a new setup. */
   initial?: PeptideSetup;
   onChange: (value: SetupFormValue, isValid: boolean) => void;
@@ -62,8 +69,27 @@ type Props = {
  * There is no dose field of any kind. VITA does not store a "typical",
  * "recommended", or "standard" amount — it has no basis for one, and a field
  * with that name would imply it did.
+ *
+ * ## Progressive disclosure, one form (slice 5.5)
+ *
+ * The founders' review was that this screen showed too much at once: vial,
+ * reconstitution, a conversion table, custom conversion, routine amount,
+ * schedule, reminder, start date and notes, all in one scroll. Someone
+ * opening it to change a schedule had to scroll past a calculator to reach
+ * one control.
+ *
+ * **Nothing was removed and nothing was duplicated.** It is still one form
+ * and one component; what changed is what is open when it loads. Amount,
+ * schedule and reminder — the fields people actually edit — are visible.
+ * *More options* holds start date and notes. *Preparation* holds the vial,
+ * the water, the conversion and the custom conversion, collapsed behind a
+ * summary line, and **open by default only for a routine that has never been
+ * configured**, where it is the reason the screen exists.
+ *
+ * `mode` changes that default and nothing else. Every field is present,
+ * reachable and identical in both.
  */
-export function SetupForm({ initial, onChange }: Props) {
+export function SetupForm({ initial, onChange, mode = 'edit' }: Props) {
   const { surfaces } = useTheme();
 
   /**
@@ -241,6 +267,18 @@ export function SetupForm({ initial, onChange }: Props) {
     emit({ days: next });
   };
 
+  /**
+   * What Preparation says while it is closed.
+   *
+   * Read from the **draft** fields rather than from the saved setup, so it
+   * updates as someone types and is honest the moment they change a vial.
+   * An unconfigured routine says what the section is for rather than
+   * pretending to summarise nothing.
+   */
+  const preparationSummary = vialAmount.trim()
+    ? `${vialAmount.trim()} mg vial${reconstitution.trim() ? ` · ${reconstitution.trim()} mL` : ''}`
+    : 'Optional — for vials you reconstitute yourself';
+
   return (
     <>
       {/*
@@ -252,300 +290,336 @@ export function SetupForm({ initial, onChange }: Props) {
         * disk untouched; they are simply no longer read.
         */}
 
-      <SectionHeader title="Vial" />
-      <Text style={[styles.note, { color: surfaces.textTertiary }]}>
-        Optional. Add these only if you reconstitute a vial yourself.
-      </Text>
       {/*
-        * Milligrams only (slice 3.9A).
+        * What most people came to change (founder direction, slice 5.5).
         *
-        * Vials are labelled in mg — nobody reads "10000 mcg" off a vial — and
-        * the toggle offered a choice whose wrong answer was catastrophic and
-        * invisible: a vial entered as mcg instead of mg is off by a thousand,
-        * and every syringe number derived from it is wrong in the same
-        * direction. Removing the choice removes the failure.
-        *
-        * Nothing changes underneath: `amountMcg` is still canonical, and a
-        * legacy setup authored in mcg is converted for display rather than
-        * reinterpreted.
+        * Amount, schedule and reminder are the fields that actually get
+        * edited; everything else is configured once and revisited rarely.
+        * They are the only things open when this form loads.
         */}
-      <NumericField
-        label="Vial Amount (MG)"
-        placeholder="e.g. 10"
-        value={vialAmount}
-        onChangeText={(text) => {
-          setVialAmount(text);
-          emit({ vialAmount: text });
-        }}
-        accessibilityLabel="Vial amount in milligrams, optional"
-      />
-      {vialInvalid ? (
-        <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
-      ) : null}
+      <Text style={[styles.sectionTitle, { color: surfaces.text }]}>Routine</Text>
 
-      {/*
-        * One idea in the label, the detail underneath it.
-        *
-        * "Bacteriostatic Water / Reconstitution (mL)" put two names for the
-        * same number in one line and made the form read as technical. The
-        * label now names the measurement; the helper says what it is. The
-        * model keeps the generic `reconstitutionMl`, which does not assume
-        * bacteriostatic water is the only possible diluent.
-        */}
-      <NumericField
-        label="Reconstitution Volume (ML)"
-        placeholder="e.g. 1"
-        value={reconstitution}
-        onChangeText={(text) => {
-          setReconstitution(text);
-          emit({ reconstitution: text });
-        }}
-        accessibilityLabel="Reconstitution volume in millilitres, optional"
-      />
-      <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
-        Bacteriostatic water added to the vial.
-      </Text>
-      {reconInvalid ? (
-        <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
-      ) : null}
-
-      {/*
-        * The unit conversion, immediately beneath the vial it is derived from.
-        *
-        * It reads the **draft** values above — the live text in those two
-        * fields — not the saved setup, so it appears while someone is still
-        * filling the form in. There is nothing else to enter: the vial and
-        * the water already fix the entire relationship between mass and
-        * syringe units, so asking for a third number would only make the user
-        * do arithmetic before VITA would do arithmetic for them.
-        */}
-      <UnitConversion
-        vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined}
-        reconstitutionMl={reconParsed ?? undefined}
-        vialUnit="mg"
-        unitsPerMl={unitsPerMl ?? undefined}
-      />
-
-      {/*
-        * No Preferred Unit control, and no sentence about one (slice 3.9A,
-        * finished in the 3.10 audit).
-        *
-        * The control asked the user to answer, up front and out of context, a
-        * question that only matters at the moment they record an amount —
-        * where the mg/mcg toggle still sits, right beside the number they are
-        * typing. The stored value is kept for backward compatibility and
-        * defaults to mg for new routines.
-        *
-        * Its explanatory line outlived it by two slices: "How amounts are
-        * shown for this peptide. A display preference, not a recommended
-        * amount." sat here on its own, describing a control nobody could see,
-        * between the conversion table and the Routine header. A test asserted
-        * on it, which is how it survived — a green suite pinning a sentence
-        * that had stopped meaning anything.
-        */}
-
-      {/*
-        * What this routine usually is — the durable half of the form.
-        *
-        * Configured once so the daily flow can stop asking. Amount sits above
-        * schedule because it is the thing users were retyping every day.
-        */}
-      <SectionHeader title="Routine" />
-      <View style={styles.row}>
-        <View style={styles.grow}>
-          {/*
-            * Uppercase, like the two vial labels above it (3.10 audit).
-            *
-            * The convention across the product: a **configuration field** on
-            * this form names its unit in caps — `(MG)`, `(ML)` — while every
-            * displayed *value* stays lowercase — `2 mg`, `20 units`, `1.2 mL`.
-            * This label was the one exception, so the form read "Vial Amount
-            * (MG)" and "Amount (mg)" four lines apart.
-            */}
-          <NumericField
-            label={`Amount (${routineUnit.toUpperCase()})`}
-            placeholder="e.g. 2"
-            value={routineAmount}
-            onChangeText={(text) => {
-              setRoutineAmount(text);
-              emit({ routineAmount: text });
-            }}
-            accessibilityLabel={`Routine amount in ${routineUnit}, optional`}
-          />
-        </View>
-        <View style={styles.unitControl}>
-          <SegmentedTabs
-            options={MASS_UNITS as readonly string[]}
-            selectedIndex={MASS_UNITS.indexOf(routineUnit)}
-            onChange={(index) => {
-              // Restates rather than reinterprets, exactly as every other
-              // unit toggle in this app does.
-              const next = MASS_UNITS[index];
-              const converted = convertAuthoredAmount(routineAmount, routineUnit, next);
-              setRoutineAmount(converted);
-              setRoutineUnit(next);
-              emit({ routineAmount: converted, routineUnit: next });
-            }}
-            activeColor={palette.peptide}
-            groupLabel="Routine amount unit"
-          />
-        </View>
-      </View>
-      {routineInvalid ? (
-        <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
-      ) : null}
-      <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
-        The amount you usually use. Used to fill in your daily log — you can change it any day.
-      </Text>
-
-      {/*
-        * Schedule, Reminder and Start date are **fields of the routine**, not
-        * sections of their own (founder decision, 3.10A).
-        *
-        * Each arrived with the slice that added it, and each brought a full
-        * SectionHeader, so the form ended up with seven equally loud headings
-        * where the founder had specified three groups. They are labelled at
-        * field weight now — the same weight as "Amount (MG)" above — so the
-        * screen reads as one setup form rather than as five stacked modules.
-        */}
-      <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Schedule</Text>
-      <Text style={[styles.note, { color: surfaces.textTertiary }]}>
-        Optional, and entirely yours to choose.
-      </Text>
-      {/* Every other segmented control on this form names its group for
-          assistive technology; this one did not, so it read as four
-          unattached buttons. */}
-      <SegmentedTabs
-        options={SCHEDULE_LABELS}
-        selectedIndex={scheduleKind ? SCHEDULE_KINDS.indexOf(scheduleKind) : -1}
-        onChange={(index) => {
-          const next = SCHEDULE_KINDS[index];
-          const cleared = scheduleKind === next ? null : next;
-          setScheduleKind(cleared);
-          emit({ scheduleKind: cleared });
-        }}
-        activeColor={palette.peptide}
-        groupLabel="Schedule"
-      />
-
-      {scheduleKind === 'daysOfWeek' ? (
-        <View style={styles.chips}>
-          {WEEKDAY_INDEXES.map((day) => (
-            <Chip
-              key={day}
-              label={weekdayShort(day)}
-              // "Mon" is fine to read and poor to hear; the full name is spoken.
-              accessibilityLabel={weekdayLong(day)}
-              selected={days.includes(day)}
-              color={palette.peptide}
-              onPress={() => toggleDay(day)}
+        <View style={styles.row}>
+          <View style={styles.grow}>
+            {/*
+              * Uppercase, like the two vial labels above it (3.10 audit).
+              *
+              * The convention across the product: a **configuration field** on
+              * this form names its unit in caps — `(MG)`, `(ML)` — while every
+              * displayed *value* stays lowercase — `2 mg`, `20 units`, `1.2 mL`.
+              * This label was the one exception, so the form read "Vial Amount
+              * (MG)" and "Amount (mg)" four lines apart.
+              */}
+            <NumericField
+              label={`Amount (${routineUnit.toUpperCase()})`}
+              placeholder="e.g. 2"
+              value={routineAmount}
+              onChangeText={(text) => {
+                setRoutineAmount(text);
+                emit({ routineAmount: text });
+              }}
+              accessibilityLabel={`Routine amount in ${routineUnit}, optional`}
             />
-          ))}
+          </View>
+          <View style={styles.unitControl}>
+            <SegmentedTabs
+              options={MASS_UNITS as readonly string[]}
+              selectedIndex={MASS_UNITS.indexOf(routineUnit)}
+              onChange={(index) => {
+                // Restates rather than reinterprets, exactly as every other
+                // unit toggle in this app does.
+                const next = MASS_UNITS[index];
+                const converted = convertAuthoredAmount(routineAmount, routineUnit, next);
+                setRoutineAmount(converted);
+                setRoutineUnit(next);
+                emit({ routineAmount: converted, routineUnit: next });
+              }}
+              activeColor={palette.peptide}
+              groupLabel="Routine amount unit"
+            />
+          </View>
         </View>
-      ) : null}
+        {routineInvalid ? (
+          <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
+        ) : null}
+        <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+          The amount you usually use. Used to fill in your daily log — you can change it any day.
+        </Text>
 
-      {scheduleKind === 'everyNDays' ? (
-        <>
-          <Text style={[styles.note, { color: surfaces.textSecondary }]}>Repeat every</Text>
-          <Stepper
-            value={everyN}
-            min={2}
-            max={90}
-            suffix="days"
-            onChange={(next) => {
-              setEveryN(next);
-              emit({ everyN: next });
+        {/*
+          * Schedule, Reminder and Start date are **fields of the routine**, not
+          * sections of their own (founder decision, 3.10A).
+          *
+          * Each arrived with the slice that added it, and each brought a full
+          * SectionHeader, so the form ended up with seven equally loud headings
+          * where the founder had specified three groups. They are labelled at
+          * field weight now — the same weight as "Amount (MG)" above — so the
+          * screen reads as one setup form rather than as five stacked modules.
+          */}
+        <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Schedule</Text>
+        <Text style={[styles.note, { color: surfaces.textTertiary }]}>
+          Optional, and entirely yours to choose.
+        </Text>
+        {/* Every other segmented control on this form names its group for
+            assistive technology; this one did not, so it read as four
+            unattached buttons. */}
+        <SegmentedTabs
+          options={SCHEDULE_LABELS}
+          selectedIndex={scheduleKind ? SCHEDULE_KINDS.indexOf(scheduleKind) : -1}
+          onChange={(index) => {
+            const next = SCHEDULE_KINDS[index];
+            const cleared = scheduleKind === next ? null : next;
+            setScheduleKind(cleared);
+            emit({ scheduleKind: cleared });
+          }}
+          activeColor={palette.peptide}
+          groupLabel="Schedule"
+        />
+
+        {scheduleKind === 'daysOfWeek' ? (
+          <View style={styles.chips}>
+            {WEEKDAY_INDEXES.map((day) => (
+              <Chip
+                key={day}
+                label={weekdayShort(day)}
+                // "Mon" is fine to read and poor to hear; the full name is spoken.
+                accessibilityLabel={weekdayLong(day)}
+                selected={days.includes(day)}
+                color={palette.peptide}
+                onPress={() => toggleDay(day)}
+              />
+            ))}
+          </View>
+        ) : null}
+
+        {scheduleKind === 'everyNDays' ? (
+          <>
+            <Text style={[styles.note, { color: surfaces.textSecondary }]}>Repeat every</Text>
+            <Stepper
+              value={everyN}
+              min={2}
+              max={90}
+              suffix="days"
+              onChange={(next) => {
+                setEveryN(next);
+                emit({ everyN: next });
+              }}
+            />
+          </>
+        ) : null}
+
+        {/*
+          * A reminder the user sets for themselves.
+          *
+          * **Stored, not scheduled.** No OS notification is registered in this
+          * slice; persisting the preference now means a later slice can deliver
+          * it without a migration, and means the setting survives in the
+          * meantime. Neutral wording on purpose — "reminder", never "dose
+          * reminder" or "medication reminder".
+          */}
+        <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Reminder</Text>
+        <SegmentedTabs
+          options={['Off', 'On']}
+          selectedIndex={reminderOn ? 1 : 0}
+          onChange={(index) => {
+            setReminderOn(index === 1);
+            emit({ reminderOn: index === 1 });
+          }}
+          activeColor={palette.peptide}
+          groupLabel="Reminder"
+        />
+        {reminderOn ? (
+          <>
+            <TextField
+              label="Time"
+              placeholder="e.g. 09:00"
+              value={reminderTime}
+              onChangeText={(text) => {
+                setReminderTime(text);
+                emit({ reminderTime: text });
+              }}
+              accessibilityLabel="Reminder time, 24-hour"
+            />
+            {reminderInvalid ? (
+              <Text style={[styles.error, { color: palette.fat }]}>Enter a time like 09:00.</Text>
+            ) : null}
+            <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+              Saved with your routine. Reminders aren't sent yet.
+            </Text>
+          </>
+        ) : null}
+
+
+      <Disclosure title="More options">
+        <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Start date</Text>
+
+          <View style={styles.row}>
+            <View style={styles.grow}>
+              <TextField
+                label="Date (YYYY-MM-DD)"
+                placeholder="2026-08-23"
+                autoCapitalize="none"
+                autoCorrect={false}
+                value={startDate}
+                onChangeText={(text) => {
+                  setStartDate(text);
+                  emit({ startDate: text });
+                }}
+                accessibilityLabel="Start date, optional, year dash month dash day"
+              />
+            </View>
+            <Chip
+              label="Today"
+              color={palette.peptide}
+              onPress={() => {
+                const today = todayLogDate();
+                setStartDate(today);
+                emit({ startDate: today });
+              }}
+            />
+          </View>
+          {!startDateValid ? (
+            <Text style={[styles.error, { color: palette.fat }]}>
+              Use a real date in YYYY-MM-DD form.
+            </Text>
+          ) : null}
+
+
+
+          <TextField
+            placeholder="Anything you want to remember"
+            multiline
+            numberOfLines={3}
+            value={notes}
+            onChangeText={(text) => {
+              setNotes(text);
+              emit({ notes: text });
             }}
+            style={styles.notes}
+            accessibilityLabel="Notes, optional"
           />
-        </>
-      ) : null}
+
+
+      </Disclosure>
 
       {/*
-        * A reminder the user sets for themselves.
+        * Preparation, collapsed.
         *
-        * **Stored, not scheduled.** No OS notification is registered in this
-        * slice; persisting the preference now means a later slice can deliver
-        * it without a migration, and means the setting survives in the
-        * meantime. Neutral wording on purpose — "reminder", never "dose
-        * reminder" or "medication reminder".
+        * The founders' review named this exactly: opening Edit Routine to
+        * change a schedule should not put a vial field and a conversion table
+        * between you and the schedule. **Nothing was removed** — the vial, the
+        * water, the conversion and the custom conversion are all still here,
+        * one tap away, with a summary line that answers the common question
+        * without opening anything.
+        *
+        * Open by default for a routine that has never been configured, since
+        * for that one the section is the reason the screen exists.
         */}
-      <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Reminder</Text>
-      <SegmentedTabs
-        options={['Off', 'On']}
-        selectedIndex={reminderOn ? 1 : 0}
-        onChange={(index) => {
-          setReminderOn(index === 1);
-          emit({ reminderOn: index === 1 });
-        }}
-        activeColor={palette.peptide}
-        groupLabel="Reminder"
-      />
-      {reminderOn ? (
-        <>
-          <TextField
-            label="Time"
-            placeholder="e.g. 09:00"
-            value={reminderTime}
-            onChangeText={(text) => {
-              setReminderTime(text);
-              emit({ reminderTime: text });
-            }}
-            accessibilityLabel="Reminder time, 24-hour"
-          />
-          {reminderInvalid ? (
-            <Text style={[styles.error, { color: palette.fat }]}>Enter a time like 09:00.</Text>
-          ) : null}
-          <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
-            Saved with your routine. Reminders aren't sent yet.
-          </Text>
-        </>
-      ) : null}
+      <Disclosure
+        title="Preparation"
+        summary={preparationSummary}
+        initiallyOpen={mode === 'new'}
+      >
 
-      <Text style={[styles.fieldLabel, { color: surfaces.textSecondary }]}>Start date</Text>
-      <View style={styles.row}>
-        <View style={styles.grow}>
-          <TextField
-            label="Date (YYYY-MM-DD)"
-            placeholder="2026-08-23"
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={startDate}
-            onChangeText={(text) => {
-              setStartDate(text);
-              emit({ startDate: text });
-            }}
-            accessibilityLabel="Start date, optional, year dash month dash day"
-          />
-        </View>
-        <Chip
-          label="Today"
-          color={palette.peptide}
-          onPress={() => {
-            const today = todayLogDate();
-            setStartDate(today);
-            emit({ startDate: today });
-          }}
-        />
-      </View>
-      {!startDateValid ? (
-        <Text style={[styles.error, { color: palette.fat }]}>
-          Use a real date in YYYY-MM-DD form.
+        <Text style={[styles.note, { color: surfaces.textTertiary }]}>
+          Optional. Add these only if you reconstitute a vial yourself.
         </Text>
-      ) : null}
+        {/*
+          * Milligrams only (slice 3.9A).
+          *
+          * Vials are labelled in mg — nobody reads "10000 mcg" off a vial — and
+          * the toggle offered a choice whose wrong answer was catastrophic and
+          * invisible: a vial entered as mcg instead of mg is off by a thousand,
+          * and every syringe number derived from it is wrong in the same
+          * direction. Removing the choice removes the failure.
+          *
+          * Nothing changes underneath: `amountMcg` is still canonical, and a
+          * legacy setup authored in mcg is converted for display rather than
+          * reinterpreted.
+          */}
+        <NumericField
+          label="Vial Amount (MG)"
+          placeholder="e.g. 10"
+          value={vialAmount}
+          onChangeText={(text) => {
+            setVialAmount(text);
+            emit({ vialAmount: text });
+          }}
+          accessibilityLabel="Vial amount in milligrams, optional"
+        />
+        {vialInvalid ? (
+          <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
+        ) : null}
 
-      <SectionHeader title="Notes" />
-      <TextField
-        placeholder="Anything you want to remember"
-        multiline
-        numberOfLines={3}
-        value={notes}
-        onChangeText={(text) => {
-          setNotes(text);
-          emit({ notes: text });
-        }}
-        style={styles.notes}
-        accessibilityLabel="Notes, optional"
-      />
+        {/*
+          * One idea in the label, the detail underneath it.
+          *
+          * "Bacteriostatic Water / Reconstitution (mL)" put two names for the
+          * same number in one line and made the form read as technical. The
+          * label now names the measurement; the helper says what it is. The
+          * model keeps the generic `reconstitutionMl`, which does not assume
+          * bacteriostatic water is the only possible diluent.
+          */}
+        <NumericField
+          label="Reconstitution Volume (ML)"
+          placeholder="e.g. 1"
+          value={reconstitution}
+          onChangeText={(text) => {
+            setReconstitution(text);
+            emit({ reconstitution: text });
+          }}
+          accessibilityLabel="Reconstitution volume in millilitres, optional"
+        />
+        <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+          Bacteriostatic water added to the vial.
+        </Text>
+        {reconInvalid ? (
+          <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
+        ) : null}
+
+        {/*
+          * The unit conversion, immediately beneath the vial it is derived from.
+          *
+          * It reads the **draft** values above — the live text in those two
+          * fields — not the saved setup, so it appears while someone is still
+          * filling the form in. There is nothing else to enter: the vial and
+          * the water already fix the entire relationship between mass and
+          * syringe units, so asking for a third number would only make the user
+          * do arithmetic before VITA would do arithmetic for them.
+          */}
+        <UnitConversion
+          vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined}
+          reconstitutionMl={reconParsed ?? undefined}
+          vialUnit="mg"
+          unitsPerMl={unitsPerMl ?? undefined}
+        />
+
+        {/*
+          * No Preferred Unit control, and no sentence about one (slice 3.9A,
+          * finished in the 3.10 audit).
+          *
+          * The control asked the user to answer, up front and out of context, a
+          * question that only matters at the moment they record an amount —
+          * where the mg/mcg toggle still sits, right beside the number they are
+          * typing. The stored value is kept for backward compatibility and
+          * defaults to mg for new routines.
+          *
+          * Its explanatory line outlived it by two slices: "How amounts are
+          * shown for this peptide. A display preference, not a recommended
+          * amount." sat here on its own, describing a control nobody could see,
+          * between the conversion table and the Routine header. A test asserted
+          * on it, which is how it survived — a green suite pinning a sentence
+          * that had stopped meaning anything.
+          */}
+
+        {/*
+          * What this routine usually is — the durable half of the form.
+          *
+          * Configured once so the daily flow can stop asking. Amount sits above
+          * schedule because it is the thing users were retyping every day.
+          */}
+
+      </Disclosure>
 
       {/* One accessory bar for every numeric field on this form. */}
       <NumericKeyboardAccessory />
@@ -556,6 +630,12 @@ export function SetupForm({ initial, onChange }: Props) {
 const styles = StyleSheet.create({
   /** Field weight, matching `TextField`'s own label — a field of the group
       above it, never a section of its own. */
+  /** The one always-visible group heading, matching `Disclosure`'s title. */
+  sectionTitle: {
+    ...typography.bodyMedium,
+    fontSize: 15.5,
+    fontWeight: '600',
+  },
   fieldLabel: {
     ...typography.captionMedium,
     marginTop: spacing.s,

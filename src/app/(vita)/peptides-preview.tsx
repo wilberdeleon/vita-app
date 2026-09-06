@@ -2,10 +2,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale, Screen, ScreenHeader } from '../../components/ui';
-import { todayLogDate } from '../../lib/daily';
+import { shiftLogDate, todayLogDate } from '../../lib/daily';
+import { weekOf } from '../../features/peptides/week';
 import type { PeptideRepository } from '../../lib/peptides/data/PeptideRepository';
 import {
   PeptideProvider,
+  createSiteSnapshot,
   toMcg,
   type PeptideLogEntry,
   type PeptideSetup,
@@ -14,6 +16,9 @@ import {
 import { palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import Peptides from './peptides/index';
+import RoutineDetail from './peptides/routine/[id]';
+import EditPeptideSetup from './peptides/setup/[id]';
+import InjectionSites from './tools/injection-sites';
 
 /**
  * Peptides Home, in every state, touching nothing real (slice 5.4).
@@ -30,11 +35,21 @@ import Peptides from './peptides/index';
  * nowhere. Tapping *Taken* here writes to a `Map` that dies with the route.
  *
  * Reachable at `/peptides-preview`, or `/peptides-preview?state=mixed` to
- * open on one directly. Temporary, and removed with the other Sprint 5
- * scaffolding in 5.9.
+ * open on one directly. **Slice 5.5 added `&screen=`** — `home`, `routine`,
+ * `edit` or `sites` — so Routine, Edit Routine and Injection Sites can be
+ * reviewed over the same seeded week without navigating out of the sandbox
+ * into the real provider, where the data would be empty.
+ *
+ * Routine and Edit read their setup id from the route, and every scenario's
+ * first setup is `a` — hence the `&id=a` the chips carry. A deep link to
+ * either wants it too: `?state=mixed&screen=routine&id=a`.
+ *
+ * Temporary, and removed with the other Sprint 5 scaffolding in 5.9.
  */
 
 const TODAY = todayLogDate();
+/** Monday of the current week, so seeded sites land on the map. */
+const MONDAY = weekOf(TODAY)[0];
 const CREATED = '2026-08-25T10:00:00.000Z';
 const OTHER_DAY = (new Date().getDay() + 3) % 7;
 
@@ -64,11 +79,30 @@ const status = (setupId: string, state: 'taken' | 'skipped'): RoutineDayStatus =
   updatedAt: CREATED,
 });
 
+const log = (
+  id: string,
+  logDate: string,
+  site: ReturnType<typeof createSiteSnapshot>,
+  definitionId = 'catalog:retatrutide',
+): PeptideLogEntry =>
+  ({
+    id,
+    setupId: 'a',
+    definitionId,
+    logDate,
+    loggedAt: `${logDate}T09:00:00.000Z`,
+    amount: { amountMcg: toMcg(1, 'mg'), authoredUnit: 'mg' },
+    site,
+    createdAt: CREATED,
+    updatedAt: CREATED,
+  }) as PeptideLogEntry;
+
 type Scenario = {
   key: string;
   label: string;
   setups: PeptideSetup[];
   statuses?: RoutineDayStatus[];
+  logs?: PeptideLogEntry[];
 };
 
 const SCENARIOS: Scenario[] = [
@@ -151,6 +185,34 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    key: 'sites',
+    label: 'Sites this week',
+    setups: [setup({ id: 'a' })],
+    logs: [
+      log('s1', MONDAY, createSiteSnapshot('abdomen-left')),
+      log('s2', shiftLogDate(MONDAY, 2), createSiteSnapshot('thigh-right')),
+      log('s3', shiftLogDate(MONDAY, 4), createSiteSnapshot('upper-arm-left')),
+    ],
+  },
+  {
+    key: 'overlap',
+    label: 'Same site twice',
+    setups: [setup({ id: 'a' })],
+    logs: [
+      log('o1', MONDAY, createSiteSnapshot('thigh-left')),
+      log('o2', shiftLogDate(MONDAY, 3), createSiteSnapshot('thigh-left')),
+      log('o3', shiftLogDate(MONDAY, 5), createSiteSnapshot('glute-right')),
+    ],
+  },
+  {
+    key: 'history',
+    label: 'Five logs',
+    setups: [setup({ id: 'a' })],
+    logs: [0, 1, 2, 3, 4].map((n) =>
+      log(`h${n}`, shiftLogDate(TODAY, -n), createSiteSnapshot('abdomen-center')),
+    ),
+  },
+  {
     key: 'everything',
     label: 'Everything',
     setups: [
@@ -177,6 +239,9 @@ const SCENARIOS: Scenario[] = [
 function memoryRepository(scenario: Scenario): PeptideRepository {
   let setups = scenario.setups.map((item) => ({ ...item }));
   const logs = new Map<string, PeptideLogEntry[]>();
+  for (const entry of scenario.logs ?? []) {
+    logs.set(entry.logDate, [...(logs.get(entry.logDate) ?? []), entry]);
+  }
   const statuses = new Map<string, RoutineDayStatus[]>();
   for (const entry of scenario.statuses ?? []) {
     statuses.set(entry.logDate, [...(statuses.get(entry.logDate) ?? []), entry]);
@@ -216,11 +281,19 @@ function memoryRepository(scenario: Scenario): PeptideRepository {
   };
 }
 
+const SCREENS = [
+  { key: 'home', label: 'Home', render: () => <Peptides /> },
+  { key: 'routine', label: 'Routine', render: () => <RoutineDetail /> },
+  { key: 'edit', label: 'Edit', render: () => <EditPeptideSetup /> },
+  { key: 'sites', label: 'Sites', render: () => <InjectionSites /> },
+] as const;
+
 export default function PeptidesPreview() {
   const { surfaces } = useTheme();
-  const { state } = useLocalSearchParams<{ state?: string }>();
+  const { state, screen } = useLocalSearchParams<{ state?: string; screen?: string }>();
 
   const active = SCENARIOS.find((item) => item.key === state) ?? SCENARIOS[0];
+  const stage = SCREENS.find((item) => item.key === screen) ?? SCREENS[0];
   // Re-created whenever the scenario changes, so each one starts clean.
   const repository = useMemo(() => memoryRepository(active), [active]);
 
@@ -251,7 +324,11 @@ export default function PeptidesPreview() {
                 key={item.key}
                 // Replaces the route so the picker never stacks; the provider
                 // remounts and the scenario starts fresh.
-                onPress={() => router.replace(`/peptides-preview?state=${item.key}`)}
+                onPress={() =>
+                  router.replace(
+                    `/peptides-preview?state=${item.key}&screen=${stage.key}&id=a`,
+                  )
+                }
                 style={[
                   styles.chip,
                   { borderColor: surfaces.border },
@@ -274,10 +351,53 @@ export default function PeptidesPreview() {
         </ScrollView>
       </View>
 
+      {/*
+        * Which screen to review. `RoutineDetail` and `EditPeptideSetup` read
+        * their id from the route, so every scenario's first setup is `a`.
+        */}
+      <View
+        style={[
+          styles.screenBar,
+          { borderBottomColor: surfaces.border, backgroundColor: surfaces.background },
+        ]}
+      >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          {SCREENS.map((item) => {
+            const selected = item.key === stage.key;
+            return (
+              <PressableScale
+                key={item.key}
+                onPress={() =>
+                  router.replace(
+                    `/peptides-preview?state=${active.key}&screen=${item.key}&id=a`,
+                  )
+                }
+                style={[
+                  styles.chip,
+                  { borderColor: surfaces.border },
+                  selected && { backgroundColor: surfaces.text, borderColor: surfaces.text },
+                ]}
+                accessibilityLabel={`Preview ${item.label} screen`}
+                accessibilityState={{ selected }}
+              >
+                <Text
+                  style={[
+                    styles.chipLabel,
+                    { color: selected ? surfaces.background : surfaces.textSecondary },
+                  ]}
+                >
+                  {item.label}
+                </Text>
+              </PressableScale>
+            );
+          })}
+        </ScrollView>
+      </View>
+
       {/* The real screen, over a repository that forgets everything. */}
       <View style={styles.stage}>
-        <PeptideProvider key={active.key} repository={repository}>
-          <Peptides />
+        <PeptideProvider key={`${active.key}-${stage.key}`} repository={repository}>
+          {stage.render()}
         </PeptideProvider>
       </View>
     </View>
@@ -294,6 +414,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingTop: spacing.xxxl + spacing.l,
     paddingBottom: spacing.s,
+  },
+  screenBar: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingVertical: spacing.s,
   },
   chips: {
     gap: spacing.xs,

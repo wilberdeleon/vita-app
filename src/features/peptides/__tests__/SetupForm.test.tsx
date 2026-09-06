@@ -20,13 +20,17 @@ import { SetupForm, type SetupFormValue } from '../components/SetupForm';
 let latest: { value: SetupFormValue; isValid: boolean } | null = null;
 let mounted: ReactTestRenderer | null = null;
 
-async function render(initial?: PeptideSetup): Promise<ReactTestRenderer> {
+async function renderRaw(
+  initial?: PeptideSetup,
+  mode: 'new' | 'edit' = 'edit',
+): Promise<ReactTestRenderer> {
   latest = null;
   await act(async () => {
     mounted = create(
       <ThemeProvider>
         <SetupForm
           initial={initial}
+          mode={mode}
           onChange={(value, isValid) => {
             latest = { value, isValid };
           }}
@@ -35,6 +39,33 @@ async function render(initial?: PeptideSetup): Promise<ReactTestRenderer> {
     );
   });
   return mounted!;
+}
+
+/** Opens one of slice 5.5's collapsed sections, the way a user does. */
+async function expand(tree: ReactTestRenderer, title: RegExp) {
+  const [target] = tree.root.findAll(
+    (node) =>
+      typeof node.props?.onPress === 'function' &&
+      title.test(String(node.props?.accessibilityLabel ?? '')),
+  );
+  if (!target) return;
+  await act(async () => target.props.onPress());
+}
+
+/**
+ * The form with every section open.
+ *
+ * Slice 5.5 collapsed *More options* and *Preparation* so that opening Edit
+ * Routine to change a schedule no longer puts a conversion table in the way.
+ * The tests below are about what the **fields** do, and those are unchanged —
+ * so they open the sections first, exactly as someone editing them would.
+ * What is collapsed by default has its own tests, which use `renderRaw`.
+ */
+async function render(initial?: PeptideSetup): Promise<ReactTestRenderer> {
+  const tree = await renderRaw(initial);
+  await expand(tree, /^More options/);
+  await expand(tree, /^Preparation/);
+  return tree;
 }
 
 afterEach(async () => {

@@ -221,6 +221,23 @@ async function pressByLabel(tree: ReactTestRenderer, label: string) {
   await act(async () => target.props.onPress());
 }
 
+/**
+ * Opens one of slice 5.5's collapsed sections.
+ *
+ * Routine details, Preparation and Manage routine are disclosed rather than
+ * always visible, so a test that acts on something inside one has to open it
+ * first — exactly as a user does.
+ */
+async function expand(tree: ReactTestRenderer, title: RegExp) {
+  const [target] = tree.root.findAll(
+    (node) =>
+      typeof node.props?.onPress === 'function' &&
+      title.test(String(node.props?.accessibilityLabel ?? '')),
+  );
+  if (!target) throw new Error(`no section matching ${title}`);
+  await act(async () => target.props.onPress());
+}
+
 async function type(tree: ReactTestRenderer, label: RegExp, value: string) {
   const field = tree.root
     .findAllByType(TextInput)
@@ -303,6 +320,8 @@ describe('routine state', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<RoutineDetail />, fake.repository);
 
+    // 5.5 folds management away so it cannot compete with daily tracking.
+    await expand(tree, /^Manage routine/);
     await press(tree, 'Pause Routine');
     expect(fake.setups()[0].routineState).toBe('inactive');
 
@@ -732,8 +751,14 @@ describe('the routine screen', () => {
     const rendered = screen(tree);
     expect(rendered).toContain('Active');
     expect(rendered).toContain('Scheduled today');
-    // The vial reads as a value, not as an editable field.
-    expect(rendered).toContain('20 mg vial · 2 mL reconstitution');
+    // 5.5: preparation summarises itself so most visits never open it, and
+    // the vial still reads as a value rather than as an editable field.
+    expect(rendered).toContain('20 mg vial · 2 mL');
+
+    await expand(tree, /^Preparation/);
+    expect(screen(tree)).toContain('Reconstitution');
+
+    await expand(tree, /^Manage routine/);
     expect(control(tree, 'Edit Routine')).toBeDefined();
   });
 
@@ -742,6 +767,7 @@ describe('the routine screen', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<RoutineDetail />, fake.repository);
 
+    await expand(tree, /^Manage routine/);
     await press(tree, 'Edit Routine');
     expect(mockPush).toHaveBeenCalledWith('/peptides/setup/setup-1');
   });
@@ -816,6 +842,9 @@ describe('setup simplification', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<EditPeptideSetup />, fake.repository);
 
+    // 5.5 collapses Preparation for a configured routine; the field's own
+    // rule — milligrams, and no unit choice to get wrong — is unchanged.
+    await expand(tree, /^Preparation/);
     expect(texts(tree)).toContain('Vial Amount (MG)');
     expect(
       tree.root.findAll((node) => node.props?.accessibilityLabel === 'Vial unit'),
@@ -827,6 +856,7 @@ describe('setup simplification', () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<EditPeptideSetup />, fake.repository);
 
+    await expand(tree, /^Preparation/);
     expect(texts(tree)).toContain('Reconstitution Volume (ML)');
     expect(screen(tree)).toContain('Bacteriostatic water added to the vial.');
     // The slash-heavy original put two names for one number in a single line.
@@ -991,8 +1021,10 @@ describe("today's actions", () => {
     // Peptides Home moved to "Mark …" in 5.4, the wording the authorization
     // fixed. The routine screen still says "Record …" and is 5.5's to change;
     // the safety property under test is identical on both.
+    // Both surfaces moved to "Mark …" — Home in 5.4, the routine screen in
+    // 5.5. The safety property under test is identical on each.
     ['the peptides screen', () => <Peptides />, 'Mark'],
-    ['the routine screen', () => <RoutineDetail />, 'Record'],
+    ['the routine screen', () => <RoutineDetail />, 'Mark'],
   ])('presents Taken and Skipped as two available choices on %s', async (_name, element, verb) => {
     mockRouteId = 'setup-1';
     const fake = repositoryWith([setupFixture()]);
@@ -1332,6 +1364,7 @@ describe('removing a routine', () => {
     mockRouteId = 'setup-1';
     const tree = await mount(<RoutineDetail />, fake.repository);
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await expand(tree, /^Manage routine/);
     await press(tree, 'Remove from Routine');
 
     const [, message, buttons] = alert.mock.calls[0] as [
@@ -1383,6 +1416,9 @@ describe('removing a routine', () => {
     // Tools resolves names from the compiled catalog through the log's own
     // `definitionId`, so history does not depend on the routine existing.
     const tools = await mount(<InjectionSites />, fake.repository);
+    // 5.5 makes the map week-scoped; all-time history is disclosed beneath it
+    // and is what this test is about.
+    await expand(tools, /^All recorded sites/);
     const rendered = screen(tools);
     expect(rendered).toContain('Left Abdomen');
     expect(rendered).toContain('Right Thigh');
@@ -1437,6 +1473,8 @@ describe('the closeout audit', () => {
     const fake = repositoryWith([setupFixture({ startDate: '2026-08-24' })]);
     const tree = await mount(<RoutineDetail />, fake.repository);
 
+    // 5.5 discloses the routine's details; the reading rule is unchanged.
+    await expand(tree, /^Routine details/);
     const rendered = screen(tree);
     expect(rendered).toContain('24 August 2026');
     expect(rendered).not.toContain('2026-08-24');
@@ -1449,6 +1487,7 @@ describe('the closeout audit', () => {
     ]);
     const tree = await mount(<RoutineDetail />, fake.repository);
 
+    await expand(tree, /^Routine details/);
     const rendered = screen(tree);
     expect(rendered).toContain('9:00 AM');
     // The 24-hour form is what the field parses, not what a summary shows.
