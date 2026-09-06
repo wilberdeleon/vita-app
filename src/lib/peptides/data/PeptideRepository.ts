@@ -71,4 +71,27 @@ export interface PeptideRepository {
   saveRoutineStatuses(logDate: LogDate, statuses: RoutineDayStatus[]): Promise<void>;
 
   getRecentRoutineStatuses(maxDays: number): Promise<RoutineDayStatus[]>;
+
+  /**
+   * ── Historical reads (slice 5.5B) ────────────────────────────────────
+   *
+   * **Read-only, range-bounded, and additive.** The provider keeps a warm
+   * window of recent history for the everyday screens; Monthly Activity can
+   * ask for an older month than that window covers, and it must be able to
+   * get the real answer rather than draw days it knows nothing about.
+   *
+   * Nothing here writes, migrates, or changes a key. Every day the user ever
+   * recorded was already on disk — the sixty-day limit was always a loading
+   * decision, never a retention one.
+   */
+  getLogsInRange(startDate: LogDate, endDate: LogDate): Promise<PeptideLogEntry[]>;
+
+  getRoutineStatusesInRange(startDate: LogDate, endDate: LogDate): Promise<RoutineDayStatus[]>;
+
+  /**
+   * The oldest day with any peptide history, across logs and statuses, or
+   * `null` when there is none. Bounds how far back a history view may offer
+   * to go.
+   */
+  getEarliestHistoryDate(): Promise<LogDate | null>;
 }

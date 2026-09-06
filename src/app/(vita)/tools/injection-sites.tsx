@@ -5,8 +5,9 @@ import { PressableScale, Screen, ScreenHeader, SegmentedTabs } from '../../../co
 import { BodyMap, type SiteMarker } from '../../../features/peptides/components/BodyMap';
 import { Disclosure } from '../../../features/peptides/components/Disclosure';
 import { WeekSelector } from '../../../features/peptides/components/WeekSelector';
+import { compactWeekday } from '../../../features/peptides/month';
 import { countSiteLogs, siteLogsForWeek, weekOf } from '../../../features/peptides/week';
-import { formatClockTime, formatLogDateLong, weekdayInitial, weekdayName } from '../../../lib/daily';
+import { formatClockTime, formatLogDateLong, weekdayName } from '../../../lib/daily';
 import {
   REGION_DESCRIPTIONS,
   entriesAtSite,
@@ -99,7 +100,9 @@ export default function InjectionSites() {
       [...grouped.entries()].map(([key, entries]) => ({
         key,
         count: entries.length,
-        initial: entries.length === 1 ? weekdayInitial(entries[0].logDate) : undefined,
+        // `TH`/`SU` where one letter is ambiguous; the spoken label below
+        // always says the weekday in full.
+        initial: entries.length === 1 ? compactWeekday(entries[0].logDate) : undefined,
         spoken: `${siteKeyLabel(key)}. ${entries
           .map(
             (entry) =>
@@ -256,7 +259,7 @@ export default function InjectionSites() {
                 accessibilityHint="Opens this log"
               >
                 <View style={[styles.day, { backgroundColor: palette.peptide }]}>
-                  <Text style={styles.dayLabel}>{weekdayInitial(entry.logDate)}</Text>
+                  <Text style={styles.dayLabel}>{compactWeekday(entry.logDate)}</Text>
                 </View>
                 <View style={styles.rowText}>
                   <Text style={[styles.site, { color: surfaces.text }]} numberOfLines={2}>
@@ -378,9 +381,10 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   day: {
-    width: 26,
+    minWidth: 26,
     height: 26,
     borderRadius: 13,
+    paddingHorizontal: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },

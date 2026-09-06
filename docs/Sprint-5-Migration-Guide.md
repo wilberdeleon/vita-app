@@ -218,6 +218,16 @@ Needed and not yet present: a range selector over site history — something lik
 - **Stop navigating where knowledge stops.** The provider holds a bounded window; rendering months before it would draw unanswered days nobody failed to answer. A disabled arrow with a line of copy is more honest than an empty grid.
 - **A fixed-size node crops its own glyph at accessibility text sizes.** Scale the container with `fontScale` rather than reaching for `allowFontScaling={false}`.
 
+**Patterns 5.5B added:**
+
+- **A warm window is a loading decision, not a retention one.** Before designing around "we only have 60 days", check what storage actually holds. Here every day was on disk and only the read was bounded — the ceiling was self-imposed.
+- **Range reads, not bigger windows.** `getDaysInRange(start, end)` costs one month per month viewed. Growing the provider's window would have made app start slower for everyone to serve one screen.
+- **Read through the provider, cache in the screen.** The provider stays the only path to storage so the injected seam holds; the cache lives with the screen that knows when it is stale and dies with it. A cache in the provider would need invalidating by every write in the app.
+- **Failed and empty are different states.** Rendering a failed read as "nothing here" is a claim about the user's data. Say the read failed, and offer a retry.
+- **Two letters only where one is ambiguous.** `T` and `S` each name two days. In a positional grid that is fine; on a chip standing alone it is not. Keep the compact form compact, and always speak the full word.
+- **Selection beats navigation for a calendar.** Sending every tap to another screen means the calendar can only be looked at or left. Selecting keeps the context and makes the detail a second, deliberate step.
+- **Three states on one cell must stay three.** Today, selected and status each need their own treatment — an underline, a ring and a node — or they collapse into one ambiguous decoration.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

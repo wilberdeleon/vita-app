@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../../../components/ui';
-import { weekdayInitial } from '../../../lib/daily';
+import { weekdayName } from '../../../lib/daily';
+import { compactWeekday } from '../month';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { SiteLogSummary } from '../week';
@@ -41,15 +42,26 @@ export function RoutineSiteContext({ logs, onOpenTool }: Props) {
    * four identical chips, which is what the first version drew and what made
    * this region noise rather than context.
    */
-  const grouped = new Map<string, { label: string; days: string[]; first: number }>();
+  const grouped = new Map<
+    string,
+    { label: string; days: string[]; spokenDays: string[]; first: number }
+  >();
   for (const log of [...logs].sort((a, b) => a.dayIndex - b.dayIndex)) {
     const existing = grouped.get(log.label);
-    if (existing) existing.days.push(weekdayInitial(log.logDate));
-    else grouped.set(log.label, {
-      label: log.label,
-      days: [weekdayInitial(log.logDate)],
-      first: log.dayIndex,
-    });
+    if (existing) {
+      existing.days.push(compactWeekday(log.logDate));
+      existing.spokenDays.push(weekdayName(log.logDate));
+    } else {
+      grouped.set(log.label, {
+        label: log.label,
+        // `TH` and `SU` where one letter would be ambiguous — a chip reading
+        // `T Left Thigh` on its own could be Tuesday or Thursday.
+        days: [compactWeekday(log.logDate)],
+        // Spoken in full, always. "T H" is not a word.
+        spokenDays: [weekdayName(log.logDate)],
+        first: log.dayIndex,
+      });
+    }
   }
 
   const sites = [...grouped.values()].sort((a, b) => a.first - b.first);
@@ -57,11 +69,7 @@ export function RoutineSiteContext({ logs, onOpenTool }: Props) {
   const remaining = sites.length - shown.length;
 
   const spoken = sites
-    .map((site) =>
-      site.days.length === 1
-        ? `${site.label}, once`
-        : `${site.label}, ${site.days.length} times`,
-    )
+    .map((site) => `${site.spokenDays.join(', ')}, ${site.label}`)
     .join('. ');
 
   return (
@@ -150,9 +158,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   dot: {
-    width: 18,
+    // Wide enough for `TH` and `SU` without the one-letter days looking lost.
+    minWidth: 22,
     height: 18,
     borderRadius: 9,
+    paddingHorizontal: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },

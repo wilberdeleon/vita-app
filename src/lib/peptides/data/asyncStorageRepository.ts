@@ -269,4 +269,27 @@ export const asyncStoragePeptideRepository: PeptideRepository = {
     const days = await routineStatusStore.getRecentDays(maxDays);
     return days.flatMap((day) => day.records);
   },
+
+  async getLogsInRange(startDate, endDate) {
+    const days = await logStore.getDaysInRange(startDate, endDate);
+    return days.flatMap((day) => day.records);
+  },
+
+  async getRoutineStatusesInRange(startDate, endDate) {
+    const days = await routineStatusStore.getDaysInRange(startDate, endDate);
+    return days.flatMap((day) => day.records);
+  },
+
+  async getEarliestHistoryDate() {
+    // Either store may hold the oldest day: a skipped day has a status and no
+    // log, and a manual administration has a log and no status.
+    const [logDay, statusDay] = await Promise.all([
+      logStore.getEarliestDay(),
+      routineStatusStore.getEarliestDay(),
+    ]);
+
+    if (logDay === null) return statusDay;
+    if (statusDay === null) return logDay;
+    return logDay < statusDay ? logDay : statusDay;
+  },
 };

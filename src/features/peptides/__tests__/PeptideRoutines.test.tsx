@@ -141,6 +141,29 @@ function repositoryWith(
     async getRecentRoutineStatuses() {
       return [...statusDays.values()].flat();
     },
+
+    /* Slice 5.5B's historical reads. Range-bounded and read-only, exactly
+       like the real repository — these fakes hold every day they were given,
+       which is what makes an "older than the warm window" test meaningful. */
+    async getLogsInRange(startDate, endDate) {
+      return [...days.entries()]
+        .filter(([day]) => day >= startDate && day <= endDate)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .flatMap(([, records]) => records);
+    },
+
+    async getRoutineStatusesInRange(startDate, endDate) {
+      return [...statusDays.entries()]
+        .filter(([day]) => day >= startDate && day <= endDate)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .flatMap(([, records]) => records);
+    },
+
+    async getEarliestHistoryDate() {
+      const all = [...days.keys(), ...statusDays.keys()];
+      if (all.length === 0) return null;
+      return all.reduce((oldest, day) => (day < oldest ? day : oldest)) as never;
+    },
   };
 
   return {

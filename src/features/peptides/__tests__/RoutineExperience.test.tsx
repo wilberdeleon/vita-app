@@ -154,6 +154,29 @@ function repositoryWith(
     async getRecentRoutineStatuses() {
       return [...statusDays.values()].flat();
     },
+
+    /* Slice 5.5B's historical reads. Range-bounded and read-only, exactly
+       like the real repository — these fakes hold every day they were given,
+       which is what makes an "older than the warm window" test meaningful. */
+    async getLogsInRange(startDate, endDate) {
+      return [...days.entries()]
+        .filter(([day]) => day >= startDate && day <= endDate)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .flatMap(([, records]) => records);
+    },
+
+    async getRoutineStatusesInRange(startDate, endDate) {
+      return [...statusDays.entries()]
+        .filter(([day]) => day >= startDate && day <= endDate)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .flatMap(([, records]) => records);
+    },
+
+    async getEarliestHistoryDate() {
+      const all = [...days.keys(), ...statusDays.keys()];
+      if (all.length === 0) return null;
+      return all.reduce((oldest, day) => (day < oldest ? day : oldest)) as never;
+    },
   };
 
   return { repository, setups: () => setups, logs: () => [...days.values()].flat() };
@@ -822,15 +845,34 @@ describe('monthly activity', () => {
     expect(control(tree, 'Next month')!.props.disabled).toBe(false);
   });
 
-  it('stops where its knowledge stops, and says so', async () => {
+  it('offers no month for a routine with no history at all', async () => {
     /*
-     * The provider keeps a bounded window warm. Rendering months before the
-     * oldest record it holds would draw unanswered days nobody failed to
-     * answer, so navigation stops instead.
+     * 5.5B reads months on demand, so the floor is now whatever history
+     * actually exists rather than whatever happened to be in memory. With
+     * nothing recorded, there is nothing earlier to show.
      */
     const tree = await mount(<MonthlyActivity />, repositoryWith([setupFixture()]).repository);
     expect(control(tree, 'Previous month')!.props.disabled).toBe(true);
-    expect(screen(tree)).toContain('Earlier months aren’t available');
+  });
+
+  it('reaches a month far outside the provider’s warm window', async () => {
+    // The whole point of 5.5B: every day the user recorded is still on disk.
+    const longAgo = shiftLogDate(TODAY, -200);
+    const fake = repositoryWith(
+      [setupFixture()],
+      [logFixture({ id: 'old', logDate: longAgo })],
+      [statusFixture('taken', longAgo)],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    expect(control(tree, 'Previous month')!.props.disabled).toBe(false);
+    // Step back to the month that holds it and read it out of storage.
+    for (let step = 0; step < 7; step += 1) {
+      const back = control(tree, 'Previous month')!;
+      if (back.props.disabled) break;
+      await act(async () => back.props.onPress());
+    }
+    expect(screen(tree)).toContain('Taken');
   });
 
   it('counts three states, with no score of any kind', async () => {
@@ -866,7 +908,9 @@ describe('monthly activity', () => {
     const spoken = tree.root
       .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
       .map((node) => String(node.props.accessibilityLabel));
-    expect(spoken.some((label) => /: \d+ taken, \d+ skipped, \d+ no response$/.test(label))).toBe(true);
+    expect(
+      spoken.some((label) => /^Month summary\. \d+ taken\. \d+ skipped\. \d+ no response\.$/.test(label)),
+    ).toBe(true);
   });
 
   it('names every day it shows, including the ones it is not asking about', async () => {
@@ -911,7 +955,11 @@ describe('monthly activity', () => {
       ).repository,
     );
 
+    // 5.5B selects the day rather than navigating; the log is a second step.
     await press(tree, new RegExp(`^${fromLogDate(TODAY).toLocaleString('en-US', { weekday: 'long' })}, .*today, taken$`));
+    expect(screen(tree)).toContain('Taken');
+
+    await press(tree, 'View log');
     expect(mockPush).toHaveBeenCalledWith('/peptides/log/l1');
   });
 
@@ -929,6 +977,10 @@ describe('monthly activity', () => {
     );
 
     await press(tree, new RegExp(`^${fromLogDate(TODAY).toLocaleString('en-US', { weekday: 'long' })}, .*today, taken$`));
+    // Both entries are listed — a day with two administrations has two.
+    expect(screen(tree)).toContain('2 entries');
+
+    await press(tree, 'View history');
     expect(mockPush).toHaveBeenCalledWith('/peptides/setup/setup-1/history');
   });
 
@@ -1017,3 +1069,225 @@ function tree_label(tree: ReactTestRenderer): string {
     .map((node) => String(node.props.accessibilityLabel))
     .join(' | ');
 }
+
+/* ── historical month loading (5.5B) ────────────────────────────────────── */
+
+describe('loading an older month', () => {
+  /** A repository that counts reads and can be made to fail. */
+  function trackingRepository(
+    setups: PeptideSetup[],
+    logs: PeptideLogEntry[],
+    statuses: RoutineDayStatus[],
+  ) {
+    const base = repositoryWith(setups, logs, statuses);
+    let rangeReads = 0;
+    let fail = false;
+
+    const repository: PeptideRepository = {
+      ...base.repository,
+      async getLogsInRange(startDate, endDate) {
+        rangeReads += 1;
+        if (fail) throw new Error('storage unavailable');
+        return base.repository.getLogsInRange(startDate, endDate);
+      },
+      async getRoutineStatusesInRange(startDate, endDate) {
+        if (fail) throw new Error('storage unavailable');
+        return base.repository.getRoutineStatusesInRange(startDate, endDate);
+      },
+    };
+
+    return {
+      repository,
+      reads: () => rangeReads,
+      setFail: (value: boolean) => {
+        fail = value;
+      },
+    };
+  }
+
+  it('reads a month older than the warm window and shows what it finds', async () => {
+    /*
+     * The premise of 5.5B: the sixty-day window was a loading decision, and
+     * every day the user recorded is still on disk.
+     */
+    const longAgo = shiftLogDate(TODAY, -200);
+    const fake = repositoryWith(
+      [setupFixture()],
+      [logFixture({ id: 'old', logDate: longAgo })],
+      [statusFixture('taken', longAgo)],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    for (let step = 0; step < 8; step += 1) {
+      const back = control(tree, 'Previous month')!;
+      if (back.props.disabled) break;
+      await act(async () => back.props.onPress());
+    }
+
+    expect(screen(tree)).toContain('Month summary');
+    expect(screen(tree)).toContain('Taken');
+  });
+
+  it('stops at the oldest day history exists for', async () => {
+    const oldest = shiftLogDate(TODAY, -70);
+    const fake = repositoryWith(
+      [setupFixture()],
+      [],
+      [statusFixture('taken', oldest)],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    // Steps back to that month, then refuses to go further.
+    for (let step = 0; step < 10; step += 1) {
+      const back = control(tree, 'Previous month')!;
+      if (back.props.disabled) break;
+      await act(async () => back.props.onPress());
+    }
+    expect(control(tree, 'Previous month')!.props.disabled).toBe(true);
+  });
+
+  it('does not re-read a month it has already loaded', async () => {
+    const fake = trackingRepository(
+      [setupFixture()],
+      [],
+      [statusFixture('taken', shiftLogDate(TODAY, -40))],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+    const initial = fake.reads();
+
+    await press(tree, 'Previous month');
+    const afterBack = fake.reads();
+    expect(afterBack).toBeGreaterThan(initial);
+
+    await press(tree, 'Next month');
+    // Returning to a cached month costs nothing.
+    expect(fake.reads()).toBe(afterBack);
+  });
+
+  it('reports a failed read as a failure, never as an empty month', async () => {
+    /*
+     * Rendering nothing would tell the user this month held nothing — a claim
+     * about their history that one failed storage call has not earned.
+     */
+    const fake = trackingRepository([setupFixture()], [], []);
+    fake.setFail(true);
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    expect(screen(tree)).toContain("Couldn't load this month");
+    expect(screen(tree)).not.toContain('Month summary');
+
+    fake.setFail(false);
+    await press(tree, 'Try again');
+    expect(screen(tree)).not.toContain("Couldn't load this month");
+    expect(screen(tree)).toContain('Month summary');
+  });
+
+  it('never duplicates an entry after loading and revisiting', async () => {
+    const day = shiftLogDate(TODAY, -3);
+    const fake = repositoryWith(
+      [setupFixture()],
+      [logFixture({ id: 'l1', logDate: day })],
+      [statusFixture('taken', day)],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    await press(tree, 'Previous month');
+    await press(tree, 'Next month');
+
+    await press(tree, new RegExp(`^${fromLogDate(day).toLocaleString('en-US', { weekday: 'long' })},.*taken$`));
+    // One entry, not two — the cache returns the same read, never a merge.
+    expect(screen(tree)).not.toContain('2 entries');
+  });
+
+  it('never offers a future month', async () => {
+    const fake = repositoryWith([setupFixture()], [], [statusFixture('taken', TODAY)]);
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+    expect(control(tree, 'Next month')!.props.disabled).toBe(true);
+  });
+});
+
+/* ── selecting a day (5.5B) ─────────────────────────────────────────────── */
+
+describe('selecting a day in the month', () => {
+  const weekdayOf = (day: LogDate) =>
+    fromLogDate(day).toLocaleString('en-US', { weekday: 'long' });
+
+  it('opens with nothing selected', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture()], [], [statusFixture('taken', TODAY)]).repository,
+    );
+    // The month should answer "what happened" before any interaction.
+    expect(screen(tree)).toContain('Month summary');
+    expect(screen(tree)).not.toContain('View log');
+  });
+
+  it('shows an unanswered day without a word of blame', async () => {
+    const past = shiftLogDate(TODAY, -2);
+    const tree = await mount(<MonthlyActivity />, repositoryWith([setupFixture()]).repository);
+
+    await press(tree, new RegExp(`^${weekdayOf(past)},.*no response$`));
+    const rendered = screen(tree).toLowerCase();
+    expect(screen(tree)).toContain('No response');
+    for (const word of ['missed', 'overdue', 'failed', 'behind']) {
+      expect(rendered).not.toContain(word);
+    }
+  });
+
+  it('shows a skipped day plainly', async () => {
+    const past = shiftLogDate(TODAY, -1);
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture()], [], [statusFixture('skipped', past)]).repository,
+    );
+
+    await press(tree, new RegExp(`^${weekdayOf(past)},.*skipped$`));
+    expect(screen(tree)).toContain('Skipped');
+  });
+
+  it('announces the selection, and clears it on the second tap', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture()], [], [statusFixture('taken', TODAY)]).repository,
+    );
+
+    await press(tree, new RegExp(`^${weekdayOf(TODAY)},.*taken$`));
+    expect(control(tree, new RegExp(`^${weekdayOf(TODAY)},.*selected$`))).toBeDefined();
+
+    await press(tree, new RegExp(`^${weekdayOf(TODAY)},.*selected$`));
+    expect(screen(tree)).not.toContain('View log');
+  });
+
+  it('clears the selection when the month changes', async () => {
+    // September the 3rd's details under August would describe a day the
+    // screen is no longer about.
+    const fake = repositoryWith(
+      [setupFixture()],
+      [logFixture({ id: 'l1', logDate: TODAY })],
+      [statusFixture('taken', TODAY), statusFixture('taken', shiftLogDate(TODAY, -40))],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    await press(tree, new RegExp(`^${weekdayOf(TODAY)},.*taken$`));
+    expect(screen(tree)).toContain('View log');
+
+    await press(tree, 'Previous month');
+    expect(screen(tree)).not.toContain('View log');
+  });
+
+  it('does not make a blank day feel like a button', async () => {
+    const notToday = (fromLogDate(TODAY).getDay() + 3) % 7;
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture({ schedule: { kind: 'daysOfWeek', days: [notToday] } })])
+        .repository,
+    );
+
+    const blank = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /, not scheduled$/.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+    expect(blank).toHaveLength(0);
+  });
+});

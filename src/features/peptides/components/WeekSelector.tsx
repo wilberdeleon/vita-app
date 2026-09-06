@@ -5,6 +5,7 @@ import { PressableScale } from '../../../components/ui';
 import type { LogDate } from '../../../lib/daily';
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
+import { dateRangeLabel } from '../month';
 import { weekLabel } from '../week';
 
 type Props = {
@@ -34,6 +35,11 @@ type Props = {
  *
  * Forward is disabled at the present by default: a routine has no future to
  * report, and a disabled arrow says that more honestly than an empty week.
+ *
+ * **The dates sit under the label** (slice 5.5A→B). *This week* answers which
+ * week relative to now; `Aug 31 – Sep 6` answers which week on a calendar,
+ * and someone stepping back three weeks needs the second. It is deliberately
+ * quieter than the label above it — context, not the subject.
  */
 export function WeekSelector({ days, offset, onChange, allowFuture = false, action }: Props) {
   const { surfaces } = useTheme();
@@ -50,9 +56,19 @@ export function WeekSelector({ days, offset, onChange, allowFuture = false, acti
         <Ionicons name="chevron-back" size={18} color={surfaces.textSecondary} />
       </PressableScale>
 
-      <Text style={[styles.label, { color: surfaces.text }]} numberOfLines={1}>
-        {weekLabel(days, offset)}
-      </Text>
+      <View
+        style={styles.labels}
+        accessible
+        accessibilityRole="text"
+        accessibilityLabel={`${weekLabel(days, offset)}, ${dateRangeLabel(days)}`}
+      >
+        <Text style={[styles.label, { color: surfaces.text }]} numberOfLines={1}>
+          {weekLabel(days, offset)}
+        </Text>
+        <Text style={[styles.range, { color: surfaces.textTertiary }]} numberOfLines={1}>
+          {dateRangeLabel(days)}
+        </Text>
+      </View>
 
       <PressableScale
         onPress={() => onChange(allowFuture ? offset + 1 : Math.min(0, offset + 1))}
@@ -84,10 +100,18 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.3,
   },
+  labels: {
+    alignItems: 'center',
+    gap: 1,
+    flexShrink: 1,
+  },
   label: {
     ...typography.captionMedium,
     fontSize: 14.5,
     fontWeight: '600',
-    flexShrink: 1,
+  },
+  range: {
+    ...typography.micro,
+    fontSize: 12,
   },
 });

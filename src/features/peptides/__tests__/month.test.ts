@@ -18,8 +18,10 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 import { toMcg, type PeptideSetup, type RoutineDayStatus } from '../../../lib/peptides';
 import type { LogDate } from '../../../lib/daily';
 import {
+  compactWeekday,
   compareMonths,
   countMonth,
+  dateRangeLabel,
   daysInMonth,
   earliestKnownMonth,
   isSameMonth,
@@ -316,5 +318,51 @@ describe('the earliest month it can speak about', () => {
   it('ignores another routine history', () => {
     const other: RoutineDayStatus = { ...status('2026-05-01' as LogDate, 'taken'), setupId: 'other' };
     expect(earliestKnownMonth([other], [], 'setup-1', today)).toEqual({ year: 2026, month: 8 });
+  });
+});
+
+/* ── compact weekday labels (5.5B) ──────────────────────────────────────── */
+
+describe('compact weekday labels', () => {
+  it('uses two letters only where one would be ambiguous', () => {
+    /*
+     * `T` and `S` each stand for two days. In a seven-column calendar
+     * position settles it; on a chip standing alone it does not, and
+     * `T Left Thigh` could be Tuesday or Thursday.
+     */
+    // 2026-07-13 is a Monday.
+    expect(compactWeekday('2026-07-13' as LogDate)).toBe('M');
+    expect(compactWeekday('2026-07-14' as LogDate)).toBe('T');
+    expect(compactWeekday('2026-07-15' as LogDate)).toBe('W');
+    expect(compactWeekday('2026-07-16' as LogDate)).toBe('TH');
+    expect(compactWeekday('2026-07-17' as LogDate)).toBe('F');
+    expect(compactWeekday('2026-07-18' as LogDate)).toBe('S');
+    expect(compactWeekday('2026-07-19' as LogDate)).toBe('SU');
+  });
+
+  it('gives every day of the week a distinct label', () => {
+    const week = ['13', '14', '15', '16', '17', '18', '19'].map(
+      (day) => compactWeekday(`2026-07-${day}` as LogDate),
+    );
+    expect(new Set(week).size).toBe(7);
+  });
+});
+
+describe('the week date range', () => {
+  it('repeats the month only when the week crosses one', () => {
+    expect(dateRangeLabel(weekAround('2026-07-15' as LogDate))).toBe('Jul 13 – 19');
+    // 31 Aug is a Monday; that week ends on 6 September.
+    expect(dateRangeLabel(weekAround('2026-09-02' as LogDate))).toBe('Aug 31 – Sep 6');
+  });
+
+  it('carries the year when a week crosses one', () => {
+    const newYear = weekAround('2026-12-31' as LogDate);
+    const label = dateRangeLabel(newYear);
+    expect(label).toContain('2026');
+    expect(label).toContain('2027');
+  });
+
+  it('never renders an ISO date', () => {
+    expect(dateRangeLabel(weekAround('2026-07-15' as LogDate))).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 });

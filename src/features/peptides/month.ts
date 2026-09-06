@@ -215,3 +215,43 @@ export function weekAround(logDate: LogDate): LogDate[] {
   const monday = shiftLogDate(logDate, -mondayIndex);
   return Array.from({ length: 7 }, (_, day) => shiftLogDate(monday, day));
 }
+
+/**
+ * Compact weekday labels, disambiguated.
+ *
+ * `T` and `S` each stand for two days, which is fine in a seven-column
+ * calendar where position settles it and misleading anywhere a single label
+ * appears on its own — a site chip reading `T Left Thigh` could be Tuesday or
+ * Thursday, and the user has no way to tell.
+ *
+ * Two letters only where one is ambiguous, so the common days stay narrow.
+ * **Visual only**: every caller speaks the full weekday name to assistive
+ * technology, because "T H" is not a word.
+ */
+const COMPACT_WEEKDAYS = ['SU', 'M', 'T', 'W', 'TH', 'F', 'S'] as const;
+
+export function compactWeekday(logDate: LogDate): string {
+  return COMPACT_WEEKDAYS[fromLogDate(logDate).getDay()];
+}
+
+/**
+ * `Sep 7 – 13`, or `Aug 31 – Sep 6` when a week straddles two months.
+ *
+ * The month is repeated only when it changes, and the year only when the week
+ * crosses one — enough context to be unambiguous, and never an ISO date.
+ */
+export function dateRangeLabel(days: readonly LogDate[]): string {
+  if (days.length === 0) return '';
+
+  const first = fromLogDate(days[0]);
+  const last = fromLogDate(days[days.length - 1]);
+  const short = (date: Date) => date.toLocaleString('en-US', { month: 'short' });
+
+  if (first.getFullYear() !== last.getFullYear()) {
+    return `${short(first)} ${first.getDate()}, ${first.getFullYear()} – ${short(last)} ${last.getDate()}, ${last.getFullYear()}`;
+  }
+  if (first.getMonth() !== last.getMonth()) {
+    return `${short(first)} ${first.getDate()} – ${short(last)} ${last.getDate()}`;
+  }
+  return `${short(first)} ${first.getDate()} – ${last.getDate()}`;
+}

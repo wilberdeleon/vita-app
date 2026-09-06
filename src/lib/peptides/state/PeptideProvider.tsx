@@ -181,6 +181,26 @@ export type PeptideContextValue = PeptideState & {
   /** Everything recorded on one day, newest first. */
   logsForDate: (logDate: LogDate) => PeptideLogEntry[];
   findLog: (entryId: string) => PeptideLogEntry | undefined;
+
+  /**
+   * ── Historical reads (slice 5.5B) ────────────────────────────────────
+   *
+   * The window above stays what it is: enough for Today, Recent Activity and
+   * a first screen of history without a read. A screen that genuinely needs
+   * an older range asks for it, gets it, and holds it itself.
+   *
+   * **This is a read, not a load.** Nothing is merged into the warm arrays,
+   * so browsing five months of calendar cannot slowly turn the provider into
+   * every log the user has ever written, and Peptides Home never waits on
+   * one. The repository is reached through the provider so the injected seam
+   * is still the only way to storage — screens never import it directly.
+   */
+  readHistory: (
+    startDate: LogDate,
+    endDate: LogDate,
+  ) => Promise<{ logs: PeptideLogEntry[]; statuses: RoutineDayStatus[] }>;
+  /** The oldest day any peptide history exists for, or `null`. */
+  earliestHistoryDate: () => Promise<LogDate | null>;
 };
 
 const PeptideContext = createContext<PeptideContextValue | null>(null);
@@ -652,6 +672,31 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
     onRollover: useCallback((today: LogDate) => dispatch({ type: 'setToday', today }), []),
   });
 
+  /**
+   * One range, read straight through to storage.
+   *
+   * Deliberately not cached here: the caller knows which month it is showing
+   * and when that stops being true, and a cache in the provider would have to
+   * be invalidated by every write in the app. Errors are thrown rather than
+   * swallowed so the screen can tell *failed* from *empty* — a calendar that
+   * rendered a failed read as an empty month would be inventing history.
+   */
+  const readHistory = useCallback(
+    async (startDate: LogDate, endDate: LogDate) => {
+      const [logs, statuses] = await Promise.all([
+        repository.getLogsInRange(startDate, endDate),
+        repository.getRoutineStatusesInRange(startDate, endDate),
+      ]);
+      return { logs, statuses };
+    },
+    [repository],
+  );
+
+  const earliestHistoryDate = useCallback(
+    () => repository.getEarliestHistoryDate(),
+    [repository],
+  );
+
   const value = useMemo<PeptideContextValue>(
     () => ({
       ...state,
@@ -678,6 +723,8 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
       logsForSetup,
       logsForDate,
       findLog,
+      readHistory,
+      earliestHistoryDate,
     }),
     [
       state,
@@ -693,6 +740,8 @@ export function PeptideProvider({ children, repository = asyncStoragePeptideRepo
       logsForSetup,
       logsForDate,
       findLog,
+      readHistory,
+      earliestHistoryDate,
     ],
   );
 

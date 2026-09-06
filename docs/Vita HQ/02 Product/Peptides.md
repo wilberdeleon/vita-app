@@ -6,6 +6,22 @@
 
 ---
 
+## Sprint 5 slice 5.5B — real history, and a month you can dig into (2026-09-05, awaiting founder device review)
+
+**You can go back as far as you actually have history.** July, June, May, last year — Monthly activity now reads each month from storage when you open it, instead of stopping at the couple of months VITA happened to be holding in memory. **Nothing was ever deleted**; it simply was not being loaded. Where your records genuinely stop, so does the arrow.
+
+**Tap a day and it opens underneath the calendar.** The date, what happened, and what was recorded — the amount, the time, the site — read back from that day's own log, not from how your routine is set up today. Two entries on one day shows both. *View log* takes you the rest of the way if you want it.
+
+**Days can be told apart at a glance.** `T` used to mean Tuesday *or* Thursday on the injection-site chips, and `S` either weekend day. Now it is **M · T · W · TH · F · S · SU**, and a screen reader still says the whole word.
+
+**The week header says which week you are looking at** — `This week`, with `Aug 31 – Sep 6` quietly underneath.
+
+**Month summary is a proper section now** rather than three loose numbers: Taken, Skipped, No response, each on its own line. Still no percentage, no streak, no grade, and still counting only days that have actually happened.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5B.
+
+---
+
 ## Sprint 5 slice 5.5A — the week as a timeline, and a month you can look back at (2026-09-05, awaiting founder device review)
 
 **The week strip is now a timeline.** A faint line joins the seven days, so it reads as one week rather than seven loose circles. **The line never fills in** — it is not a progress bar, and nothing on this screen is scoring you. The day markers are slightly larger, and today is marked by a small violet underline under the date rather than a ring, so *today* can never be mistaken for *taken*.

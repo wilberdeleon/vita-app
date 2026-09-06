@@ -282,6 +282,52 @@ const SCENARIOS: Scenario[] = [
     statuses: [status('a', 'taken', shiftLogDate(TODAY, -2))],
   },
   {
+    /* Tuesday and Thursday at different sites — the ambiguity 5.5B fixed. */
+    key: 'sites-tue-thu',
+    label: 'Sites · Tue + Thu',
+    setups: [setup({ id: 'a' })],
+    logs: [
+      log('t1', shiftLogDate(MONDAY, 1), createSiteSnapshot('abdomen-left')),
+      log('t2', shiftLogDate(MONDAY, 3), createSiteSnapshot('thigh-right')),
+    ],
+  },
+  {
+    /* Saturday and Sunday — the other ambiguous pair. */
+    key: 'sites-sat-sun',
+    label: 'Sites · Sat + Sun',
+    setups: [setup({ id: 'a' })],
+    logs: [
+      log('s1', shiftLogDate(MONDAY, 5), createSiteSnapshot('upper-arm-left')),
+      log('s2', shiftLogDate(MONDAY, 6), createSiteSnapshot('glute-right')),
+    ],
+  },
+  {
+    /* Two administrations on one day — the multiple-logs case. */
+    key: 'month-twice',
+    label: 'Month · two in a day',
+    setups: [setup({ id: 'a' })],
+    statuses: [status('a', 'taken', shiftLogDate(TODAY, -2))],
+    logs: [
+      log('d1', shiftLogDate(TODAY, -2), createSiteSnapshot('thigh-left')),
+      {
+        ...log('d2', shiftLogDate(TODAY, -2), createSiteSnapshot('thigh-right')),
+        loggedAt: `${shiftLogDate(TODAY, -2)}T20:00:00.000Z`,
+      } as PeptideLogEntry,
+    ],
+  },
+  {
+    /* Older than the provider's warm window — 5.5B's headline case. */
+    key: 'month-old',
+    label: 'Month · 200 days back',
+    setups: [setup({ id: 'a' })],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -200)),
+      status('a', 'skipped', shiftLogDate(TODAY, -198)),
+      status('a', 'taken', shiftLogDate(TODAY, -195)),
+    ],
+    logs: [log('o1', shiftLogDate(TODAY, -200), createSiteSnapshot('abdomen-center'))],
+  },
+  {
     key: 'month-empty',
     label: 'Month · no activity',
     setups: [setup({ id: 'a', schedule: { kind: 'asNeeded' } })],
@@ -351,6 +397,29 @@ function memoryRepository(scenario: Scenario): PeptideRepository {
     },
     async getRecentRoutineStatuses() {
       return [...statuses.values()].flat();
+    },
+
+    /* Slice 5.5B's historical reads. Range-bounded and read-only, exactly
+       like the real repository — these fakes hold every day they were given,
+       which is what makes an "older than the warm window" test meaningful. */
+    async getLogsInRange(startDate, endDate) {
+      return [...logs.entries()]
+        .filter(([day]) => day >= startDate && day <= endDate)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .flatMap(([, records]) => records);
+    },
+
+    async getRoutineStatusesInRange(startDate, endDate) {
+      return [...statuses.entries()]
+        .filter(([day]) => day >= startDate && day <= endDate)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .flatMap(([, records]) => records);
+    },
+
+    async getEarliestHistoryDate() {
+      const all = [...logs.keys(), ...statuses.keys()];
+      if (all.length === 0) return null;
+      return all.reduce((oldest, day) => (day < oldest ? day : oldest)) as never;
     },
   };
 }

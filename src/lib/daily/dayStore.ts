@@ -53,6 +53,24 @@ export type DayKeyedStore<T> = {
    * to order records *within* a day is a domain question, not this one's.
    */
   getRecentDays(maxDays: number): Promise<DayRecords<T>[]>;
+  /**
+   * Every written day between two dates, inclusive, oldest first.
+   *
+   * **Read-only, and bounded by the range rather than by a count** — which is
+   * the difference from `getRecentDays`. Sprint 5 slice 5.5B added it for the
+   * monthly activity view: a provider keeps a warm window of recent history
+   * for the everyday screens, and a month older than that window needs the
+   * days it actually covers rather than "the most recent sixty".
+   *
+   * Nothing is written, nothing is migrated, and no key is touched. Days with
+   * no records are simply absent, exactly as in `getRecentDays`.
+   */
+  getDaysInRange(startDate: LogDate, endDate: LogDate): Promise<DayRecords<T>[]>;
+  /**
+   * The oldest day this store holds anything for, or `null` when it holds
+   * nothing. Lets a caller stop offering history it does not have.
+   */
+  getEarliestDay(): Promise<LogDate | null>;
 };
 
 export function createDayKeyedStore<T>(domain: StorageDomain, parse: RecordParser<T>): DayKeyedStore<T> {
@@ -83,6 +101,38 @@ export function createDayKeyedStore<T>(domain: StorageDomain, parse: RecordParse
         return;
       }
       await writeJson(key, records);
+    },
+
+    async getDaysInRange(startDate: LogDate, endDate: LogDate): Promise<DayRecords<T>[]> {
+      // ISO dates sort and compare lexicographically, so this is a real date
+      // range with no parsing and no timezone to get wrong.
+      if (startDate > endDate) return [];
+
+      const keys = await allKeys();
+      const logDates = keys
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length))
+        .filter(isValidLogDate)
+        .filter((logDate) => logDate >= startDate && logDate <= endDate)
+        .sort((a, b) => a.localeCompare(b));
+
+      const days = await Promise.all(
+        logDates.map(async (logDate) => ({ logDate, records: await getDay(logDate) })),
+      );
+
+      // A day whose records all failed validation is not a day with history.
+      return days.filter((day) => day.records.length > 0);
+    },
+
+    async getEarliestDay(): Promise<LogDate | null> {
+      const keys = await allKeys();
+      const logDates = keys
+        .filter((key) => key.startsWith(prefix))
+        .map((key) => key.slice(prefix.length))
+        .filter(isValidLogDate);
+
+      if (logDates.length === 0) return null;
+      return logDates.reduce((oldest, day) => (day < oldest ? day : oldest));
     },
 
     async getRecentDays(maxDays: number): Promise<DayRecords<T>[]> {

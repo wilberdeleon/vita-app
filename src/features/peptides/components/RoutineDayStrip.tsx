@@ -124,12 +124,16 @@ export function RoutineDayStrip({ days, selected, today, onSelectDay }: Props) {
             }, ${scheduled ? 'scheduled' : 'not scheduled'}, ${routineDayMarkLabel(
               day.mark,
             ).toLowerCase()}`}
-            style={[
+            /* Opacity rather than a spring: the cell is a real control and
+               should answer a finger, but a bouncing calendar day would be
+               decoration. Reduce Motion needs no special case for a fade. */
+            style={({ pressed }) => [
               styles.cell,
               isSelected && {
                 backgroundColor: surfaces.card,
                 borderColor: palette.peptide,
               },
+              pressed && styles.pressed,
             ]}
           >
             <Text style={[styles.weekday, { color: surfaces.textTertiary }]}>{weekday}</Text>
@@ -219,6 +223,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.control,
     borderWidth: 1,
     borderColor: 'transparent',
+  },
+  pressed: {
+    opacity: 0.6,
   },
   nodeRow: {
     flexDirection: 'row',

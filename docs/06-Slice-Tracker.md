@@ -2045,7 +2045,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | ✅ Accepted subpass of 5.3 |
 | 5.4 | Peptides Home Redesign | Today as hero, one setup notice, routines progressively disclosed | 🟡 Implemented — awaiting founder device review |
 | 5.5 | Routine + Injection Site Experience | Today first, progressive disclosure, weekly site history on the shared `BodyMap` | 🟡 Direction approved on device; week strip refined in 5.5A |
-| 5.5A | Weekly Timeline Polish + Monthly Activity | A connecting rail on the week strip, and a month-by-month history for one routine | 🟡 Implemented — awaiting founder device review |
+| 5.5A | Weekly Timeline Polish + Monthly Activity | A connecting rail on the week strip, and a month-by-month history for one routine | 🟡 Direction approved on device; finished in 5.5B |
+| 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | 🟡 Implemented — awaiting founder device review |
 | 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ Planned |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
@@ -2327,6 +2328,36 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.5B — Historical Month Loading + Final Routine/Month Polish 🟡
+
+**Implemented 2026-09-05. Awaiting founder device review — not approved.** Five focused items, and one narrow authorised domain exception.
+
+**`T` no longer means two days.** A chip reading `T Left Thigh` could be Tuesday or Thursday, and `S` could be Saturday or Sunday. `compactWeekday` gives two letters only where one is ambiguous — **M · T · W · TH · F · S · SU** — used by the routine's site chips and the Injection Sites day badges. **The calendar headers were deliberately left alone**: seven columns in fixed positions are not ambiguous, and forcing `TH`/`SU` there would make the grid worse to read. Every caller speaks the full weekday name to VoiceOver; "T H" is not a word.
+
+**The week header says which week.** `This week` stays primary with `Aug 31 – Sep 6` quiet beneath it — the month repeats only when a week straddles two, and the year only when it crosses one. Someone three weeks back needs the dates; someone on this week does not. Day cells gained a press fade, which Reduce Motion needs no special case for.
+
+**Month summary is a section now, not three numbers on the floor.** A `Month summary` heading over three divided rows: a coloured marker, the name, the count right-aligned. Neutral typography dominates — the state colour is a 6pt dot, not a tinted hero figure. Still exactly **Taken · Skipped · No response**, with no total, denominator, percentage, streak, average, best or worst week, score or encouragement, and still counting nothing that has not happened yet.
+
+**Tapping a day selects it instead of leaving.** 5.5A sent every tap straight to a log, so the calendar could only be looked at or left. A selected day shows its date, its state and every stored entry — amount, units, time, site — beneath the grid, with *View log* or *View history* as a deliberate second step. **From the log's own snapshot**, never reconstructed from the routine as it stands now. Selection is drawn as a ring on the cell, separate from the today underline and the status node, so a day can be all three at once. A blank unscheduled day is not a button. Changing month clears the selection; the month opens with none.
+
+**And the ceiling is gone.** 5.5A stopped at the provider's warm window and said so, which was honest but not the product.
+
+**The investigation first (§35/§36):** `removeKey` fires in exactly one place — when a day's last record is cleared. Nothing prunes by age. **Every day the user ever recorded is still on disk**; the sixty-day limit was always a loading decision. So §36's stop condition did not apply.
+
+**The narrow exception, used narrowly.** Three read-only additions: `getDaysInRange` and `getEarliestDay` on the shared day-keyed store, `getLogsInRange` / `getRoutineStatusesInRange` / `getEarliestHistoryDate` on the peptide repository, and `readHistory` / `earliestHistoryDate` passed through the provider. **No schema, no key, no migration, no write, no mutation semantics** — a test asserts every key and value is byte-identical after a full-range read, and that the existing recent-window read still returns what it always did.
+
+**The provider did not grow.** `readHistory` reads straight through and merges nothing into the warm arrays, so browsing five months of calendar cannot slowly turn it into every log ever written, and Peptides Home never waits on a historical read. The month cache lives in `useMonthActivity` and dies with the screen; any write anywhere clears it, because a month that disagreed with the day you just recorded would be worse than a second read.
+
+**Failed and empty are different.** A read that throws says `Couldn't load this month` with *Try again* — never an empty calendar, which would be a claim about the user's history that one failed storage call has not earned. Loading is a small indicator beside the month title.
+
+**Navigation now stops at the truth**: the oldest day any history exists for, or the routine's start month when that is later. Forward still stops at the current month.
+
+**Validation.** `npm test` **58 suites / 1555 tests** (1524 → 1555) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · verified in Expo Go: Dark, Light.
+
+**Device coverage limit.** The selected-day detail could not be exercised on device — this environment can deep-link and screenshot but cannot tap. It is covered by nine route tests.
+
+**Still to verify — founder, on a real device:** whether the week header now feels finished, whether `TH`/`SU` read cleanly at chip size, whether Month summary looks designed, whether tapping a day gives the depth that was missing, and whether stepping back to a genuinely old month works on real data.
 
 ### Slice 5.5A — Weekly Timeline Polish + Monthly Activity 🟡
 
