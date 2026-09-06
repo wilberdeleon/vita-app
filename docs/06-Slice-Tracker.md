@@ -2044,7 +2044,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.3C | Dashboard Direct Manipulation + Visual Polish | Shared square footprint, Quick Tools customization, Food Scanner reinstated, serif quote, daypart accents, on-Home edit mode | ✅ Accepted subpass of 5.3 |
 | 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | ✅ Accepted subpass of 5.3 |
 | 5.4 | Peptides Home Redesign | Today as hero, one setup notice, routines progressively disclosed | 🟡 Implemented — awaiting founder device review |
-| 5.5 | Routine + Injection Site Experience | Today first, progressive disclosure, weekly site history on the shared `BodyMap` | 🟡 Implemented — awaiting founder device review |
+| 5.5 | Routine + Injection Site Experience | Today first, progressive disclosure, weekly site history on the shared `BodyMap` | 🟡 Direction approved on device; week strip refined in 5.5A |
+| 5.5A | Weekly Timeline Polish + Monthly Activity | A connecting rail on the week strip, and a month-by-month history for one routine | 🟡 Implemented — awaiting founder device review |
 | 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ Planned |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
@@ -2326,6 +2327,38 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.5A — Weekly Timeline Polish + Monthly Activity 🟡
+
+**Implemented 2026-09-05. Awaiting founder device review — not approved.** A refinement of 5.5, not another redesign. **Zero changes under `src/lib/peptides/`.**
+
+**Founder verdict on 5.5:** Routine detail, Recent Activity, the disclosures, Edit Routine and Injection Sites are all approved in direction. One note: the week strip read as *sparse* rather than deliberately minimal.
+
+**The week strip became a timeline.** A hairline rail now joins the seven nodes, drawn as two halves inside each cell so it needs no measurement and survives any text size. **It is calendar structure, not progress** — one neutral weight end to end, never filling with takens, never stopping at today. Each node paints over it with the screen's own background, so the line is interrupted rather than drawn through an open circle. Nodes went 26 → 30, and the cell lost 8pt of height and 4pt of gap.
+
+**Today is an underline, not a ring.** A halo was tried first and failed on device for the case that matters: on a day the schedule does not cover there is no node to encircle, so the halo became the only circle in the cell and read as a state of its own. An underline beneath the date cannot be mistaken for a node and works identically whether or not the day is scheduled — which keeps *today* and *what happened* the two separate facts they are.
+
+**Monthly activity, at `/peptides/routine/[id]/month`**, reached from a quiet `Month ›` in the week header. A true Monday-first seven-column grid built from `Date` and the project's own helpers — no calendar dependency. Leading and trailing cells are blank rather than the neighbouring month's dates.
+
+**An unscheduled day draws no node at all.** This is the distinction the whole screen turns on: *No response* means the routine asked and was not answered; a day the schedule never covered asked nothing. Drawing a faint circle for it would be a different claim. It matters most for **as-needed** routines, where every day with no log is blank — an as-needed routine has nothing to fail to answer.
+
+**One function decides a day's state for both views.** `markForDay` wraps `routineDayMark`, so a day that reads *Taken* in the week cannot read anything else in the month. Regression tests assert that on taken, skipped, unscheduled and pre-start days.
+
+**It adds one guard, and that guard fixed a latent bug.** `isScheduledOn` honours `startDate` for `everyNDays` but not for `daily` or `daysOfWeek` — so a daily routine begun in August reported every day of July as unanswered. Invisible while only one week showed; a page of asserted failures in a month view. A day before the routine began is now *not scheduled*, on **both** surfaces, which is what keeps them agreeing. The week strip therefore no longer uses `useRoutineWeek`; it uses the same function the month does.
+
+**The summary is three counts and nothing else.** Taken, Skipped, No response. No total, no denominator, no percentage, no streak, no average, no best or worst week, no score, no encouragement. **The count stops at today** — a scheduled day still to come is drawn, because the plan ahead is real, but nobody has failed to answer a day that has not arrived, and counting the rest of the month would turn a plan into an accusation.
+
+**Navigation stops where knowledge stops.** The provider keeps a bounded window of recent history warm; everything from the oldest record it holds is complete, and before that nothing is known. Rather than draw empty circles that would read as unanswered days, backward navigation ends there and says so. Forward stops at the current month.
+
+**Tapping a day** opens its log when there is one, or the routine's full history when a day holds several. A day with no log opens nothing.
+
+**A Dynamic Type defect the device pass caught:** at an accessibility text size the month's fixed 20pt nodes cropped their own glyphs. Both the month node and the week node now scale with `fontScale`, so the mark is never clipped and no `allowFontScaling={false}` was needed anywhere.
+
+**Validation.** `npm test` **57 suites / 1524 tests** (1476 → 1524) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · **zero `src/lib` changes** · verified in Expo Go: Dark, Light, accessibility-large.
+
+**Carried, not fixed:** the provider's 60-day warm window is what bounds how far back the month view can go. Reaching deeper needs a repository read the domain freeze forbids adding here — recorded for a later slice. `ScreenHeader` truncates its title at accessibility sizes, which is shared-primitive behaviour on every stacked screen.
+
+**Still to verify — founder, on a real device:** whether the rail reads premium or gimmicky, whether the nodes have presence without becoming buttons, whether today stays distinguishable, whether the month feels calm, and whether blank days are unmistakably different from *No response*.
 
 ### Slice 5.5 — Routine + Injection Site Experience 🟡
 

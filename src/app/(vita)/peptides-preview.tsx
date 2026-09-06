@@ -17,6 +17,7 @@ import { palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import Peptides from './peptides/index';
 import RoutineDetail from './peptides/routine/[id]';
+import MonthlyActivity from './peptides/routine/[id]/month';
 import EditPeptideSetup from './peptides/setup/[id]';
 import InjectionSites from './tools/injection-sites';
 
@@ -70,10 +71,14 @@ function setup(overrides: Partial<PeptideSetup> & { id: string }): PeptideSetup 
   };
 }
 
-const status = (setupId: string, state: 'taken' | 'skipped'): RoutineDayStatus => ({
-  id: `status-${setupId}`,
+const status = (
+  setupId: string,
+  state: 'taken' | 'skipped',
+  logDate: string = TODAY,
+): RoutineDayStatus => ({
+  id: `status-${setupId}-${logDate}`,
   setupId,
-  logDate: TODAY,
+  logDate,
   state,
   createdAt: CREATED,
   updatedAt: CREATED,
@@ -213,6 +218,75 @@ const SCENARIOS: Scenario[] = [
     ),
   },
   {
+    /*
+     * A month with all three answered states plus unscheduled days, so the
+     * blank-versus-no-response distinction can be judged at a glance.
+     */
+    key: 'month-mixed',
+    label: 'Month · mixed',
+    setups: [setup({ id: 'a', schedule: { kind: 'daysOfWeek', days: [1, 3, 5] } })],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -2)),
+      status('a', 'taken', shiftLogDate(TODAY, -4)),
+      status('a', 'skipped', shiftLogDate(TODAY, -7)),
+      status('a', 'taken', shiftLogDate(TODAY, -9)),
+      status('a', 'taken', shiftLogDate(TODAY, -11)),
+      status('a', 'skipped', shiftLogDate(TODAY, -14)),
+    ],
+    logs: [
+      log('m1', shiftLogDate(TODAY, -2), createSiteSnapshot('thigh-left')),
+      log('m2', shiftLogDate(TODAY, -4), createSiteSnapshot('abdomen-left')),
+    ],
+  },
+  {
+    key: 'month-daily',
+    label: 'Month · daily',
+    setups: [setup({ id: 'a' })],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -1)),
+      status('a', 'taken', shiftLogDate(TODAY, -2)),
+      status('a', 'skipped', shiftLogDate(TODAY, -3)),
+      status('a', 'taken', shiftLogDate(TODAY, -5)),
+    ],
+  },
+  {
+    /* As needed: every day with no log stays blank. Nothing to answer. */
+    key: 'month-asneeded',
+    label: 'Month · as needed',
+    setups: [setup({ id: 'a', schedule: { kind: 'asNeeded' } })],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -3)),
+      status('a', 'taken', shiftLogDate(TODAY, -10)),
+    ],
+  },
+  {
+    key: 'month-everyn',
+    label: 'Month · every 3 days',
+    setups: [
+      setup({
+        id: 'a',
+        schedule: { kind: 'everyNDays', n: 3 },
+        startDate: shiftLogDate(TODAY, -21),
+      }),
+    ],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -3)),
+      status('a', 'skipped', shiftLogDate(TODAY, -6)),
+    ],
+  },
+  {
+    /* Started mid-month: everything before the start date stays blank. */
+    key: 'month-started',
+    label: 'Month · started mid',
+    setups: [setup({ id: 'a', startDate: shiftLogDate(TODAY, -6) })],
+    statuses: [status('a', 'taken', shiftLogDate(TODAY, -2))],
+  },
+  {
+    key: 'month-empty',
+    label: 'Month · no activity',
+    setups: [setup({ id: 'a', schedule: { kind: 'asNeeded' } })],
+  },
+  {
     key: 'everything',
     label: 'Everything',
     setups: [
@@ -284,6 +358,7 @@ function memoryRepository(scenario: Scenario): PeptideRepository {
 const SCREENS = [
   { key: 'home', label: 'Home', render: () => <Peptides /> },
   { key: 'routine', label: 'Routine', render: () => <RoutineDetail /> },
+  { key: 'month', label: 'Month', render: () => <MonthlyActivity /> },
   { key: 'edit', label: 'Edit', render: () => <EditPeptideSetup /> },
   { key: 'sites', label: 'Sites', render: () => <InjectionSites /> },
 ] as const;

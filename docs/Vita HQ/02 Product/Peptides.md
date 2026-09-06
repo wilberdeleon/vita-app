@@ -6,6 +6,24 @@
 
 ---
 
+## Sprint 5 slice 5.5A — the week as a timeline, and a month you can look back at (2026-09-05, awaiting founder device review)
+
+**The week strip is now a timeline.** A faint line joins the seven days, so it reads as one week rather than seven loose circles. **The line never fills in** — it is not a progress bar, and nothing on this screen is scoring you. The day markers are slightly larger, and today is marked by a small violet underline under the date rather than a ring, so *today* can never be mistaken for *taken*.
+
+**And there is a month view.** `Month ›` sits beside the week header and opens **Monthly activity** for that routine: a normal calendar, Monday first, with a marker on each day the routine asked about — violet for taken, amber for skipped, an open circle for a day you did not answer.
+
+**Days the routine never asked about are blank.** That is the important part. If your routine runs Monday, Wednesday and Friday, the Tuesdays are simply empty — not "no response". And an **as-needed** routine shows only the days you actually logged; every other day is blank, because an as-needed routine never asked anything of them.
+
+**The summary is three numbers.** Taken, Skipped, No response. No percentage, no streak, no average, no grade, no "great month". You can look at July and see that you skipped twice; whether twice is a lot is yours to decide, not VITA's.
+
+**It counts only what has already happened** — the rest of this month is drawn but not counted, because you have not failed to answer a day that has not arrived yet.
+
+**You can step back through months**, as far as VITA actually has records for. Where its records stop, the arrow stops too and says so, rather than showing you empty circles for days it knows nothing about. Tapping a day opens what you recorded.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5A.
+
+---
+
 ## Sprint 5 slice 5.5 — Routine and injection sites (2026-09-05, awaiting founder device review)
 
 **Opening a routine now answers today first.** The state, the amount you set, and — if you have not answered yet — Taken and Skipped, right at the top. Under that: the week, then the last couple of things you recorded, then where you injected them.

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../../../components/ui';
 import type { LogDate } from '../../../lib/daily';
@@ -12,6 +13,12 @@ type Props = {
   onChange: (offset: number) => void;
   /** Whether stepping forward past this week is allowed. */
   allowFuture?: boolean;
+  /**
+   * A quiet control on the right of the header — the routine's *Month* link.
+   * Deliberately a slot rather than a built-in: the Injection Sites tool uses
+   * this same selector and has no month view to offer.
+   */
+  action?: ReactNode;
 };
 
 /**
@@ -28,7 +35,7 @@ type Props = {
  * Forward is disabled at the present by default: a routine has no future to
  * report, and a disabled arrow says that more honestly than an empty week.
  */
-export function WeekSelector({ days, offset, onChange, allowFuture = false }: Props) {
+export function WeekSelector({ days, offset, onChange, allowFuture = false, action }: Props) {
   const { surfaces } = useTheme();
   const atEnd = !allowFuture && offset >= 0;
 
@@ -56,6 +63,8 @@ export function WeekSelector({ days, offset, onChange, allowFuture = false }: Pr
       >
         <Ionicons name="chevron-forward" size={18} color={surfaces.textSecondary} />
       </PressableScale>
+
+      {action}
     </View>
   );
 }

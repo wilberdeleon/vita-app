@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import {
   routineDayMarkLabel,
   routineDayMarkSymbol,
@@ -56,13 +56,40 @@ const WEEKDAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const;
  *
  * **Nothing here is scored.** No percentage, no streak, no good week. A day
  * the user did not answer says *No response*, which is the whole truth.
+ *
+ * ## The rail (slice 5.5A)
+ *
+ * The founders' review was that the strip read as sparse rather than
+ * deliberately minimal. A hairline rail now runs behind the nodes, joining
+ * them into one timeline instead of seven loose circles.
+ *
+ * **It is calendar structure, not progress.** It is one neutral weight from
+ * end to end: it does not fill as days are taken, it does not stop at today,
+ * and it carries no proportion of anything. The nodes remain the only thing
+ * that means a state. Each node paints over the rail with the screen's own
+ * background so the line is interrupted rather than drawn through an open
+ * circle.
+ *
+ * **Today is marked, and marked apart from status.** A short violet underline
+ * sits beneath the date — never a ring, and never on the node. A ring was
+ * tried first and failed on device for the case that matters: on a day the
+ * schedule does not cover there is no node to encircle, so the halo became
+ * the only circle in the cell and read as a state of its own. An underline
+ * cannot be mistaken for a node, works identically whether or not the day is
+ * scheduled, and leaves *today* and *what happened* as the two separate facts
+ * they are.
  */
 export function RoutineDayStrip({ days, selected, today, onSelectDay }: Props) {
   const { surfaces } = useTheme();
+  const { fontScale } = useWindowDimensions();
+
+  /* Grows with the text so the mark inside is never cropped — see the month
+     grid, where a fixed node clipped its own glyph at an accessibility size. */
+  const nodeSize = Math.round(30 * Math.min(Math.max(fontScale, 1), 2));
 
   return (
     <View style={styles.row}>
-      {days.map((day) => {
+      {days.map((day, index) => {
         const date = fromLogDate(day.logDate);
         const weekday = WEEKDAY_INITIALS[date.getDay()];
         const taken = day.mark === 'taken';
@@ -82,6 +109,9 @@ export function RoutineDayStrip({ days, selected, today, onSelectDay }: Props) {
           : skipped
             ? palette.routineSkipped
             : surfaces.textTertiary;
+
+        const firstCell = index === 0;
+        const lastCell = index === days.length - 1;
 
         return (
           <Pressable
@@ -105,26 +135,64 @@ export function RoutineDayStrip({ days, selected, today, onSelectDay }: Props) {
             <Text style={[styles.weekday, { color: surfaces.textTertiary }]}>{weekday}</Text>
             {/* Today is marked by weight, not by the status palette — using
                 the taken colour here would say something was recorded. */}
-            <Text
-              style={[
-                isToday ? styles.dateToday : styles.date,
-                { color: isToday ? surfaces.text : surfaces.textSecondary },
-              ]}
-            >
-              {date.getDate()}
-            </Text>
-            <View
-              style={[
-                styles.dot,
-                {
-                  borderColor: scheduled ? ring : 'transparent',
-                  backgroundColor: fill,
-                },
-              ]}
-            >
-              <Text style={[styles.glyph, { color: glyphColor }]}>
-                {routineDayMarkSymbol(day.mark)}
+            <View style={styles.dateBlock}>
+              <Text
+                style={[
+                  isToday ? styles.dateToday : styles.date,
+                  { color: isToday ? surfaces.text : surfaces.textSecondary },
+                ]}
+              >
+                {date.getDate()}
               </Text>
+              {isToday ? (
+                <View style={[styles.todayRule, { backgroundColor: palette.peptide }]} />
+              ) : null}
+            </View>
+            {/*
+              * The rail passes through this cell behind the node. Two halves
+              * rather than one line across the strip, so it needs no
+              * measurement and survives any text size — the outer halves are
+              * dropped on the first and last cells so the timeline starts and
+              * ends at a node.
+              */}
+            <View style={styles.nodeRow}>
+              <View
+                style={[
+                  styles.rail,
+                  { backgroundColor: firstCell ? 'transparent' : surfaces.border },
+                ]}
+              />
+
+              <View style={styles.nodeSlot}>
+                <View
+                  style={[
+                    styles.dot,
+                    {
+                      width: nodeSize,
+                      height: nodeSize,
+                      borderRadius: nodeSize / 2,
+                      borderColor: scheduled ? ring : 'transparent',
+                      // Opaque, so the rail is interrupted by the node rather
+                      // than drawn through it.
+                      backgroundColor: surfaces.background,
+                    },
+                  ]}
+                >
+                  {fill !== 'transparent' ? (
+                    <View style={[styles.dotFill, { backgroundColor: fill }]} />
+                  ) : null}
+                  <Text style={[styles.glyph, { color: glyphColor }]}>
+                    {routineDayMarkSymbol(day.mark)}
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={[
+                  styles.rail,
+                  { backgroundColor: lastCell ? 'transparent' : surfaces.border },
+                ]}
+              />
             </View>
           </Pressable>
         );
@@ -136,18 +204,44 @@ export function RoutineDayStrip({ days, selected, today, onSelectDay }: Props) {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
+    /* No gap: the rail halves in adjacent cells have to meet, or the
+       timeline reads as seven dashes. The cells carry their own breathing
+       room instead. */
     justifyContent: 'space-between',
-    gap: spacing.xs,
   },
   cell: {
     flex: 1,
     alignItems: 'center',
-    gap: 3,
-    paddingVertical: spacing.s,
-    minHeight: 72,
+    gap: 2,
+    paddingVertical: spacing.xs,
+    // A minimum, never a height — the labels grow with the system text size.
+    minHeight: 64,
     borderRadius: radii.control,
     borderWidth: 1,
     borderColor: 'transparent',
+  },
+  nodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    marginTop: 1,
+  },
+  rail: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  nodeSlot: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateBlock: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  todayRule: {
+    width: 12,
+    height: 2,
+    borderRadius: 1,
   },
   weekday: {
     ...typography.micro,
@@ -160,12 +254,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dot: {
-    width: 26,
-    height: 26,
-    borderRadius: radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
+    // +4 on 5.5's 26 — more presence and an easier target, still a node
+    // rather than a button. Size is applied inline: it tracks the text scale.
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  dotFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   glyph: {
     ...typography.caption,

@@ -11,6 +11,7 @@ import { RoutineSiteContext } from '../../../../features/peptides/components/Rou
 import { RoutineToday } from '../../../../features/peptides/components/RoutineToday';
 import { TakenSheet } from '../../../../features/peptides/components/TakenSheet';
 import { WeekSelector } from '../../../../features/peptides/components/WeekSelector';
+import { markForDay } from '../../../../features/peptides/month';
 import { siteLogsForWeek, weekOf } from '../../../../features/peptides/week';
 import {
   formatLogDateWithYear,
@@ -21,11 +22,9 @@ import { vitaHaptic } from '../../../../lib/haptics';
 import {
   formatMass,
   formatMcg,
-  routineDayMark,
   routineStateLabel,
   usePeptideContext,
   useResolvedSetup,
-  useRoutineWeek,
 } from '../../../../lib/peptides';
 import { palette, spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
@@ -70,6 +69,7 @@ export default function RoutineDetail() {
   const resolved = useResolvedSetup(setupId);
   const {
     today,
+    routineStatuses,
     logsForSetup,
     markTaken,
     markSkipped,
@@ -86,9 +86,28 @@ export default function RoutineDetail() {
   const [taking, setTaking] = useState<LogDate | null>(null);
   const [openDay, setOpenDay] = useState<StripDay | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
-  const strip = useRoutineWeek(resolved?.setup, weekOffset);
-
   const weekDays = useMemo(() => weekOf(today, weekOffset), [today, weekOffset]);
+
+  /**
+   * The week's marks, from the same function the month grid uses.
+   *
+   * `useRoutineWeek` did this before and still does it correctly for the
+   * schedule — but it does not guard the routine's **start date** for `daily`
+   * or `daysOfWeek` schedules, so a routine begun in August reported every
+   * earlier day as unanswered. That was invisible while only one week showed;
+   * a month view makes it a page of asserted failures. `markForDay` adds that
+   * one guard, and using it here is what stops the two views disagreeing.
+   */
+  const strip = useMemo(
+    () =>
+      resolved
+        ? weekDays.map((logDate) => ({
+            logDate,
+            mark: markForDay(resolved.setup, routineStatuses, logDate),
+          }))
+        : [],
+    [resolved, routineStatuses, weekDays],
+  );
 
   const logs = resolved ? logsForSetup(resolved.setup.id) : [];
 
@@ -124,12 +143,7 @@ export default function RoutineDetail() {
 
   const { setup, name, scheduleLabel } = resolved;
   const status = routineStatusFor(setup.id, today);
-  const mark = routineDayMark({
-    schedule: setup.schedule,
-    startDate: setup.startDate,
-    logDate: today,
-    status,
-  });
+  const mark = markForDay(setup, routineStatuses, today);
   const linked = status?.linkedLogId
     ? logs.find((entry) => entry.id === status.linkedLogId)
     : undefined;
@@ -227,7 +241,25 @@ export default function RoutineDetail() {
         */}
       {setup.schedule ? (
         <View style={styles.week}>
-          <WeekSelector days={weekDays} offset={weekOffset} onChange={setWeekOffset} />
+          <WeekSelector
+            days={weekDays}
+            offset={weekOffset}
+            onChange={setWeekOffset}
+            /* One quiet way into the month, attached to the week header
+               rather than competing with it as a second call to action. */
+            action={
+              <PressableScale
+                onPress={() => router.push(`/peptides/routine/${encodeURIComponent(setup.id)}/month`)}
+                hitSlop={8}
+                accessibilityLabel="Monthly activity"
+                accessibilityHint="Opens this routine's month by month history"
+                style={styles.monthLink}
+              >
+                <Text style={[styles.monthLinkLabel, { color: palette.peptide }]}>Month</Text>
+                <Ionicons name="chevron-forward" size={13} color={palette.peptide} />
+              </PressableScale>
+            }
+          />
           <RoutineDayStrip
             days={strip}
             selected={openDay?.logDate}
@@ -419,7 +451,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   week: {
-    gap: spacing.m,
+    // Tightened from `spacing.m` — the founders' note was that the strip had
+    // a little too much air above it.
+    gap: spacing.s,
+  },
+  monthLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1,
+    paddingVertical: spacing.xs,
+    paddingLeft: spacing.s,
+  },
+  monthLinkLabel: {
+    ...typography.captionMedium,
+    fontSize: 14.5,
+    fontWeight: '600',
   },
   summaryRow: {
     flexDirection: 'row',

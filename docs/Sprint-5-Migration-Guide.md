@@ -208,6 +208,16 @@ Needed and not yet present: a range selector over site history — something lik
 - **Dynamic Type is platform behaviour, not a second design.** One layout per screen; no large-text variants; no `allowFontScaling={false}`; no VITA text-size setting. Large-text screenshots are QA, not implementations.
 - **`flex` on `PressableScale` still does not reach its parent row.** Hit a **sixth** time, and this one shipped a visible defect — a section header that rendered as a bare chevron. **5.7 should fix the primitive.**
 
+**Patterns 5.5A added:**
+
+- **A rail is structure, not progress.** A line joining status nodes must be one weight end to end. The moment it fills, stops at today, or changes colour, it has become a completion bar and the screen is scoring the user.
+- **Mark "today" with something that cannot be a state.** A ring around a node fails wherever there is no node to encircle — it becomes the only circle in the cell and reads as a status. An underline cannot.
+- **An unscheduled day and an unanswered day must not share a treatment.** *No response* means the routine asked; a day the schedule never covered asked nothing. Drawing anything at all for the second is a claim. This is the rule that makes as-needed routines correct.
+- **One function per fact, shared by every view of it.** `markForDay` decides a day's state for both the week strip and the month grid, so they cannot disagree. Two views computing the same thing independently is how they drift.
+- **Count only what has happened.** A scheduled day still to come belongs on the calendar and not in the summary — counting the rest of the month turns a plan into an accusation.
+- **Stop navigating where knowledge stops.** The provider holds a bounded window; rendering months before it would draw unanswered days nobody failed to answer. A disabled arrow with a line of copy is more honest than an empty grid.
+- **A fixed-size node crops its own glyph at accessibility text sizes.** Scale the container with `fontScale` rather than reaching for `allowFontScaling={false}`.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

@@ -39,10 +39,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Peptides from '../../../app/(vita)/peptides/index';
 import RoutineDetail from '../../../app/(vita)/peptides/routine/[id]';
+import MonthlyActivity from '../../../app/(vita)/peptides/routine/[id]/month';
 import EditPeptideSetup from '../../../app/(vita)/peptides/setup/[id]';
 import InjectionSites from '../../../app/(vita)/tools/injection-sites';
 import { ToastProvider } from '../../../components/ui';
-import { shiftLogDate, todayLogDate, weekdayInitial, type LogDate } from '../../../lib/daily';
+import {
+  fromLogDate,
+  shiftLogDate,
+  todayLogDate,
+  weekdayInitial,
+  type LogDate,
+} from '../../../lib/daily';
 import type { PeptideRepository } from '../../../lib/peptides/data/PeptideRepository';
 import {
   PeptideProvider,
@@ -730,3 +737,283 @@ describe('cross-feature reactivity', () => {
     expect(control(tree, 'Mark Retatrutide as skipped')).toBeUndefined();
   });
 });
+
+/* ── the weekly timeline (5.5A) ─────────────────────────────────────────── */
+
+describe('the week timeline', () => {
+  it('offers one quiet way into the month, from the week header', async () => {
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+
+    const month = control(tree, 'Monthly activity')!;
+    expect(month).toBeDefined();
+    await act(async () => month.props.onPress());
+    expect(mockPush).toHaveBeenCalledWith('/peptides/routine/setup-1/month');
+  });
+
+  it('keeps every day a real button, Monday to Sunday', async () => {
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+
+    const cells = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /, (scheduled|not scheduled), /.test(String(node.props?.accessibilityLabel ?? '')),
+    );
+    const labels = [...new Set(cells.map((node) => String(node.props.accessibilityLabel)))];
+    expect(labels).toHaveLength(7);
+    expect(labels[0]).toMatch(/^Monday, /);
+    expect(labels[6]).toMatch(/^Sunday, /);
+  });
+
+  it('marks today without claiming anything was recorded', async () => {
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+    const todayCell = tree.root
+      .findAll(
+        (node) =>
+          typeof node.props?.onPress === 'function' &&
+          String(node.props?.accessibilityLabel ?? '').includes(', today,'),
+      )
+      .map((node) => String(node.props.accessibilityLabel))[0];
+
+    expect(todayCell).toBeDefined();
+    // Today and state are separate facts; the halo says one, the node says
+    // the other.
+    expect(todayCell).toContain('no response');
+  });
+});
+
+/* ── monthly activity (5.5A) ────────────────────────────────────────────── */
+
+describe('monthly activity', () => {
+  const thisMonthLabel = () => {
+    const now = fromLogDate(TODAY);
+    return `${
+      [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+      ][now.getMonth()]
+    } ${now.getFullYear()}`;
+  };
+
+  it('opens on the current month, named the way people say it', async () => {
+    const tree = await mount(<MonthlyActivity />, repositoryWith([setupFixture()]).repository);
+
+    expect(screen(tree)).toContain('Monthly activity');
+    expect(screen(tree)).toContain(thisMonthLabel());
+    expect(screen(tree)).toContain('Retatrutide');
+    // Monday-first, matching the week strip.
+    expect(texts(tree).slice(0, 14).join('')).toContain('MTWTFSS');
+  });
+
+  it('offers no month that has not happened', async () => {
+    const tree = await mount(<MonthlyActivity />, repositoryWith([setupFixture()]).repository);
+    expect(control(tree, 'Next month')!.props.disabled).toBe(true);
+  });
+
+  it('steps back to a month the provider actually holds', async () => {
+    const lastMonth = shiftLogDate(TODAY, -35);
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture()], [], [statusFixture('taken', lastMonth)]).repository,
+    );
+
+    expect(control(tree, 'Previous month')!.props.disabled).toBe(false);
+    await press(tree, 'Previous month');
+    expect(screen(tree)).not.toContain(thisMonthLabel());
+    expect(control(tree, 'Next month')!.props.disabled).toBe(false);
+  });
+
+  it('stops where its knowledge stops, and says so', async () => {
+    /*
+     * The provider keeps a bounded window warm. Rendering months before the
+     * oldest record it holds would draw unanswered days nobody failed to
+     * answer, so navigation stops instead.
+     */
+    const tree = await mount(<MonthlyActivity />, repositoryWith([setupFixture()]).repository);
+    expect(control(tree, 'Previous month')!.props.disabled).toBe(true);
+    expect(screen(tree)).toContain('Earlier months aren’t available');
+  });
+
+  it('counts three states, with no score of any kind', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith(
+        [setupFixture()],
+        [],
+        [
+          statusFixture('taken', TODAY),
+          statusFixture('skipped', shiftLogDate(TODAY, -1)),
+        ],
+      ).repository,
+    );
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('Taken');
+    expect(rendered).toContain('Skipped');
+    expect(rendered).toContain('No response');
+
+    expect(rendered).not.toMatch(/\d+%/);
+    for (const word of ['adherence', 'compliance', 'streak', 'average', 'score', 'goal', 'great']) {
+      expect(rendered.toLowerCase()).not.toContain(word);
+    }
+  });
+
+  it('speaks the summary as a sentence', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture()], [], [statusFixture('taken', TODAY)]).repository,
+    );
+
+    const spoken = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .map((node) => String(node.props.accessibilityLabel));
+    expect(spoken.some((label) => /: \d+ taken, \d+ skipped, \d+ no response$/.test(label))).toBe(true);
+  });
+
+  it('names every day it shows, including the ones it is not asking about', async () => {
+    const notToday = (fromLogDate(TODAY).getDay() + 3) % 7;
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture({ schedule: { kind: 'daysOfWeek', days: [notToday] } })])
+        .repository,
+    );
+
+    const spoken = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .map((node) => String(node.props.accessibilityLabel));
+
+    expect(spoken.some((label) => /, not scheduled$/.test(label))).toBe(true);
+    expect(spoken.some((label) => /, no response$/.test(label))).toBe(true);
+    // Never colour or a glyph alone.
+    expect(spoken.some((label) => /^\w+day, /.test(label))).toBe(true);
+  });
+
+  it('leaves an as-needed month blank rather than unanswered', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith([setupFixture({ schedule: { kind: 'asNeeded' } })]).repository,
+    );
+
+    const spoken = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .map((node) => String(node.props.accessibilityLabel));
+
+    expect(spoken.some((label) => /, no response$/.test(label))).toBe(false);
+    expect(screen(tree)).toContain('No routine activity this month');
+  });
+
+  it('opens the one log recorded on a day', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith(
+        [setupFixture()],
+        [logFixture({ id: 'l1', logDate: TODAY })],
+        [statusFixture('taken', TODAY)],
+      ).repository,
+    );
+
+    await press(tree, new RegExp(`^${fromLogDate(TODAY).toLocaleString('en-US', { weekday: 'long' })}, .*today, taken$`));
+    expect(mockPush).toHaveBeenCalledWith('/peptides/log/l1');
+  });
+
+  it('sends a day with several logs to the full history', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith(
+        [setupFixture()],
+        [
+          logFixture({ id: 'l1', logDate: TODAY }),
+          logFixture({ id: 'l2', logDate: TODAY, loggedAt: `${TODAY}T18:00:00.000Z` }),
+        ],
+        [statusFixture('taken', TODAY)],
+      ).repository,
+    );
+
+    await press(tree, new RegExp(`^${fromLogDate(TODAY).toLocaleString('en-US', { weekday: 'long' })}, .*today, taken$`));
+    expect(mockPush).toHaveBeenCalledWith('/peptides/setup/setup-1/history');
+  });
+
+  it('keeps history for a paused routine', async () => {
+    const tree = await mount(
+      <MonthlyActivity />,
+      repositoryWith(
+        [setupFixture({ routineState: 'inactive', active: false })],
+        [],
+        [statusFixture('taken', TODAY)],
+      ).repository,
+    );
+    // Pausing changes what happens next, never what already happened.
+    expect(screen(tree)).toContain(thisMonthLabel());
+    expect(screen(tree)).toContain('Taken');
+  });
+
+  it('never switches font scaling off', async () => {
+    mockFontScale = 1.9;
+    const tree = await mount(<MonthlyActivity />, repositoryWith([setupFixture()]).repository);
+    const copy = tree.root.findAllByType(Text).filter((node) => {
+      const style = Object.assign({}, ...[node.props.style].flat(2).filter(Boolean));
+      return style.fontFamily !== 'ionicons';
+    });
+    expect(copy.length).toBeGreaterThan(10);
+    for (const node of copy) expect(node.props.allowFontScaling).not.toBe(false);
+  });
+});
+
+/* ── the week and the month must agree (§42) ────────────────────────────── */
+
+describe('week and month consistency', () => {
+  it.each([
+    ['taken' as const],
+    ['skipped' as const],
+  ])('reports a %s day the same way in both views', async (state) => {
+    const fake = repositoryWith([setupFixture()], [], [statusFixture(state, TODAY)]);
+
+    const week = await mount(<RoutineDetail />, fake.repository);
+    const weekLabel = tree_label(week);
+    await act(async () => week.unmount());
+    mounted = null;
+
+    const month = await mount(<MonthlyActivity />, fake.repository);
+    const monthLabelText = tree_label(month);
+
+    expect(weekLabel).toContain(state);
+    expect(monthLabelText).toContain(state);
+  });
+
+  it('agrees that an unscheduled day is unscheduled in both', async () => {
+    const notToday = (fromLogDate(TODAY).getDay() + 3) % 7;
+    const fake = repositoryWith([
+      setupFixture({ schedule: { kind: 'daysOfWeek', days: [notToday] } }),
+    ]);
+
+    const week = await mount(<RoutineDetail />, fake.repository);
+    expect(tree_label(week)).toContain('not scheduled');
+    await act(async () => week.unmount());
+    mounted = null;
+
+    const month = await mount(<MonthlyActivity />, fake.repository);
+    expect(tree_label(month)).toContain('not scheduled');
+  });
+
+  it('agrees that a day before the routine started belongs to neither view', async () => {
+    // The guard `markForDay` adds, checked on both surfaces at once.
+    const started = shiftLogDate(TODAY, -1);
+    const fake = repositoryWith([setupFixture({ startDate: started })]);
+
+    const week = await mount(<RoutineDetail />, fake.repository);
+    const weekLabels = tree_label(week);
+    expect(weekLabels).toContain('not scheduled');
+    await act(async () => week.unmount());
+    mounted = null;
+
+    const month = await mount(<MonthlyActivity />, fake.repository);
+    expect(tree_label(month)).toContain('not scheduled');
+  });
+});
+
+/** Every spoken label on a screen, joined — for comparing two surfaces. */
+function tree_label(tree: ReactTestRenderer): string {
+  return tree.root
+    .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+    .map((node) => String(node.props.accessibilityLabel))
+    .join(' | ');
+}
