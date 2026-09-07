@@ -2049,7 +2049,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | ✅ Accepted subpass of 5.5 |
 | 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | ✅ Accepted subpass of 5.5 |
 | 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
-| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ **NEXT** — not started |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ **NEXT** — audited 2026-09-07, awaiting founder design direction. See `docs/Sprint-5-Fuel-Identity-Audit.md` |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2330,6 +2330,22 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6 — Fuel Identity Refresh ⬜
+
+**Audited 2026-09-07. Awaiting founder design direction — not started, no code written.** The full audit is `docs/Sprint-5-Fuel-Identity-Audit.md`.
+
+**Three findings decide the slice.**
+
+**Fuel presents invented goals as the user's own.** `DEFAULT_TARGETS` — 2,000 kcal, 160 g protein, 214 g carbs, 64 g fat — is hardcoded, and `updateTargets` has **no callers anywhere in `src/`**; there is no goals editor. So a new user is told they have `2000 Calories remaining` and a `Protein Goal` of 160 g against numbers VITA chose. `FuelSummaryCard`'s docstring claims these are "the user's own configured targets", which is not true and cannot currently be made true. Same class of defect 5.3 removed from Dashboard and 5.2 settled in Water. **A founder ruling is needed before implementation** — it is a product decision before a design one.
+
+**Fuel has no tests.** Of 64 suites, none covers `lib/nutrition`, `features/fuel`, or any `/fuel/*` route; two merely mount `NutritionProvider` while testing other features. The provider, both external adapters, dedupe, ranking, the cache, the repository, and all nine routes are uncovered — about 6,990 lines. This is the largest risk in 5.6, and the reason the proposed breakdown puts a characterization pass first.
+
+**The distinctive asset is already in the codebase.** `foodVisual.ts` and `foodArt.ts` — a three-tier resolver over fourteen hand-drawn category illustrations, with a written rule that *generic is preferable to wrong* — are currently used at 40–64 pt inside list rows, while the subject of Fuel Home is a calorie ring and three macro bars. The recommendation is to make that artwork the subject: **the Day Strip**, the day's foods placed in time order along a hairline rail, with a slim macro-composition line beneath it. It needs no goal to be meaningful, which dissolves the targets problem rather than restyling it.
+
+**Architecture is a strength and stays.** The repository seam, the normalized `VitaFood`, denormalized log entries, derived-not-stored totals, meal grouping with `?meal=` threaded through every route, parallel search with isolated per-provider failure, OFF-first barcode ordering, offline favourites, and undo on delete are all sound. **USDA is live, not deferred** — any doc saying otherwise is stale.
+
+**Six founder decisions are listed in §AA of the audit**, the blocking one being how goals should work.
 
 ### Slice 5.5 — closed ✅
 
