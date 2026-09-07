@@ -1,7 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Button, Card, Screen, ScreenHeader, SectionHeader, TextField } from '../../../components/ui';
+import {
+  Button,
+  Card,
+  NumericField,
+  Screen,
+  ScreenHeader,
+  SectionHeader,
+  TextField,
+} from '../../../components/ui';
 import { createCustomFood, parseMealSlot, useNutrition, type NutritionFacts } from '../../../lib/nutrition';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -129,10 +137,9 @@ export default function AddFoodManually() {
 
       <View style={styles.row}>
         <View style={styles.grow}>
-          <TextField
+          <NumericField
             label="Serving Size"
             placeholder="1"
-            keyboardType="decimal-pad"
             value={servingSize}
             onChangeText={setServingSize}
           />
@@ -144,37 +151,33 @@ export default function AddFoodManually() {
 
       <SectionHeader title="Nutrition per serving" />
       <Card style={styles.nutritionCard}>
-        <TextField
+        <NumericField
           label="Calories"
           placeholder="0"
-          keyboardType="decimal-pad"
           value={calories}
           onChangeText={setCalories}
         />
         <View style={styles.row}>
           <View style={styles.grow}>
-            <TextField
+            <NumericField
               label="Protein (g)"
               placeholder="0"
-              keyboardType="decimal-pad"
               value={protein}
               onChangeText={setProtein}
             />
           </View>
           <View style={styles.grow}>
-            <TextField
+            <NumericField
               label="Carbs (g)"
               placeholder="0"
-              keyboardType="decimal-pad"
               value={carbs}
               onChangeText={setCarbs}
             />
           </View>
           <View style={styles.grow}>
-            <TextField
+            <NumericField
               label="Fat (g)"
               placeholder="0"
-              keyboardType="decimal-pad"
               value={fat}
               onChangeText={setFat}
             />
@@ -191,19 +194,17 @@ export default function AddFoodManually() {
           <View style={styles.moreFields}>
             <View style={styles.row}>
               <View style={styles.grow}>
-                <TextField
+                <NumericField
                   label="Sat. Fat (g)"
                   placeholder="—"
-                  keyboardType="decimal-pad"
                   value={saturatedFat}
                   onChangeText={setSaturatedFat}
                 />
               </View>
               <View style={styles.grow}>
-                <TextField
+                <NumericField
                   label="Fiber (g)"
                   placeholder="—"
-                  keyboardType="decimal-pad"
                   value={fiber}
                   onChangeText={setFiber}
                 />
@@ -211,19 +212,17 @@ export default function AddFoodManually() {
             </View>
             <View style={styles.row}>
               <View style={styles.grow}>
-                <TextField
+                <NumericField
                   label="Sugar (g)"
                   placeholder="—"
-                  keyboardType="decimal-pad"
                   value={sugar}
                   onChangeText={setSugar}
                 />
               </View>
               <View style={styles.grow}>
-                <TextField
+                <NumericField
                   label="Sodium (mg)"
                   placeholder="—"
-                  keyboardType="decimal-pad"
                   value={sodium}
                   onChangeText={setSodium}
                 />

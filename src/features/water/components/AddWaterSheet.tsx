@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import {
   NumericField,
-  NumericKeyboardAccessory,
   PressableScale,
   VitaSheet,
 } from '../../../components/ui';
@@ -77,8 +76,8 @@ type Props = {
  * iOS's decimal pad has no return key, so a focused amount field can leave
  * someone with no obvious way to put the keyboard away — founder device QA
  * found exactly that here, and had found it once before on the peptide
- * calculator, which is why `NumericKeyboardAccessory` already existed to
- * reuse.
+ * calculator. Since 5.5C the Done bar is part of `NumericField`, so this
+ * sheet declares nothing for it and cannot forget to.
  *
  * **Done dismisses the keyboard and nothing else.** It does not save, and the
  * amount and the chosen logging unit both survive it. `Log` remains the only
@@ -238,7 +237,6 @@ export function AddWaterSheet({ visible, preferredUnit, onClose, onLog }: Props)
         * hydration sheet, and a Done key is keyboard chrome that has not
         * earned a feature colour.
         */}
-      {showCustom ? <NumericKeyboardAccessory tone="neutral" /> : null}
     </VitaSheet>
   );
 }

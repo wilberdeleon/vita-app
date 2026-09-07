@@ -17,7 +17,6 @@ import { fromLogDate, shiftLogDate, toLogDate, type LogDate } from '../../lib/da
 import {
   routineDayMark,
   statusFor,
-  type PeptideLogEntry,
   type PeptideSetup,
   type RoutineDayMark,
   type RoutineDayStatus,
@@ -178,35 +177,6 @@ export function countMonth(
   }
 
   return counts;
-}
-
-/**
- * The earliest month this screen can speak about honestly.
- *
- * The provider keeps a bounded window of recent history warm — the most
- * recent day-keys that actually hold records. Everything from the oldest
- * loaded record forward is complete: a day with no record in that range
- * genuinely has no record. **Before it, nothing is known**, and a calendar
- * that rendered those days as *No response* would be inventing an answer the
- * user never failed to give.
- *
- * So navigation stops there. A routine with nothing recorded can only show
- * the current month, which is the whole truth about it.
- */
-export function earliestKnownMonth(
-  statuses: readonly RoutineDayStatus[],
-  logs: readonly PeptideLogEntry[],
-  setupId: string,
-  today: LogDate,
-): MonthKey {
-  const days = [
-    ...statuses.filter((status) => status.setupId === setupId).map((status) => status.logDate),
-    ...logs.filter((entry) => entry.setupId === setupId).map((entry) => entry.logDate),
-  ];
-  if (days.length === 0) return monthOf(today);
-
-  // ISO dates sort lexicographically, so this is a real date comparison.
-  return monthOf(days.reduce((oldest, day) => (day < oldest ? day : oldest)));
 }
 
 /** The seven days of the week containing `logDate`, Monday first. */

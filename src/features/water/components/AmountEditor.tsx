@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Chip, SectionHeader, TextField } from '../../../components/ui';
+import { Chip, NumericField, SectionHeader } from '../../../components/ui';
 import { formatEntered, parseAmount, unitName, type VolumeUnit } from '../../../lib/water';
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -110,10 +110,9 @@ export function AmountEditor({ initial, onChange }: Props) {
       </View>
 
       <SectionHeader title="Custom amount" />
-      <TextField
+      <NumericField
         label={`Amount in ${unitName(unit)}`}
         placeholder={`Enter ${unitName(unit)}`}
-        keyboardType="decimal-pad"
         value={custom}
         onChangeText={typeCustom}
         accessibilityLabel={`Custom amount in ${unitName(unit)}`}

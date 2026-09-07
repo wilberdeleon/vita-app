@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale, Screen, ScreenHeader, useToast } from '../../../components/ui';
+import { ActivityLink } from '../../../features/peptides/components/ActivityLink';
 import { NeedsSetupNotice } from '../../../features/peptides/components/NeedsSetupNotice';
 import { RoutineList } from '../../../features/peptides/components/RoutineList';
 import { TakenSheet } from '../../../features/peptides/components/TakenSheet';
@@ -215,6 +216,16 @@ export default function Peptides() {
       />
 
       <RoutineList active={peptides.active} inactive={peptides.inactive} onOpen={openRoutine} />
+
+      {/*
+        * One destination, added in 5.5C — the month across every routine.
+        *
+        * Home answers "what is scheduled today, and what can I do about it".
+        * It had no answer at all to "what did I actually do in July", which
+        * with two routines meant visiting two calendars. Today stays the
+        * hero; this sits after the routines, as a row rather than a card.
+        */}
+      {hasRoutines ? <ActivityLink onPress={() => router.push('/peptides/activity')} /> : null}
 
       {taking ? (
         <TakenSheet

@@ -720,7 +720,9 @@ describe('injection sites', () => {
     await pressByLabel(tree, 'Select injection site');
     await pressByLabel(tree, 'Other / Custom');
     await type(tree, /^Custom injection site name/, 'Left Hip');
-    await press(tree, 'Done');
+    // By its spoken label: since 5.5C every numeric field carries its own
+    // keyboard bar, whose key is also visibly "Done".
+    await pressByLabel(tree, 'Use this site name');
     await press(tree, 'Save log');
 
     // Never rewritten to "Other".
@@ -1520,8 +1522,13 @@ describe('changing a setup never rewrites what was already recorded', () => {
     // 5.5 collapses Preparation for a configured routine; the conversion is
     // unchanged, and still derived from the live vial fields.
     await expand(tree, /^Preparation/);
-    // 20 mg in 1 mL is 20 mg/mL, so one milligram is now five units.
+    // 20 mg in 1 mL is 20 mg/mL, so one milligram is now five units — and
+    // since 5.5C that headline is the calculator's collapsed summary, which
+    // means the new relationship is legible without opening anything.
     expect(screen(tree)).toContain('1 mg = 5 units');
+
+    // The full table, one tap further in, agrees with it.
+    await expand(tree, /^Unit conversion calculator/);
     expect(screen(tree)).toContain('Concentration · 20 mg/mL');
   });
 });

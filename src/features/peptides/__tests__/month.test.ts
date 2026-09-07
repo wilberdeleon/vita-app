@@ -23,7 +23,6 @@ import {
   countMonth,
   dateRangeLabel,
   daysInMonth,
-  earliestKnownMonth,
   isSameMonth,
   markForDay,
   monthGrid,
@@ -296,28 +295,6 @@ describe('the month summary', () => {
       skipped: 0,
       noResponse: 0,
     });
-  });
-});
-
-/* ── how far back it can honestly go ────────────────────────────────────── */
-
-describe('the earliest month it can speak about', () => {
-  const today = '2026-09-05' as LogDate;
-
-  it('is the current month when nothing has been recorded', () => {
-    // A calendar that scrolled back through months it knows nothing about
-    // would render invented unanswered days.
-    expect(earliestKnownMonth([], [], 'setup-1', today)).toEqual({ year: 2026, month: 8 });
-  });
-
-  it('reaches back to the oldest record the provider holds', () => {
-    const statuses = [status('2026-07-12' as LogDate, 'taken'), status('2026-08-02' as LogDate, 'taken')];
-    expect(earliestKnownMonth(statuses, [], 'setup-1', today)).toEqual({ year: 2026, month: 6 });
-  });
-
-  it('ignores another routine history', () => {
-    const other: RoutineDayStatus = { ...status('2026-05-01' as LogDate, 'taken'), setupId: 'other' };
-    expect(earliestKnownMonth([other], [], 'setup-1', today)).toEqual({ year: 2026, month: 8 });
   });
 });
 

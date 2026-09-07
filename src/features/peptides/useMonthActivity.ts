@@ -22,7 +22,7 @@ export type MonthActivity = {
 type CacheEntry = { statuses: RoutineDayStatus[]; logs: PeptideLogEntry[] };
 
 /**
- * One month of one routine's history, read on demand.
+ * One month of history for **every** routine, read on demand.
  *
  * ## Why this exists
  *
@@ -53,7 +53,7 @@ type CacheEntry = { statuses: RoutineDayStatus[]; logs: PeptideLogEntry[] };
  * error, never as a month with nothing in it. A calendar that drew a failed
  * read as an empty month would be inventing history.
  */
-export function useMonthActivity(setupId: string, month: MonthKey): MonthActivity {
+export function useMonthHistory(month: MonthKey): MonthActivity {
   const { readHistory, earliestHistoryDate, routineStatuses, logs: warmLogs } = usePeptideContext();
 
   const cache = useRef(new Map<string, CacheEntry>());
@@ -138,14 +138,36 @@ export function useMonthActivity(setupId: string, month: MonthKey): MonthActivit
 
   return useMemo(
     () => ({
-      statuses: (entry?.statuses ?? []).filter((status) => status.setupId === setupId),
-      logs: (entry?.logs ?? []).filter((log) => log.setupId === setupId),
+      statuses: entry?.statuses ?? [],
+      logs: entry?.logs ?? [],
       isLoading,
       error,
       retry,
       earliest,
     }),
-    [entry, setupId, isLoading, error, retry, earliest],
+    [entry, isLoading, error, retry, earliest],
+  );
+}
+
+/**
+ * One month of **one routine's** history — the same read, narrowed.
+ *
+ * Filtering here rather than in the read is deliberate. A month is one range
+ * of day keys whatever it is going to be used for, so the Peptides-level
+ * calendar and a single routine's calendar ask storage the identical
+ * question; splitting them would mean two caches, two loading states and two
+ * chances to disagree about what July says.
+ */
+export function useMonthActivity(setupId: string, month: MonthKey): MonthActivity {
+  const history = useMonthHistory(month);
+
+  return useMemo(
+    () => ({
+      ...history,
+      statuses: history.statuses.filter((status) => status.setupId === setupId),
+      logs: history.logs.filter((log) => log.setupId === setupId),
+    }),
+    [history, setupId],
   );
 }
 

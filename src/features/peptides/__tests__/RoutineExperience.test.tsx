@@ -855,9 +855,47 @@ describe('monthly activity', () => {
     expect(control(tree, 'Previous month')!.props.disabled).toBe(true);
   });
 
-  it('reaches a month far outside the provider’s warm window', async () => {
-    // The whole point of 5.5B: every day the user recorded is still on disk.
-    const longAgo = shiftLogDate(TODAY, -200);
+  /** The month label `days` ago, spelled the way the screen spells it. */
+  const monthLabelAgo = (days: number) => {
+    const date = fromLogDate(shiftLogDate(TODAY, -days));
+    return `${
+      [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+      ][date.getMonth()]
+    } ${date.getFullYear()}`;
+  };
+
+  /** Steps back until the arrow disables, and says where it stopped. */
+  async function stepBackToFloor(tree: ReactTestRenderer, limit = 24) {
+    let steps = 0;
+    for (; steps < limit; steps += 1) {
+      const back = control(tree, 'Previous month');
+      if (!back || back.props.disabled) break;
+      await act(async () => back.props.onPress());
+    }
+    return steps;
+  }
+
+  /*
+   * ── how far back it goes ──────────────────────────────────────────────
+   *
+   * §5 of the 5.5C authorization, written after the founder saw about two
+   * months on device. The investigation found no bug in the navigation
+   * floor — the scenarios they opened held two weeks of fixtures, so two
+   * months was the whole truth about them. What it *did* find was that the
+   * 5.5B regression asserted `toContain('Taken')` after stepping back, and
+   * the Month summary renders the word "Taken" on every month ever drawn.
+   * That test would have passed with navigation frozen on the current month.
+   *
+   * These assert the month actually reached, by name.
+   */
+  it.each([
+    ['two months', 60],
+    ['six months', 180],
+    ['a year', 365],
+  ])('reaches history %s old, and stops exactly there', async (_label, daysAgo) => {
+    const longAgo = shiftLogDate(TODAY, -daysAgo);
     const fake = repositoryWith(
       [setupFixture()],
       [logFixture({ id: 'old', logDate: longAgo })],
@@ -866,13 +904,70 @@ describe('monthly activity', () => {
     const tree = await mount(<MonthlyActivity />, fake.repository);
 
     expect(control(tree, 'Previous month')!.props.disabled).toBe(false);
-    // Step back to the month that holds it and read it out of storage.
-    for (let step = 0; step < 7; step += 1) {
-      const back = control(tree, 'Previous month')!;
-      if (back.props.disabled) break;
-      await act(async () => back.props.onPress());
+    await stepBackToFloor(tree);
+
+    // The month that holds the record, read out of storage rather than memory.
+    expect(screen(tree)).toContain(monthLabelAgo(daysAgo));
+    // And it is the floor: there is nothing older, so there is nowhere further.
+    expect(control(tree, 'Previous month')!.props.disabled).toBe(true);
+  });
+
+  it('bounds navigation by the data, not by a window of any size', async () => {
+    /*
+     * The claim 5.5B made and this checks: no 60-, 90-day or n-month limit
+     * survives anywhere. Sixteen months back is reachable in sixteen steps.
+     */
+    const longAgo = shiftLogDate(TODAY, -480);
+    const fake = repositoryWith(
+      [setupFixture()],
+      [],
+      [statusFixture('taken', longAgo)],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    const steps = await stepBackToFloor(tree, 40);
+    expect(steps).toBeGreaterThanOrEqual(15);
+    expect(screen(tree)).toContain(monthLabelAgo(480));
+  });
+
+  it('comes forward again after loading an old month', async () => {
+    const longAgo = shiftLogDate(TODAY, -200);
+    const fake = repositoryWith(
+      [setupFixture()],
+      [],
+      [statusFixture('taken', longAgo), statusFixture('skipped', shiftLogDate(TODAY, -1))],
+    );
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    await stepBackToFloor(tree);
+    expect(screen(tree)).toContain(monthLabelAgo(200));
+
+    for (let step = 0; step < 24; step += 1) {
+      const forward = control(tree, 'Next month');
+      if (!forward || forward.props.disabled) break;
+      await act(async () => forward.props.onPress());
     }
-    expect(screen(tree)).toContain('Taken');
+    // Back where it started, with the recent month intact rather than blank.
+    expect(screen(tree)).toContain(thisMonthLabel());
+    expect(screen(tree)).toContain('Skipped');
+  });
+
+  it('revisits a cached month without asking storage again', async () => {
+    const longAgo = shiftLogDate(TODAY, -70);
+    const fake = repositoryWith([setupFixture()], [], [statusFixture('taken', longAgo)]);
+    const reads = jest.spyOn(fake.repository, 'getRoutineStatusesInRange');
+    const tree = await mount(<MonthlyActivity />, fake.repository);
+
+    await act(async () => control(tree, 'Previous month')!.props.onPress());
+    await act(async () => control(tree, 'Previous month')!.props.onPress());
+    const afterFirstVisit = reads.mock.calls.length;
+
+    // Forward and back over ground already covered.
+    await act(async () => control(tree, 'Next month')!.props.onPress());
+    await act(async () => control(tree, 'Previous month')!.props.onPress());
+
+    expect(reads.mock.calls.length).toBe(afterFirstVisit);
+    reads.mockRestore();
   });
 
   it('counts three states, with no score of any kind', async () => {

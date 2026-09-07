@@ -23,6 +23,13 @@ type Props = {
   vialUnit: MassUnit;
   /** Graduation density. U-100 unless a setup says otherwise. */
   unitsPerMl?: number;
+  /**
+   * `false` when the surface around it already names the section — Routine
+   * Setup puts the whole calculator behind a disclosure called *Unit
+   * conversion calculator*, and a second heading immediately inside it says
+   * the same thing twice.
+   */
+  showHeading?: boolean;
 };
 
 /**
@@ -43,7 +50,13 @@ type Props = {
  * Regenerates on every render from the current vial values, so editing the
  * amount or the water updates it immediately, with no button to press.
  */
-export function UnitConversion({ vialAmountMcg, reconstitutionMl, vialUnit, unitsPerMl }: Props) {
+export function UnitConversion({
+  vialAmountMcg,
+  reconstitutionMl,
+  vialUnit,
+  unitsPerMl,
+  showHeading = true,
+}: Props) {
   const { surfaces } = useTheme();
 
   /**
@@ -97,7 +110,9 @@ export function UnitConversion({ vialAmountMcg, reconstitutionMl, vialUnit, unit
         * directly above it and belongs to them, so it is labelled at
         * field weight and sits inside the vial group.
         */}
-      <Text style={[styles.groupLabel, { color: surfaces.textSecondary }]}>Unit conversion</Text>
+      {showHeading ? (
+        <Text style={[styles.groupLabel, { color: surfaces.textSecondary }]}>Unit conversion</Text>
+      ) : null}
 
       {!reference.ok ? (
         <Text style={[styles.helper, { color: surfaces.textTertiary }]}>

@@ -33,7 +33,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-import { Keyboard, Text, TextInput } from 'react-native';
+import { InputAccessoryView, Keyboard, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import WaterGoalScreen from '../../../app/(vita)/water/goal';
@@ -723,6 +723,48 @@ describe('the daily goal', () => {
       .findAllByType(TextInput)
       .find((node) => /goal in/i.test(String(node.props.accessibilityLabel ?? '')));
     expect(field?.props.value).toBe('');
+  });
+
+  it('gives the number pad a way out (slice 5.5C)', async () => {
+    /*
+     * This field had a decimal pad and no accessory of any kind: the goal
+     * screen predates the Done bar and never opted into it, so the keyboard
+     * covered the Set goal button with no way to close it. It is the third
+     * screen founder QA found in that state, which is why 5.5C moved the bar
+     * into `NumericField` rather than patching a fourth.
+     */
+    const { repository } = fakeRepository();
+    const tree = await mount(<WaterGoalScreen />, repository);
+
+    const field = tree.root
+      .findAllByType(TextInput)
+      .find((node) => /goal in/i.test(String(node.props.accessibilityLabel ?? '')))!;
+    expect(field.props.keyboardType).toBe('decimal-pad');
+
+    const registered = tree.root
+      .findAllByType(InputAccessoryView)
+      .map((bar) => String(bar.props.nativeID));
+    expect(registered).toContain(String(field.props.inputAccessoryViewID));
+    expect(control(tree, 'Done, close the number pad')).toBeDefined();
+  });
+
+  it('dismisses the goal keyboard without saving a goal', async () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+    const { repository, stored } = fakeRepository();
+    const tree = await mount(<WaterGoalScreen />, repository);
+
+    await type(tree, /goal in/i, '2.5');
+    dismiss.mockClear();
+    await act(async () => control(tree, 'Done, close the number pad')!.props.onPress());
+
+    expect(dismiss).toHaveBeenCalled();
+    // Done closes a keyboard. Setting the goal stays the button's job.
+    expect(stored.goal()).toBeNull();
+    const field = tree.root
+      .findAllByType(TextInput)
+      .find((node) => /goal in/i.test(String(node.props.accessibilityLabel ?? '')));
+    expect(field?.props.value).toBe('2.5');
+    dismiss.mockRestore();
   });
 });
 

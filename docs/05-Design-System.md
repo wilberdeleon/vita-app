@@ -499,6 +499,25 @@ Anything a figure, map or chart says must **also** exist as text — reachable b
 
 **A visualization of history must not become a recommendation.** No colour scale of good and bad, no ordering, no "next", no rest periods. A mark means *this happened here*, and the vocabulary stops there.
 
+## 26 — The number pad always has a way out (slice 5.5C)
+
+**Every numeric input in VITA offers `Done` on iOS. This is input-system behaviour, not a screen's responsibility.**
+
+iOS's `decimal-pad` and `number-pad` have no return key, so a focused numeric field can leave someone with the keyboard covering both the value they just typed and the control that would save it. Founder device QA found exactly that three times across three slices — the peptide calculator in 5.2, the `TakenSheet` in 5.5, and the Water goal field in 5.5C — and each was patched at the screen where it was found.
+
+| | Rule |
+|---|---|
+| **How** | Use `NumericField`. It carries its own `InputAccessoryView`, one per field, under an id it generates. There is nothing to wire up |
+| **Never** | A screen does not render an accessory bar, and does not set a numeric `keyboardType` on a raw `TextInput`. A source-scanning test fails the build if it does |
+| **What Done does** | Dismisses the keyboard. It does **not** submit, save, advance to the next field, or alter the typed value — the form's own action stays the only thing that commits |
+| **Appearance** | Neutral text on the card surface. A Done key is keyboard chrome and has not earned a feature colour |
+| **Android** | Renders nothing. The platform's number pad has its own dismiss affordance |
+| **Naming** | Spoken as `Done, close the number pad`. Any other control on the same screen visibly labelled "Done" needs its own `accessibilityLabel` saying what it finishes |
+
+**Why one bar per field rather than one per screen.** `InputAccessoryView` is matched by `nativeID` **within the presented view hierarchy**, so a bar registered by the route underneath a modal never appears above that modal's keyboard. A field that carries its own accessory is in the right hierarchy by construction, and works identically in a route, a `VitaSheet`, and a bare RN `Modal`. iOS shows only the focused input's accessory, so the cost is one small unmounted view per field.
+
+**`numbers-and-punctuation` is not covered by this rule** — it is a full keyboard with a return key and needs no accessory.
+
 ---
 
 ## What this document still owes

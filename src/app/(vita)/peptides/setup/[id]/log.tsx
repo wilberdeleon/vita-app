@@ -4,7 +4,6 @@ import { StyleSheet, Text } from 'react-native';
 import {
   Button,
   EmptyState,
-  NumericKeyboardAccessory,
   Screen,
   ScreenHeader,
   useToast,
@@ -95,8 +94,6 @@ export default function LogPeptide() {
         disabled={!draft || saving}
         onPress={() => void save()}
       />
-
-      <NumericKeyboardAccessory />
     </Screen>
   );
 }

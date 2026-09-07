@@ -20,7 +20,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-import { Text, TextInput } from 'react-native';
+import { InputAccessoryView, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import StandalonePeptideCalculator from '../../../app/(vita)/tools/peptide-calculator';
@@ -96,10 +96,59 @@ function control(tree: ReactTestRenderer, label: string) {
     );
 }
 
-/** Types only the vial and the water — deliberately nothing else. */
+/** A routine that is already configured — 20 mg in 2 mL. */
+const savedSetup = () =>
+  ({
+    id: 'setup-1',
+    definitionId: 'catalog:retatrutide',
+    vial: { amountMcg: 20_000, authored: { amount: 20, unit: 'mg' } },
+    reconstitutionMl: 2,
+    preferredDoseUnit: 'mg',
+    preferredEntryMode: 'mass',
+    routineState: 'active',
+    active: true,
+    createdAt: '2026-08-25T10:00:00.000Z',
+    updatedAt: '2026-08-25T10:00:00.000Z',
+  }) as const;
+
+/**
+ * Answers the preparation question the way someone who mixes their own vial
+ * does. A no-op on surfaces that never ask it.
+ */
+async function chooseSetUpVial(tree: ReactTestRenderer) {
+  const option = tree.root
+    .findAll((node) => typeof node.props?.onPress === 'function')
+    .find((node) => /^Set up vial\./.test(String(node.props.accessibilityLabel ?? '')));
+  if (option) await act(async () => option.props.onPress());
+}
+
+/** Opens the collapsed calculator, if this surface keeps one collapsed. */
+async function openCalculator(tree: ReactTestRenderer) {
+  const calculator = tree.root
+    .findAll((node) => typeof node.props?.onPress === 'function')
+    .find((node) =>
+      /^Unit conversion calculator/.test(String(node.props.accessibilityLabel ?? '')),
+    );
+  if (calculator && calculator.props.accessibilityState?.expanded === false) {
+    await act(async () => calculator.props.onPress());
+  }
+}
+
+/**
+ * Reaches the vial fields the way a user does, then types only the vial and
+ * the water — deliberately nothing else.
+ *
+ * On the setup form that means answering the preparation question first
+ * (slice 5.5C), then opening the calculator, which is now collapsed behind a
+ * summary rather than filling the screen. The standalone tool has neither
+ * step, so both are conditional: what is under test is the conversion, not
+ * the route to it.
+ */
 async function enterVial(tree: ReactTestRenderer, vial: string, water: string) {
+  await chooseSetUpVial(tree);
   await type(tree, /^Vial amount/, vial);
   await type(tree, /reconstitution volume/i, water);
+  await openCalculator(tree);
 }
 
 /*
@@ -170,8 +219,8 @@ describe.each(SURFACES)('%s', (_name, render) => {
 
   it('asks for the vial before it has one, and nothing more', async () => {
     const tree = await render();
-    // A field-weight label under the vial, not a section header of its own.
-    expect(texts(tree)).toContain('Unit conversion');
+    await chooseSetUpVial(tree);
+    await openCalculator(tree);
     expect(texts(tree)).not.toContain('UNIT CONVERSION');
     expect(screen(tree)).toContain(
       'Enter vial amount and reconstitution volume to see the unit conversion.',
@@ -282,9 +331,19 @@ describe.each(SURFACES)('%s', (_name, render) => {
     const numeric = tree.root
       .findAllByType(TextInput)
       .filter((node) => node.props.keyboardType === 'decimal-pad');
+    expect(numeric.length).toBeGreaterThan(0);
 
+    /*
+     * The id is generated per field since 5.5C, so what matters is not what
+     * it says but that a bar is actually mounted under it. Asserting a
+     * hardcoded shared id would have passed happily on a screen whose bar
+     * nobody rendered — which is the bug this replaced.
+     */
+    const registered = new Set(
+      tree.root.findAllByType(InputAccessoryView).map((bar) => String(bar.props.nativeID)),
+    );
     for (const field of numeric) {
-      expect(field.props.inputAccessoryViewID).toBe('vita-numeric-done');
+      expect(registered.has(String(field.props.inputAccessoryViewID))).toBe(true);
     }
     expect(control(tree, 'Done')).toBeDefined();
   });
@@ -391,7 +450,11 @@ describe.each(SURFACES)('%s — custom conversion', (_name, render) => {
       .findAllByType(TextInput)
       .find((node) => /^Custom amount,/.test(String(node.props.accessibilityLabel ?? '')));
     expect(field?.props.keyboardType).toBe('decimal-pad');
-    expect(field?.props.inputAccessoryViewID).toBe('vita-numeric-done');
+
+    const registered = tree.root
+      .findAllByType(InputAccessoryView)
+      .map((bar) => String(bar.props.nativeID));
+    expect(registered).toContain(String(field?.props.inputAccessoryViewID));
   });
 });
 
@@ -413,6 +476,7 @@ describe.each(SURFACES)('%s — custom conversion', (_name, render) => {
 describe.each(SURFACES)('%s — the vial is milligrams, and only milligrams', (_name, render) => {
   it('labels the vial in uppercase MG', async () => {
     const tree = await render();
+    await chooseSetUpVial(tree);
     expect(screen(tree)).toContain('Vial Amount (MG)');
   });
 
@@ -429,6 +493,7 @@ describe.each(SURFACES)('%s — the vial is milligrams, and only milligrams', (_
 
   it('asks for the vial in milligrams for assistive technology too', async () => {
     const tree = await render();
+    await chooseSetUpVial(tree);
     const field = tree.root
       .findAllByType(TextInput)
       .find((node) => /^Vial amount/.test(String(node.props.accessibilityLabel ?? '')));
@@ -522,22 +587,7 @@ describe('the inline surface specifically', () => {
 
   it('reads a saved setup’s vial without any further input', async () => {
     const tree = await mount(
-      <SetupForm
-        mode="new"
-        initial={{
-          id: 'setup-1',
-          definitionId: 'catalog:retatrutide',
-          vial: { amountMcg: 20_000, authored: { amount: 20, unit: 'mg' } },
-          reconstitutionMl: 2,
-          preferredDoseUnit: 'mg',
-          preferredEntryMode: 'mass',
-          routineState: 'active',
-          active: true,
-          createdAt: '2026-08-25T10:00:00.000Z',
-          updatedAt: '2026-08-25T10:00:00.000Z',
-        }}
-        onChange={() => undefined}
-      />,
+      <SetupForm mode="new" initial={savedSetup()} onChange={() => undefined} />,
     );
 
     expect(screen(tree)).toContain('1 mg = 10 units');
@@ -557,28 +607,50 @@ describe('the inline surface specifically', () => {
     }
   });
 
-  it('sits inside the preparation group rather than beside it', async () => {
+  it('leads a new setup with Preparation, and an edit with Routine', async () => {
     /**
      * The hierarchy, asserted as a shape rather than as a screenshot.
      *
      * NAME went in 3.9 (a routine is named by its definition) and PREFERRED
      * UNIT in 3.9A. SCHEDULE, REMINDER and START DATE were demoted to field
      * labels in 3.10A: they are fields of the routine, not groups of their
-     * own. **Slice 5.5 removed the uppercase headers entirely** — the form is
-     * now Routine, then a disclosed *More options*, then a disclosed
-     * *Preparation* that the conversion lives inside.
+     * own. Slice 5.5 removed the uppercase headers entirely.
+     *
+     * **5.5C is where the two orders diverge**, on founder direction: setting
+     * a routine up for the first time is a sequence — prepare it, then track
+     * it — while editing a running one is not, and nobody opens an existing
+     * routine to reconsider how their vial arrives. Same fields, same
+     * validation, same emit; only the order and the framing differ.
      */
-    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
-    const shouting = texts(tree).filter(
+    const fresh = await mount(<SetupForm mode="new" onChange={() => undefined} />);
+    const shouting = texts(fresh).filter(
       (line) => line === line.toUpperCase() && /^[A-Z ]{3,}$/.test(line),
     );
     expect(shouting).toEqual([]);
 
+    const newOrder = texts(fresh);
+    expect(newOrder.indexOf('Preparation')).toBeLessThan(newOrder.indexOf('Routine'));
+    expect(newOrder.indexOf('Routine')).toBeLessThan(newOrder.indexOf('More options'));
+
+    const existing = await mount(
+      <SetupForm mode="edit" initial={savedSetup()} onChange={() => undefined} />,
+    );
+    const editOrder = texts(existing);
+    expect(editOrder.indexOf('Routine')).toBeLessThan(editOrder.indexOf('More options'));
+    expect(editOrder.indexOf('More options')).toBeLessThan(editOrder.indexOf('Preparation'));
+  });
+
+  it('keeps the calculator with the vial it derives from, in both orders', async () => {
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
+    await chooseSetUpVial(tree);
+
     const lines = texts(tree);
-    expect(lines.indexOf('Routine')).toBeLessThan(lines.indexOf('More options'));
-    expect(lines.indexOf('More options')).toBeLessThan(lines.indexOf('Preparation'));
-    // The conversion sits under Preparation, with the vial it derives from.
-    expect(lines.indexOf('Preparation')).toBeLessThan(lines.indexOf('Unit conversion'));
+    expect(lines.indexOf('Preparation')).toBeLessThan(lines.indexOf('Vial Amount (MG)'));
+    expect(lines.indexOf('Vial Amount (MG)')).toBeLessThan(
+      lines.indexOf('Unit conversion calculator'),
+    );
+    // And still above Routine, because Preparation leads a new setup.
+    expect(lines.indexOf('Unit conversion calculator')).toBeLessThan(lines.indexOf('Routine'));
   });
 
   it('keeps every routine control present, just no longer shouting', async () => {
@@ -586,15 +658,19 @@ describe('the inline surface specifically', () => {
     // 3.10A set, re-checked after 5.5 collapsed two of the groups.
     const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
 
-    // Visible on load: what people actually come here to change.
+    // Visible on load: the preparation question, and the routine fields
+    // people actually come here to change. Routine is never gated behind the
+    // question — answering it is optional, and so is preparation itself.
+    for (const label of ['Set up vial', 'Already prepared', 'Amount (MG)', 'Schedule', 'Reminder']) {
+      expect(screen(tree)).toContain(label);
+    }
+
+    // And nothing was dropped: choosing to prepare reveals the same fields.
+    await chooseSetUpVial(tree);
     for (const label of [
-      'Amount (MG)',
-      'Schedule',
-      'Reminder',
-      // Preparation is open for a routine that has never been configured.
       'Vial Amount (MG)',
       'Reconstitution Volume (ML)',
-      'Unit conversion',
+      'Unit conversion calculator',
     ]) {
       expect(screen(tree)).toContain(label);
     }
@@ -643,16 +719,19 @@ describe('the standalone surface specifically', () => {
 describe.each(SURFACES)('%s — asks in the product’s own words', (_name, render) => {
   it('names the vial in uppercase MG, as the founder specified', async () => {
     const tree = await render();
+    await chooseSetUpVial(tree);
     expect(screen(tree)).toContain('Vial Amount (MG)');
   });
 
   it('names the water as a volume, in uppercase ML', async () => {
     const tree = await render();
+    await chooseSetUpVial(tree);
     expect(screen(tree)).toContain('Reconstitution Volume (ML)');
   });
 
   it('puts the diluent in a helper line rather than in the label', async () => {
     const tree = await render();
+    await chooseSetUpVial(tree);
     const rendered = screen(tree);
     expect(rendered).toContain('Bacteriostatic water added to the vial.');
     expect(rendered).not.toContain('Bacteriostatic Water / Reconstitution');
@@ -675,6 +754,7 @@ describe.each(SURFACES)('%s — asks in the product’s own words', (_name, rend
 describe('units are cased by role, not by accident', () => {
   it('caps the unit in every configuration label on the setup form', async () => {
     const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
+    await chooseSetUpVial(tree);
     const rendered = screen(tree);
     expect(rendered).toContain('Vial Amount (MG)');
     expect(rendered).toContain('Reconstitution Volume (ML)');

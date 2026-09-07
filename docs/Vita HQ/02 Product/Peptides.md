@@ -6,6 +6,26 @@
 
 ---
 
+## Sprint 5 slice 5.5C — setting a routine up, and a month across all of them (2026-09-06, awaiting founder device review)
+
+**Setting up a new routine now asks one question first: how does this reach you?** *Set up vial* if you mix it yourself, or ***Already prepared*** if it arrives ready to use from a pharmacy, a clinic, or a pen. Choosing *Already prepared* means VITA stops asking about vials, water and syringe units entirely — none of which apply to you — and you go straight to the amount. Neither answer is the lesser one, and you can still save a routine without answering at all.
+
+**The unit conversion calculator folded away.** It used to sit open in the middle of setup — a table, a concentration line and a custom-amount field between you and the thing you came to set. Now you see the one line most people want, `1 mg = 20 units`, and the full calculator is one tap in, exactly as it was.
+
+**Each peptide says what it is, under its name.** Retatrutide reads *Triple Agonist · GIP / GLP-1 / Glucagon*; 5-Amino-1MQ reads *NNMT Inhibitor · Small molecule*. It is the classification already in VITA's reference library — what a compound *is*, never what it might do for you, and never an amount.
+
+**The keyboard always has a Done key now.** iOS's number pad has no return key, so on some screens the keyboard covered the very button you needed. That is fixed everywhere at once — including eleven places that never had one, in Fuel's manual food entry and in Water. **Done closes the keyboard and does nothing else**: it does not save, and what you typed stays where it is.
+
+**There is a month across all your routines.** A new *Monthly activity* row on the Peptides screen opens a calendar covering **everything you track**, so you can answer "what did I actually do in July" without visiting each routine in turn. **A day with several routines shows several marks** — two taken and one skipped is three marks, never one blended colour — and tapping the day lists what each routine actually did, with the amount and time you recorded.
+
+**The month summary is bigger and easier to read**, on both the all-routines month and each routine's own. Still Taken, Skipped, No response, and still no percentage, no streak and no grade.
+
+**Still no dose advice, of any kind.** No popular doses, no starting doses, no typical amounts, no titration, no protocols, no "most users take". VITA calculates what you ask it to and records what you tell it.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5C.
+
+---
+
 ## Sprint 5 slice 5.5B — real history, and a month you can dig into (2026-09-05, awaiting founder device review)
 
 **You can go back as far as you actually have history.** July, June, May, last year — Monthly activity now reads each month from storage when you open it, instead of stopping at the couple of months VITA happened to be holding in memory. **Nothing was ever deleted**; it simply was not being loaded. Where your records genuinely stop, so does the arrow.

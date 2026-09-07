@@ -324,7 +324,7 @@ describe('routine state', () => {
     const fake = repositoryWith([setupFixture({ routineState: 'needs-setup', active: false })]);
     const tree = await mount(<EditPeptideSetup />, fake.repository);
 
-    await press(tree, 'Save Setup');
+    await press(tree, 'Add to Routine');
     expect(fake.setups()[0].routineState).toBe('active');
   });
 
@@ -823,7 +823,7 @@ describe('needs setup', () => {
 
     mockRouteId = 'setup-1';
     const setup = await mount(<EditPeptideSetup />, fake.repository);
-    await press(setup, 'Save Setup');
+    await press(setup, 'Add to Routine');
     await act(async () => setup.unmount());
     mounted = null;
 

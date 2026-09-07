@@ -13,6 +13,7 @@ import {
   shiftMonth,
   type MonthKey,
 } from '../../../../../features/peptides/month';
+import { MonthSummary } from '../../../../../features/peptides/components/MonthSummary';
 import { useMonthActivity } from '../../../../../features/peptides/useMonthActivity';
 import {
   formatClockTime,
@@ -139,7 +140,6 @@ export default function MonthlyActivity() {
   const atEarliest = compareMonths(month, floor) <= 0;
   const atCurrent = compareMonths(month, currentMonth) >= 0;
 
-  const total = counts ? counts.taken + counts.skipped + counts.noResponse : 0;
   const selectedMark = selected ? markForDay(setup, activity.statuses, selected) : null;
   const selectedLogs = selected
     ? routineLogs.filter((entry) => entry.logDate === selected)
@@ -274,27 +274,7 @@ export default function MonthlyActivity() {
         * days counted as nothing — they are not a denominator, and there is
         * deliberately nothing to be a fraction of.
         */}
-      {counts && !activity.error ? (
-        <View style={styles.summary}>
-          <Text style={[styles.summaryTitle, { color: surfaces.text }]}>Month summary</Text>
-
-          <View
-            accessible
-            accessibilityRole="text"
-            accessibilityLabel={`Month summary. ${counts.taken} taken. ${counts.skipped} skipped. ${counts.noResponse} no response.`}
-          >
-            <SummaryRow label="Taken" value={counts.taken} tone={palette.peptide} first />
-            <SummaryRow label="Skipped" value={counts.skipped} tone={palette.routineSkipped} />
-            <SummaryRow label="No response" value={counts.noResponse} tone={surfaces.textTertiary} />
-          </View>
-
-          {total === 0 ? (
-            <Text style={[styles.quiet, { color: surfaces.textTertiary }]}>
-              No routine activity this month.
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
+      {counts && !activity.error ? <MonthSummary counts={counts} /> : null}
     </Screen>
   );
 }
@@ -519,35 +499,6 @@ function SelectedDay({
  * Neutral typography dominates — the state colour is a 6pt dot, not a giant
  * tinted figure. Three counts are facts, and facts do not need to shout.
  */
-function SummaryRow({
-  label,
-  value,
-  tone,
-  first = false,
-}: {
-  label: string;
-  value: number;
-  tone: string;
-  first?: boolean;
-}) {
-  const { surfaces } = useTheme();
-  return (
-    <View
-      style={[styles.summaryRow, !first && styles.divided, !first && { borderTopColor: surfaces.border }]}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      <View style={styles.summaryLabelRow}>
-        <View style={[styles.summaryDot, { backgroundColor: tone }]} />
-        <Text style={[styles.summaryLabel, { color: surfaces.textSecondary }]} numberOfLines={2}>
-          {label}
-        </Text>
-      </View>
-      <Text style={[styles.summaryValue, { color: surfaces.text }]}>{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   name: {
     ...typography.bodyMedium,
@@ -685,46 +636,6 @@ const styles = StyleSheet.create({
     ...typography.captionMedium,
     fontSize: 14.5,
     fontWeight: '600',
-  },
-  summary: {
-    gap: spacing.s,
-  },
-  summaryTitle: {
-    ...typography.bodyMedium,
-    fontSize: 15.5,
-    fontWeight: '600',
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.m,
-    paddingVertical: spacing.s,
-    minHeight: 40,
-  },
-  divided: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  summaryValue: {
-    ...typography.bodyMedium,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  summaryLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.s,
-    flexShrink: 1,
-  },
-  summaryDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  summaryLabel: {
-    ...typography.body,
-    fontSize: 15.5,
-    flexShrink: 1,
   },
   quiet: {
     ...typography.caption,

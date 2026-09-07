@@ -12,6 +12,12 @@ type Props = {
   variant?: 'filled' | 'soft';
   /** Dims the button and ignores presses — for forms that aren't valid yet. */
   disabled?: boolean;
+  /**
+   * Spoken instead of `label`, for the cases where the visible word is not a
+   * sentence on its own — a bare "Done" says nothing about what it finishes.
+   * Defaults to `label`, so every existing caller is unchanged.
+   */
+  accessibilityLabel?: string;
 };
 
 export function Button({
@@ -21,12 +27,14 @@ export function Button({
   icon,
   variant = 'filled',
   disabled = false,
+  accessibilityLabel,
 }: Props) {
   const filled = variant === 'filled';
   return (
     <PressableScale
       onPress={onPress}
       disabled={disabled}
+      accessibilityLabel={accessibilityLabel ?? label}
       style={[
         styles.button,
         { backgroundColor: filled ? color : `${color}1A` },

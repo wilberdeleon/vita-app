@@ -9,8 +9,9 @@ import {
   useToast,
 } from '../../../../components/ui';
 import { ClassificationChip } from '../../../../features/peptides/components/ClassificationChip';
+import { peptideDescriptor } from '../../../../features/peptides/descriptor';
 import { SetupForm, type SetupFormValue } from '../../../../features/peptides/components/SetupForm';
-import { formatLabel, usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
+import { usePeptideContext, useResolvedSetup } from '../../../../lib/peptides';
 import { spacing, typography } from '../../../../theme/tokens';
 import { useTheme } from '../../../../theme/ThemeProvider';
 
@@ -73,6 +74,7 @@ export default function EditPeptideSetup() {
   const { setup, definition } = resolved;
 
   const needsSetup = setup.routineState === 'needs-setup';
+  const descriptor = peptideDescriptor(definition);
 
   /**
    * Saving is what makes a new routine active.
@@ -91,10 +93,22 @@ export default function EditPeptideSetup() {
     if (needsSetup) {
       await completeSetup(setup.id, value);
       showToast({ message: `${definition.name} is ready` });
-    } else {
-      await updateSetup(setup.id, value);
-      showToast({ message: `Updated · ${definition.name}` });
+      /*
+       * Ends on Peptides, by name (founder direction, 5.5C §57).
+       *
+       * `back()` returns to whatever opened this screen — the catalog detail
+       * page for something just added, or the needs-setup notice on Home —
+       * so finishing a setup could leave you on a research page for a routine
+       * you had already finished configuring. Naming the destination puts
+       * everyone on the screen that now contains the running routine, which
+       * is the same rule the catalog's own Add already follows.
+       */
+      router.navigate('/peptides');
+      return;
     }
+
+    await updateSetup(setup.id, value);
+    showToast({ message: `Updated · ${definition.name}` });
     router.back();
   };
 
@@ -102,17 +116,26 @@ export default function EditPeptideSetup() {
     <Screen keyboardAware>
       <ScreenHeader title="Routine Setup" back />
 
+      {/*
+        * Identity, in the order it is read (founder direction, 5.5C §21).
+        *
+        * This was the name, then a regulatory badge, then the raw category on
+        * a line of its own — *Semax / Research / ACTH (4-10) Analog* — three
+        * facts stacked in descending order of usefulness, which the founder
+        * read as technical rather than descriptive. The one line that says
+        * what the compound *is* now sits directly under its name, and the
+        * badge follows as the qualifier it always was.
+        *
+        * Every word comes from the catalog. See `descriptor.ts` for what it
+        * will and will not say.
+        */}
       <Text style={[styles.name, { color: surfaces.text }]}>{definition.name}</Text>
-      <ClassificationChip classification={definition.classification} />
-      {/* Title-cased like every other place the catalog's category is shown.
-          This one rendered the stored string exactly as authored, so the same
-          compound read "Melanocortin agonist" here and "Melanocortin Agonist"
-          one screen back. */}
-      {definition.category ? (
-        <Text style={[styles.category, { color: surfaces.textTertiary }]}>
-          {formatLabel(definition.category)}
+      {descriptor ? (
+        <Text style={[styles.descriptor, { color: surfaces.textSecondary }]} numberOfLines={2}>
+          {descriptor}
         </Text>
       ) : null}
+      <ClassificationChip classification={definition.classification} />
 
       {needsSetup ? (
         <Text style={[styles.inactive, { color: surfaces.textTertiary }]}>
@@ -164,10 +187,15 @@ export default function EditPeptideSetup() {
           { backgroundColor: surfaces.text },
           (!isValid || saving) && styles.saveDisabled,
         ]}
-        accessibilityLabel={needsSetup ? 'Save Setup' : 'Save Changes'}
+        /*
+         * "Add to Routine" for a new one, because that is what it does — the
+         * product already uses those words on the catalog page, and "Save
+         * Setup" described the form rather than the outcome.
+         */
+        accessibilityLabel={needsSetup ? 'Add to Routine' : 'Save Changes'}
       >
         <Text style={[styles.saveLabel, { color: surfaces.background }]}>
-          {needsSetup ? 'Save Setup' : 'Save Changes'}
+          {needsSetup ? 'Add to Routine' : 'Save Changes'}
         </Text>
       </PressableScale>
     </Screen>
@@ -178,9 +206,9 @@ const styles = StyleSheet.create({
   name: {
     ...typography.heading,
   },
-  category: {
-    ...typography.caption,
-    marginTop: -spacing.xs,
+  descriptor: {
+    ...typography.body,
+    marginTop: -spacing.s,
   },
   inactive: {
     ...typography.caption,

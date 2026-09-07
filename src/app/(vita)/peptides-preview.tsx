@@ -18,6 +18,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import Peptides from './peptides/index';
 import RoutineDetail from './peptides/routine/[id]';
 import MonthlyActivity from './peptides/routine/[id]/month';
+import PeptideActivity from './peptides/activity';
 import EditPeptideSetup from './peptides/setup/[id]';
 import InjectionSites from './tools/injection-sites';
 
@@ -328,6 +329,86 @@ const SCENARIOS: Scenario[] = [
     logs: [log('o1', shiftLogDate(TODAY, -200), createSiteSnapshot('abdomen-center'))],
   },
   {
+    /*
+     * Six and twelve months back, so the founder can prove on device that
+     * history is bounded by what exists rather than by a window. The founder
+     * saw "about two months" in 5.5B because the scenarios they opened only
+     * held a fortnight — not because the loading stopped.
+     */
+    key: 'month-deep',
+    label: 'Month · a year of history',
+    setups: [setup({ id: 'a' })],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -60)),
+      status('a', 'skipped', shiftLogDate(TODAY, -58)),
+      status('a', 'taken', shiftLogDate(TODAY, -180)),
+      status('a', 'taken', shiftLogDate(TODAY, -178)),
+      status('a', 'skipped', shiftLogDate(TODAY, -365)),
+      status('a', 'taken', shiftLogDate(TODAY, -362)),
+    ],
+    logs: [
+      log('d60', shiftLogDate(TODAY, -60), createSiteSnapshot('abdomen-left')),
+      log('d180', shiftLogDate(TODAY, -180), createSiteSnapshot('thigh-right')),
+      log('d365', shiftLogDate(TODAY, -362), createSiteSnapshot('glute-left')),
+    ],
+  },
+  {
+    /* Three routines, several sharing dates — the multi-routine month. */
+    key: 'all-activity',
+    label: 'All routines · one month',
+    setups: [
+      setup({ id: 'a' }),
+      setup({ id: 'b', definitionId: 'catalog:semax' }),
+      setup({
+        id: 'c',
+        definitionId: 'catalog:ipamorelin',
+        schedule: { kind: 'daysOfWeek', days: [OTHER_DAY] },
+      }),
+    ],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -1)),
+      status('b', 'skipped', shiftLogDate(TODAY, -1)),
+      status('c', 'taken', shiftLogDate(TODAY, -1)),
+      status('a', 'taken', shiftLogDate(TODAY, -3)),
+      status('b', 'taken', shiftLogDate(TODAY, -3)),
+      status('a', 'skipped', shiftLogDate(TODAY, -5)),
+    ],
+    logs: [
+      log('x1', shiftLogDate(TODAY, -1), createSiteSnapshot('abdomen-left')),
+      { ...log('x2', shiftLogDate(TODAY, -1), createSiteSnapshot('thigh-left')), setupId: 'c' },
+      log('x3', shiftLogDate(TODAY, -3), createSiteSnapshot('glute-right')),
+    ],
+  },
+  {
+    /*
+     * A genuinely new routine: nothing configured, so the preparation
+     * question is unanswered and neither option is selected. The `setup`
+     * scenario above carries a vial, which seeds the answer — this is the
+     * state someone actually lands on after adding from the catalog.
+     */
+    key: 'setup-blank',
+    label: 'New setup · nothing entered',
+    setups: [
+      {
+        id: 'a',
+        definitionId: 'catalog:semax',
+        preferredDoseUnit: 'mg',
+        preferredEntryMode: 'mass',
+        routineState: 'needs-setup',
+        active: false,
+        createdAt: CREATED,
+        updatedAt: CREATED,
+      } as PeptideSetup,
+    ],
+  },
+  {
+    /* One routine only — the sparse Home the founder flagged in §32. */
+    key: 'single',
+    label: 'One routine',
+    setups: [setup({ id: 'a' })],
+    statuses: [status('a', 'taken', shiftLogDate(TODAY, -2))],
+  },
+  {
     key: 'month-empty',
     label: 'Month · no activity',
     setups: [setup({ id: 'a', schedule: { kind: 'asNeeded' } })],
@@ -428,6 +509,8 @@ const SCREENS = [
   { key: 'home', label: 'Home', render: () => <Peptides /> },
   { key: 'routine', label: 'Routine', render: () => <RoutineDetail /> },
   { key: 'month', label: 'Month', render: () => <MonthlyActivity /> },
+  /* The Peptides-level calendar — every routine on one month (5.5C). */
+  { key: 'activity', label: 'All activity', render: () => <PeptideActivity /> },
   { key: 'edit', label: 'Edit', render: () => <EditPeptideSetup /> },
   { key: 'sites', label: 'Sites', render: () => <InjectionSites /> },
 ] as const;

@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import {
   Button,
   NumericField,
-  NumericKeyboardAccessory,
   SegmentedTabs,
   TextField,
 } from '../../../components/ui';
@@ -69,11 +68,12 @@ type Props = {
  * found this and recorded it against whichever slice owned the daily flow;
  * this is that slice.
  *
- * `NumericKeyboardAccessory` is rendered **inside this Modal**, because
- * `InputAccessoryView` is matched by `nativeID` within the presented view —
- * a bar rendered on the screen behind the sheet never appears above the
- * sheet's own keyboard. `AddWaterSheet` does the same thing inside
- * `VitaSheet`, which is a Modal too.
+ * The Done bar comes with `NumericField` itself (slice 5.5C), so the sheet
+ * renders nothing for it. That matters here more than anywhere: an
+ * `InputAccessoryView` is matched by `nativeID` **within the presented
+ * view**, so a bar rendered on the screen behind this Modal would never
+ * appear above the sheet's own keyboard. A field that carries its own
+ * accessory is in the right hierarchy by construction.
  *
  * **Done dismisses the keyboard and nothing else.** It does not save, does
  * not close the sheet, and does not touch the amount, the site, the time or
@@ -289,7 +289,6 @@ export function TakenSheet({
           * so it reaches the keyboard this sheet raises. `Keyboard.dismiss()`
           * is all it does — nothing here is saved or closed by Done.
           */}
-        <NumericKeyboardAccessory />
       </View>
     </Modal>
   );

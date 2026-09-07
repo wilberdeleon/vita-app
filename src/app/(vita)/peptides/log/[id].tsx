@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   EmptyState,
-  NumericKeyboardAccessory,
   Screen,
   ScreenHeader,
   SectionHeader,
@@ -163,8 +162,6 @@ export default function PeptideLogDetail() {
         onPress={() => void save()}
       />
       <Button label="Delete log" variant="soft" color={palette.fat} onPress={confirmDelete} />
-
-      <NumericKeyboardAccessory />
     </Screen>
   );
 }

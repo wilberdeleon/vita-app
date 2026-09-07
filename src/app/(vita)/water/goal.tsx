@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { Button, Screen, ScreenHeader, SectionHeader, TextField, useToast } from '../../../components/ui';
+import { Button, NumericField, Screen, ScreenHeader, SectionHeader, useToast } from '../../../components/ui';
 import { UnitSelector } from '../../../features/water/components/UnitSelector';
 import {
   createWaterGoal,
@@ -104,10 +104,9 @@ export default function WaterGoalScreen() {
       </Text>
 
       <SectionHeader title="Your daily goal" />
-      <TextField
+      <NumericField
         label={`Goal in ${unitName(unit)}`}
         placeholder={`Enter ${unitName(unit)}`}
-        keyboardType="decimal-pad"
         value={amount}
         onChangeText={typeAmount}
         accessibilityLabel={`Daily water goal in ${unitName(unit)}`}

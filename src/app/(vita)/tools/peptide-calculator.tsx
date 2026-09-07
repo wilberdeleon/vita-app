@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import {
   NumericField,
-  NumericKeyboardAccessory,
   Screen,
   ScreenHeader,
   SectionHeader,
@@ -121,7 +120,6 @@ export default function StandalonePeptideCalculator() {
       </Text>
 
       {/* One accessory bar serves every numeric field on this screen. */}
-      <NumericKeyboardAccessory />
     </Screen>
   );
 }

@@ -228,6 +228,20 @@ Needed and not yet present: a range selector over site history — something lik
 - **Selection beats navigation for a calendar.** Sending every tap to another screen means the calendar can only be looked at or left. Selecting keeps the context and makes the detail a second, deliberate step.
 - **Three states on one cell must stay three.** Today, selected and status each need their own treatment — an underline, a ring and a node — or they collapse into one ambiguous decoration.
 
+**Patterns 5.5C added:**
+
+- **A shared behaviour that each screen has to opt into is not shared.** The Done bar had a shared component and a shared id, and was still missing from eleven inputs — because using it took two coordinated steps and forgetting either failed silently. It is behaviour now, not a component: `NumericField` carries its own accessory, one per field with its own generated id, and no screen renders one. If a rule has been broken three times in three slices, fix the primitive rather than the third screen.
+- **A source-scanning test is the right shape for "nobody may do X".** Render tests only cover the screens someone thought to write a test for, and the failure here is a field nobody remembered. Scanning `src/` for `keyboardType="decimal-pad"` outside the primitive catches the case that has not been written yet.
+- **`InputAccessoryView` is matched within the presented hierarchy.** A bar registered by the route beneath a modal never appears above the modal's keyboard. Making the field self-sufficient removes the question instead of answering it per screen.
+- **The order of a form is part of its argument.** New setup and editing are different jobs — one is a sequence, the other is a visit — so they present the same fields in different orders. Extract the sections and order them by mode; do not fork the fields, the validation or the emit path.
+- **Give the ordinary case a name, not an escape hatch.** "Skip preparation" framed a complete situation as an omission. "Already prepared" names what is true for someone handed a prepared pen, and reads as a peer of the other answer rather than as opting out.
+- **Answering a question must not write an answer.** Choosing *Already prepared* stores nothing and clears what was typed before it. A value the form has stopped showing is a value the user cannot correct — inferring or retaining one is how invisible data gets saved.
+- **A disclosure needs a summary or it is a filing cabinet.** The calculator collapsed cleanly because `1 mg = 20 units` answers what most people opened it for. Built from the same reference the table uses, so the closed and open states cannot disagree.
+- **Use the reviewed field you already have.** The peptide descriptor is the catalog's existing `category`, audited across all 96 entries before a line was written. Authoring new content would have meant a new review surface for something the data already said.
+- **A per-day mark multiplies.** One hollow node per future day reads as *scheduled ahead*; three routines' worth reads as a wall of failure. A treatment that is legible for one routine is not automatically legible for several — check the aggregate before shipping it.
+- **Never flatten a day that holds several answers.** Two taken and one skipped is three facts. Picking a dominant state, blending the colours, or drawing a proportion all invent a summary the data does not support; draw one mark per event and let selection show the detail.
+- **Delete the helper the new one replaced.** `earliestKnownMonth` bounded navigation in 5.5A and nothing since. Dead code that looks like live logic is how a fixed bug comes back.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

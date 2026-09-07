@@ -274,8 +274,13 @@ export function SiteSelector({ value, onChange, lastRecordedLabel }: Props) {
                   accessibilityLabel="Custom injection site name"
                   autoFocus
                 />
+                {/* Spoken with its purpose, for the same reason the confirm
+                    above it is: "Done" alone says nothing about what it
+                    finishes, and since 5.5C every numeric field carries a
+                    keyboard bar whose key is also called Done. */}
                 <Button
                   label="Done"
+                  accessibilityLabel="Use this site name"
                   color={palette.peptide}
                   onPress={confirm}
                   disabled={custom.trim().length === 0}
