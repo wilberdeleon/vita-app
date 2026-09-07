@@ -6,6 +6,7 @@ import { shiftLogDate, todayLogDate } from '../../lib/daily';
 import { weekOf } from '../../features/peptides/week';
 import type { PeptideRepository } from '../../lib/peptides/data/PeptideRepository';
 import {
+  DEFAULT_UNITS_PER_ML,
   PeptideProvider,
   createSiteSnapshot,
   toMcg,
@@ -13,6 +14,8 @@ import {
   type PeptideSetup,
   type RoutineDayStatus,
 } from '../../lib/peptides';
+import { Disclosure } from '../../features/peptides/components/Disclosure';
+import { UnitConversion } from '../../features/peptides/components/UnitConversion';
 import { palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import Peptides from './peptides/index';
@@ -381,6 +384,64 @@ const SCENARIOS: Scenario[] = [
   },
   {
     /*
+     * The founder's §21 worked example: 50 mg in 3 mL is 16.67 mg/mL, so a
+     * 5 mg routine is 0.3 mL — 30 units on a U-100 barrel. Open the Edit tab
+     * and the collapsed calculator should read `5 mg = 30 units`, not
+     * `1 mg = 6 units`.
+     */
+    key: 'setup-5mg',
+    label: 'Setup · 50 mg / 3 mL / 5 mg',
+    setups: [
+      setup({
+        id: 'a',
+        routineState: 'needs-setup',
+        active: false,
+        vial: { amountMcg: toMcg(50, 'mg'), authored: { amount: 50, unit: 'mg' } },
+        reconstitutionMl: 3,
+        routineAmount: { amountMcg: toMcg(5, 'mg'), authored: { amount: 5, unit: 'mg' } },
+      }),
+    ],
+  },
+  {
+    /*
+     * The same vial and amount on a routine that is already running, so the
+     * founder can check the calculator in Edit — where Routine leads, and the
+     * conversion sits directly under the amount without scrolling.
+     */
+    key: 'edit-5mg',
+    label: 'Edit · 50 mg / 3 mL / 5 mg',
+    setups: [
+      setup({
+        id: 'a',
+        vial: { amountMcg: toMcg(50, 'mg'), authored: { amount: 50, unit: 'mg' } },
+        reconstitutionMl: 3,
+        routineAmount: { amountMcg: toMcg(5, 'mg'), authored: { amount: 5, unit: 'mg' } },
+      }),
+    ],
+  },
+  {
+    /* Several weeks back, so swiping the strip has somewhere to go. */
+    key: 'weeks',
+    label: 'Routine · weeks of history',
+    setups: [setup({ id: 'a' })],
+    statuses: [
+      status('a', 'taken', shiftLogDate(TODAY, -2)),
+      status('a', 'skipped', shiftLogDate(TODAY, -4)),
+      status('a', 'taken', shiftLogDate(TODAY, -9)),
+      status('a', 'taken', shiftLogDate(TODAY, -11)),
+      status('a', 'skipped', shiftLogDate(TODAY, -16)),
+      status('a', 'taken', shiftLogDate(TODAY, -18)),
+      status('a', 'taken', shiftLogDate(TODAY, -23)),
+      status('a', 'taken', shiftLogDate(TODAY, -30)),
+    ],
+    logs: [
+      log('w1', shiftLogDate(TODAY, -2), createSiteSnapshot('abdomen-left')),
+      log('w2', shiftLogDate(TODAY, -9), createSiteSnapshot('thigh-right')),
+      log('w3', shiftLogDate(TODAY, -18), createSiteSnapshot('glute-left')),
+    ],
+  },
+  {
+    /*
      * A genuinely new routine: nothing configured, so the preparation
      * question is unanswered and neither option is selected. The `setup`
      * scenario above carries a vial, which seeds the answer — this is the
@@ -505,14 +566,45 @@ function memoryRepository(scenario: Scenario): PeptideRepository {
   };
 }
 
+/**
+ * The calculator, already open — preview-only scaffolding.
+ *
+ * Routine Setup keeps it collapsed behind a one-line summary, which is right
+ * for the form and awkward for a review pass: checking the expanded table
+ * means finding it and tapping it on every scenario. This renders the same
+ * component with the same inputs, open.
+ */
+function ExpandedCalculator({ scenario }: { scenario: Scenario }) {
+  const target = scenario.setups[0];
+  return (
+    <Screen contentGap={spacing.l}>
+      <ScreenHeader title="Unit conversion" subtitle="Expanded, for review" />
+      <Disclosure title="Unit conversion calculator" initiallyOpen>
+        <UnitConversion
+          vialAmountMcg={target?.vial?.amountMcg}
+          reconstitutionMl={target?.reconstitutionMl}
+          vialUnit="mg"
+          unitsPerMl={DEFAULT_UNITS_PER_ML}
+          showHeading={false}
+          routine={{
+            amountMcg: target?.routineAmount?.amountMcg ?? null,
+            unit: target?.routineAmount?.authored.unit ?? 'mg',
+          }}
+        />
+      </Disclosure>
+    </Screen>
+  );
+}
+
 const SCREENS = [
-  { key: 'home', label: 'Home', render: () => <Peptides /> },
-  { key: 'routine', label: 'Routine', render: () => <RoutineDetail /> },
-  { key: 'month', label: 'Month', render: () => <MonthlyActivity /> },
+  { key: 'home', label: 'Home', render: (_scenario: Scenario) => <Peptides /> },
+  { key: 'routine', label: 'Routine', render: (_scenario: Scenario) => <RoutineDetail /> },
+  { key: 'month', label: 'Month', render: (_scenario: Scenario) => <MonthlyActivity /> },
   /* The Peptides-level calendar — every routine on one month (5.5C). */
-  { key: 'activity', label: 'All activity', render: () => <PeptideActivity /> },
-  { key: 'edit', label: 'Edit', render: () => <EditPeptideSetup /> },
-  { key: 'sites', label: 'Sites', render: () => <InjectionSites /> },
+  { key: 'activity', label: 'All activity', render: (_scenario: Scenario) => <PeptideActivity /> },
+  { key: 'edit', label: 'Edit', render: (_scenario: Scenario) => <EditPeptideSetup /> },
+  { key: 'calc', label: 'Calculator', render: (scenario: Scenario) => <ExpandedCalculator scenario={scenario} /> },
+  { key: 'sites', label: 'Sites', render: (_scenario: Scenario) => <InjectionSites /> },
 ] as const;
 
 export default function PeptidesPreview() {
@@ -624,7 +716,7 @@ export default function PeptidesPreview() {
       {/* The real screen, over a repository that forgets everything. */}
       <View style={styles.stage}>
         <PeptideProvider key={`${active.key}-${stage.key}`} repository={repository}>
-          {stage.render()}
+          {stage.render(active)}
         </PeptideProvider>
       </View>
     </View>

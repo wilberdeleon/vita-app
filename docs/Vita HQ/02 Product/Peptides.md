@@ -6,6 +6,22 @@
 
 ---
 
+## Sprint 5 slice 5.5D — swipe through weeks, and a calculator that answers you (2026-09-07, awaiting founder device review)
+
+**You can push the week strip sideways.** Drag it right to look back a week, left to come forward, the way you would move any calendar with your thumb. The arrows are still there and still work — the swipe is an extra way to move, not a replacement — and if you use VoiceOver you can flick up and down on the week to step it. One swipe moves one week, however hard you throw it, and scrolling the page up and down still works normally over the strip.
+
+**The unit conversion calculator now answers the amount you actually entered.** It used to headline `1 mg = 6 units` even when your routine was 5 mg — true, and not the number you were looking for. Now it says **`5 mg = 30 units`**, and it updates as you type: change the vial, the water, the amount, or switch mg to mcg, and the answer follows immediately.
+
+**It also moved to where it makes sense** — directly under the Routine Amount, instead of up inside Preparation above it. Preparation, then your amount, then what that amount is on the syringe, then schedule and reminder.
+
+**Before you have entered an amount, it says so** rather than showing a number VITA picked. And if you chose *Already prepared*, or have not filled in the vial and the water, the calculator does not appear at all — there is no concentration to calculate from, and a section that exists to say it cannot help you is worse than no section.
+
+**The table underneath is still just arithmetic.** It is called *Reference conversions*, the rows are the same fixed ladder they have always been, and your own amount is marked in it as **Your routine** — a note about whose number it is, never a recommendation. VITA still does not suggest doses, starting amounts, typical amounts, or titration of any kind.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5D.
+
+---
+
 ## Sprint 5 slice 5.5C — setting a routine up, and a month across all of them (2026-09-06, awaiting founder device review)
 
 **Setting up a new routine now asks one question first: how does this reach you?** *Set up vial* if you mix it yourself, or ***Already prepared*** if it arrives ready to use from a pharmacy, a clinic, or a pen. Choosing *Already prepared* means VITA stops asking about vials, water and syringe units entirely — none of which apply to you — and you go straight to the amount. Neither answer is the lesser one, and you can still save a routine without answering at all.

@@ -56,11 +56,31 @@ export function WeekSelector({ days, offset, onChange, allowFuture = false, acti
         <Ionicons name="chevron-back" size={18} color={surfaces.textSecondary} />
       </PressableScale>
 
+      {/*
+        * Steppable without sight, and without the swipe (slice 5.5D §48).
+        *
+        * The strip now supports a horizontal drag, which VoiceOver users
+        * cannot perform — so the week is *also* an adjustable value here:
+        * flick up for the next week, down for the previous, on the element
+        * that already announces which week is showing. The arrows either side
+        * remain, so there are three ways to move and none of them is the only
+        * one.
+        */}
       <View
         style={styles.labels}
         accessible
-        accessibilityRole="text"
+        accessibilityRole="adjustable"
         accessibilityLabel={`${weekLabel(days, offset)}, ${dateRangeLabel(days)}`}
+        accessibilityActions={[
+          { name: 'increment', label: 'Next week' },
+          { name: 'decrement', label: 'Previous week' },
+        ]}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'decrement') onChange(offset - 1);
+          if (event.nativeEvent.actionName === 'increment' && !atEnd) {
+            onChange(allowFuture ? offset + 1 : Math.min(0, offset + 1));
+          }
+        }}
       >
         <Text style={[styles.label, { color: surfaces.text }]} numberOfLines={1}>
           {weekLabel(days, offset)}

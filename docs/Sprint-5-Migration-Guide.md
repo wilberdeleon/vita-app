@@ -242,6 +242,19 @@ Needed and not yet present: a range selector over site history — something lik
 - **Never flatten a day that holds several answers.** Two taken and one skipped is three facts. Picking a dominant state, blending the colours, or drawing a proportion all invent a summary the data does not support; draw one mark per event and let selection show the detail.
 - **Delete the helper the new one replaced.** `earliestKnownMonth` bounded navigation in 5.5A and nothing since. Dead code that looks like live logic is how a fixed bug comes back.
 
+**Patterns 5.5D added:**
+
+- **A gesture inside a scroll view has to earn the touch, in the capture phase.** A `Pressable` becomes the responder the moment a finger lands, so a parent can only take it back on the way down — `onMoveShouldSetPanResponderCapture`, never the bubbling variant. Claim only past a distance *and* a direction ratio, then refuse termination so a scroll cannot reclaim it mid-drag.
+- **One gesture is one step.** Never turn velocity or distance into a count. A flick that skips four weeks leaves someone somewhere they did not choose, and the precise control already exists next to it.
+- **Extract gesture arithmetic from the responder.** `PanResponder` handlers are only reachable through RN's negotiation and a synthetic touch history; a test that drives them tests the framework. Put "should I claim", "how far do I follow", "what does a release mean" in a pure module and test that. Same split as `dragLayout.ts`.
+- **A swipe is never the only way.** Add the gesture, keep the buttons, and expose `adjustable` with increment/decrement so VoiceOver can step the same value.
+- **Put derived arithmetic after its input, not before it.** The calculator sat above the amount it converted, which meant meeting a conversion table before saying what you wanted converted. Order a form by the order the questions are answered in.
+- **A default value in the position of an answer reads as a suggestion.** With no amount entered, falling back to `1 mg = …` would have looked like VITA proposing 1 mg. Say what is missing instead.
+- **Do not render a section in order to explain it cannot help.** No vial means no concentration means no calculator — absence is cleaner than an apology, and it makes the "already prepared" path free of it without a second rule.
+- **Highlight the user's own row; never invent neighbours around it.** Marking their amount in a fixed, deterministic ladder is context. Generating amounts *near* theirs would be proposing doses.
+- **`Your routine`, never `Recommended`.** The label says whose number it is. The moment it grades the number, the tracker has become an advisor.
+- **A test anchored to "today" is a test that fails one day in seven.** `TODAY - 1` fell into the previous week every Monday. Anchor fixtures to the window under test, not to the clock.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

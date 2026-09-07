@@ -351,11 +351,85 @@ describe('the unit conversion calculator', () => {
     await press(tree, /^Set up vial\./);
     await type(tree, /^Vial amount/, '10');
     await type(tree, /^Reconstitution volume/, '2');
+    await type(tree, /^Routine amount/, '1');
 
     // The headline is legible without expanding anything…
     expect(screen(tree)).toContain('1 mg = 20 units');
     // …and the table itself is still folded away.
     expect(screen(tree)).not.toContain('Concentration · 5 mg/mL');
+  });
+
+  it('summarises the user’s own amount, not a number VITA picked', async () => {
+    /*
+     * The founder's §28 objection, worked through: with a vial of 50 mg in
+     * 3 mL and a routine of 5 mg, the closed summary read `1 mg = 6 units`
+     * — the one number on that line nobody had asked for. 50 mg in 3 mL is
+     * 16.67 mg/mL, so 5 mg is 0.3 mL, which is 30 units on a U-100 barrel.
+     */
+    const tree = await mount(<EditPeptideSetup />, repositoryWith([setupFixture()]).repository);
+
+    await press(tree, /^Set up vial\./);
+    await type(tree, /^Vial amount/, '50');
+    await type(tree, /^Reconstitution volume/, '3');
+    await type(tree, /^Routine amount/, '5');
+
+    expect(screen(tree)).toContain('5 mg = 30 units');
+    expect(screen(tree)).not.toContain('1 mg = 6 units');
+  });
+
+  it('follows the amount as it is typed, with nothing to save or reopen', async () => {
+    const tree = await mount(<EditPeptideSetup />, repositoryWith([setupFixture()]).repository);
+
+    await press(tree, /^Set up vial\./);
+    await type(tree, /^Vial amount/, '50');
+    await type(tree, /^Reconstitution volume/, '3');
+
+    await type(tree, /^Routine amount/, '1');
+    expect(screen(tree)).toContain('1 mg = 6 units');
+
+    await type(tree, /^Routine amount/, '5');
+    expect(screen(tree)).toContain('5 mg = 30 units');
+
+    // And it follows the unit toggle too — 5 mg restated is 5000 mcg.
+    await press(tree, 'Routine amount unit, mcg');
+    expect(screen(tree)).toContain('5000 mcg = 30 units');
+  });
+
+  it('says what it needs rather than answering with a number of its own', async () => {
+    /*
+     * §29. Falling back to `1 mg = …` would put a number VITA chose in the
+     * position of an answer, which reads as a suggested amount.
+     */
+    const tree = await mount(<EditPeptideSetup />, repositoryWith([setupFixture()]).repository);
+
+    await press(tree, /^Set up vial\./);
+    await type(tree, /^Vial amount/, '50');
+    await type(tree, /^Reconstitution volume/, '3');
+    await press(tree, /^Unit conversion calculator/);
+
+    expect(screen(tree)).toContain('Enter an amount to see syringe units.');
+    expect(screen(tree)).not.toContain('1 mg = 6 units');
+    // The ladder is still there — it is arithmetic about the vial, not a dose.
+    expect(screen(tree)).toContain('REFERENCE CONVERSIONS');
+  });
+
+  it('marks the user’s own row in the reference ladder', async () => {
+    const tree = await mount(<EditPeptideSetup />, repositoryWith([setupFixture()]).repository);
+
+    await press(tree, /^Set up vial\./);
+    await type(tree, /^Vial amount/, '50');
+    await type(tree, /^Reconstitution volume/, '3');
+    await type(tree, /^Routine amount/, '5');
+    await press(tree, /^Unit conversion calculator/);
+
+    const mine = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .find((node) => /your routine$/.test(String(node.props.accessibilityLabel)));
+    expect(mine).toBeDefined();
+    expect(mine!.props.accessibilityLabel).toBe('5 mg, 30 units, your routine');
+    // Named as theirs, never graded.
+    expect(screen(tree)).toContain('Your routine');
+    expect(screen(tree).toLowerCase()).not.toContain('recommended');
   });
 
   it('opens to the full table, unchanged', async () => {
@@ -373,6 +447,8 @@ describe('the unit conversion calculator', () => {
   it('announces whether it is open', async () => {
     const tree = await mount(<EditPeptideSetup />, repositoryWith([setupFixture()]).repository);
     await press(tree, /^Set up vial\./);
+    await type(tree, /^Vial amount/, '10');
+    await type(tree, /^Reconstitution volume/, '2');
 
     expect(control(tree, /^Unit conversion calculator/).props.accessibilityState.expanded).toBe(
       false,

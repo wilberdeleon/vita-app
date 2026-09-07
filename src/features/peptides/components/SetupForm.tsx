@@ -14,6 +14,7 @@ import { UnitConversion } from './UnitConversion';
 import {
   DEFAULT_UNITS_PER_ML,
   WEEKDAY_INDEXES,
+  calculateSyringeUnits,
   formatMcg,
   formatSyringeUnits,
   parseAmount,
@@ -333,8 +334,35 @@ export function SetupForm({ initial, onChange, mode = 'edit' }: Props) {
     },
     'mg',
   );
-  const conversionSummary = conversion.ok
-    ? `${formatMcg(conversion.primary.amountMcg, 'mg')} = ${formatSyringeUnits(conversion.primary.syringeUnits)}`
+
+  /**
+   * The routine amount, canonical — the calculator's subject since 5.5D.
+   *
+   * `null` while the field is blank or half-typed, which the calculator
+   * reports as *enter an amount* rather than answering with a number nobody
+   * chose.
+   */
+  const routineAmountMcg = routineParsed !== null ? toMcg(routineParsed, routineUnit) : null;
+
+  const routineUnits = calculateSyringeUnits(
+    {
+      vialAmountMcg: vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined,
+      reconstitutionMl: reconParsed ?? undefined,
+      unitsPerMl: unitsPerMl ?? undefined,
+    },
+    routineAmountMcg ?? undefined,
+  );
+
+  /**
+   * What the collapsed calculator says — `5 mg = 30 units`, their own amount.
+   *
+   * Founder §28: with a routine of 5 mg the closed summary read
+   * `1 mg = 6 units`, which is the one number on that line nobody asked for.
+   * `null` when there is no amount yet, so the section shows its title and
+   * nothing that looks like an answer.
+   */
+  const conversionSummary = routineUnits.ok
+    ? `${formatMcg(routineUnits.amountMcg, routineUnit)} = ${formatSyringeUnits(routineUnits.syringeUnits)}`
     : null;
 
   /**
@@ -392,33 +420,40 @@ export function SetupForm({ initial, onChange, mode = 'edit' }: Props) {
         <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
       ) : null}
 
-      {/*
-        * The calculator, behind a disclosure (founder direction, 5.5C §14).
-        *
-        * It reads the **draft** values above — the live text in those two
-        * fields — so it is right while the form is still being filled in. What
-        * changed in 5.5C is only how much of it is open: a full conversion
-        * table, a concentration line and a custom-amount field sat permanently
-        * between the vial and the routine amount, which made a setup screen
-        * look like an engineering tool. The summary answers the question most
-        * people open it for — `1 mg = 20 units` — and the whole table is one
-        * tap away, unchanged.
-        *
-        * It answers *"how many syringe units is the amount I chose?"*. It does
-        * not answer "how much should I use", and nothing in it is marked
-        * typical, common or recommended.
-        */}
-      <Disclosure title="Unit conversion calculator" summary={conversionSummary}>
-        <UnitConversion
-          vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined}
-          reconstitutionMl={reconParsed ?? undefined}
-          vialUnit="mg"
-          unitsPerMl={unitsPerMl ?? undefined}
-          showHeading={false}
-        />
-      </Disclosure>
     </>
   );
+
+  /**
+   * The calculator — **after the amount it is about** (founder direction,
+   * 5.5D §17).
+   *
+   * It sat inside Preparation, above the Routine amount, which put the
+   * arithmetic before its own input: someone met a conversion table before
+   * they had told VITA the number they wanted converted. It now follows
+   * Amount directly, and answers *how many syringe units is the amount I
+   * entered* — which is the only question it was ever for.
+   *
+   * **Shown only when the preparation math is real** (§30). With no vial, no
+   * reconstitution volume, or *Already prepared*, there is no concentration,
+   * so there is nothing to calculate and no section — rather than a section
+   * that appears and then explains that it cannot help. That also means the
+   * *Already prepared* path never sees it, which is §19.
+   *
+   * Identical in both orders: nothing here depends on `mode`, so a routine
+   * being edited gets the same routine-aware result as one being created.
+   */
+  const calculatorSection = conversion.ok ? (
+    <Disclosure title="Unit conversion calculator" summary={conversionSummary}>
+      <UnitConversion
+        vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined}
+        reconstitutionMl={reconParsed ?? undefined}
+        vialUnit="mg"
+        unitsPerMl={unitsPerMl ?? undefined}
+        showHeading={false}
+        routine={{ amountMcg: routineAmountMcg, unit: routineUnit }}
+      />
+    </Disclosure>
+  ) : null;
 
   /**
    * Preparation as the opening question — New Setup only.
@@ -512,6 +547,9 @@ export function SetupForm({ initial, onChange, mode = 'edit' }: Props) {
       <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
         The amount you usually use. Used to prefill your log — you can change it when logging.
       </Text>
+
+      {/* Directly under the amount it converts. */}
+      {calculatorSection}
 
       {/*
         * Schedule, Reminder and Start date are **fields of the routine**, not

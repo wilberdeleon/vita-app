@@ -103,6 +103,7 @@ const savedSetup = () =>
     definitionId: 'catalog:retatrutide',
     vial: { amountMcg: 20_000, authored: { amount: 20, unit: 'mg' } },
     reconstitutionMl: 2,
+    routineAmount: { amountMcg: 1_000, authored: { amount: 1, unit: 'mg' } },
     preferredDoseUnit: 'mg',
     preferredEntryMode: 'mass',
     routineState: 'active',
@@ -151,6 +152,57 @@ async function enterVial(tree: ReactTestRenderer, vial: string, water: string) {
   await openCalculator(tree);
 }
 
+/**
+ * Types a routine amount, on the surface that has one.
+ *
+ * Since 5.5D the setup form's headline conversion is about the amount the
+ * user entered, so a test that wants a headline there has to enter one. The
+ * standalone tool has no routine and no such field.
+ */
+async function enterAmount(tree: ReactTestRenderer, amount: string) {
+  const field = tree.root
+    .findAllByType(TextInput)
+    .find((node) => /^Routine amount/.test(String(node.props.accessibilityLabel ?? '')));
+  if (field) await act(async () => field.props.onChangeText(amount));
+}
+
+/**
+ * The reference ladder, read as displayed amount → displayed units.
+ *
+ * Asserted through the rows' own spoken labels rather than by searching the
+ * joined screen text, which is both more precise and surface-independent:
+ * the ladder is identical on the tool and in setup, while the headline above
+ * it is deliberately no longer.
+ */
+function ladder(tree: ReactTestRenderer): Record<string, string> {
+  const rows: Record<string, string> = {};
+  for (const node of tree.root.findAll(
+    (candidate) => typeof candidate.props?.accessibilityLabel === 'string',
+  )) {
+    const match = /^([\d.]+ (?:mg|mcg)), ([\d.]+ units)(?:, your routine)?$/.exec(
+      String(node.props.accessibilityLabel),
+    );
+    if (match) rows[match[1]] = match[2];
+  }
+  return rows;
+}
+
+/**
+ * True when the surface is offering no conversion at all.
+ *
+ * The two express it differently since 5.5D §30: the standalone tool keeps
+ * its section and says what is missing, while Routine Setup does not render
+ * the section until the preparation math is real — a section that appears
+ * only to explain that it cannot help is worse than no section.
+ */
+function offersNoConversion(tree: ReactTestRenderer): boolean {
+  const rendered = screen(tree);
+  return (
+    rendered.includes('Enter vial amount and reconstitution volume') ||
+    !rendered.includes('SYRINGE UNITS')
+  );
+}
+
 /*
  * `mode="new"` throughout: slice 5.5 collapsed Preparation for a routine that
  * is already configured, and leaves it open for one that has never been set
@@ -167,25 +219,27 @@ describe.each(SURFACES)('%s', (_name, render) => {
     const tree = await render();
     await enterVial(tree, '10', '1');
 
-    expect(screen(tree)).toContain('1 mg = 10 units');
+    // The ladder is derived from the vial and the water and nothing else, on
+    // both surfaces — 5.5D changed only which line is the *headline*.
+    expect(ladder(tree)['1 mg']).toBe('10 units');
   });
 
   it('updates when the reconstitution changes, still with no other input', async () => {
     const tree = await render();
     await enterVial(tree, '10', '1');
-    expect(screen(tree)).toContain('1 mg = 10 units');
+    expect(ladder(tree)['1 mg']).toBe('10 units');
 
     await type(tree, /reconstitution volume/i, '2');
-    expect(screen(tree)).toContain('1 mg = 20 units');
+    expect(ladder(tree)['1 mg']).toBe('20 units');
   });
 
   it('updates when the vial amount changes', async () => {
     const tree = await render();
     await enterVial(tree, '10', '2');
-    expect(screen(tree)).toContain('1 mg = 20 units');
+    expect(ladder(tree)['1 mg']).toBe('20 units');
 
     await type(tree, /^Vial amount/, '20');
-    expect(screen(tree)).toContain('1 mg = 10 units');
+    expect(ladder(tree)['1 mg']).toBe('10 units');
   });
 
   it('renders a compact reference table', async () => {
@@ -193,20 +247,18 @@ describe.each(SURFACES)('%s', (_name, render) => {
     await enterVial(tree, '10', '1');
 
     const rendered = screen(tree);
-    expect(rendered).toContain('AMOUNT');
+    // "Reference conversions" since 5.5D — a ruler, never a menu of doses.
+    expect(rendered).toContain('REFERENCE CONVERSIONS');
     expect(rendered).toContain('SYRINGE UNITS');
     // The founder's worked example: 0.5/1/2/3/4/5 mg against 5/10/…/50 units.
-    for (const [amount, units] of [
-      ['0.5 mg', '5 units'],
-      ['1 mg', '10 units'],
-      ['2 mg', '20 units'],
-      ['3 mg', '30 units'],
-      ['4 mg', '40 units'],
-      ['5 mg', '50 units'],
-    ]) {
-      expect(texts(tree)).toContain(amount);
-      expect(texts(tree)).toContain(units);
-    }
+    expect(ladder(tree)).toEqual({
+      '0.5 mg': '5 units',
+      '1 mg': '10 units',
+      '2 mg': '20 units',
+      '3 mg': '30 units',
+      '4 mg': '40 units',
+      '5 mg': '50 units',
+    });
   });
 
   it('shows the concentration and the U-100 assumption', async () => {
@@ -222,9 +274,8 @@ describe.each(SURFACES)('%s', (_name, render) => {
     await chooseSetUpVial(tree);
     await openCalculator(tree);
     expect(texts(tree)).not.toContain('UNIT CONVERSION');
-    expect(screen(tree)).toContain(
-      'Enter vial amount and reconstitution volume to see the unit conversion.',
-    );
+    expect(offersNoConversion(tree)).toBe(true);
+    // Whatever the surface says, it must not invent a concentration.
     expect(screen(tree)).not.toContain('units/mL');
   });
 
@@ -243,8 +294,12 @@ describe.each(SURFACES)('%s', (_name, render) => {
     for (const gone of ['Amount being used', 'Amount to convert', 'CALCULATED SYRINGE AMOUNT']) {
       expect(rendered).not.toContain(gone);
     }
-    // And the reference is already there without touching the custom field.
-    expect(rendered).toContain('1 mg = 10 units');
+    /*
+     * The reference ladder is there without touching the custom field, and
+     * without an amount. 5.5D gave the *headline* a subject — the routine
+     * amount — but the ladder itself is still pure vial arithmetic.
+     */
+    expect(ladder(tree)['1 mg']).toBe('10 units');
   });
 
   it('offers the custom field only once a concentration exists', async () => {
@@ -270,7 +325,7 @@ describe.each(SURFACES)('%s', (_name, render) => {
     const tree = await render();
     await enterVial(tree, '0.5', '2');
 
-    expect(screen(tree)).toContain('0.05 mg = 20 units');
+    expect(ladder(tree)['0.05 mg']).toBe('20 units');
     expect(screen(tree)).toContain('Concentration · 0.25 mg/mL');
     // And every row it offers is drawable.
     expect(screen(tree)).not.toContain('400 units');
@@ -302,8 +357,8 @@ describe.each(SURFACES)('%s', (_name, render) => {
       ['10', 'abc'],
     ]) {
       await enterVial(tree, vial, water);
+      expect(offersNoConversion(tree)).toBe(true);
       const rendered = screen(tree);
-      expect(rendered).toContain('Enter vial amount and reconstitution volume');
       expect(rendered).not.toContain('NaN');
       expect(rendered).not.toContain('Infinity');
     }
@@ -312,10 +367,11 @@ describe.each(SURFACES)('%s', (_name, render) => {
   it('recovers immediately once the numbers are valid again', async () => {
     const tree = await render();
     await enterVial(tree, '10', '0');
-    expect(screen(tree)).toContain('Enter vial amount and reconstitution volume');
+    expect(offersNoConversion(tree)).toBe(true);
 
     await type(tree, /reconstitution volume/i, '1');
-    expect(screen(tree)).toContain('1 mg = 10 units');
+    await openCalculator(tree);
+    expect(ladder(tree)['1 mg']).toBe('10 units');
   });
 
   it('handles decimals', async () => {
@@ -323,7 +379,7 @@ describe.each(SURFACES)('%s', (_name, render) => {
     await enterVial(tree, '10', '1.5');
 
     // 10 mg in 1.5 mL is 6.67 mg/mL, so 1 mg is 15 units.
-    expect(screen(tree)).toContain('1 mg = 15 units');
+    expect(ladder(tree)['1 mg']).toBe('15 units');
   });
 
   it('keeps the Done accessory on both numeric fields', async () => {
@@ -402,7 +458,7 @@ describe.each(SURFACES)('%s — custom conversion', (_name, render) => {
 
   it('stays silent while blank, and never blocks the reference', async () => {
     const tree = await ready('10', '1');
-    expect(screen(tree)).toContain('1 mg = 10 units');
+    expect(ladder(tree)['1 mg']).toBe('10 units');
     expect(screen(tree)).not.toContain('Enter an amount greater than zero.');
     expect(customValue(tree)).toBe('');
   });
@@ -413,7 +469,7 @@ describe.each(SURFACES)('%s — custom conversion', (_name, render) => {
       await type(tree, /^Custom amount,/, junk);
       expect(screen(tree)).toContain('Enter an amount greater than zero.');
       // The automatic reference is unaffected by a bad custom value.
-      expect(screen(tree)).toContain('1 mg = 10 units');
+      expect(ladder(tree)['1 mg']).toBe('10 units');
       expect(screen(tree)).not.toContain('NaN');
       expect(screen(tree)).not.toContain('Infinity');
     }
@@ -509,7 +565,7 @@ describe.each(SURFACES)('%s — the vial is milligrams, and only milligrams', (_
     const tree = await render();
     await enterVial(tree, '20', '2');
     expect(screen(tree)).toContain('Concentration · 10 mg/mL');
-    expect(screen(tree)).toContain('1 mg = 10 units');
+    expect(ladder(tree)['1 mg']).toBe('10 units');
   });
 
   it('still converts a Custom Amount entered in micrograms', async () => {
@@ -582,6 +638,7 @@ describe('the inline surface specifically', () => {
     // A brand-new form, exactly as "Track this peptide" opens it.
     const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
     await enterVial(tree, '10', '1');
+    await enterAmount(tree, '1');
     expect(screen(tree)).toContain('1 mg = 10 units');
   });
 
@@ -590,6 +647,7 @@ describe('the inline surface specifically', () => {
       <SetupForm mode="new" initial={savedSetup()} onChange={() => undefined} />,
     );
 
+    // 20 mg in 2 mL, with the saved routine amount of 1 mg.
     expect(screen(tree)).toContain('1 mg = 10 units');
   });
 
@@ -597,6 +655,7 @@ describe('the inline surface specifically', () => {
     const emitted: unknown[] = [];
     const tree = await mount(<SetupForm mode="new" onChange={(value) => emitted.push(value)} />);
     await enterVial(tree, '10', '1');
+    await enterAmount(tree, '1');
 
     expect(screen(tree)).toContain('1 mg = 10 units');
     for (const value of emitted) {
@@ -640,17 +699,39 @@ describe('the inline surface specifically', () => {
     expect(editOrder.indexOf('More options')).toBeLessThan(editOrder.indexOf('Preparation'));
   });
 
-  it('keeps the calculator with the vial it derives from, in both orders', async () => {
+  it('puts the calculator directly after the amount it converts', async () => {
+    /*
+     * The 5.5D correction. 5.5C kept the calculator inside Preparation, which
+     * put the arithmetic *above its own input*: someone met a conversion
+     * table before they had told VITA the number they wanted converted. The
+     * founder's §17 order is Preparation → Amount → calculator → Schedule.
+     */
     const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
-    await chooseSetUpVial(tree);
+    await enterVial(tree, '10', '1');
 
     const lines = texts(tree);
     expect(lines.indexOf('Preparation')).toBeLessThan(lines.indexOf('Vial Amount (MG)'));
-    expect(lines.indexOf('Vial Amount (MG)')).toBeLessThan(
-      lines.indexOf('Unit conversion calculator'),
-    );
-    // And still above Routine, because Preparation leads a new setup.
-    expect(lines.indexOf('Unit conversion calculator')).toBeLessThan(lines.indexOf('Routine'));
+    expect(lines.indexOf('Vial Amount (MG)')).toBeLessThan(lines.indexOf('Routine'));
+    expect(lines.indexOf('Amount (MG)')).toBeLessThan(lines.indexOf('Unit conversion calculator'));
+    expect(lines.indexOf('Unit conversion calculator')).toBeLessThan(lines.indexOf('Schedule'));
+  });
+
+  it('offers no calculator until there is something to calculate', async () => {
+    /*
+     * §30: a section that appears only to explain it cannot help is worse
+     * than no section. With no vial there is no concentration, so there is
+     * no calculator — which is also what makes the *Already prepared* path
+     * free of it.
+     */
+    const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
+    await chooseSetUpVial(tree);
+    expect(screen(tree)).not.toContain('Unit conversion calculator');
+
+    await type(tree, /^Vial amount/, '10');
+    expect(screen(tree)).not.toContain('Unit conversion calculator');
+
+    await type(tree, /reconstitution volume/i, '1');
+    expect(screen(tree)).toContain('Unit conversion calculator');
   });
 
   it('keeps every routine control present, just no longer shouting', async () => {
@@ -665,15 +746,15 @@ describe('the inline surface specifically', () => {
       expect(screen(tree)).toContain(label);
     }
 
-    // And nothing was dropped: choosing to prepare reveals the same fields.
+    // And nothing was dropped: choosing to prepare reveals the same fields,
+    // and filling them in brings the calculator with them.
     await chooseSetUpVial(tree);
-    for (const label of [
-      'Vial Amount (MG)',
-      'Reconstitution Volume (ML)',
-      'Unit conversion calculator',
-    ]) {
+    for (const label of ['Vial Amount (MG)', 'Reconstitution Volume (ML)']) {
       expect(screen(tree)).toContain(label);
     }
+
+    await enterVial(tree, '10', '1');
+    expect(screen(tree)).toContain('Unit conversion calculator');
 
     // And nothing was dropped — start date and notes are one tap away.
     const [more] = tree.root.findAll(
@@ -765,6 +846,7 @@ describe('units are cased by role, not by accident', () => {
   it('leaves displayed values in lowercase, where they belong', async () => {
     const tree = await mount(<SetupForm mode="new" onChange={() => undefined} />);
     await enterVial(tree, '10', '1');
+    await enterAmount(tree, '1');
     const rendered = screen(tree);
     expect(rendered).toContain('1 mg = 10 units');
     expect(rendered).toContain('10 mg/mL');
@@ -792,9 +874,19 @@ describe.each(SURFACES)('%s — the canonical conversions', (_name, render) => {
   ])('%s MG in %s ML gives %s', async (vial, water, headline, concentration) => {
     const tree = await render();
     await enterVial(tree, vial, water);
+    /*
+     * A routine amount of 1 mg, so the founder's four worked examples are
+     * still asserted where they are most visible — the headline. On the
+     * standalone tool this is a no-op and the generic 1 mg primary already
+     * reads the same; in setup the headline is the user's own amount, which
+     * is the whole of 5.5D §21.
+     */
+    await enterAmount(tree, '1');
     const rendered = screen(tree);
     expect(rendered).toContain(headline);
     expect(rendered).toContain(concentration);
+    // And the ladder agrees with the headline, on both surfaces.
+    expect(ladder(tree)['1 mg']).toBe(headline.split(' = ')[1]);
   });
 
   it('5 MG / 2 ML with a 500 mcg custom amount gives 20 units', async () => {

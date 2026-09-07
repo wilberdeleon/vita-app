@@ -2048,6 +2048,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5A | Weekly Timeline Polish + Monthly Activity | A connecting rail on the week strip, and a month-by-month history for one routine | 🟡 Direction approved on device; finished in 5.5B |
 | 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | 🟡 Implemented — awaiting founder device review |
 | 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | 🟡 Implemented — awaiting founder device review |
+| 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | 🟡 Implemented — awaiting founder device review |
 | 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ Planned |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
@@ -2329,6 +2330,46 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.5D — Weekly Swipe Navigation + Routine-Aware Unit Conversion 🟡
+
+**Implemented 2026-09-07. Awaiting founder device review — not approved.** Two fixes, no redesign. **Zero changes under `src/lib/`**, no dependency added, no persistence touched.
+
+**A date-fragile test failed at the baseline, before anything was changed.** `agrees that a day before the routine started belongs to neither view` started the routine at `TODAY − 1` and expected the week strip to show a day before it — which is only true when today is not a Monday. It passed on the 6th and failed on the 7th. The start date is anchored to the displayed week's Sunday now, so Monday through Saturday precede it on every day of the week. A product bug it was not; a test that could only be trusted six days in seven it was.
+
+**The week strip can be dragged.** Pull it right to reach back, left to come forward. The arrows are untouched and still bound at the present — the swipe is a third way to move, not a replacement for the two accessible ones.
+
+**Sharing a screen with a vertical scroll and seven buttons.** The gesture is the third claimant on every touch and wins only when the intent is unmistakable: it claims in the **capture** phase — a `Pressable` takes the responder the instant a finger lands, and a parent can only take it back on the way down — and only past 12pt of travel with the movement 1.6× more horizontal than vertical. A tap never travels that far; a scroll is never that sideways. Having claimed, it refuses termination, so a scroll view cannot pull a swipe out from under a finger mid-drag.
+
+**One gesture is one week**, and deliberately not a function of distance or velocity. A thrown flick moves one week exactly like a slow drag past the threshold — skipping four weeks because a gesture was fast would leave someone somewhere they never chose, and the arrows exist for precision.
+
+**The drag is visible and the settle is small.** The strip follows the finger, damped to 55% and capped at 72pt so it stays in its lane; dragging forward at the present gives 18%, so the edge is felt rather than explained. On release it either slides 28pt further and returns carrying the new week, or springs home. **Under Reduce Motion the week simply changes**, with no travel at all — the app-wide rule is to land on the final state, not to play a shorter animation. No haptic (§12).
+
+**The arithmetic is a pure module.** `weekSwipe.ts` holds every decision the gesture makes — whether to claim, how far to follow, what a release means — because a `PanResponder`'s handlers are only reachable through React Native's responder negotiation and a synthetic touch history, and a test that drove them would be testing the framework. The same split `dragLayout.ts` established for the dashboard. Sixteen tests cover claiming, damping, the present boundary, and the one-week guarantee at 80pt, 400pt and 2000pt of throw.
+
+**Also steppable without a swipe.** The week label is an `adjustable` region with increment and decrement actions, so VoiceOver can flick up and down to change week — a drag is not available to someone navigating by flick, and §13 requires the swipe never be the only way. **This lands on Injection Sites too**, which shares `WeekSelector`; it is additive accessibility on a shared component, changes no layout, and is the only way that screen is touched by this slice.
+
+**The calculator now answers the question the user asked.** With a routine of 5 mg it read `1 mg = 6 units` — mathematically true, and the one number on that line nobody wanted. The headline is the user's own amount: **`5 mg = 30 units`** on a 50 mg / 3 mL vial, live as the vial, the volume, the amount or the mg/mcg toggle change, with nothing to save or reopen. The collapsed summary says the same thing.
+
+**With no amount yet it says so and stops.** `Enter an amount to see syringe units.` — it does **not** fall back to `1 mg = …`, which is §29's trap: a number VITA chose, rendered in the position of an answer, reads as a suggested amount. The standalone calculator tool passes no routine at all and keeps its generic reference, which is the whole point of that screen.
+
+**And it moved to where it belongs: directly under Amount.** 5.5C had it inside Preparation, *above* the routine amount — the arithmetic sitting above its own input. The order is now Preparation → Amount → calculator → Schedule → Reminder → More options. **Identical in Edit**, because §18 asks for one calculator behaviour rather than two: editing shows the same routine-aware result, collapsed to one line, with Preparation still folded away underneath.
+
+**It appears only when there is something to calculate** (§30). No vial, no volume, or *Already prepared* means no concentration, so there is no section — rather than a section that appears in order to explain that it cannot help. That is also what keeps the *Already prepared* path free of it (§19).
+
+**The ladder is a ruler with the user's row marked on it.** Same generated, deterministic, compound-agnostic conversions as before, retitled **Reference conversions** (§24) — never "suggested", "popular" or "dose options". The user's amount is marked in place when it already lands on a generated row, and inserted in numeric order when it does not; **no neighbouring amounts are invented around it**. The marker reads `Your routine`, which says whose number it is, and is never `Recommended`.
+
+**The founder's canonical examples all still hold**, now asserted through the headline on both surfaces: 10 mg/1 mL → `1 mg = 10 units`; 10 mg/2 mL → `1 mg = 20 units`; 20 mg/2 mL → `1 mg = 10 units`; 5 mg/2 mL with a 500 mcg custom amount → 20 units. Plus the new routine-aware regression, computed rather than hardcoded: 50 mg in 3 mL is 16.67 mg/mL, so 5 mg is 0.3 mL — 30 units.
+
+**No-recommendation boundary, unchanged and re-tested.** No popular, common, typical, starting or recommended dose; no titration; no protocol; no suggested amount; no schedule recommendation; and no vial-duration dose selection. §38's optional derived math was not expanded into.
+
+**Validation.** `npm test` **64 suites / 1661 tests** (1634 → 1661) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added**, `package.json` diff empty · **zero changes under `src/lib`** · no persistence key, schema or migration touched · verified in Expo Go: Dark and Light.
+
+**Device coverage limit.** This environment deep-links and screenshots but **cannot touch**, so the swipe itself — the claim, the drag, the settle, the snap-back — is covered by sixteen pure tests and six wiring tests and **not by a finger**. It is the first thing worth the founder's attention. The collapsed and expanded calculator were both verified on device.
+
+**Preview scaffolding added:** `setup-5mg` and `edit-5mg` (50 mg / 3 mL / 5 mg), `weeks` (a month of history to swipe through), and a **Calculator** screen that renders the conversion already expanded, so a review pass does not have to find and tap the disclosure on every scenario.
+
+**Still to verify — founder, on a real device:** whether the swipe feels like pushing a timeline rather than fighting the page, whether one swipe reliably moves one week, whether vertical scrolling still feels normal over the strip, and whether the calculator now answers the question you actually asked it.
 
 ### Slice 5.5C — Routine Setup + Peptides Activity Finalization 🟡
 

@@ -8,6 +8,8 @@ import {
   formatConcentration,
   formatMcg,
   formatSyringeUnits,
+  roundForDisplay,
+  fromMcg,
   toMcg,
   unitConversionReference,
   type MassUnit,
@@ -30,6 +32,17 @@ type Props = {
    * the same thing twice.
    */
   showHeading?: boolean;
+  /**
+   * The amount **the user entered for this routine**, when there is a routine
+   * at all.
+   *
+   * `undefined` means there is no routine in this context — the standalone
+   * calculator tool, where a generic `1 mg = X units` reference is the whole
+   * point. An object means Routine Setup: `amountMcg: null` is a routine
+   * whose amount has not been typed yet, which is a different thing from
+   * having no routine, and must not be answered with a number VITA chose.
+   */
+  routine?: { amountMcg: number | null; unit: MassUnit };
 };
 
 /**
@@ -56,6 +69,7 @@ export function UnitConversion({
   vialUnit,
   unitsPerMl,
   showHeading = true,
+  routine,
 }: Props) {
   const { surfaces } = useTheme();
 
@@ -80,6 +94,56 @@ export function UnitConversion({
     { vialAmountMcg, reconstitutionMl, unitsPerMl },
     vialUnit,
   );
+
+  /**
+   * What the **user's own amount** comes to on the syringe.
+   *
+   * The founder's §21 objection: with a routine of 5 mg, the calculator's
+   * headline still read `1 mg = 6 units` — mathematically true and not the
+   * question anyone had. The subject of this card is now the amount they
+   * typed, and the ladder below it is context around that.
+   *
+   * Computed from `calculateSyringeUnits`, the same canonical function the
+   * log flow uses; there is no second conversion engine here.
+   */
+  const routineResult =
+    routine && routine.amountMcg !== null
+      ? calculateSyringeUnits({ vialAmountMcg, reconstitutionMl, unitsPerMl }, routine.amountMcg)
+      : null;
+  const routineUnit = routine?.unit ?? vialUnit;
+
+  /**
+   * The reference ladder, with the user's own amount in it.
+   *
+   * **Never a suggestion.** The ladder is the existing generated one —
+   * deterministic, compound-agnostic, unordered by desirability — and the
+   * only thing added is a marker on the row that is *theirs*. If their amount
+   * already lands on a generated row it is marked in place rather than
+   * duplicated; if it does not, it is inserted in numeric order so the column
+   * still climbs. No neighbouring amounts are invented around it.
+   */
+  const rows = (() => {
+    const generated = reference.ok ? reference.rows : [];
+    if (!routineResult?.ok) return generated.map((entry) => ({ entry, mine: false }));
+
+    const mineMcg = routineResult.amountMcg;
+    // Compared as *displayed*, because two rows a user cannot tell apart are
+    // one row — the same rule the generated ladder already de-duplicates by.
+    const shown = (mcg: number) => roundForDisplay(fromMcg(mcg, routineUnit), routineUnit);
+    const already = generated.find((entry) => shown(entry.amountMcg) === shown(mineMcg));
+    if (already) {
+      return generated.map((entry) => ({ entry, mine: entry === already }));
+    }
+
+    const withMine = [
+      ...generated.map((entry) => ({ entry, mine: false })),
+      {
+        entry: { amountMcg: mineMcg, syringeUnits: routineResult.syringeUnits },
+        mine: true,
+      },
+    ];
+    return withMine.sort((a, b) => a.entry.amountMcg - b.entry.amountMcg);
+  })();
 
   /**
    * `null` while the field is untouched — blank is where everyone starts and
@@ -121,18 +185,39 @@ export function UnitConversion({
       ) : (
         <Card style={styles.card}>
           {/*
-           * The headline. One sentence a person can carry in their head and
-           * check a syringe against — "1 mg = 10 units" — spoken as a whole
-           * rather than as three separate stops.
+           * The headline — **the user's own amount**, wherever there is one.
+           *
+           * One sentence someone can carry to a syringe and check against:
+           * `5 mg = 30 units`. Spoken as a whole rather than as three
+           * separate stops.
+           *
+           * With a routine but no amount typed yet, it says so and stops. It
+           * deliberately does **not** fall back to `1 mg = …`, which is the
+           * §29 trap: a number VITA picked, rendered in the position of an
+           * answer, reads as a suggested amount.
+           *
+           * The standalone calculator tool passes no routine at all, and
+           * there the generic reference is the entire point of the screen.
            */}
-          <Text
-            style={[styles.primary, { color: palette.peptide }]}
-            accessibilityRole="text"
-            accessibilityLabel={`${formatMcg(reference.primary.amountMcg, vialUnit)} equals ${formatSyringeUnits(reference.primary.syringeUnits)}`}
-          >
-            {formatMcg(reference.primary.amountMcg, vialUnit)} ={' '}
-            {formatSyringeUnits(reference.primary.syringeUnits)}
-          </Text>
+          {routine && !routineResult?.ok ? (
+            <Text style={[styles.pending, { color: surfaces.textSecondary }]}>
+              Enter an amount to see syringe units.
+            </Text>
+          ) : (
+            <Text
+              style={[styles.primary, { color: palette.peptide }]}
+              accessibilityRole="text"
+              accessibilityLabel={
+                routineResult?.ok
+                  ? `${formatMcg(routineResult.amountMcg, routineUnit)} equals ${formatSyringeUnits(routineResult.syringeUnits)}`
+                  : `${formatMcg(reference.primary.amountMcg, vialUnit)} equals ${formatSyringeUnits(reference.primary.syringeUnits)}`
+              }
+            >
+              {routineResult?.ok
+                ? `${formatMcg(routineResult.amountMcg, routineUnit)} = ${formatSyringeUnits(routineResult.syringeUnits)}`
+                : `${formatMcg(reference.primary.amountMcg, vialUnit)} = ${formatSyringeUnits(reference.primary.syringeUnits)}`}
+            </Text>
+          )}
 
           <Text style={[styles.concentration, { color: surfaces.textSecondary }]}>
             Concentration · {formatConcentration(reference.concentrationMcgPerMl, vialUnit)}
@@ -140,27 +225,63 @@ export function UnitConversion({
 
           <View style={[styles.table, { borderTopColor: surfaces.border }]}>
             <View style={styles.row}>
-              <Text style={[styles.heading, { color: surfaces.textTertiary }]}>AMOUNT</Text>
+              {/*
+               * "Reference conversions", never "suggested" or "popular"
+               * amounts (§24). These rows are a ruler: a fixed, deterministic,
+               * compound-agnostic ladder of the same ratio restated. Nothing
+               * is ordered by desirability and nothing is recommended.
+               */}
+              <Text style={[styles.heading, { color: surfaces.textTertiary }]}>
+                REFERENCE CONVERSIONS
+              </Text>
               <Text style={[styles.heading, styles.right, { color: surfaces.textTertiary }]}>
                 SYRINGE UNITS
               </Text>
             </View>
 
-            {reference.rows.map((entry) => {
-              const amount = formatMcg(entry.amountMcg, vialUnit);
+            {rows.map(({ entry, mine }) => {
+              // A marked row is written in the user's own unit, because it is
+              // their number; the generated ladder stays in the vial's.
+              const amount = formatMcg(entry.amountMcg, mine ? routineUnit : vialUnit);
               const units = formatSyringeUnits(entry.syringeUnits);
               return (
                 // One accessible node per line, so a screen reader says
                 // "2 mg, 20 units" rather than reading two disconnected columns.
                 <View
-                  key={entry.amountMcg}
+                  key={`${entry.amountMcg}-${mine ? 'mine' : 'ref'}`}
                   style={styles.row}
                   accessible
                   accessibilityRole="text"
-                  accessibilityLabel={`${amount}, ${units}`}
+                  accessibilityLabel={`${amount}, ${units}${mine ? ', your routine' : ''}`}
                 >
-                  <Text style={[styles.cell, { color: surfaces.text }]}>{amount}</Text>
-                  <Text style={[styles.cell, styles.right, { color: surfaces.text }]}>{units}</Text>
+                  <View style={styles.amountCell}>
+                    <Text
+                      style={[
+                        styles.cell,
+                        mine && styles.mineCell,
+                        { color: mine ? palette.peptide : surfaces.text },
+                      ]}
+                    >
+                      {amount}
+                    </Text>
+                    {/*
+                     * "Your routine" — a statement of whose number this is,
+                     * not a grade of it. Never "recommended".
+                     */}
+                    {mine ? (
+                      <Text style={[styles.mineTag, { color: palette.peptide }]}>Your routine</Text>
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.cell,
+                      styles.right,
+                      mine && styles.mineCell,
+                      { color: mine ? palette.peptide : surfaces.text },
+                    ]}
+                  >
+                    {units}
+                  </Text>
                 </View>
               );
             })}
@@ -241,6 +362,22 @@ const styles = StyleSheet.create({
   },
   primary: {
     ...typography.display,
+  },
+  pending: {
+    ...typography.body,
+  },
+  amountCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+    flexShrink: 1,
+  },
+  mineCell: {
+    fontWeight: '600',
+  },
+  mineTag: {
+    ...typography.micro,
+    flexShrink: 1,
   },
   concentration: {
     ...typography.caption,

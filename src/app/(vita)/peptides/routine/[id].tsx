@@ -10,6 +10,7 @@ import { RoutineDayStrip, type StripDay } from '../../../../features/peptides/co
 import { RoutineSiteContext } from '../../../../features/peptides/components/RoutineSiteContext';
 import { RoutineToday } from '../../../../features/peptides/components/RoutineToday';
 import { TakenSheet } from '../../../../features/peptides/components/TakenSheet';
+import { SwipeableWeek } from '../../../../features/peptides/components/SwipeableWeek';
 import { WeekSelector } from '../../../../features/peptides/components/WeekSelector';
 import { markForDay } from '../../../../features/peptides/month';
 import { siteLogsForWeek, weekOf } from '../../../../features/peptides/week';
@@ -260,12 +261,30 @@ export default function RoutineDetail() {
               </PressableScale>
             }
           />
-          <RoutineDayStrip
-            days={strip}
-            selected={openDay?.logDate}
-            today={today}
-            onSelectDay={setOpenDay}
-          />
+          {/*
+            * The strip is draggable (slice 5.5D). Pull it right to go back a
+            * week, left to come forward; the arrows above stay exactly as
+            * they were, for precision and for anyone who cannot swipe.
+            *
+            * `onNext` is omitted at the present, which is what makes the
+            * forward edge resist rather than move — the same boundary the
+            * next arrow already draws.
+            */}
+          <SwipeableWeek
+            onPrevious={() => setWeekOffset((current) => current - 1)}
+            onNext={
+              weekOffset < 0
+                ? () => setWeekOffset((current) => Math.min(0, current + 1))
+                : undefined
+            }
+          >
+            <RoutineDayStrip
+              days={strip}
+              selected={openDay?.logDate}
+              today={today}
+              onSelectDay={setOpenDay}
+            />
+          </SwipeableWeek>
         </View>
       ) : null}
 

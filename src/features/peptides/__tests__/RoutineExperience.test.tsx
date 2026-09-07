@@ -44,6 +44,7 @@ import EditPeptideSetup from '../../../app/(vita)/peptides/setup/[id]';
 import InjectionSites from '../../../app/(vita)/tools/injection-sites';
 import { ToastProvider } from '../../../components/ui';
 import {
+  formatLogDateLong,
   fromLogDate,
   shiftLogDate,
   todayLogDate,
@@ -454,8 +455,16 @@ describe('editing a routine', () => {
     expect(rendered).toContain('Amount (MG)');
     expect(rendered).toContain('Schedule');
     expect(rendered).toContain('Reminder');
-    // The conversion calculator does not stand between you and the schedule.
-    expect(rendered).not.toContain('Unit conversion');
+    /*
+     * The conversion table does not stand between you and the schedule. Since
+     * 5.5D the calculator's *collapsed* row does sit under Amount, carrying
+     * one line — `1 mg = 10 units` — because the founder asked for one
+     * consistent calculator rather than two behaviours (§18). What must stay
+     * folded away is the table, the concentration and the custom field.
+     */
+    expect(rendered).not.toContain('Concentration ·');
+    expect(rendered).not.toContain('REFERENCE CONVERSIONS');
+    expect(rendered).not.toContain('CUSTOM CONVERSION');
     expect(rendered).not.toContain('Vial Amount (MG)');
   });
 
@@ -1142,8 +1151,17 @@ describe('week and month consistency', () => {
   });
 
   it('agrees that a day before the routine started belongs to neither view', async () => {
-    // The guard `markForDay` adds, checked on both surfaces at once.
-    const started = shiftLogDate(TODAY, -1);
+    /*
+     * The guard `markForDay` adds, checked on both surfaces at once.
+     *
+     * The start date is the **Sunday of the displayed week**, not `TODAY - 1`.
+     * Yesterday is in last week whenever today is a Monday, so the week strip
+     * had no day before the start date to show and this test failed on
+     * Mondays only — which is exactly how it was found, at the 5.5D baseline.
+     * Anchoring to the week under test makes Monday through Saturday precede
+     * the start on every day of the week.
+     */
+    const started = weekOf(TODAY)[6];
     const fake = repositoryWith([setupFixture({ startDate: started })]);
 
     const week = await mount(<RoutineDetail />, fake.repository);
@@ -1154,6 +1172,109 @@ describe('week and month consistency', () => {
 
     const month = await mount(<MonthlyActivity />, fake.repository);
     expect(tree_label(month)).toContain('not scheduled');
+  });
+});
+
+/* ── dragging the week (slice 5.5D) ─────────────────────────────────────── */
+
+describe('the week strip as a timeline', () => {
+  /** The responder wrapped around the strip, found the way RN wires it. */
+  const swipeSurface = (tree: ReactTestRenderer) =>
+    tree.root.findAll(
+      (node) => typeof node.props?.onMoveShouldSetResponderCapture === 'function',
+    )[0];
+
+  it('is draggable, without taking the page’s vertical scroll', async () => {
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+    const surface = swipeSurface(tree);
+    expect(surface).toBeDefined();
+
+    // The negotiation itself is `weekSwipe.test.ts`; this is the wiring —
+    // that the claim runs in the capture phase, which is the only phase a
+    // parent can take a gesture back from the day buttons underneath.
+    expect(typeof surface.props.onMoveShouldSetResponderCapture).toBe('function');
+
+    // …and that the day buttons underneath still receive presses. A touch is
+    // a tap until it travels, so the strip stays a control surface.
+    const cells = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /^\w+day, /.test(String(node.props.accessibilityLabel ?? '')),
+    );
+    expect(cells.length).toBe(7);
+  });
+
+  it('keeps the arrows working, and they still bound at the present', async () => {
+    // §5: the swipe adds a way to navigate; it replaces nothing.
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+
+    expect(screen(tree)).toContain('This week');
+    await press(tree, 'Previous week');
+    expect(screen(tree)).toContain('Last week');
+
+    await press(tree, 'Next week');
+    expect(screen(tree)).toContain('This week');
+    // Forward stops at the present — a routine has no future to report.
+    expect(control(tree, 'Next week')!.props.disabled).toBe(true);
+  });
+
+  it('can be stepped without a swipe, for VoiceOver', async () => {
+    /*
+     * §48. A drag is not available to someone navigating by flick, so the
+     * week is an adjustable value as well as a pair of arrows.
+     */
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+
+    const region = tree.root
+      .findAll((node) => typeof node.props?.onAccessibilityAction === 'function')
+      .find((node) => /week/i.test(String(node.props.accessibilityLabel ?? '')))!;
+    expect(region.props.accessibilityRole).toBe('adjustable');
+    expect(region.props.accessibilityActions.map((action: { name: string }) => action.name)).toEqual(
+      ['increment', 'decrement'],
+    );
+
+    await act(async () =>
+      region.props.onAccessibilityAction({ nativeEvent: { actionName: 'decrement' } }),
+    );
+    expect(screen(tree)).toContain('Last week');
+  });
+
+  it('will not step forward past the present, by any route', async () => {
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+
+    const region = () =>
+      tree.root
+        .findAll((node) => typeof node.props?.onAccessibilityAction === 'function')
+        .find((node) => /week/i.test(String(node.props.accessibilityLabel ?? '')))!;
+
+    await act(async () =>
+      region().props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } }),
+    );
+    expect(screen(tree)).toContain('This week');
+  });
+
+  it('leaves the month link alone', async () => {
+    // §14: swiping moves a week. The month is a separate destination and a
+    // separate press target.
+    const tree = await mount(<RoutineDetail />, repositoryWith([setupFixture()]).repository);
+
+    await press(tree, 'Monthly activity');
+    expect(mockPush).toHaveBeenCalledWith('/peptides/routine/setup-1/month');
+  });
+
+  it('changes which week is shown, not what a day means', async () => {
+    /*
+     * §15: the gesture is navigation. Stepping back must not alter the
+     * schedule semantics the strip reports.
+     */
+    const lastWeek = weekOf(TODAY, -1)[2];
+    const fake = repositoryWith([setupFixture()], [], [statusFixture('taken', lastWeek)]);
+    const tree = await mount(<RoutineDetail />, fake.repository);
+
+    await press(tree, 'Previous week');
+    const labels = tree_label(tree);
+    expect(labels).toContain('taken');
+    expect(labels).toContain(formatLogDateLong(lastWeek));
   });
 });
 
