@@ -145,7 +145,7 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.4 — Peptides Home — ✅ IMPLEMENTED 2026-09-04 (awaiting founder device review)
+# Slice 5.4 — Peptides Home — ✅ LOCKED (founder-approved on device 2026-09-07)
 
 **File:** `src/app/(vita)/peptides/index.tsx` · `features/peptides/components/TodayRoutineCard.tsx`
 
@@ -171,7 +171,7 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.5 — Routine + Injection Sites — ✅ IMPLEMENTED 2026-09-05 (awaiting founder device review)
+# Slice 5.5 — Routine + Injection Sites — ✅ LOCKED (founder-approved on device 2026-09-07, with 5.5A–5.5D)
 
 **Files:** `src/app/(vita)/peptides/routine/[id].tsx` · `features/peptides/components/{TakenSheet,RoutineDaySheet,RoutineDayStrip,SiteSelector,BodyMap,LogRow}.tsx` · `src/app/(vita)/tools/injection-sites.tsx`
 

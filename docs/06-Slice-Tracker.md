@@ -2043,13 +2043,13 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.3B | Dashboard Widget Layout + Density | Two-column widget grid, square/wide sizes, drag reorder, quote, Food Scanner correction | ✅ Accepted subpass of 5.3 |
 | 5.3C | Dashboard Direct Manipulation + Visual Polish | Shared square footprint, Quick Tools customization, Food Scanner reinstated, serif quote, daypart accents, on-Home edit mode | ✅ Accepted subpass of 5.3 |
 | 5.3D | Dashboard Final Interaction + Typography Polish | Live drag reflow, remove control moved top-right, type scale raised, Dynamic Type support | ✅ Accepted subpass of 5.3 |
-| 5.4 | Peptides Home Redesign | Today as hero, one setup notice, routines progressively disclosed | 🟡 Implemented — awaiting founder device review |
-| 5.5 | Routine + Injection Site Experience | Today first, progressive disclosure, weekly site history on the shared `BodyMap` | 🟡 Direction approved on device; week strip refined in 5.5A |
-| 5.5A | Weekly Timeline Polish + Monthly Activity | A connecting rail on the week strip, and a month-by-month history for one routine | 🟡 Direction approved on device; finished in 5.5B |
-| 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | 🟡 Implemented — awaiting founder device review |
-| 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | 🟡 Implemented — awaiting founder device review |
-| 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | 🟡 Implemented — awaiting founder device review |
-| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ Planned |
+| 5.4 | Peptides Home Redesign | Today as hero, one setup notice, routines progressively disclosed | ✅ Approved — founder device review, 2026-09-07. **Peptides locked.** |
+| 5.5 | Routine + Injection Site Experience | Today first, progressive disclosure, weekly site history on the shared `BodyMap` | ✅ Approved — founder device review, 2026-09-07. **Peptides locked.** |
+| 5.5A | Weekly Timeline Polish + Monthly Activity | A connecting rail on the week strip, and a month-by-month history for one routine | ✅ Accepted subpass of 5.5 |
+| 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | ✅ Accepted subpass of 5.5 |
+| 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | ✅ Accepted subpass of 5.5 |
+| 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ **NEXT** — not started |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2331,7 +2331,49 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
 
-### Slice 5.5D — Weekly Swipe Navigation + Routine-Aware Unit Conversion 🟡
+### Slice 5.5 — closed ✅
+
+**Founder-approved on real device, 2026-09-07. The Peptides experience is locked.**
+
+5.5 shipped across five passes, and each earlier one was a genuine correction rather than a restatement — the hierarchy and the shared `BodyMap` in 5.5, the week timeline and the month view in 5.5A, real history and day selection in 5.5B, the setup flow and the all-routines month in 5.5C, the week gesture and the routine-aware calculator in 5.5D. **All five are accepted as one approved whole**; 5.5A–5.5D are subpasses of 5.5, not separate deliverables. **5.4 — Peptides Home Redesign is locked with them**, on the same review: Peptides Home is one of the surfaces the founder approved.
+
+**The locked state, surface by surface.**
+
+**Peptides Home.** Today first and answerable in place · compact routine rows under *Your routines* · one *Monthly activity* row after them · one setup notice · no card soup, no fake statistics, no adherence score.
+
+**Routine detail.** Identity and status · Today · this week · Recent activity · injection sites this week when there are any · Routine details · Preparation · Manage routine — the last four progressively disclosed.
+
+**Recent activity.** The latest one or two entries as compact rows, *View all history*, *Add log* secondary. No activity cards.
+
+**New Routine Setup.** Peptide identity with a short factual descriptor · **Preparation first** — *Set up vial* or *Already prepared* · vial amount · reconstitution volume · Routine Amount · the unit conversion calculator directly beneath it · Schedule · Reminder · More options · **Add to Routine**, which ends on Peptides.
+
+**Edit Routine.** Routine first, Preparation collapsed beneath it, same fields and same validation as new setup. A visit, not a sequence.
+
+**Unit conversion.** The headline is the amount the user authored — `5 mg = 30 units` — live as the vial, the volume, the amount or the unit changes, and identical in the collapsed summary. Deterministic *Reference conversions* underneath, with the user's own row marked `Your routine`. Shown only when a real concentration exists. No recommendation language anywhere in it.
+
+**Weekly timeline.** Monday to Sunday · a neutral rail that never fills · Taken / Skipped / No response · today underlined, never ringed · the date range · the *Month* entry · **swipe left and right**, with the arrows kept as fallback and one swipe moving exactly one week. Nothing on it is scored.
+
+**Monthly activity, one routine.** A Monday-first grid · historical navigation · lazy month-scoped loading · Taken / Skipped / No response · blank unscheduled days · a selected-day detail read from the stored log · a three-count Month summary. No percentage, streak or grade.
+
+**Monthly activity, all routines.** The same month across every routine including paused ones · a day with several routines draws several marks and is never flattened into one · selecting it lists what each routine did · a factual Month summary counting routine events. The month ends at today.
+
+**Injection Sites.** The shared `BodyMap` · weekly historical markers grouped by place with counts · `M · T · W · TH · F · S · SU` where a single letter would be ambiguous · historical only. **No rotation engine, no recommended site, no spacing advice.**
+
+**Numeric keyboard.** `Done` is an input-system behaviour: `NumericField` carries its own accessory, so every numeric field in VITA has one, in routes and in modals alike, and no screen wires it. Done dismisses the keyboard and does nothing else. Design System §26.
+
+**These are settled, not open questions.** They are reopened only if an audit finds a real defect — not to revisit a decision already made.
+
+**The no-recommendation boundary is a locked Peptides product rule.** VITA may track what the user entered, calculate syringe units from their own values, show factual historical activity, show reviewed catalog classification, and show mathematical conversion references. VITA may **not** recommend or suggest a dose, show a popular or starting dose, recommend titration, recommend a schedule, choose an amount, calculate a dose to make a vial last a given number of days, recommend an injection site, recommend a reconstitution, score adherence, or grade compliance. This survives 5.5.
+
+**Historical data behaviour, as accepted.** The provider keeps a warm recent window · older months load lazily, range-scoped and read-only · nothing preloads at startup · every recorded day stays on disk · there is **no 60-, 90-day or n-month cap** — navigation stops only where real history stops, or at the routine's start month · as-needed days with no log stay blank · future days are drawn where they are meaningful and never counted as *No response*.
+
+**Founder design approval is not content approval.** The Peptides catalog remains under its existing qualified expert / medical / legal review gate before release (Open Question #17). Nothing in this closeout changes that.
+
+**Carried forward, and not Peptides blockers** — all four belong to shared shell or shared primitives: `FloatingDock` crops its labels at accessibility text sizes · `PressableScale` does not propagate `flex` to its parent row, worked around at seven call sites · `ScreenHeader` truncates titles at accessibility text sizes · `EditableWidget.tsx` carries quote-formatting drift. **5.5 is not reopened for any of them.**
+
+**No runtime change accompanied this approval.** The approved build is `fc231f2` on `sprint-5-identity-interaction`; the branch is **not merged**, by standing instruction.
+
+### Slice 5.5D — Weekly Swipe Navigation + Routine-Aware Unit Conversion ✅
 
 **Implemented 2026-09-07. Awaiting founder device review — not approved.** Two fixes, no redesign. **Zero changes under `src/lib/`**, no dependency added, no persistence touched.
 
@@ -2371,7 +2413,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Still to verify — founder, on a real device:** whether the swipe feels like pushing a timeline rather than fighting the page, whether one swipe reliably moves one week, whether vertical scrolling still feels normal over the strip, and whether the calculator now answers the question you actually asked it.
 
-### Slice 5.5C — Routine Setup + Peptides Activity Finalization 🟡
+### Slice 5.5C — Routine Setup + Peptides Activity Finalization ✅
 
 **Implemented 2026-09-06. Awaiting founder device review — not approved.** **Zero changes under `src/lib/`** — the whole slice is presentation, selectors and one shared UI primitive.
 
@@ -2409,7 +2451,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Still to verify — founder, on a real device:** whether New Setup now feels guided rather than administrative, whether *Already prepared* reads as a valid path rather than a lesser one, whether the descriptor is the right amount of information, whether Done now appears on every number pad in the app, and whether the all-routines month is the depth Peptides Home was missing.
 
-### Slice 5.5B — Historical Month Loading + Final Routine/Month Polish 🟡
+### Slice 5.5B — Historical Month Loading + Final Routine/Month Polish ✅
 
 **Implemented 2026-09-05. Awaiting founder device review — not approved.** Five focused items, and one narrow authorised domain exception.
 
@@ -2439,9 +2481,9 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Still to verify — founder, on a real device:** whether the week header now feels finished, whether `TH`/`SU` read cleanly at chip size, whether Month summary looks designed, whether tapping a day gives the depth that was missing, and whether stepping back to a genuinely old month works on real data.
 
-### Slice 5.5A — Weekly Timeline Polish + Monthly Activity 🟡
+### Slice 5.5A — Weekly Timeline Polish + Monthly Activity ✅
 
-**Implemented 2026-09-05. Awaiting founder device review — not approved.** A refinement of 5.5, not another redesign. **Zero changes under `src/lib/peptides/`.**
+**Implemented 2026-09-05. Approved as a subpass of 5.5 on 2026-09-07.** A refinement of 5.5, not another redesign. **Zero changes under `src/lib/peptides/`.**
 
 **Founder verdict on 5.5:** Routine detail, Recent Activity, the disclosures, Edit Routine and Injection Sites are all approved in direction. One note: the week strip read as *sparse* rather than deliberately minimal.
 
@@ -2471,9 +2513,9 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Still to verify — founder, on a real device:** whether the rail reads premium or gimmicky, whether the nodes have presence without becoming buttons, whether today stays distinguishable, whether the month feels calm, and whether blank days are unmistakably different from *No response*.
 
-### Slice 5.5 — Routine + Injection Site Experience 🟡
+### Slice 5.5 — Routine + Injection Site Experience ✅
 
-**Implemented 2026-09-05. Awaiting founder device review — not approved.** Hierarchy, disclosure and one new visualization. **Zero changes under `src/lib/peptides/`.**
+**Implemented 2026-09-05. Founder-approved on real device 2026-09-07, with subpasses 5.5A–5.5D — see *Slice 5.5 — closed* above.** Hierarchy, disclosure and one new visualization. **Zero changes under `src/lib/peptides/`.**
 
 **Nothing was removed.** Taken, Skipped, Change, week navigation, history, Add Log, View All History, vial, reconstitution, unit conversion, custom conversion, routine amount, schedule, reminder, start date, notes, Pause, Resume, Remove and Edit are all still present and still reach the same provider operations. What changed is what is visible on arrival.
 
@@ -2505,9 +2547,9 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Still to verify — founder, on a real device:** whether Routine now answers *what happened today* first, whether two recent entries is the right number, whether *Preparation* collapsed is a relief or a hiding place, whether the site markers read at a glance, and whether the neutral Save feels right.
 
-### Slice 5.4 — Peptides Home Redesign 🟡
+### Slice 5.4 — Peptides Home Redesign ✅
 
-**Implemented 2026-09-04. Awaiting founder device review — not approved.** Presentation, hierarchy and interaction only.
+**Implemented 2026-09-04. Founder-approved on real device 2026-09-07**, in the same review that locked 5.5 — Peptides Home is one of the surfaces named in that approval. Presentation, hierarchy and interaction only.
 
 **Zero changes under `src/lib/peptides/`.** Every group still comes from `usePeptides()` — `today`, `needsSetup`, `active`, `inactive` — and every write still goes through `markTaken`, `markSkipped`, `clearRoutineDay` and `restoreRoutineDay`. The diff is `features/peptides/` plus the one route.
 

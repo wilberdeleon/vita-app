@@ -6,7 +6,19 @@
 
 ---
 
-## Sprint 5 slice 5.5D — swipe through weeks, and a calculator that answers you (2026-09-07, awaiting founder device review)
+## ✅ Approved and locked — 2026-09-07
+
+**The Peptides experience is founder-approved on a real iPhone and locked.** That covers Peptides Home, routine detail, Recent activity, Edit Routine, the preparation-first new setup and its *Already prepared* path, the routine-aware unit conversion, the swipeable weekly timeline with its arrow fallback, both Monthly Activity views, historical month loading, the Month summary, selected-day detail, Injection Sites weekly history, the compact weekday labels, and the Dynamic Type and Light/Dark behaviour throughout. Slices 5.4 and 5.5 — with 5.5A, 5.5B, 5.5C and 5.5D — are one approved whole.
+
+**What that approval is not.** It is a design and product decision. **The peptide reference content is still under its qualified expert / medical and legal review gate** and is not cleared for release by it.
+
+**Two rules that outlive the slice.** VITA tracks what you enter, calculates syringe units from your own values, and shows your real history and the reviewed classification of a compound. It does **not** recommend or suggest a dose, show popular or starting amounts, recommend titration, choose an amount for you, work out a dose to make a vial last a given time, recommend an injection site or a reconstitution, or score how well you kept to a routine. And your history is never capped: months load as you browse back, as far as you actually have records.
+
+Peptides is closed for redesign. It reopens only for a genuine bug.
+
+---
+
+## Sprint 5 slice 5.5D — swipe through weeks, and a calculator that answers you (2026-09-07, approved)
 
 **You can push the week strip sideways.** Drag it right to look back a week, left to come forward, the way you would move any calendar with your thumb. The arrows are still there and still work — the swipe is an extra way to move, not a replacement — and if you use VoiceOver you can flick up and down on the week to step it. One swipe moves one week, however hard you throw it, and scrolling the page up and down still works normally over the strip.
 
@@ -22,7 +34,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5D.
 
 ---
 
-## Sprint 5 slice 5.5C — setting a routine up, and a month across all of them (2026-09-06, awaiting founder device review)
+## Sprint 5 slice 5.5C — setting a routine up, and a month across all of them (2026-09-06, approved)
 
 **Setting up a new routine now asks one question first: how does this reach you?** *Set up vial* if you mix it yourself, or ***Already prepared*** if it arrives ready to use from a pharmacy, a clinic, or a pen. Choosing *Already prepared* means VITA stops asking about vials, water and syringe units entirely — none of which apply to you — and you go straight to the amount. Neither answer is the lesser one, and you can still save a routine without answering at all.
 
@@ -42,7 +54,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5C.
 
 ---
 
-## Sprint 5 slice 5.5B — real history, and a month you can dig into (2026-09-05, awaiting founder device review)
+## Sprint 5 slice 5.5B — real history, and a month you can dig into (2026-09-05, approved)
 
 **You can go back as far as you actually have history.** July, June, May, last year — Monthly activity now reads each month from storage when you open it, instead of stopping at the couple of months VITA happened to be holding in memory. **Nothing was ever deleted**; it simply was not being loaded. Where your records genuinely stop, so does the arrow.
 
@@ -58,7 +70,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5B.
 
 ---
 
-## Sprint 5 slice 5.5A — the week as a timeline, and a month you can look back at (2026-09-05, awaiting founder device review)
+## Sprint 5 slice 5.5A — the week as a timeline, and a month you can look back at (2026-09-05, approved)
 
 **The week strip is now a timeline.** A faint line joins the seven days, so it reads as one week rather than seven loose circles. **The line never fills in** — it is not a progress bar, and nothing on this screen is scoring you. The day markers are slightly larger, and today is marked by a small violet underline under the date rather than a ring, so *today* can never be mistaken for *taken*.
 
@@ -76,7 +88,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5A.
 
 ---
 
-## Sprint 5 slice 5.5 — Routine and injection sites (2026-09-05, awaiting founder device review)
+## Sprint 5 slice 5.5 — Routine and injection sites (2026-09-05, approved)
 
 **Opening a routine now answers today first.** The state, the amount you set, and — if you have not answered yet — Taken and Skipped, right at the top. Under that: the week, then the last couple of things you recorded, then where you injected them.
 
@@ -96,7 +108,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.5.
 
 ---
 
-## Sprint 5 slice 5.4 — Peptides Home redesigned (2026-09-04, awaiting founder device review)
+## Sprint 5 slice 5.4 — Peptides Home redesigned (2026-09-04, approved)
 
 **Peptides Home now answers one question first: what is scheduled today, and what can I do about it?**
 
