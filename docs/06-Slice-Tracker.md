@@ -2353,7 +2353,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Deferred, and recorded as direction only:** a future Journey that knows a user's broader goal, starting state and progress may one day assist with nutrition guidance. **No questionnaire, no TDEE, no BMR, no deficit, no macro planner and no recommendation algorithm exists or is authorised** — this note implies none.
 
-**Validation.** `npm test` **71 suites / 1825 tests** (1807 → 1825) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · no persistence key changed · food logs, favourites, recents, custom foods and the search cache untouched.
+**Validation.** `npm test` **71 suites / 1826 tests** (1807 → 1826) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · no persistence key changed · food logs, favourites, recents, custom foods and the search cache untouched.
 
 **Still to verify — founder, on a real device:** that the editor offers only calories and protein, that *Set nutrition goals* appears with none set and disappears after setting either one, that it returns after clearing, and that carbs and fat never show a denominator in any state.
 
