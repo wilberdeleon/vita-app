@@ -10,9 +10,22 @@
  * names, so a consumer resolves the color with `palette[macro.key]`.
  */
 
-import type { NutritionFacts, NutritionTargets } from './types';
+import type { NutritionFacts } from './types';
 
-export type MacroKey = Extract<keyof NutritionFacts & keyof NutritionTargets, 'protein' | 'carbs' | 'fat'>;
+/**
+ * What VITA *tracks*, which is not the same as what can have a goal.
+ *
+ * This was the intersection of `NutritionFacts` and `NutritionTargets`,
+ * which only held while every macro had a target. Since 5.6A.1 only protein
+ * can, and carbs and fat are totals — so the two ideas are decoupled here
+ * rather than left to collapse the list to one entry.
+ */
+export type MacroKey = Extract<keyof NutritionFacts, 'protein' | 'carbs' | 'fat'>;
+
+/** Whether a macro is something the user can set a goal for. Only protein is. */
+export function macroHasGoal(key: MacroKey): key is 'protein' {
+  return key === 'protein';
+}
 
 export type MacroDescriptor = {
   key: MacroKey;

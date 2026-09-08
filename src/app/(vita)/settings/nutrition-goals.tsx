@@ -21,10 +21,8 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * `Optional` says the only thing that needs saying.
  */
 const FIELDS: Record<GoalField, { label: string; unit: string }> = {
-  calories: { label: 'Calories', unit: 'kcal' },
-  protein: { label: 'Protein', unit: 'g' },
-  carbs: { label: 'Carbs', unit: 'g' },
-  fat: { label: 'Fat', unit: 'g' },
+  calories: { label: 'Daily calorie goal', unit: 'kcal' },
+  protein: { label: 'Daily protein goal', unit: 'g' },
 };
 
 /** Positive finite numbers only. Blank means *no goal for this one*. */
@@ -54,11 +52,17 @@ function parseGoal(raw: string): number | null {
  * own language arrives in 5.6B and Settings' in 5.7; a considered design
  * here would be work thrown away twice. Four fields, a save, and a clear.
  *
- * ## Every goal is optional, including all of them
+ * ## Two goals, both optional
  *
- * Any subset may be set. Someone tracking protein alone leaves the other
- * three blank and gets exactly that — no calorie goal is inferred from a
- * protein one, and no macro split is derived from a calorie figure.
+ * **Calories and protein only** (founder ruling, 5.6A.1). Carbohydrate and
+ * fat are secondary totals rather than things people set out to hit, and
+ * asking for four numbers turned setting a goal into a configuration
+ * exercise. They are still tracked and shown everywhere — as totals, with no
+ * denominator.
+ *
+ * Either goal may be set alone. Someone tracking protein leaves calories
+ * blank and gets exactly that — no calorie goal is inferred from a protein
+ * one, and no macro split is derived from a calorie figure.
  *
  * ## Nothing is suggested, computed, or judged
  *
@@ -73,12 +77,7 @@ export default function NutritionGoals() {
   const { showToast } = useToast();
   const { surfaces } = useTheme();
 
-  const [draft, setDraft] = useState<Record<GoalField, string>>({
-    calories: '',
-    protein: '',
-    carbs: '',
-    fat: '',
-  });
+  const [draft, setDraft] = useState<Record<GoalField, string>>({ calories: '', protein: '' });
   const [saving, setSaving] = useState(false);
 
   /**
@@ -97,8 +96,6 @@ export default function NutritionGoals() {
     setDraft({
       calories: targets?.calories !== undefined ? String(targets.calories) : '',
       protein: targets?.protein !== undefined ? String(targets.protein) : '',
-      carbs: targets?.carbs !== undefined ? String(targets.carbs) : '',
-      fat: targets?.fat !== undefined ? String(targets.fat) : '',
     });
   }, [status, targets]);
 
@@ -130,7 +127,7 @@ export default function NutritionGoals() {
   const clear = async () => {
     if (saving) return;
     setSaving(true);
-    setDraft({ calories: '', protein: '', carbs: '', fat: '' });
+    setDraft({ calories: '', protein: '' });
     // Clearing restores *no goal* — never the figures 5.6A removed.
     await updateTargets(null);
     showToast({ message: 'Goals cleared' });
@@ -142,8 +139,8 @@ export default function NutritionGoals() {
       <ScreenHeader title="Nutrition Goals" back />
 
       <Text style={[styles.intro, { color: surfaces.textSecondary }]}>
-        Set the daily goals you want Fuel to measure against. Every one is optional — leave a field
-        blank and Fuel simply shows the total.
+        Set the daily goals you want Fuel to measure against. Both are optional — leave one blank
+        and Fuel simply shows the total. Carbs and fat are always shown as totals.
       </Text>
 
       <SectionHeader title="Daily goals" />
@@ -155,7 +152,7 @@ export default function NutritionGoals() {
           placeholder="Optional"
           value={draft[field]}
           onChangeText={(text) => setDraft((current) => ({ ...current, [field]: text }))}
-          accessibilityLabel={`${FIELDS[field].label} goal in ${FIELDS[field].unit}, optional`}
+          accessibilityLabel={`${FIELDS[field].label} in ${FIELDS[field].unit}, optional`}
         />
       ))}
 

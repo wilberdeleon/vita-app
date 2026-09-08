@@ -401,6 +401,16 @@ VITA Score · any food, meal or product grading · red/yellow/green ratings · d
 
 ---
 
+# Z.1 — Rulings received (2026-09-07)
+
+**§AA.1 — goals.** Option (a): VITA does not invent goals; one exists when the user sets it. Implemented in **5.6A**, then narrowed in **5.6A.1** — the authorable goals are **calories and protein only**. Carbohydrate and fat remain tracked totals and can never carry a target. First-time setup is contextual from Fuel; later editing lives in Settings → Nutrition Goals. §H of this audit is superseded on that point: macros are not measured against targets except protein.
+
+**§AA.6 — characterization first.** Confirmed and done: 5.6A wrote the safety net before changing anything.
+
+The remaining §AA decisions — the visual object, the Hydration/Peptides tiles, empty meal slots and `/fuel/log` — are settled for 5.6B and recorded in the Slice Tracker's 5.6A.1 entry.
+
+---
+
 # AA. Founder decisions needed before implementation
 
 1. **Calorie and macro goals — the blocking decision.** Today VITA invents 2,000 / 160 / 214 / 64 and presents them as the user's own. Choose one: **(a)** show no goal until the user sets one, and add a goals editor in Settings — the Water precedent; **(b)** show no goal and ship no editor in 5.6, treating calories as a plain total; or **(c)** keep goals but make them explicitly user-authored on first use. *Recommendation: (a).*

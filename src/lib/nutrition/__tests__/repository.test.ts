@@ -170,9 +170,40 @@ describe('goals in storage', () => {
   });
 
   it('round-trips goals the user actually authored', async () => {
-    const authored = { calories: 2200, protein: 150, carbs: 200, fat: 60 };
+    const authored = { calories: 2200, protein: 150 };
     await repository.saveTargets(authored);
     expect(await repository.getTargets()).toEqual(authored);
+  });
+
+  it('ignores carb and fat goals left over from 5.6A', async () => {
+    /*
+     * §9's backward-compatible read. 5.6A briefly allowed four goals; the
+     * founder ruling narrowed them to calories and protein. A record written
+     * in between is not migrated or deleted — the parser simply walks
+     * `GOAL_FIELDS`, so the extra keys are inert, and the next save drops
+     * them. Nothing the user set for calories or protein is lost.
+     */
+    await AsyncStorage.setItem(
+      StorageKeys.targets,
+      JSON.stringify({ calories: 2200, protein: 150, carbs: 200, fat: 60 }),
+    );
+    expect(await repository.getTargets()).toEqual({ calories: 2200, protein: 150 });
+  });
+
+  it('drops the stale keys the next time goals are saved', async () => {
+    await AsyncStorage.setItem(
+      StorageKeys.targets,
+      JSON.stringify({ calories: 2200, carbs: 200, fat: 60 }),
+    );
+    await repository.saveTargets({ calories: 1800 });
+
+    const raw = JSON.parse((await AsyncStorage.getItem(StorageKeys.targets))!) as object;
+    expect(Object.keys(raw)).toEqual(['calories']);
+  });
+
+  it('treats a record of only carb and fat goals as no goal at all', async () => {
+    await AsyncStorage.setItem(StorageKeys.targets, JSON.stringify({ carbs: 200, fat: 60 }));
+    expect(await repository.getTargets()).toBeNull();
   });
 
   it('reads a partial record — a calories-only goal is a goal', async () => {
@@ -196,7 +227,7 @@ describe('goals in storage', () => {
     // of one — a range check would be a nutrition recommendation.
     await AsyncStorage.setItem(
       StorageKeys.targets,
-      JSON.stringify({ calories: 2000, protein: 0, carbs: -5, fat: 'lots' }),
+      JSON.stringify({ calories: 2000, protein: 0 }),
     );
     expect(await repository.getTargets()).toEqual({ calories: 2000 });
   });

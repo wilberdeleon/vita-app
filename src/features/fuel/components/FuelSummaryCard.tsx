@@ -1,9 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
-import { Card, ProgressBar, ProgressRing, StatBar } from '../../../components/ui';
+import { Card, PressableScale, ProgressBar, ProgressRing, StatBar } from '../../../components/ui';
 import {
   MACROS,
+  macroHasGoal,
   formatAmount,
   formatCalories,
+  hasAnyGoal,
   progress,
   roundForDisplay,
   type DailyNutrition,
@@ -23,6 +26,11 @@ const OVER_ACCENT = palette.carbs;
 
 type Props = {
   today: DailyNutrition;
+  /**
+   * Opens the goal editor. Rendered **only while the user has no goals at
+   * all** — see the note on first-time setup below.
+   */
+  onSetGoals?: () => void;
 };
 
 /**
@@ -66,21 +74,33 @@ type Props = {
  * same no-guilt rule the rest of the product follows.
  *
  * Protein says "Goal" only when one is set, because reaching it is the
- * intent; Carbs and Fat carry no verb because their targets are neither
- * floors nor ceilings, and labelling them as either would be VITA inventing
- * dietary advice.
+ * intent. **Carbs and Fat can have no goal at all** (5.6A.1): they are
+ * secondary totals rather than things people set out to hit, so they are
+ * always reported as plain figures and never gain a denominator.
+ *
+ * ## Finding goals in the first place
+ *
+ * A goal nobody can discover is barely better than one nobody can set. With
+ * neither goal configured this card carries one quiet line into the editor —
+ * not a warning, not an onboarding gate, and not a second call to action:
+ * Fuel is fully usable without goals, and the line disappears the moment
+ * either one is set. It returns if the user later clears them, which is the
+ * truth about that state. Editing afterwards lives in Settings, so Home does
+ * not keep a permanent settings button on it.
  *
  * Every number is derived from the shared nutrition engine. While the day
  * is still loading, figures hold an em dash rather than showing a real "0"
  * that jumps a frame later — a false zero reads as data loss. The layout
  * never shifts between the two states.
  */
-export function FuelSummaryCard({ today }: Props) {
+export function FuelSummaryCard({ today, onSetGoals }: Props) {
   const { surfaces } = useTheme();
   const pending = today.isLoading;
   /** `undefined` when the user has authored no calorie goal. */
   const goal = today.targets?.calories;
   const over = !pending && (today.caloriesOver ?? 0) > 0;
+  /* Neither goal set — and not merely still loading, which would flash it. */
+  const noGoals = !pending && !hasAnyGoal(today.targets);
 
   // Stored exactly, rounded only here at the display edge, so a half serving
   // never accumulates rounding error across a day's totals.
@@ -172,7 +192,9 @@ export function FuelSummaryCard({ today }: Props) {
 
       <View style={[styles.macros, { borderTopColor: surfaces.border }]}>
         {MACROS.map((macro) => {
-          const macroGoal = today.targets?.[macro.key];
+          // Only protein can carry a goal (5.6A.1). Carbs and fat are
+          // totals, so they never gain a denominator.
+          const macroGoal = macroHasGoal(macro.key) ? today.targets?.protein : undefined;
           const eaten = pending ? PENDING : formatAmount(consumed[macro.key]);
 
           // Without a goal there is no bar to fill, so the figure stands on
@@ -202,6 +224,20 @@ export function FuelSummaryCard({ today }: Props) {
           );
         })}
       </View>
+
+      {noGoals && onSetGoals ? (
+        <PressableScale
+          onPress={onSetGoals}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Set nutrition goals"
+          accessibilityHint="Opens your daily calorie and protein goals"
+          style={[styles.setGoals, { borderTopColor: surfaces.border }]}
+        >
+          <Text style={[styles.setGoalsLabel, { color: palette.primary }]}>Set nutrition goals</Text>
+          <Ionicons name="chevron-forward" size={13} color={palette.primary} />
+        </PressableScale>
+      ) : null}
     </Card>
   );
 }
@@ -250,6 +286,18 @@ const styles = StyleSheet.create({
   },
   macroValue: {
     ...typography.bodyMedium,
+  },
+  setGoals: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: spacing.m,
+    paddingTop: spacing.m,
+    minHeight: 36,
+  },
+  setGoalsLabel: {
+    ...typography.captionMedium,
   },
   macros: {
     flexDirection: 'row',

@@ -153,7 +153,7 @@ describe('setting a goal', () => {
     await seed();
     const tree = await mount(<NutritionGoals />);
 
-    for (const field of [/Calories goal/, /Protein goal/, /Carbs goal/, /Fat goal/]) {
+    for (const field of [/^Daily calorie goal/, /^Daily protein goal/]) {
       const input = tree.root
         .findAllByType(TextInput)
         .find((node) => field.test(String(node.props.accessibilityLabel ?? '')))!;
@@ -162,11 +162,33 @@ describe('setting a goal', () => {
     }
   });
 
-  it('saves a calories-only goal, inventing no macros around it', async () => {
+  it('offers exactly two goals — calories and protein', async () => {
+    /*
+     * Founder ruling, 5.6A.1: carbohydrate and fat are secondary totals
+     * rather than things people set out to hit, and asking for four numbers
+     * turned setting a goal into a configuration exercise.
+     */
     await seed();
     const tree = await mount(<NutritionGoals />);
 
-    await type(tree, /Calories goal/, '2200');
+    const fields = tree.root
+      .findAllByType(TextInput)
+      .map((node) => String(node.props.accessibilityLabel ?? ''));
+    expect(fields).toHaveLength(2);
+    expect(fields[0]).toMatch(/^Daily calorie goal/);
+    expect(fields[1]).toMatch(/^Daily protein goal/);
+
+    // No carb or fat *field*. The intro does mention them, to say why they
+    // are not here — that is an explanation, not an input.
+    expect(screen(tree)).not.toContain('Daily carb goal');
+    expect(screen(tree)).not.toContain('Daily fat goal');
+  });
+
+  it('saves a calories-only goal, inventing no protein goal around it', async () => {
+    await seed();
+    const tree = await mount(<NutritionGoals />);
+
+    await type(tree, /^Daily calorie goal/, '2200');
     await act(async () => control(tree, 'Save goals')!.props.onPress());
 
     expect(await storedGoals()).toEqual({ calories: 2200 });
@@ -176,23 +198,30 @@ describe('setting a goal', () => {
     await seed();
     const tree = await mount(<NutritionGoals />);
 
-    await type(tree, /Protein goal/, '150');
+    await type(tree, /^Daily protein goal/, '150');
     await act(async () => control(tree, 'Save goals')!.props.onPress());
 
     expect(await storedGoals()).toEqual({ protein: 150 });
   });
 
-  it('saves all four when all four are given', async () => {
+  it('saves both when both are given', async () => {
     await seed();
     const tree = await mount(<NutritionGoals />);
 
-    await type(tree, /Calories goal/, '2200');
-    await type(tree, /Protein goal/, '150');
-    await type(tree, /Carbs goal/, '200');
-    await type(tree, /Fat goal/, '60');
+    await type(tree, /^Daily calorie goal/, '2200');
+    await type(tree, /^Daily protein goal/, '150');
     await act(async () => control(tree, 'Save goals')!.props.onPress());
 
-    expect(await storedGoals()).toEqual({ calories: 2200, protein: 150, carbs: 200, fat: 60 });
+    expect(await storedGoals()).toEqual({ calories: 2200, protein: 150 });
+  });
+
+  it('edits a protein goal on its own', async () => {
+    await seed({ goals: { protein: 150 } });
+    const tree = await mount(<NutritionGoals />);
+
+    await type(tree, /^Daily protein goal/, '180');
+    await act(async () => control(tree, 'Save goals')!.props.onPress());
+    expect(await storedGoals()).toEqual({ protein: 180 });
   });
 
   it('opens with the goals already set, and edits them', async () => {
@@ -201,16 +230,16 @@ describe('setting a goal', () => {
 
     const input = tree.root
       .findAllByType(TextInput)
-      .find((node) => /Calories goal/.test(String(node.props.accessibilityLabel ?? '')))!;
+      .find((node) => /^Daily calorie goal/.test(String(node.props.accessibilityLabel ?? '')))!;
     expect(input.props.value).toBe('2000');
 
-    await type(tree, /Calories goal/, '2500');
+    await type(tree, /^Daily calorie goal/, '2500');
     await act(async () => control(tree, 'Save goals')!.props.onPress());
     expect(await storedGoals()).toEqual({ calories: 2500 });
   });
 
   it('clears back to no goal, never to the old defaults', async () => {
-    await seed({ goals: { calories: 2000, protein: 160, carbs: 214, fat: 64 } });
+    await seed({ goals: { calories: 2000, protein: 160 } });
     const tree = await mount(<NutritionGoals />);
 
     await act(async () => control(tree, 'Clear goals')!.props.onPress());
@@ -229,7 +258,7 @@ describe('setting a goal', () => {
     const tree = await mount(<NutritionGoals />);
 
     for (const bad of ['0', '-5', 'abc']) {
-      await type(tree, /Calories goal/, bad);
+      await type(tree, /^Daily calorie goal/, bad);
       expect(screen(tree)).toContain('Enter a number greater than zero.');
       expect(control(tree, 'Save goals')!.props.disabled).toBe(true);
     }
@@ -239,7 +268,7 @@ describe('setting a goal', () => {
     await seed({ goals: { calories: 2000 } });
     const tree = await mount(<NutritionGoals />);
 
-    await type(tree, /Calories goal/, '');
+    await type(tree, /^Daily calorie goal/, '');
     await act(async () => control(tree, 'Save goals')!.props.onPress());
     expect(await storedGoals()).toBeNull();
   });
@@ -252,7 +281,7 @@ describe('setting a goal', () => {
     await seed();
     const tree = await mount(<NutritionGoals />);
 
-    await type(tree, /Calories goal/, '5000');
+    await type(tree, /^Daily calorie goal/, '5000');
     expect(screen(tree)).not.toContain('Enter a number greater than zero.');
     await act(async () => control(tree, 'Save goals')!.props.onPress());
     expect(await storedGoals()).toEqual({ calories: 5000 });
@@ -270,7 +299,7 @@ describe('setting a goal', () => {
     const numeric = tree.root
       .findAllByType(TextInput)
       .filter((node) => node.props.keyboardType === 'decimal-pad');
-    expect(numeric).toHaveLength(4);
+    expect(numeric).toHaveLength(2);
     for (const field of numeric) {
       expect(field.props.inputAccessoryViewID).toBeDefined();
     }
@@ -295,7 +324,7 @@ describe('across a restart', () => {
   it('a goal the user set comes back', async () => {
     await seed();
     const editor = await mount(<NutritionGoals />);
-    await type(editor, /Calories goal/, '2200');
+    await type(editor, /^Daily calorie goal/, '2200');
     await act(async () => control(editor, 'Save goals')!.props.onPress());
     await act(async () => editor.unmount());
     mounted = null;
@@ -340,6 +369,21 @@ describe('Fuel with no goal', () => {
     expect(rendered).not.toMatch(/\/\s*160/);
   });
 
+  it('offers a way to set goals, since Settings is not discoverable', async () => {
+    await seed({ calories: 600 });
+    const tree = await mount(<Fuel />);
+
+    expect(control(tree, 'Set nutrition goals')).toBeDefined();
+  });
+
+  it('routes that action to the existing editor rather than duplicating it', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+
+    await act(async () => control(tree, 'Set nutrition goals')!.props.onPress());
+    expect(mockPush).toHaveBeenCalledWith('/settings/nutrition-goals');
+  });
+
   it('says nothing about goals on a completely empty day', async () => {
     await seed();
     const tree = await mount(<Fuel />);
@@ -372,15 +416,98 @@ describe('Fuel with a goal the user set', () => {
     }
   });
 
-  it('measures only the macros that have goals', async () => {
+  it('measures protein when a protein goal exists', async () => {
     await seed({ goals: { calories: 2000, protein: 150 }, calories: 600 });
     const tree = await mount(<Fuel />);
     const rendered = screen(tree);
 
     expect(rendered).toContain('Protein Goal');
     expect(rendered).toContain('150');
-    // Carbs and Fat were left unset, so they carry no denominator.
-    expect(rendered).not.toMatch(/\/\s*214/);
-    expect(rendered).not.toMatch(/\/\s*64/);
+  });
+});
+
+/* ── carbs and fat are totals, always ──────────────────────────────────── */
+
+describe('carbs and fat', () => {
+  it.each([
+    ['no goals', undefined],
+    ['a calorie goal', { calories: 2000 }],
+    ['a protein goal', { protein: 150 }],
+    ['both goals', { calories: 2000, protein: 150 }],
+  ])('carry no denominator with %s', async (_label, goals) => {
+    /*
+     * The 5.6A.1 ruling, checked in every goal state: carbohydrate and fat
+     * are tracked and summed exactly as before, and can never be measured
+     * against a target because none can exist.
+     */
+    await seed({ goals, calories: 600 });
+    const tree = await mount(<Fuel />);
+    const rendered = screen(tree);
+
+    expect(rendered).toContain('Carbs');
+    expect(rendered).toContain('Fat');
+    expect(rendered).not.toMatch(/Carbs[^·]*\//);
+    expect(rendered).not.toMatch(/Fat[^·]*\//);
+    expect(rendered).not.toContain('Carbs Goal');
+    expect(rendered).not.toContain('Fat Goal');
+  });
+
+  it('still totals what was eaten', async () => {
+    await seed({ calories: 600 });
+    const tree = await mount(<Fuel />);
+    const rendered = screen(tree);
+
+    // 2 cups of the fixture oats: 108 g carbs, 10 g fat.
+    expect(rendered).toContain('108');
+    expect(rendered).toContain('10');
+  });
+});
+
+/* ── first-time setup ──────────────────────────────────────────────────── */
+
+describe('the contextual setup prompt', () => {
+  const prompt = (tree: ReactTestRenderer) => control(tree, 'Set nutrition goals');
+
+  it('appears when neither goal is set', async () => {
+    await seed();
+    expect(prompt(await mount(<Fuel />))).toBeDefined();
+  });
+
+  it.each([
+    ['calories only', { calories: 2000 }],
+    ['protein only', { protein: 150 }],
+    ['both', { calories: 2000, protein: 150 }],
+  ])('disappears with %s — goals are optional and partial', async (_label, goals) => {
+    // Nagging someone to configure the second goal would contradict the
+    // whole point of goals being optional.
+    await seed({ goals });
+    expect(prompt(await mount(<Fuel />))).toBeUndefined();
+  });
+
+  it('comes back after the user clears their goals', async () => {
+    await seed({ goals: { calories: 2000 } });
+    const before = await mount(<Fuel />);
+    expect(prompt(before)).toBeUndefined();
+    await act(async () => before.unmount());
+    mounted = null;
+
+    const editor = await mount(<NutritionGoals />);
+    await act(async () => control(editor, 'Clear goals')!.props.onPress());
+    await act(async () => editor.unmount());
+    mounted = null;
+
+    expect(prompt(await mount(<Fuel />))).toBeDefined();
+  });
+
+  it('is a quiet line, not a second call to action', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+
+    // Fuel stays usable without goals: this is not a gate and not a warning.
+    expect(screen(tree)).toContain('Log Food');
+    const rendered = screen(tree).toLowerCase();
+    for (const alarm of ['required', 'set up your', 'get started', 'finish setup', 'missing']) {
+      expect(rendered).not.toContain(alarm);
+    }
   });
 });

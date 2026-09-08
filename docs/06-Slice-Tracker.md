@@ -2051,6 +2051,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
 | 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — audit approved; 5.6A implemented |
 | 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | 🟡 Implemented — awaiting founder device review |
+| 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | 🟡 Implemented — awaiting founder review |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2331,6 +2332,30 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6A.1 — Goal Model Finalization 🟡
+
+**Implemented 2026-09-07. Awaiting founder review — not approved.** A focused product-model correction on top of 5.6A. **No visual redesign**: the Day Strip, the composition bar and the Fuel Home rebuild all remain 5.6B.
+
+**Goals are calories and protein. Nothing else.** The founder's ruling is that carbohydrate and fat are secondary totals rather than things people set out to hit — asking for four numbers turned setting a goal into a configuration exercise. Both remaining goals stay entirely user-authored and independently optional: neither, calories only, protein only, or both are all valid states.
+
+**Carbs and fat are untouched as data.** Provider normalization, `FoodEntry` snapshots, the daily sums and every display of them are exactly as they were. What is gone is *target semantics*: they can no longer be measured against anything, so Fuel reads `Carbs 108 g` and never `Carbs 108 / 214 g`. A parameterized test asserts that in all four goal states.
+
+**One piece of dead coupling removed.** `MacroKey` was defined as the intersection of `NutritionFacts` and `NutritionTargets` keys — which held only while every macro had a target, and collapsed to a single entry the moment the model narrowed. Tracked macros and goal fields are separate ideas now, and `macroHasGoal` names the one macro that can carry a target.
+
+**No migration, and none needed.** A record written during 5.6A may still carry `carbs` and `fat` keys. `parseTargets` walks `GOAL_FIELDS`, so those keys are simply inert on read, and the next save drops them — the user's calorie and protein goals survive untouched. Writing a migration system for one-day-old, unreleased, development-branch data would have been more risk than the data is worth. Three tests pin that behaviour.
+
+**Goals are now discoverable from where they matter.** A goal nobody can find is barely better than one nobody can set, and Settings is not where someone looks. While the user has *neither* goal, the Fuel summary carries one quiet line — *Set nutrition goals ›* — into the existing editor. It is not a warning, not an onboarding gate and not a second call to action: Fuel is fully usable without goals. It disappears the moment **either** goal is set, because nagging for the second would contradict goals being optional, and it returns if the user later clears them, which is the truth about that state. Editing afterwards stays in Settings, so Home gains no permanent settings button.
+
+**The editor is two fields.** *Daily calorie goal* and *Daily protein goal*, both optional, nothing prefilled and no numeric placeholders. Save, and Clear when there is something to clear. The 5.6A hydration fix is intact and retested.
+
+**Dashboard untouched.** `FuelStrip` reads only the calorie goal and was already truthful in both states; it has no carb or fat goal dependency to remove.
+
+**Deferred, and recorded as direction only:** a future Journey that knows a user's broader goal, starting state and progress may one day assist with nutrition guidance. **No questionnaire, no TDEE, no BMR, no deficit, no macro planner and no recommendation algorithm exists or is authorised** — this note implies none.
+
+**Validation.** `npm test` **71 suites / 1825 tests** (1807 → 1825) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · no persistence key changed · food logs, favourites, recents, custom foods and the search cache untouched.
+
+**Still to verify — founder, on a real device:** that the editor offers only calories and protein, that *Set nutrition goals* appears with none set and disappears after setting either one, that it returns after clearing, and that carbs and fat never show a denominator in any state.
 
 ### Slice 5.6A — Fuel Characterization + Goal Truth 🟡
 

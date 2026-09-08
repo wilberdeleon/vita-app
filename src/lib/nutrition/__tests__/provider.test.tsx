@@ -330,13 +330,13 @@ describe('goals', () => {
   });
 
   it('reads back goals the user authored', async () => {
-    const authored = { calories: 1800, protein: 120, carbs: 180, fat: 55 };
+    const authored = { calories: 1800, protein: 120 };
     const app = await mount(fakeRepository({ targets: authored }).repository);
     expect(app.daily.targets).toEqual(authored);
     expect(app.daily.caloriesRemaining).toBe(1800);
   });
 
-  it('supports a calories-only goal, with no macro figures invented', async () => {
+  it('supports a calories-only goal, with no protein figure invented', async () => {
     const app = await mount(fakeRepository({ targets: { calories: 2200 } }).repository);
 
     expect(app.daily.targets).toEqual({ calories: 2200 });
@@ -344,12 +344,30 @@ describe('goals', () => {
     expect(app.daily.caloriePercent).toBe(0);
   });
 
-  it('supports a macro-only goal, with no calorie figures invented', async () => {
+  it('supports a protein-only goal, with no calorie figures invented', async () => {
     const app = await mount(fakeRepository({ targets: { protein: 150 } }).repository);
 
     expect(app.daily.targets).toEqual({ protein: 150 });
     expect(app.daily.caloriesRemaining).toBeNull();
     expect(app.daily.caloriePercent).toBeNull();
+  });
+
+  it('derives nothing goal-shaped for carbs or fat, ever', async () => {
+    /*
+     * 5.6A.1: carbohydrate and fat are tracked totals with no target, so
+     * there is no progress, no remainder and no percentage to compute. The
+     * type no longer admits one, and this pins the behaviour beside it.
+     */
+    const seeded = createEntry({ food: food(), quantity: 1, meal: 'Lunch', logDate: TODAY });
+    const fake = fakeRepository({
+      entries: { [TODAY]: [seeded] },
+      targets: { calories: 2000, protein: 150 },
+    });
+    const app = await mount(fake.repository);
+
+    expect(app.daily.nutrition.carbs).toBe(54);
+    expect(app.daily.nutrition.fat).toBe(5);
+    expect(Object.keys(app.daily.targets ?? {}).sort()).toEqual(['calories', 'protein']);
   });
 
   it('writes what the user set, and clears back to nothing', async () => {

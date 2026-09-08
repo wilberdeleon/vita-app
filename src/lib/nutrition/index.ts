@@ -36,7 +36,7 @@ export {
 
 export { defaultMealForTime, parseMealSlot } from './model/mealSlots';
 
-export { MACROS, type MacroDescriptor, type MacroKey } from './model/macros';
+export { MACROS, macroHasGoal, type MacroDescriptor, type MacroKey } from './model/macros';
 
 export {
   formatAmount,

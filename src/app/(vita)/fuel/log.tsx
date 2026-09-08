@@ -13,6 +13,7 @@ import {
 import { LoggedEntryRow } from '../../../features/fuel/components/LoggedEntryRow';
 import {
   MACROS,
+  macroHasGoal,
   progress,
   roundForDisplay,
   useDailyNutrition,
@@ -87,7 +88,9 @@ export default function FoodLog() {
         bars={MACROS.map((macro) => {
           // A macro with no goal shows what was eaten, with no denominator
           // appended. Protein reads as a goal to reach only when one exists.
-          const macroGoal = today.targets?.[macro.key];
+          // Only protein can carry a goal (5.6A.1). Carbs and fat are
+          // totals, so they never gain a denominator.
+          const macroGoal = macroHasGoal(macro.key) ? today.targets?.protein : undefined;
           const eaten = pending ? PENDING : String(consumed[macro.key]);
           return {
             label: macroGoal === undefined || macro.key !== 'protein' ? macro.label : `${macro.label} Goal`,

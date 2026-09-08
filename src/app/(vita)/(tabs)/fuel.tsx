@@ -40,7 +40,16 @@ export default function Fuel() {
     <Screen dockClearance contentGap={spacing.xl}>
       <ScreenHeader title="Fuel" subtitle={formatLogDateLong(today.logDate)} settings />
 
-      <FuelSummaryCard today={today} />
+      {/*
+        * Goals are discoverable from where they matter, not only from
+        * Settings (founder direction, 5.6A.1). The card shows this line
+        * only while there are none; the editor itself is not duplicated
+        * here.
+        */}
+      <FuelSummaryCard
+        today={today}
+        onSetGoals={() => router.push('/settings/nutrition-goals')}
+      />
 
       {today.error ? <Text style={[styles.error, { color: palette.fat }]}>{today.error}</Text> : null}
 

@@ -171,9 +171,9 @@ export type FoodEntry = {
  *
  * `null` means the user has never set a goal, which is the state everyone
  * starts in and a perfectly normal one to stay in. A non-null record may
- * carry any subset: someone can set a calorie goal and no macro goals, or a
- * protein goal alone. A field that is absent is *not a goal*, and nothing
- * downstream may substitute a number for it.
+ * carry either field or both: someone can set a calorie goal and no protein
+ * goal, or a protein goal alone. A field that is absent is *not a goal*, and
+ * nothing downstream may substitute a number for it.
  *
  * ## Why there is no default
  *
@@ -196,12 +196,23 @@ export type FoodEntry = {
 export type NutritionTargets = {
   calories?: number;
   protein?: number;
-  carbs?: number;
-  fat?: number;
 };
 
-/** The four things a goal can be set for, in the order they are shown. */
-export const GOAL_FIELDS = ['calories', 'protein', 'carbs', 'fat'] as const;
+/**
+ * The two things a goal can be set for, in the order they are shown.
+ *
+ * **Calories and protein only** (founder ruling, slice 5.6A.1). Carbohydrate
+ * and fat are secondary totals rather than things people set out to hit, and
+ * asking for four numbers made a goal feel like a configuration exercise.
+ * Carbs and fat are still tracked, summed and displayed everywhere they were
+ * — they simply have no target to be measured against, so they are reported
+ * as plain totals and never as `80 / 214 g`.
+ *
+ * A stored record from 5.6A may still carry `carbs` and `fat` keys. They are
+ * ignored on read because this list is what the parser walks, and the next
+ * save drops them — see `parseTargets`.
+ */
+export const GOAL_FIELDS = ['calories', 'protein'] as const;
 export type GoalField = (typeof GOAL_FIELDS)[number];
 
 /** True when a record carries no goal at all — indistinguishable from `null`. */
