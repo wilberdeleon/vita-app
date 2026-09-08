@@ -76,14 +76,16 @@ export type MealGroup = {
 };
 
 /**
- * The meals that actually have something in them, in canonical order.
+ * All four meals, in canonical order, with what is in each.
  *
- * **Empty slots are absent, not rendered as four negative statements.** The
- * previous screen listed *Breakfast · No foods logged* four times inside one
- * card, which made an untouched day read as a list of things not done.
- * Reaching an empty meal is what Add Food is for.
+ * **Empty slots are kept** (founder ruling, 5.6B.1). 5.6B hid them, which
+ * made the section disappear entirely on an untouched day and cost the
+ * structure people navigate by — *this is what a day is made of*. What made
+ * the original version heavy was not their presence but their weight: four
+ * full rows saying *No foods logged* inside a card. They are one compact
+ * line each now.
  */
-export function loggedMeals(entries: readonly FoodEntry[]): MealGroup[] {
+export function mealGroups(entries: readonly FoodEntry[]): MealGroup[] {
   return MEAL_SLOTS.map((slot) => {
     const inMeal = entries.filter((entry) => entry.meal === slot);
     return {
@@ -91,5 +93,10 @@ export function loggedMeals(entries: readonly FoodEntry[]): MealGroup[] {
       entries: inMeal,
       calories: inMeal.reduce((total, entry) => total + entry.nutrition.calories, 0),
     };
-  }).filter((meal) => meal.entries.length > 0);
+  });
+}
+
+/** Only the meals with something in them — for callers that need just those. */
+export function loggedMeals(entries: readonly FoodEntry[]): MealGroup[] {
+  return mealGroups(entries).filter((meal) => meal.entries.length > 0);
 }

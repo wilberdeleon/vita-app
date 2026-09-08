@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { readJson, writeJson } from '../../lib/daily/storage';
+import { readJson, writeJson } from '../daily/storage';
 
 /** A value, or a function of the current one — `useState`'s own shape. */
 export type PrefsUpdate<T> = T | ((current: T) => T);

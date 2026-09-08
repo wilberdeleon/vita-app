@@ -184,7 +184,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.m,
+    // Tight: the resting marker is a placeholder, and 5.6B.1's device
+    // review found it opening a void between the header and the day.
+    paddingVertical: spacing.xs,
   },
   restingNode: {
     alignItems: 'center',

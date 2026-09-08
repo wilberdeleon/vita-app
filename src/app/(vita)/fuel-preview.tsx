@@ -13,6 +13,9 @@ import {
   type NutritionTargets,
   type VitaFood,
 } from '../../lib/nutrition';
+import type { WaterRepository } from '../../lib/water/data/WaterRepository';
+import type { WaterEntry, WaterGoal, WaterPreferences } from '../../lib/water/model/types';
+import { WaterProvider } from '../../lib/water';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import Fuel from './(tabs)/fuel';
@@ -85,6 +88,9 @@ type Scenario = {
   label: string;
   entries?: FoodEntry[];
   targets?: NutritionTargets | null;
+  /** Water's own goal, so the shared-goal states are reviewable here too. */
+  waterGoal?: WaterGoal | null;
+  waterMl?: number;
 };
 
 const SCENARIOS: Scenario[] = [
@@ -179,6 +185,20 @@ const SCENARIOS: Scenario[] = [
     ],
   },
   {
+    key: 'water-goal',
+    label: 'Water goal',
+    waterGoal: { amount: 8, unit: 'cup' },
+    waterMl: 720,
+    targets: { calories: 2000 },
+    entries: [entry('Chicken bowl', 620, 'Lunch', 13)],
+  },
+  {
+    key: 'water-no-goal',
+    label: 'Water · no goal',
+    waterMl: 480,
+    entries: [entry('Chicken bowl', 620, 'Lunch', 13)],
+  },
+  {
     key: 'missing-macros',
     label: 'Missing macros',
     entries: [
@@ -189,6 +209,46 @@ const SCENARIOS: Scenario[] = [
     ],
   },
 ];
+
+/** Water's own seam, in memory — the same shape the provider was built for. */
+function memoryWaterRepository(scenario: Scenario): WaterRepository {
+  const entries: WaterEntry[] = scenario.waterMl
+    ? [
+        {
+          id: 'preview-water',
+          logDate: TODAY,
+          loggedAt: `${TODAY}T09:00:00.000Z`,
+          amountMl: scenario.waterMl,
+          enteredAmount: scenario.waterMl,
+          enteredUnit: 'ml',
+        } as WaterEntry,
+      ]
+    : [];
+  let goal: WaterGoal | null = scenario.waterGoal ?? null;
+  let preferences: WaterPreferences | null = null;
+
+  return {
+    async getEntries(logDate) {
+      return logDate === TODAY ? [...entries] : [];
+    },
+    async saveEntries() {},
+    async getGoal() {
+      return goal;
+    },
+    async saveGoal(next) {
+      goal = next;
+    },
+    async getPreferences() {
+      return preferences;
+    },
+    async savePreferences(next) {
+      preferences = next;
+    },
+    async getRecentDays() {
+      return [];
+    },
+  } as WaterRepository;
+}
 
 /** Everything lives in this closure; nothing reaches storage. */
 function memoryRepository(scenario: Scenario): NutritionRepository {
@@ -235,6 +295,7 @@ export default function FuelPreview() {
   const active = SCENARIOS.find((item) => item.key === state) ?? SCENARIOS[0];
   // Re-created whenever the scenario changes, so each one starts clean.
   const repository = useMemo(() => memoryRepository(active), [active]);
+  const waterRepository = useMemo(() => memoryWaterRepository(active), [active]);
 
   if (!__DEV__) {
     return (
@@ -279,7 +340,11 @@ export default function FuelPreview() {
       {/* The real screen, over a repository that forgets everything. */}
       <View style={styles.stage}>
         <NutritionProvider key={active.key} repository={repository}>
-          <Fuel />
+          {/* Water gets its own in-memory seam too, so the shared-goal
+              states are reviewable without touching the real goal. */}
+          <WaterProvider key={`${active.key}-water`} repository={waterRepository}>
+            <Fuel />
+          </WaterProvider>
         </NutritionProvider>
       </View>
     </View>

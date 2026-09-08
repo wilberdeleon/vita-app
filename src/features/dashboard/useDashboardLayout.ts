@@ -5,7 +5,7 @@ import {
   normalizeQuickTools,
   type QuickToolsPrefs,
 } from './quickTools';
-import { usePersistedPrefs, type PrefsUpdate } from './usePersistedPrefs';
+import { usePersistedPrefs, type PrefsUpdate } from '../../lib/preferences/usePersistedPrefs';
 
 /** `vita:v1:dashboard:layout` — built from the shared helper so the namespace cannot drift. */
 export const DASHBOARD_LAYOUT_KEY = singletonKey('dashboard', 'layout');

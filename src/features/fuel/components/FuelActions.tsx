@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../../../components/ui';
-import { MEAL_SLOTS, type MealSlot } from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -36,61 +35,56 @@ export function AddFoodAction({ onPress }: { onPress: () => void }) {
 }
 
 /**
- * Meal shortcuts, for a day with nothing on it yet.
+ * The first-use invitation into setup.
  *
- * The four canonical slots are genuine orientation on an empty screen —
- * *this is what a day is made of* — and they carry the meal through to Food
- * Detail so it is not asked for twice. Once anything is logged they go away:
- * the meals that exist become the section headings below, and reaching an
- * empty slot is what Add Food is for. Chips rather than rows, because four
- * full-width rows saying nothing is exactly the weight this screen shed.
- */
-export function MealShortcuts({ onAddToMeal }: { onAddToMeal: (meal: MealSlot) => void }) {
-  const { surfaces } = useTheme();
-
-  return (
-    <View style={styles.shortcuts}>
-      {MEAL_SLOTS.map((slot) => (
-        <PressableScale
-          key={slot}
-          onPress={() => onAddToMeal(slot)}
-          accessibilityLabel={`Add food to ${slot}`}
-          style={[styles.chip, { borderColor: surfaces.border }]}
-        >
-          <Text style={[styles.chipLabel, { color: surfaces.textSecondary }]}>{slot}</Text>
-        </PressableScale>
-      ))}
-    </View>
-  );
-}
-
-/**
- * The way into goals, for someone who has none.
+ * Shown while the user has configured **nothing** — no calorie goal, no
+ * protein goal, no water goal — and has not waved it away. 5.6A.1 offered
+ * this as one quiet line, and the founder's device review was that it still
+ * felt like being sent to a settings screen; this states what setup is for
+ * and opens a surface built for it.
  *
- * Shown only while **neither** goal is set, and never as a warning: Fuel is
- * fully usable without goals, and calories are counted whether or not one
- * exists. The copy says what goals *add* rather than implying tracking is
- * gated behind them. It disappears the moment either goal is set — nagging
- * for the second would contradict them being optional — and returns if they
- * are cleared.
+ * **Never a warning and never a gate.** Fuel logs food, counts calories and
+ * scans barcodes with no goals at all. Once any goal exists — set here or in
+ * Settings — the invitation is gone, and it does not come back for someone
+ * who skipped it.
  */
-export function GoalPrompt({ onPress }: { onPress: () => void }) {
+export function SetUpFuel({ onPress }: { onPress: () => void }) {
   const { surfaces } = useTheme();
 
   return (
     <PressableScale
       onPress={onPress}
-      accessibilityLabel="Set nutrition goals"
-      accessibilityHint="Add optional calorie and protein goals"
+      accessibilityRole="button"
+      accessibilityLabel="Set up Fuel"
+      accessibilityHint="Set optional calorie, protein and water goals"
       style={[styles.goals, { borderColor: surfaces.border }]}
     >
       <View style={styles.goalsText}>
-        <Text style={[styles.goalsTitle, { color: surfaces.text }]}>Set nutrition goals</Text>
+        <Text style={[styles.goalsTitle, { color: surfaces.text }]}>Set up Fuel</Text>
         <Text style={[styles.goalsBody, { color: surfaces.textTertiary }]} numberOfLines={2}>
-          Add calorie and protein goals to track progress. Optional — Fuel works without them.
+          Set your daily intake goals and make Fuel yours. Optional — Fuel works without them.
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={16} color={surfaces.textTertiary} />
+      <Ionicons name="chevron-forward" size={16} color={palette.primary} />
+    </PressableScale>
+  );
+}
+
+/** The quiet way back to setup, once the invitation has been dealt with. */
+export function EditGoalsAction({ onPress }: { onPress: () => void }) {
+  const { surfaces } = useTheme();
+
+  return (
+    <PressableScale
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Set up Fuel"
+      accessibilityHint="Set optional calorie, protein and water goals"
+      style={styles.editGoals}
+    >
+      <Text style={[styles.editGoalsLabel, { color: surfaces.textSecondary }]}>Set up Fuel</Text>
+      <Ionicons name="chevron-forward" size={13} color={surfaces.textTertiary} />
     </PressableScale>
   );
 }
@@ -111,20 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  shortcuts: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.s,
-  },
-  chip: {
-    borderWidth: 1,
-    borderRadius: radii.chip,
-    paddingHorizontal: spacing.m,
-    paddingVertical: 8,
-  },
-  chipLabel: {
-    ...typography.caption,
-  },
   goals: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -143,5 +123,15 @@ const styles = StyleSheet.create({
   },
   goalsBody: {
     ...typography.caption,
+  },
+  editGoals: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
+    minHeight: 36,
+  },
+  editGoalsLabel: {
+    ...typography.captionMedium,
   },
 });

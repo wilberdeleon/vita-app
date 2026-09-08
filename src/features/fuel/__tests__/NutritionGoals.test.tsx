@@ -371,7 +371,7 @@ describe('Fuel with no goal', () => {
     const tree = await mount(<Fuel />);
     const rendered = screen(tree);
 
-    expect(rendered).toContain('Nothing logged yet');
+    expect(rendered).toContain('No food logged yet');
     expect(rendered).not.toContain('Calories today');
     expect(rendered).not.toMatch(/Protein\s+0 g/);
   });
@@ -385,19 +385,19 @@ describe('Fuel with no goal', () => {
     expect(rendered).not.toMatch(/\/\s*160/);
   });
 
-  it('offers a way to set goals, since Settings is not discoverable', async () => {
+  it('invites setup, since Settings is not where anyone looks', async () => {
     await seed({ calories: 600 });
     const tree = await mount(<Fuel />);
 
-    expect(control(tree, 'Set nutrition goals')).toBeDefined();
+    expect(control(tree, 'Set up Fuel')).toBeDefined();
   });
 
-  it('routes that action to the existing editor rather than duplicating it', async () => {
+  it('routes that invitation to the setup surface', async () => {
     await seed();
     const tree = await mount(<Fuel />);
 
-    await act(async () => control(tree, 'Set nutrition goals')!.props.onPress());
-    expect(mockPush).toHaveBeenCalledWith('/settings/nutrition-goals');
+    await act(async () => control(tree, 'Set up Fuel')!.props.onPress());
+    expect(mockPush).toHaveBeenCalledWith('/fuel/setup');
   });
 
   it('says nothing about goals on a completely empty day', async () => {
@@ -484,7 +484,7 @@ describe('carbs and fat', () => {
 /* ── first-time setup ──────────────────────────────────────────────────── */
 
 describe('the contextual setup prompt', () => {
-  const prompt = (tree: ReactTestRenderer) => control(tree, 'Set nutrition goals');
+  const prompt = (tree: ReactTestRenderer) => control(tree, 'Set up Fuel');
 
   it('appears when neither goal is set', async () => {
     await seed();

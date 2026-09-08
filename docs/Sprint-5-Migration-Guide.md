@@ -267,6 +267,16 @@ Needed and not yet present: a range selector over site history — something lik
 - **Fixture timestamps must be built in local time.** A hand-written `T08:15:00.000Z` renders as 1:15 AM anywhere west of London, which looks like a sorting bug in a screenshot and is not one.
 - **Delete the components the redesign orphaned, in the same slice.** Five Fuel components died with the old screen; leaving them is how a codebase acquires two answers to the same question.
 
+**Patterns 5.6B.1 added:**
+
+- **Minimalism can remove the structure people navigate by.** Hiding empty meal slots made an untouched day lose its shape entirely. The fix was not to restore the weight but to keep the slots at one line each — the problem was never their presence.
+- **One goal, one owner.** A feature that offers to set another feature's goal must call that feature's own writer. Two water goals would disagree by Tuesday, and no amount of syncing fixes a second source of truth.
+- **A declined offer is an answer worth storing.** Configuration is derived from the goals themselves; the only thing that cannot be derived is "I saw it and I don't want it". One boolean, and the invitation stops returning.
+- **Reordering is not customization.** Home lets widgets be resized and hidden because it is many domains; Fuel is one workflow with a hierarchy that should be right by default. Ship the ordering, not the page builder.
+- **A drag and its accessible fallback must share one helper.** Move-up buttons that compute a step differently from the gesture are two features that will drift.
+- **A 1-D drag needs no geometry engine.** Measured heights and a midpoint rule are enough; Home's rectangles and candidate layouts are a grid's problem.
+- **Watch for the duplicate a correction creates.** Restoring the meal rows made the meal shortcut chips redundant — the second correction is often inside the first.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

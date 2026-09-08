@@ -173,21 +173,27 @@ describe('Fuel', () => {
   it('renders an empty day without inventing anything eaten', async () => {
     const tree = await mount(<Fuel />, fakeRepository().repository);
     expect(screen(tree)).toContain('Fuel');
-    expect(screen(tree)).toContain('Nothing logged yet');
-    // The four slots remain as shortcuts — orientation, not obligation.
+    expect(screen(tree)).toContain('No food logged yet');
+    // All four slots stay as structure — 5.6B.1 restored them compactly.
     for (const slot of ['Breakfast', 'Lunch', 'Dinner', 'Snacks']) {
       expect(screen(tree)).toContain(slot);
     }
+    // …and no zero is claimed for any macro.
+    expect(screen(tree)).not.toMatch(/Protein\s+0 g/);
   });
 
   it('shows what was logged, by meal', async () => {
     const entry = createEntry({ food: food(), quantity: 2, meal: 'Lunch', logDate: TODAY });
     const tree = await mount(<Fuel />, fakeRepository({ entries: [entry] }).repository);
 
-    const rendered = screen(tree);
-    expect(rendered).toContain('Oats');
+    // Meals are collapsed by default (5.6B.1) — the subtotal is the summary.
+    expect(screen(tree)).toContain('600 cal · 1 food');
     // 2 × 300 kcal, summed by the shared engine rather than by the screen.
-    expect(rendered).toContain('600');
+    expect(screen(tree)).toContain('600');
+
+    // Opening the meal reveals the food itself.
+    await act(async () => control(tree, /^Lunch, 1 food/)!.props.onPress());
+    expect(screen(tree)).toContain('Oats');
   });
 
   it('offers the meal-specific way in', async () => {
@@ -210,13 +216,20 @@ describe('Fuel', () => {
     expect(control(tree, 'Scan a barcode')).toBeDefined();
   });
 
-  it('carries no other feature on it', async () => {
-    // Cross-domain overview is Home's job, and Home is locked.
+  it('carries water and peptides as compact sections, not tiles', async () => {
+    /*
+     * 5.6B removed them; the founder's review put them back. What did not
+     * come back is the shape — two bordered tiles with a progress bar that
+     * had nothing to fill. These are section headings with one line of real
+     * state and one action.
+     */
     const tree = await mount(<Fuel />, fakeRepository().repository);
     const rendered = screen(tree);
 
-    expect(rendered).not.toContain('Hydration');
-    expect(rendered).not.toContain('Peptides');
+    expect(rendered).toContain('WATER');
+    expect(rendered).toContain('PEPTIDES');
+    expect(control(tree, 'Add')).toBeDefined();
+    expect(control(tree, 'View')).toBeDefined();
   });
 
   it('opens logging with the meal already chosen', async () => {
@@ -236,9 +249,12 @@ describe('Fuel', () => {
     const tree = await mount(<Fuel />, fakeRepository({ entries: [entry] }).repository);
     const rendered = screen(tree);
 
+    // All four remain — the founder's 5.6B.1 correction — but a meal with
+    // food reports its subtotal while an empty one stays one quiet line.
     expect(rendered).toContain('Breakfast');
-    expect(rendered).not.toContain('No foods logged');
-    expect(rendered).not.toContain('Dinner');
+    expect(rendered).toContain('300 cal · 1 food');
+    expect(rendered).toContain('Dinner');
+    expect(rendered).toContain('No foods logged');
   });
 });
 

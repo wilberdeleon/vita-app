@@ -9,6 +9,9 @@ type Props = {
   dateLabel: string;
   onScan: () => void;
   onSettings: () => void;
+  /** Rendered instead of the utilities while sections are being arranged. */
+  arranging?: boolean;
+  onDoneArranging?: () => void;
 };
 
 /**
@@ -30,8 +33,18 @@ type Props = {
  * The scanner lives here as one icon. It used to be a full-width filled card
  * beside Log Food — two competing calls to action for the same task, one of
  * which is used far less often.
+ *
+ * **The date sits on the utility side** (founder note, 5.6B.1), the way
+ * Home's contextual chip does, rather than hanging under the title on a row
+ * of its own — which left the title stranded and the right side empty.
  */
-export function FuelHeader({ dateLabel, onScan, onSettings }: Props) {
+export function FuelHeader({
+  dateLabel,
+  onScan,
+  onSettings,
+  arranging = false,
+  onDoneArranging,
+}: Props) {
   const insets = useSafeAreaInsets();
   const { surfaces } = useTheme();
 
@@ -49,37 +62,49 @@ export function FuelHeader({ dateLabel, onScan, onSettings }: Props) {
           <Text style={[styles.title, { color: surfaces.text }]}>Fuel</Text>
         </View>
 
-        <View style={styles.controls}>
+        {arranging ? (
           <PressableScale
-            onPress={onScan}
+            onPress={onDoneArranging}
             hitSlop={10}
-            accessibilityLabel="Scan a barcode"
-            accessibilityHint="Opens the barcode scanner"
+            accessibilityLabel="Done arranging Fuel"
             style={styles.control}
           >
-            <Ionicons name="barcode-outline" size={20} color={surfaces.text} />
+            <Text style={[styles.done, { color: surfaces.text }]}>Done</Text>
           </PressableScale>
+        ) : (
+          <View style={styles.controls}>
+            {/* The same chip Home uses for the date — shape, border, weight
+                — and on the same side of the bar. */}
+            <View
+              style={[styles.dateChip, { borderColor: surfaces.border }]}
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={`Today, ${dateLabel}`}
+            >
+              <Ionicons name="calendar-outline" size={13} color={surfaces.textTertiary} />
+              <Text style={[styles.dateLabel, { color: surfaces.textSecondary }]}>{dateLabel}</Text>
+            </View>
 
-          <PressableScale
-            onPress={onSettings}
-            hitSlop={10}
-            accessibilityLabel="Settings"
-            style={styles.control}
-          >
-            <Ionicons name="settings-outline" size={20} color={surfaces.text} />
-          </PressableScale>
-        </View>
-      </View>
+            <PressableScale
+              onPress={onScan}
+              hitSlop={10}
+              accessibilityLabel="Scan a barcode"
+              accessibilityHint="Opens the barcode scanner"
+              style={styles.control}
+            >
+              <Ionicons name="barcode-outline" size={20} color={surfaces.text} />
+            </PressableScale>
 
-      {/* The same chip Home uses for the date — shape, border and weight. */}
-      <View
-        style={[styles.dateChip, { borderColor: surfaces.border }]}
-        accessible
-        accessibilityRole="text"
-        accessibilityLabel={`Today, ${dateLabel}`}
-      >
-        <Ionicons name="calendar-outline" size={13} color={surfaces.textTertiary} />
-        <Text style={[styles.dateLabel, { color: surfaces.textSecondary }]}>{dateLabel}</Text>
+            <PressableScale
+              onPress={onSettings}
+              hitSlop={10}
+              accessibilityLabel="Settings"
+              style={styles.control}
+            >
+              <Ionicons name="settings-outline" size={20} color={surfaces.text} />
+            </PressableScale>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -118,10 +143,13 @@ const styles = StyleSheet.create({
     borderRadius: radii.chip,
     paddingHorizontal: spacing.m,
     paddingVertical: 6,
-    marginTop: spacing.s,
   },
   dateLabel: {
     ...typography.caption,
-    fontSize: 14,
+    fontSize: 13.5,
+  },
+  done: {
+    ...typography.bodyMedium,
+    fontWeight: '600',
   },
 });
