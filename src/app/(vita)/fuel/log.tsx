@@ -32,6 +32,8 @@ export default function FoodLog() {
 
   const consumed = roundForDisplay(today.nutrition);
   const pending = today.isLoading;
+  /** `undefined` when the user has authored no calorie goal. */
+  const goal = today.targets?.calories;
 
   const handleDelete = (entry: FoodEntry) => {
     // Captured before removal so Undo restores the entry to where it was,
@@ -62,25 +64,41 @@ export default function FoodLog() {
 
       {today.error ? <Text style={[styles.error, { color: palette.fat }]}>{today.error}</Text> : null}
 
-      <SectionHeader title="Today's Goal" />
+      {/*
+        * Goal-relative only when there is a goal (slice 5.6A).
+        *
+        * A denominator the user never chose is not a goal, so with none set
+        * this states the day's totals and stops. The visual treatment is
+        * 5.6B's; all that changed here is that it no longer claims a target.
+        */}
+      <SectionHeader title={goal === undefined ? "Today's Total" : "Today's Goal"} />
       <DailyProgressCard
         headline={
-          pending
-            ? `${PENDING} / ${today.targets.calories.toLocaleString()} Calories`
-            : `${consumed.calories.toLocaleString()} / ${today.targets.calories.toLocaleString()} Calories`
+          goal === undefined
+            ? `${pending ? PENDING : consumed.calories.toLocaleString()} Calories`
+            : pending
+              ? `${PENDING} / ${goal.toLocaleString()} Calories`
+              : `${consumed.calories.toLocaleString()} / ${goal.toLocaleString()} Calories`
         }
-        percentLabel={pending ? PENDING : `${today.caloriePercent}%`}
-        progress={pending ? 0 : today.calorieProgress}
-        bars={MACROS.map((macro) => ({
-          // Same macro semantics as the Fuel summary: progress toward the
-          // user's configured targets, with Protein the one that reads as a
-          // goal to reach. Kept identical here so the two surfaces cannot
-          // describe the same numbers differently.
-          label: macro.key === 'protein' ? `${macro.label} Goal` : macro.label,
-          valueLabel: `${pending ? PENDING : consumed[macro.key]} / ${today.targets[macro.key]} ${macro.unit}`,
-          progress: pending ? 0 : progress(consumed[macro.key], today.targets[macro.key]),
-          color: palette[macro.key],
-        }))}
+        percentLabel={
+          today.caloriePercent === null ? undefined : pending ? PENDING : `${today.caloriePercent}%`
+        }
+        progress={pending ? 0 : (today.calorieProgress ?? 0)}
+        bars={MACROS.map((macro) => {
+          // A macro with no goal shows what was eaten, with no denominator
+          // appended. Protein reads as a goal to reach only when one exists.
+          const macroGoal = today.targets?.[macro.key];
+          const eaten = pending ? PENDING : String(consumed[macro.key]);
+          return {
+            label: macroGoal === undefined || macro.key !== 'protein' ? macro.label : `${macro.label} Goal`,
+            valueLabel:
+              macroGoal === undefined
+                ? `${eaten} ${macro.unit}`
+                : `${eaten} / ${macroGoal} ${macro.unit}`,
+            progress: pending || macroGoal === undefined ? 0 : progress(consumed[macro.key], macroGoal),
+            color: palette[macro.key],
+          };
+        })}
       />
 
       {pending ? null : today.isEmpty ? (

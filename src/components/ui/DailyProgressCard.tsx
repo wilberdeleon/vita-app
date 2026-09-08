@@ -16,7 +16,12 @@ type Props = {
   /** Headline, e.g. "1,267 / 2,000 Calories". */
   headline: string;
   /** Right-aligned percent label, e.g. "63%". */
-  percentLabel: string;
+  /**
+   * Omitted when there is no goal to be a percentage of — slice 5.6A. A
+   * `0%` beside a total the user set no target for is a claim about a goal
+   * that does not exist.
+   */
+  percentLabel?: string;
   progress: number;
   color?: string;
   bars?: Bar[];
@@ -30,7 +35,9 @@ export function DailyProgressCard({ headline, percentLabel, progress, color = pa
     <Card>
       <View style={styles.headlineRow}>
         <Text style={[styles.headline, { color: surfaces.text }]}>{headline}</Text>
-        <Text style={[styles.percent, { color: surfaces.textSecondary }]}>{percentLabel}</Text>
+        {percentLabel === undefined ? null : (
+          <Text style={[styles.percent, { color: surfaces.textSecondary }]}>{percentLabel}</Text>
+        )}
       </View>
       <ProgressBar progress={progress} color={color} />
       {bars && bars.length > 0 ? (

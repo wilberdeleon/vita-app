@@ -2049,7 +2049,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | ✅ Accepted subpass of 5.5 |
 | 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | ✅ Accepted subpass of 5.5 |
 | 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
-| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | ⬜ **NEXT** — audited 2026-09-07, awaiting founder design direction. See `docs/Sprint-5-Fuel-Identity-Audit.md` |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — audit approved; 5.6A implemented |
+| 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | 🟡 Implemented — awaiting founder device review |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2330,6 +2331,36 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6A — Fuel Characterization + Goal Truth 🟡
+
+**Implemented 2026-09-07. Awaiting founder device review — not approved.** No Fuel redesign: this slice is a test baseline and one product-truth fix. The Day Strip, the composition bar, the meal and scanner work and the new Add Food all remain 5.6B and later.
+
+**Fuel had no tests, so tests came first.** The audit found zero coverage across ~6,990 lines. Written *before* any behaviour changed, so the goal fix could be shown not to have moved anything else: **six suites, 146 tests** over the pure arithmetic, the AsyncStorage repository, the provider, search fan-out and ranking, both external adapters, and the Fuel routes themselves. **No test touches the network** — the adapters are exercised over fixed payloads with `fetch` stubbed, and the registry over fake providers pushed into its own `PROVIDERS` array.
+
+**VITA no longer invents nutrition goals.** `DEFAULT_TARGETS` — 2,000 kcal, 160 g protein, 214 g carbs, 64 g fat, carried over from two Sprint 1 fixtures — was substituted by the provider whenever storage held nothing, which was always, because `updateTargets` had no caller anywhere in the app. Every Fuel surface then presented those figures as *the user's own*: `2000 Calories remaining`, `0% of 2000 Calories`, `Protein Goal 0 / 160 g`. `FuelSummaryCard`'s own docstring described them as "the user's own configured targets", which no screen could make true.
+
+**No migration was needed, and the audit proves why.** The repository has always modelled "never set" as `null`, and the only writer was `saveTargets` ← `updateTargets` ← nothing. So `vita:v1:targets` had **never been written for any user**: the synthetic figures were a display-layer fiction, not stored data. Nothing was deleted and nobody's goals were at risk.
+
+**No goal is now a first-class state.** `NutritionTargets` has four optional fields and may be `null`; `dailyTotals` returns `null` for `caloriesRemaining`, `caloriesOver`, `calorieProgress` and `caloriePercent` when there is no calorie goal — deliberately `null` rather than `0`, so a surface cannot render a percentage of nothing by accident. The type change is what forced all three consumers to decide what to show.
+
+**Partial goals are supported.** Someone may set calories and no macros, or protein alone. `parseTargets` reads each field independently and accepts positive finite numbers only; it makes **no judgement about the size** of a goal, because ruling on that is a nutrition recommendation.
+
+**Fuel tells the truth in both states.** With no goal: `600` · `Calories today`, macro totals with no denominator, no ring, no percentage, no remaining. With a goal the user set: unchanged from before — `1,400` · `Calories remaining`, `30%`, macro bars — because the visual treatment is 5.6B's and 5.6A only removes false claims. Over a goal stays factual and amber, never red.
+
+**Dashboard needed one line, not a redesign.** `FuelStrip` was already written for a goal-less world — `target <= 0` states the plain total and renders no bar, with a comment saying a bar with nothing to fill is the "empty track reads as complete" problem. Goal truth reached that locked surface through a null-safe read.
+
+**Goals can now actually be set.** `Settings → Nutrition Goals` — four optional fields, save, and clear. Deliberately plain: functional infrastructure, not identity, since Fuel's language arrives in 5.6B and Settings' in 5.7. **Nothing is prefilled, suggested or computed** — no TDEE, no BMR, no deficit, no macro split, nothing derived from age, sex, height, weight or activity. Clearing restores *no goal*, never the old defaults. A dead `updateTargets` was not an acceptable outcome of removing the defaults.
+
+**One real bug found by the new tests:** the goals editor seeded its fields during the first render, before the provider had hydrated from storage — so it opened blank for a user who *had* goals and would have overwritten them on save. Fixed by seeding once the load finishes.
+
+**§43 reported honestly: there were no stale USDA claims to correct.** The provider roster in `09-Technical-Documentation.md` already lists USDA and Open Food Facts as current; the only "deferred" provider named is FatSecret, which is accurate. The one Sprint 2 line that reads "or (later) from USDA" is a truthful historical record and was left alone.
+
+**Validation.** `npm test` **71 suites / 1807 tests** (64 / 1661 → 71 / 1807) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · no persistence key changed · no migration.
+
+**Still uncovered, honestly:** the scanner route (`expo-camera` and real permissions are not renderable in Jest — its state machine should be extracted in 5.6D), the search and add/recent/favourites *screens* (the search pipeline beneath them is covered), manual entry, and `useFoodSearch`'s debounce and cache.
+
+**Still to verify — founder, on a real device:** that a fresh install shows no 2,000/160/214/64 anywhere, that Settings → Nutrition Goals saves and clears, that a saved goal survives a restart, and that Home's Fuel widget reads `… cal` with no goal and `… cal left` with one.
 
 ### Slice 5.6 — Fuel Identity Refresh ⬜
 

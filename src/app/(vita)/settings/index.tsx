@@ -75,6 +75,17 @@ export default function Settings() {
         accessibilityHint="Opens unit preferences"
         onPress={() => router.push('/settings/units')}
       />
+      {/*
+        * Where nutrition goals come from (slice 5.6A). Until then VITA
+        * displayed goals it had invented and offered no way to author one.
+        */}
+      <ListRow
+        icon="flag-outline"
+        title="Nutrition Goals"
+        chevron
+        accessibilityHint="Opens your daily calorie and macro goals"
+        onPress={() => router.push('/settings/nutrition-goals')}
+      />
 
       {/*
         * Settings is the way in, not the home (slice 4.2). Tools moved out to

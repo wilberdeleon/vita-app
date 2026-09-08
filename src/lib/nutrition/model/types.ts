@@ -164,22 +164,47 @@ export type FoodEntry = {
   nutrition: NutritionFacts;
 };
 
-/** Daily goals. One source, replacing the two hardcoded fixture sets. */
+/**
+ * Daily goals — **authored by the user, or absent.**
+ *
+ * ## Every field is optional, and so is the whole thing
+ *
+ * `null` means the user has never set a goal, which is the state everyone
+ * starts in and a perfectly normal one to stay in. A non-null record may
+ * carry any subset: someone can set a calorie goal and no macro goals, or a
+ * protein goal alone. A field that is absent is *not a goal*, and nothing
+ * downstream may substitute a number for it.
+ *
+ * ## Why there is no default
+ *
+ * Until slice 5.6A this type was required in full and shipped with a
+ * `DEFAULT_TARGETS` constant of 2,000 kcal, 160 g protein, 214 g carbs and
+ * 64 g fat — figures carried over from two Sprint 1 fixtures. The provider
+ * substituted them whenever storage held nothing, which was always, because
+ * no screen could write goals. Every Fuel surface then presented them as
+ * *the user's own targets*: `2000 Calories remaining`, `Protein Goal 0 / 160 g`.
+ *
+ * They were never persisted — the repository has always modelled "never set"
+ * as `null` — so they were a display-layer fiction rather than stored data.
+ * The founder ruling for 5.6A is that **VITA does not invent nutrition
+ * goals**: a goal exists when the user creates one and not before, the same
+ * rule Water settled in 5.2 and Peptides in 5.4.
+ *
+ * Nothing anywhere derives a goal from age, sex, height, weight, activity or
+ * a weight target. There is no recommendation engine and none is authorised.
+ */
 export type NutritionTargets = {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
 };
 
-/**
- * Carried over from the previous Fuel and Dashboard fixtures, which both
- * hardcoded these same numbers independently. Not yet user-editable —
- * whether a goals editor ships in Sprint 2 is an open founder decision.
- */
-export const DEFAULT_TARGETS: NutritionTargets = {
-  calories: 2000,
-  protein: 160,
-  carbs: 214,
-  fat: 64,
-};
+/** The four things a goal can be set for, in the order they are shown. */
+export const GOAL_FIELDS = ['calories', 'protein', 'carbs', 'fat'] as const;
+export type GoalField = (typeof GOAL_FIELDS)[number];
+
+/** True when a record carries no goal at all — indistinguishable from `null`. */
+export function hasAnyGoal(targets: NutritionTargets | null): targets is NutritionTargets {
+  return targets !== null && GOAL_FIELDS.some((field) => targets[field] !== undefined);
+}

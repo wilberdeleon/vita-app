@@ -27,7 +27,7 @@ import { useDayRollover } from '../../daily/useDayRollover';
 import { asyncStorageNutritionRepository } from '../data/asyncStorageRepository';
 import type { NutritionRepository } from '../data/FoodLogRepository';
 import { toFavorite, type FavoriteFood } from '../model/favorites';
-import { DEFAULT_TARGETS, type FoodEntry, type NutritionTargets, type VitaFood } from '../model/types';
+import type { FoodEntry, NutritionTargets, VitaFood } from '../model/types';
 
 type Status = 'loading' | 'ready';
 
@@ -39,7 +39,7 @@ type NutritionState = {
   customFoods: VitaFood[];
   /** Favorited foods, keyed by normalized identity. Also day-independent. */
   favorites: FavoriteFood[];
-  targets: NutritionTargets;
+  targets: NutritionTargets | null;
   /** Set when persistence failed, so the UI can say so instead of showing a silently empty day. */
   error: string | null;
 };
@@ -52,13 +52,13 @@ type Action =
       entries: FoodEntry[];
       customFoods: VitaFood[];
       favorites: FavoriteFood[];
-      targets: NutritionTargets;
+      targets: NutritionTargets | null;
     }
   | { type: 'loadFailed'; message: string }
   | { type: 'setEntries'; entries: FoodEntry[] }
   | { type: 'setCustomFoods'; customFoods: VitaFood[] }
   | { type: 'setFavorites'; favorites: FavoriteFood[] }
-  | { type: 'setTargets'; targets: NutritionTargets }
+  | { type: 'setTargets'; targets: NutritionTargets | null }
   | { type: 'setError'; message: string | null };
 
 function reducer(state: NutritionState, action: Action): NutritionState {
@@ -98,7 +98,12 @@ export type NutritionContextValue = NutritionState & {
   removeEntry: (id: string) => Promise<void>;
   /** Re-inserts a removed entry in its original position — powers Undo. */
   restoreEntry: (entry: FoodEntry, index: number) => Promise<void>;
-  updateTargets: (targets: NutritionTargets) => Promise<void>;
+  /**
+   * Writes goals the **user authored**, or clears them with `null`.
+   *
+   * Clearing restores *no goal* — never the synthetic figures 5.6A removed.
+   */
+  updateTargets: (targets: NutritionTargets | null) => Promise<void>;
   selectDate: (logDate: LogDate) => void;
   /** Adds a food to My Foods. Returns it so callers can log it immediately. */
   saveCustomFood: (food: VitaFood) => Promise<VitaFood>;
@@ -124,7 +129,7 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
     entries: [],
     customFoods: [],
     favorites: [],
-    targets: DEFAULT_TARGETS,
+    targets: null,
     error: null,
   });
 
@@ -163,7 +168,7 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
           entries,
           customFoods,
           favorites,
-          targets: storedTargets ?? DEFAULT_TARGETS,
+          targets: storedTargets,
         });
       } catch {
         if (logDateRef.current !== logDate) return;
@@ -243,7 +248,7 @@ export function NutritionProvider({ children, repository = asyncStorageNutrition
   );
 
   const updateTargets = useCallback(
-    async (targets: NutritionTargets) => {
+    async (targets: NutritionTargets | null) => {
       dispatch({ type: 'setTargets', targets });
       try {
         await repository.saveTargets(targets);

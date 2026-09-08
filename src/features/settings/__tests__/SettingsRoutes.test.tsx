@@ -184,14 +184,25 @@ describe('every visible row is real', () => {
 
     /**
      * The shipping inventory. `Identity Prototype` is deliberately absent:
-     * it is `__DEV__`-only (Sprint 5 slice 5.1, removed in 5.9), so the rows
-     * a real user can ever see are still exactly these four.
+     * it is `__DEV__`-only (Sprint 5 slice 5.1, removed in 5.9), so these
+     * are the rows a real user can ever see.
+     *
+     * `Nutrition Goals` joined them in 5.6A. It is the authoring path for
+     * goals VITA had previously invented and offered no way to set — the
+     * row exists precisely so the feature is not dead behind an API nobody
+     * could call.
      */
     const shipped = rows(tree)
       .map((row) => row.title)
       .filter((title) => title !== 'Identity Prototype');
 
-    expect(shipped).toEqual(['Appearance', 'Units', 'Tools & Reference', 'Version']);
+    expect(shipped).toEqual([
+      'Appearance',
+      'Units',
+      'Nutrition Goals',
+      'Tools & Reference',
+      'Version',
+    ]);
   });
 
   /**

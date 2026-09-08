@@ -50,14 +50,25 @@ type Props = {
  * ring and bar cap at 100% so the geometry stays honest while the
  * percentage above keeps counting (116%).
  *
- * The macro bars show progress toward **the user's own configured
- * targets** — nothing here encodes a nutrition rule. Protein says "Goal"
- * because reaching it is the intent; Carbs and Fat carry no verb because
- * their targets are neither floors nor ceilings, and labelling them as
- * either would be VITA inventing dietary advice. Nothing turns red, warns,
- * or changes state at 100%: bars fill and stop, and `caloriesRemaining`
- * floors at zero rather than going negative — the same no-guilt rule the
- * rest of the product follows.
+ * ## Goals are the user's, or absent (slice 5.6A)
+ *
+ * This card used to claim `2000 Calories remaining`, `0% of 2000 Calories`
+ * and `Protein Goal 0 / 160 g` to **every** user, against figures VITA had
+ * invented; the comment here even described them as "the user's own
+ * configured targets", which no screen could make true because none could
+ * set them. With no goal it now states what was eaten and stops: no ring,
+ * no remaining, no percentage, no denominator.
+ *
+ * With a goal the previous behaviour is unchanged, deliberately — the
+ * visual treatment belongs to 5.6B, and 5.6A only removes the false claims.
+ * Nothing turns red, warns, or changes state at 100%: bars fill and stop,
+ * and `caloriesRemaining` floors at zero rather than going negative, the
+ * same no-guilt rule the rest of the product follows.
+ *
+ * Protein says "Goal" only when one is set, because reaching it is the
+ * intent; Carbs and Fat carry no verb because their targets are neither
+ * floors nor ceilings, and labelling them as either would be VITA inventing
+ * dietary advice.
  *
  * Every number is derived from the shared nutrition engine. While the day
  * is still loading, figures hold an em dash rather than showing a real "0"
@@ -67,7 +78,9 @@ type Props = {
 export function FuelSummaryCard({ today }: Props) {
   const { surfaces } = useTheme();
   const pending = today.isLoading;
-  const over = !pending && today.caloriesOver > 0;
+  /** `undefined` when the user has authored no calorie goal. */
+  const goal = today.targets?.calories;
+  const over = !pending && (today.caloriesOver ?? 0) > 0;
 
   // Stored exactly, rounded only here at the display edge, so a half serving
   // never accumulates rounding error across a day's totals.
@@ -75,13 +88,35 @@ export function FuelSummaryCard({ today }: Props) {
 
   return (
     <Card>
+      {goal === undefined ? (
+        /*
+         * No goal: the total is the whole statement.
+         *
+         * No ring, because a ring with nothing to fill reads as 0% of
+         * something — the "empty track reads as a score" problem. No
+         * remaining, no percentage, no denominator.
+         */
+        <View>
+          <Text
+            style={[styles.remaining, { color: surfaces.text }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
+          >
+            {pending ? PENDING : formatCalories(consumed.calories)}
+          </Text>
+          <Text style={[styles.remainingLabel, { color: surfaces.textSecondary }]} numberOfLines={1}>
+            Calories today
+          </Text>
+        </View>
+      ) : (
       <View style={styles.headRow}>
         {/* Number and unit both sit inside the ring. The ring itself is
             what communicates consumption, so the word below it only needs
             to name the unit — "Calories" fits where "Calories consumed"
             did not, which is what pushed it outside in the first place. */}
         <ProgressRing
-          progress={pending ? 0 : today.calorieProgress}
+          progress={pending ? 0 : (today.calorieProgress ?? 0)}
           size={104}
           thickness={9}
           color={over ? OVER_ACCENT : palette.primary}
@@ -106,7 +141,9 @@ export function FuelSummaryCard({ today }: Props) {
             adjustsFontSizeToFit
             minimumFontScale={0.6}
           >
-            {pending ? PENDING : formatCalories(over ? today.caloriesOver : today.caloriesRemaining)}
+            {pending
+              ? PENDING
+              : formatCalories((over ? today.caloriesOver : today.caloriesRemaining) ?? 0)}
           </Text>
           <Text
             style={[styles.remainingLabel, { color: over ? OVER_ACCENT : surfaces.textSecondary }]}
@@ -117,7 +154,7 @@ export function FuelSummaryCard({ today }: Props) {
 
           <View style={styles.bar}>
             <ProgressBar
-              progress={pending ? 0 : today.calorieProgress}
+              progress={pending ? 0 : (today.calorieProgress ?? 0)}
               height={6}
               color={over ? OVER_ACCENT : palette.primary}
             />
@@ -127,21 +164,43 @@ export function FuelSummaryCard({ today }: Props) {
             <Text style={[styles.percent, over && { color: OVER_ACCENT }]}>
               {pending ? PENDING : `${today.caloriePercent}%`}
             </Text>
-            {` of ${formatCalories(today.targets.calories)} Calories`}
+            {` of ${formatCalories(goal)} Calories`}
           </Text>
         </View>
       </View>
+      )}
 
       <View style={[styles.macros, { borderTopColor: surfaces.border }]}>
-        {MACROS.map((macro) => (
-          <StatBar
-            key={macro.key}
-            label={macro.key === 'protein' ? `${macro.label} Goal` : macro.label}
-            valueLabel={`${pending ? PENDING : formatAmount(consumed[macro.key])} / ${today.targets[macro.key]} ${macro.unit}`}
-            progress={pending ? 0 : progress(consumed[macro.key], today.targets[macro.key])}
-            color={palette[macro.key]}
-          />
-        ))}
+        {MACROS.map((macro) => {
+          const macroGoal = today.targets?.[macro.key];
+          const eaten = pending ? PENDING : formatAmount(consumed[macro.key]);
+
+          // Without a goal there is no bar to fill, so the figure stands on
+          // its own rather than beside an empty track and a denominator
+          // nobody chose.
+          if (macroGoal === undefined) {
+            return (
+              <View key={macro.key} style={styles.macro}>
+                <Text style={[styles.macroLabel, { color: surfaces.textSecondary }]} numberOfLines={1}>
+                  {macro.label}
+                </Text>
+                <Text style={[styles.macroValue, { color: surfaces.text }]} numberOfLines={1}>
+                  {eaten} {macro.unit}
+                </Text>
+              </View>
+            );
+          }
+
+          return (
+            <StatBar
+              key={macro.key}
+              label={macro.key === 'protein' ? `${macro.label} Goal` : macro.label}
+              valueLabel={`${eaten} / ${macroGoal} ${macro.unit}`}
+              progress={pending ? 0 : progress(consumed[macro.key], macroGoal)}
+              color={palette[macro.key]}
+            />
+          );
+        })}
       </View>
     </Card>
   );
@@ -181,6 +240,16 @@ const styles = StyleSheet.create({
   percent: {
     color: palette.primary,
     fontWeight: '700',
+  },
+  macro: {
+    flex: 1,
+    gap: 2,
+  },
+  macroLabel: {
+    ...typography.caption,
+  },
+  macroValue: {
+    ...typography.bodyMedium,
   },
   macros: {
     flexDirection: 'row',

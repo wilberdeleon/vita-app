@@ -46,7 +46,13 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
   const compact = isCompactSquare(fontScale);
 
   const consumed = Math.round(today.nutrition.calories);
-  const target = Math.round(today.targets.calories);
+  /*
+   * Zero when the user has authored no calorie goal (slice 5.6A). The
+   * branches below were already written for that case — `target <= 0`
+   * states the plain total and renders no bar — so goal truth reached this
+   * locked surface without a redesign.
+   */
+  const target = Math.round(today.targets?.calories ?? 0);
   const remaining = Math.max(0, target - consumed);
   const over = Math.max(0, consumed - target);
   const progress = target > 0 ? Math.min(1, consumed / target) : 0;

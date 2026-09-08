@@ -8,7 +8,9 @@
 
 export {
   CORE_NUTRIENTS,
-  DEFAULT_TARGETS,
+  GOAL_FIELDS,
+  hasAnyGoal,
+  type GoalField,
   MEAL_SLOTS,
   OPTIONAL_NUTRIENTS,
   type CoreNutrient,

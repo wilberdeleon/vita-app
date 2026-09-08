@@ -28,7 +28,8 @@ export type DailyNutrition = DailyTotals & {
   entries: FoodEntry[];
   /** All four slots, in canonical order, empty ones included. */
   meals: MealSummary[];
-  targets: NutritionTargets;
+  /** `null` until the user authors one. Never a figure VITA chose. */
+  targets: NutritionTargets | null;
   /** Nothing logged yet — drives the empty states. */
   isEmpty: boolean;
   /** How many slots have at least one entry, e.g. "2 / 4 meals logged". */

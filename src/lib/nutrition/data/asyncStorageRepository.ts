@@ -18,6 +18,8 @@ import {
   type FoodEntry,
   type MealSlot,
   type NutritionFacts,
+  GOAL_FIELDS,
+  hasAnyGoal,
   type NutritionTargets,
   type ServingOption,
   type VitaFood,
@@ -203,22 +205,31 @@ function parseFavorite(value: unknown): FavoriteFood | null {
   };
 }
 
+/**
+ * Goals as the user authored them — **any subset, or none**.
+ *
+ * Until slice 5.6A this demanded all four macros and returned `null` if any
+ * was missing, so a calories-only goal was unreadable and the provider
+ * substituted invented figures above it. Now each field is read
+ * independently: a record with a calorie goal and no macro goals round-trips
+ * as exactly that.
+ *
+ * Only positive finite numbers are accepted. A zero or negative goal is not
+ * a goal, and nothing here judges the *size* of one — there is no range
+ * check, because "2,000 is healthier than 5,000" is a nutrition
+ * recommendation and VITA makes none.
+ */
 function parseTargets(value: unknown): NutritionTargets | null {
   if (!isRecord(value)) return null;
-  if (
-    !isFiniteNumber(value.calories) ||
-    !isFiniteNumber(value.protein) ||
-    !isFiniteNumber(value.carbs) ||
-    !isFiniteNumber(value.fat)
-  ) {
-    return null;
+
+  const targets: NutritionTargets = {};
+  for (const field of GOAL_FIELDS) {
+    const candidate = value[field];
+    if (isFiniteNumber(candidate) && candidate > 0) targets[field] = candidate;
   }
-  return {
-    calories: value.calories,
-    protein: value.protein,
-    carbs: value.carbs,
-    fat: value.fat,
-  };
+
+  // An empty record is indistinguishable from never having set one.
+  return hasAnyGoal(targets) ? targets : null;
 }
 
 /* ── storage helpers ────────────────────────────────────────────────── */
@@ -268,7 +279,13 @@ export const asyncStorageNutritionRepository: NutritionRepository = {
     return parseTargets(await readJson(StorageKeys.targets));
   },
 
-  async saveTargets(targets: NutritionTargets): Promise<void> {
+  async saveTargets(targets: NutritionTargets | null): Promise<void> {
+    // Clearing removes the key, so "no goal" reloads as no goal rather than
+    // as an empty record that later code might treat as configured.
+    if (!hasAnyGoal(targets)) {
+      await AsyncStorage.removeItem(StorageKeys.targets);
+      return;
+    }
     await AsyncStorage.setItem(StorageKeys.targets, JSON.stringify(targets));
   },
 

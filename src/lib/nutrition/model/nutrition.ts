@@ -164,26 +164,40 @@ export function roundForDisplay(nutrition: NutritionFacts): NutritionFacts {
 
 export type DailyTotals = {
   nutrition: NutritionFacts;
-  targets: NutritionTargets;
-  /** Zero once the target is met — the overage is `caloriesOver`. */
-  caloriesRemaining: number;
+  /** `null` until the user authors a goal of their own — see `NutritionTargets`. */
+  targets: NutritionTargets | null;
+  /**
+   * All four are `null` when there is no calorie goal to measure against.
+   *
+   * Deliberately `null` rather than `0`: a zero here would render as *0
+   * remaining* and *0%*, which is a claim about a goal that does not exist.
+   * Making the absence explicit is what forces every caller to decide what
+   * to show, and is why the invented 2,000 kcal could not simply be deleted
+   * without this type changing with it.
+   */
+  caloriesRemaining: number | null;
   /** Zero until the target is passed. Exactly one of the two is non-zero. */
-  caloriesOver: number;
+  caloriesOver: number | null;
   /** 0..1, clamped, so an over-target day fills the ring rather than overflowing it. */
-  calorieProgress: number;
+  calorieProgress: number | null;
   /** Unclamped, so it can honestly read 112%. */
-  caloriePercent: number;
+  caloriePercent: number | null;
 };
 
 /** The headline numbers Fuel and Home both show. */
-export function dailyTotals(entries: readonly FoodEntry[], targets: NutritionTargets): DailyTotals {
+export function dailyTotals(
+  entries: readonly FoodEntry[],
+  targets: NutritionTargets | null,
+): DailyTotals {
   const nutrition = sumEntries(entries);
+  const goal = targets?.calories;
+
   return {
     nutrition,
     targets,
-    caloriesRemaining: remaining(nutrition.calories, targets.calories),
-    caloriesOver: over(nutrition.calories, targets.calories),
-    calorieProgress: progress(nutrition.calories, targets.calories),
-    caloriePercent: percent(nutrition.calories, targets.calories),
+    caloriesRemaining: goal === undefined ? null : remaining(nutrition.calories, goal),
+    caloriesOver: goal === undefined ? null : over(nutrition.calories, goal),
+    calorieProgress: goal === undefined ? null : progress(nutrition.calories, goal),
+    caloriePercent: goal === undefined ? null : percent(nutrition.calories, goal),
   };
 }

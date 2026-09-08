@@ -1341,9 +1341,17 @@ describe('the system text size', () => {
   });
 
   it('wraps a figure rather than truncating it once the text is large', async () => {
-    // 5.3D found `2,000 c…` on the wide Fuel strip. A value is information;
-    // truncation is only ever acceptable for a secondary label.
+    /*
+     * 5.3D found `2,000 c…` on the wide Fuel strip. A value is information;
+     * truncation is only ever acceptable for a secondary label.
+     *
+     * The goal is authored here because since 5.6A there is no invented one:
+     * `cal left` is a statement about a target, and the strip only makes it
+     * when the user has actually set one. Without this the widget correctly
+     * reads `0 cal`.
+     */
     mockFontScale = 1.6;
+    await AsyncStorage.setItem('vita:v1:targets', JSON.stringify({ calories: 2000 }));
     const tree = await mount(fakeWater());
     const fuel = tree.root
       .findAllByType(Text)

@@ -27,10 +27,15 @@ export interface FoodLogRepository {
   /** Replaces the day wholesale. Callers pass the full post-mutation array. */
   saveEntries(logDate: LogDate, entries: FoodEntry[]): Promise<void>;
 
-  /** `null` when the user has never set targets, so callers can apply defaults. */
+  /**
+   * `null` when the user has never set goals — a first-class state, not a
+   * cue to substitute defaults. Slice 5.6A removed the synthetic figures
+   * that were being applied above this layer.
+   */
   getTargets(): Promise<NutritionTargets | null>;
 
-  saveTargets(targets: NutritionTargets): Promise<void>;
+  /** `null` clears them, restoring *no goal* rather than any default. */
+  saveTargets(targets: NutritionTargets | null): Promise<void>;
 
   /**
    * Entries across recent days, newest first — the minimal history read
