@@ -191,7 +191,18 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 **Deliberately not shared:** Water looks like Water · Peptides looks like Peptides · Fuel looks like Fuel · Journey will look like Journey. This is §14 (*feature-specific vs shared*) stated as a rollout rule: **features must not be standardized into identical cards or widgets**, which would reproduce the old template sameness in a new palette.
 
-**Dashboard's customization model belongs to Dashboard.** The square/wide widget grid, visibility and order controls, on-Home edit mode and drag reorder approved in 5.3 are a **Home-specific interaction pattern** built on this language. They do **not** imply draggable widgets on every screen, and Fuel, Peptides, Tools and Settings do not get page-builder layouts.
+**Customization is per-feature, and each feature's is as narrow as its product allows.** Home's square/wide widget grid, visibility and order controls, on-Home edit mode and drag reorder approved in 5.3 are a **Home-specific model** built on this language. Fuel gained its own in 5.6B.2, in the **same interaction language and a deliberately smaller model**: `•••` opens a sheet, rows carry a visibility check, a name, Square / Wide chips, arrows and a handle, and Reset Layout sits at the foot — so someone who has arranged Home already knows how to work it.
+
+**The rule this establishes: a feature may offer order, selective visibility and contextual sizing — never a page builder.**
+
+- **Order** is always safe to offer: it changes which part someone reads first and nothing else.
+- **Visibility is offered only where the section is context, not the feature.** Fuel can hide the Day Strip, Water and Peptides; **Nutrition and Meals have no hide control at all**, because a screen you can empty until it no longer does its job can be broken by accident. Where a section cannot be hidden it says so quietly rather than offering a control that refuses.
+- **Size is offered only where two genuine designs exist.** Fuel's Water and Peptides have a square and a wide layout, drawn separately; Nutrition, the Day Strip and Meals are wide by nature and expose no size control, because a squared calorie figure is a stretched layout nobody drew.
+- **No delete `×`, and no removed-items list.** Hiding is reversible in place.
+- **Placement follows from order, never from stored coordinates.** Two adjacent squares share a row; a lone square keeps its column and leaves the other empty rather than being promoted to wide. Order stays truthful — nothing is moved up the page to find a partner.
+- **Every gesture has a real control beside it.** The drag and the Move up / Move down buttons resolve through one helper, so they cannot drift apart, and the buttons remain the accessible path.
+
+This does **not** imply draggable widgets on every screen. Peptides, Tools and Settings do not get layout customization, and no feature gets a page-builder.
 
 ## Dynamic Type policy — founder-approved
 

@@ -6,6 +6,24 @@
 
 ---
 
+## Sprint 5 slice 5.6B.2 — nutrition leads, and Fuel is yours to arrange (2026-09-08, awaiting founder device review)
+
+**Your nutrition is the first thing you see now.** Calories, how far into your goal you are, then protein, carbs and fat. The strip of your day's food follows it — it is still Fuel's own picture of your day, it just no longer stands in front of the answer.
+
+**Water and peptides are two small squares side by side**, at the foot of the screen. Water shows a ring with how far into your goal you are and the day's total; peptides shows what is scheduled. Both are read-only reminders with a way through to the real thing.
+
+**Customize Fuel.** Tap `•••` in the header. You can change the order of the sections, turn the day strip, water and peptides on and off, and switch water and peptides between square and wide. Nutrition and your meals are always there — they are what Fuel is. There is a *Reset Layout* if you want the original back. Everything is remembered.
+
+You can still press and hold a section on the page itself to move it up or down, exactly as before.
+
+**If you have set no goals and logged no food**, Fuel does not show you a screen of zeroes. It offers to set your goals up instead — and once you have skipped that, it stops asking and shrinks to a quiet link. The moment you log something, your real numbers lead again, goals or no goals.
+
+**Still no scores and no advice.** Carbs and fat remain plain totals with no limits, and VITA does not recommend calories, protein, or peptide doses — your goals are yours to set.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.2.
+
+---
+
 ## Sprint 5 slice 5.6B.1 — the structure back, without the bulk (2026-09-07, awaiting founder device review)
 
 **Fuel has five sections now**, all sitting straight on the background: your day's food, your nutrition, your meals, water and peptides. The 5.6B redesign looked right but had taken too much out — this puts the useful parts back without bringing back the big cards.

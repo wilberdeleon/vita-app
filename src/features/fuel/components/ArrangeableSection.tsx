@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, type PropsWithChildren } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
-import { motion, radii, spacing, typography } from '../../../theme/tokens';
+import { radii, spacing, typography } from '../../../theme/tokens';
 import { useReducedMotion } from '../../../theme/useReducedMotion';
 import { useTheme } from '../../../theme/ThemeProvider';
 
 type Props = PropsWithChildren<{
   label: string;
+  /** Stable handle for tests, the way Home's `EditableWidget` carries one. */
+  testID?: string;
   arranging: boolean;
   /** Position in the current order, and how many there are. */
   index: number;
@@ -16,6 +18,14 @@ type Props = PropsWithChildren<{
   onMeasure: (height: number) => void;
   onDragMove: (dy: number) => void;
   onDragEnd: (dy: number) => void;
+  /**
+   * True when this section is one half of a side-by-side pair, so the wrapper
+   * and its press target must both stretch to fill the column. Without it the
+   * square inside collapses to its content and the two stop matching.
+   *
+   * Only ever set while *not* arranging — see the note on the single column.
+   */
+  cell?: boolean;
 }>;
 
 /** Movement past this is a drag rather than a hesitation. */
@@ -24,13 +34,23 @@ const CLAIM = 8;
 /**
  * One Fuel section, and the handle that moves it.
  *
- * ## Ordering only
+ * ## Arrange mode is a single column, always
  *
- * Home lets a widget be resized, hidden and reordered, because Home is a set
- * of independent domains with no single right arrangement. Fuel is one
- * workflow with a canonical hierarchy, so the only thing worth varying is
- * which part someone looks at first. There is no size control, no hide
- * control, and **no delete `×`** — a section is being moved, never removed.
+ * Fuel's normal layout can pair two squares side by side. Arrange mode does
+ * not: while sections are being rearranged they are laid out one per row, in
+ * the order they are actually in. Two sections sharing a row have the same
+ * vertical position, and a vertical drag cannot tell them apart — so the
+ * gesture would be guessing, and the list the user is reordering would not
+ * match the order they are reordering it into. One section per row makes both
+ * exact, and the pair reappears the moment *Done* is tapped.
+ *
+ * ## Order here; size and visibility in the sheet
+ *
+ * There is no size control and no hide control in arrange mode, and **no
+ * delete `×`** — a section is being moved, never removed. Those choices live
+ * in Customize Fuel, where they can be labelled and reached without a gesture.
+ * Overloading direct manipulation with three kinds of decision is how an edit
+ * mode becomes a control panel you happen to be standing inside.
  *
  * ## Drag is not the only way
  *
@@ -50,6 +70,7 @@ const CLAIM = 8;
  */
 export function ArrangeableSection({
   label,
+  testID,
   arranging,
   index,
   total,
@@ -58,6 +79,7 @@ export function ArrangeableSection({
   onMeasure,
   onDragMove,
   onDragEnd,
+  cell = false,
   children,
 }: Props) {
   const { surfaces } = useTheme();
@@ -98,9 +120,11 @@ export function ArrangeableSection({
   return (
     <Animated.View
       {...(arranging ? responder.panHandlers : {})}
+      testID={testID}
       onLayout={(event) => onMeasure(event.nativeEvent.layout.height)}
       style={[
         styles.section,
+        cell && styles.cell,
         arranging && [styles.arranging, { borderColor: surfaces.border }],
         { transform: [{ translateY }] },
       ]}
@@ -146,7 +170,7 @@ export function ArrangeableSection({
         /* The section itself is not a button — this exists only to catch the
            hold that opens arrange mode, so it takes no role and no label. */
         accessible={false}
-        style={arranging ? styles.dimmed : undefined}
+        style={[cell && styles.cell, arranging && styles.dimmed]}
       >
         {children}
       </Pressable>
@@ -158,6 +182,9 @@ const styles = StyleSheet.create({
   section: {
     // Nothing in the resting state: sections are direct on the background,
     // and only arrange mode gives them an outline to grab.
+  },
+  cell: {
+    flex: 1,
   },
   arranging: {
     borderWidth: 1,
@@ -190,5 +217,3 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
 });
-
-export const ARRANGE_SPRING = motion.pressSpring;

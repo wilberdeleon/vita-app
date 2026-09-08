@@ -14,21 +14,20 @@ export type PersistedPrefs<T> = {
 /**
  * One small persisted UI preference, read once and written as it changes.
  *
- * Shared by the Dashboard's two preferences — the widget layout and the Quick
- * Tools order — because they want identical behaviour and the second one
- * would otherwise be a copy of the first.
+ * Shared by Home's two preferences — the widget layout and the Quick Tools
+ * order — and by Fuel's two, the section layout and whether setup was waved
+ * away. Four records that want identical behaviour; this is that behaviour,
+ * written once. It lives here rather than in `src/features/dashboard` for the
+ * reason rule 4 exists: **features never import each other**, and Fuel needed
+ * what Home already had.
  *
- * ## Why these do not live in `src/lib/preferences`
+ * ## Why each record keeps its own key
  *
- * Two reasons, one architectural and one concrete. That module's own rule is
- * that it holds preferences *no single feature owns*; Home owns both of
- * these and nothing else reads them, exactly as Water's display unit stays
- * under `vita:v1:water:prefs`.
- *
- * The concrete one settles it: `PreferencesRepository.save()` writes the
- * **whole record**, and `ThemeProvider` calls it as `save({ themeMode })` —
- * so anything stored alongside would be erased the next time somebody
- * changed their theme.
+ * `PreferencesRepository.save()` writes the **whole** shared preferences
+ * record, and `ThemeProvider` calls it as `save({ themeMode })` — so anything
+ * stored alongside would be erased the next time somebody changed their
+ * theme. Each of these gets its own key under its own feature's namespace,
+ * exactly as Water's display unit stays under `vita:v1:water:prefs`.
  *
  * ## Reads are guarded, writes are fire-and-forget
  *
@@ -75,7 +74,7 @@ export function usePersistedPrefs<T>(
         // anything, not an error. They get the fallback.
         if (!cancelled && stored !== null) setValueState(normalizeRef.current(stored));
       } catch (error) {
-        if (__DEV__) console.warn(`[dashboard] could not read ${key}`, error);
+        if (__DEV__) console.warn(`[prefs] could not read ${key}`, error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -99,7 +98,7 @@ export function usePersistedPrefs<T>(
         try {
           await writeJson(key, next);
         } catch (error) {
-          if (__DEV__) console.warn(`[dashboard] could not save ${key}`, error);
+          if (__DEV__) console.warn(`[prefs] could not save ${key}`, error);
         }
       })();
     },

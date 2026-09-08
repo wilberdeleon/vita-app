@@ -16,6 +16,12 @@ import {
 import type { WaterRepository } from '../../lib/water/data/WaterRepository';
 import type { WaterEntry, WaterGoal, WaterPreferences } from '../../lib/water/model/types';
 import { WaterProvider } from '../../lib/water';
+import {
+  defaultFuelLayout,
+  setSectionSize,
+  toggleSection,
+  type FuelLayout,
+} from '../../features/fuel/sections';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import Fuel from './(tabs)/fuel';
@@ -28,7 +34,12 @@ import Fuel from './(tabs)/fuel';
  * names otherwise means logging and deleting real food between screenshots.
  *
  * **Nothing here reaches storage.** Each scenario builds its own in-memory
- * repository, so a review pass leaves no residue in the founder's own log.
+ * repository, so a review pass leaves no residue in the founder's own log —
+ * and from 5.6B.2 the *layout* is handed in the same way, so flicking through
+ * `water-wide` and `daystrip-hidden` cannot quietly rewrite the founder's real
+ * Fuel. Customisation works inside a scenario and is forgotten when it
+ * changes, which is why the persistence steps of a device pass belong on the
+ * real `/fuel`.
  */
 
 const TODAY = todayLogDate();
@@ -91,9 +102,40 @@ type Scenario = {
   /** Water's own goal, so the shared-goal states are reviewable here too. */
   waterGoal?: WaterGoal | null;
   waterMl?: number;
+  /** A composition to review, applied over the default. Never persisted. */
+  layout?: FuelLayout;
 };
 
+/** Reads as the sentence it describes: `wide('water')`, `hide('dayStrip')`. */
+const composed = (...steps: ((layout: FuelLayout) => FuelLayout)[]): FuelLayout =>
+  steps.reduce((layout, step) => step(layout), defaultFuelLayout());
+
+const wide = (id: 'water' | 'peptides') => (layout: FuelLayout) =>
+  setSectionSize(layout, id, 'wide');
+const hide = (id: 'dayStrip' | 'water' | 'peptides') => (layout: FuelLayout) =>
+  toggleSection(layout, id);
+
+/** One ordinary day, reused by the scenarios that are about composition. */
+const DAY = () => [
+  entry('Greek yogurt', 140, 'Breakfast', 8),
+  entry('Chicken bowl', 620, 'Lunch', 13),
+  entry('Almonds', 170, 'Snacks', 16),
+  entry('Salmon', 410, 'Dinner', 19),
+];
+
+const GOALS: NutritionTargets = { calories: 2000, protein: 150 };
+const WATER: WaterGoal = { amount: 8, unit: 'cup' };
+
 const SCENARIOS: Scenario[] = [
+  /* The composition this slice ships — the first thing to look at. */
+  {
+    key: 'default-final',
+    label: 'Default',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+  },
   { key: 'empty', label: 'Empty · no goals' },
   {
     key: 'empty-goals',
@@ -206,6 +248,108 @@ const SCENARIOS: Scenario[] = [
         ...entry('Mystery snack', 250, 'Snacks', 15),
         nutrition: { calories: 250, protein: 0, carbs: 0, fat: 0 },
       },
+    ],
+  },
+
+  /* ── the four goal/food states, named as the review asks for them ─────── */
+  { key: 'no-goals-empty', label: 'No goals · empty' },
+  { key: 'goals-empty', label: 'Goals · empty', targets: GOALS, waterGoal: WATER },
+  { key: 'no-goals-food', label: 'No goals · food', entries: DAY() },
+  {
+    key: 'goals-food',
+    label: 'Goals · food',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+  },
+
+  /* ── composition ─────────────────────────────────────────────────────── */
+  {
+    key: 'both-square',
+    label: 'Both square',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    layout: composed(),
+  },
+  {
+    key: 'water-wide',
+    label: 'Water wide',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    layout: composed(wide('water')),
+  },
+  {
+    key: 'peptides-wide',
+    label: 'Peptides wide',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    layout: composed(wide('peptides')),
+  },
+  {
+    key: 'both-wide',
+    label: 'Both wide',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    layout: composed(wide('water'), wide('peptides')),
+  },
+  {
+    key: 'reordered',
+    label: 'Reordered',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    /* The §16 case: two squares split by Meals stay in two rows. */
+    layout: {
+      ...composed(),
+      order: ['nutrition', 'water', 'meals', 'peptides', 'dayStrip'],
+    },
+  },
+  {
+    key: 'daystrip-hidden',
+    label: 'Day Strip hidden',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    layout: composed(hide('dayStrip')),
+  },
+  {
+    key: 'water-hidden',
+    label: 'Water hidden',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    layout: composed(hide('water')),
+  },
+  {
+    key: 'peptides-hidden',
+    label: 'Peptides hidden',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+    layout: composed(hide('peptides')),
+  },
+  {
+    key: 'long-text',
+    label: 'Long text',
+    targets: { calories: 12000, protein: 1200 },
+    waterGoal: { amount: 240, unit: 'cup' },
+    waterMl: 12000,
+    entries: [
+      entry('Organic sprouted whole grain sourdough with sunflower seeds', 210, 'Breakfast', 8),
+      entry('Grilled free-range chicken breast with quinoa and roasted vegetables', 640, 'Lunch', 13),
     ],
   },
 ];
@@ -343,7 +487,13 @@ export default function FuelPreview() {
           {/* Water gets its own in-memory seam too, so the shared-goal
               states are reviewable without touching the real goal. */}
           <WaterProvider key={`${active.key}-water`} repository={waterRepository}>
-            <Fuel />
+            {/*
+              * A layout is handed in for *every* scenario, not only the ones
+              * about composition: without it Fuel would fall back to the real
+              * persisted record, and opening Customize Fuel in the preview
+              * would rewrite the founder's own screen.
+              */}
+            <Fuel layout={active.layout ?? defaultFuelLayout()} />
           </WaterProvider>
         </NutritionProvider>
       </View>

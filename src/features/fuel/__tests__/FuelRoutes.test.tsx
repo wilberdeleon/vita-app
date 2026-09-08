@@ -173,7 +173,7 @@ describe('Fuel', () => {
   it('renders an empty day without inventing anything eaten', async () => {
     const tree = await mount(<Fuel />, fakeRepository().repository);
     expect(screen(tree)).toContain('Fuel');
-    expect(screen(tree)).toContain('No food logged yet');
+    expect(screen(tree)).toContain('No food logged today');
     // All four slots stay as structure — 5.6B.1 restored them compactly.
     for (const slot of ['Breakfast', 'Lunch', 'Dinner', 'Snacks']) {
       expect(screen(tree)).toContain(slot);
@@ -216,20 +216,20 @@ describe('Fuel', () => {
     expect(control(tree, 'Scan a barcode')).toBeDefined();
   });
 
-  it('carries water and peptides as compact sections, not tiles', async () => {
+  it('carries water and peptides as compact square modules, not tiles', async () => {
     /*
-     * 5.6B removed them; the founder's review put them back. What did not
-     * come back is the shape — two bordered tiles with a progress bar that
-     * had nothing to fill. These are section headings with one line of real
-     * state and one action.
+     * 5.6B removed them; the founder's review put them back, and 5.6B.2 made
+     * them a pair of squares at the foot of the screen. What did not come
+     * back is the old shape — heavy tiles with shadows and a progress bar
+     * that had nothing to fill.
      */
     const tree = await mount(<Fuel />, fakeRepository().repository);
     const rendered = screen(tree);
 
     expect(rendered).toContain('WATER');
     expect(rendered).toContain('PEPTIDES');
-    expect(control(tree, 'Add')).toBeDefined();
-    expect(control(tree, 'View')).toBeDefined();
+    expect(control(tree, 'Add water')).toBeDefined();
+    expect(control(tree, 'View peptides')).toBeDefined();
   });
 
   it('opens logging with the meal already chosen', async () => {

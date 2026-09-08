@@ -15,6 +15,9 @@ type Props = {
 /** The avatar at default text size. Grows with the system scale. */
 const NODE = 48;
 
+/** The empty day's resting marker — smaller, because it marks an absence. */
+const RESTING_NODE = 32;
+
 /**
  * **Fuel's identity object** — today's food, along today.
  *
@@ -49,12 +52,15 @@ const NODE = 48;
  * food is ever silently dropped, shrunk past legibility, or hidden behind a
  * "+9" — the record has to be complete to be a record.
  *
- * ## Empty is a state, not a failure
+ * ## Empty is a state, not a failure — and a small one
  *
  * An empty day shows the rail and one resting marker rather than a wall of
- * zeroes. The founder's note was specific: `0 Calories · Protein 0 · Carbs 0
- * · Fat 0` as the hero of an untouched screen is a scoreboard for a game
- * nobody has played yet.
+ * zeroes. It is deliberately **slighter than the strip with food in it**: from
+ * 5.6B.2 the Nutrition section above already says `No food logged today` in
+ * words, and Meals below lists four slots with nothing in them, so a
+ * full-height empty hero here would be the third statement of the same fact
+ * and the void the founder's device review objected to. A short resting rail
+ * marks where the day will be drawn and gets out of the way.
  */
 export function DayStrip({ entries, onOpenEntry }: Props) {
   const { surfaces } = useTheme();
@@ -62,7 +68,11 @@ export function DayStrip({ entries, onOpenEntry }: Props) {
 
   /* Grows with the text, like the Peptides nodes — a fixed avatar beside
      30pt type reads as an afterthought. */
-  const node = Math.round(NODE * Math.min(Math.max(fontScale, 1), 1.6));
+  const scale = Math.min(Math.max(fontScale, 1), 1.6);
+  const node = Math.round(NODE * scale);
+  /* The resting marker is a placeholder, not a food: two thirds of the size,
+     so an untouched day reads as a thin line rather than an empty hero. */
+  const restingNode = Math.round(RESTING_NODE * scale);
   const items = dayStripItems(entries);
 
   if (items.length === 0) {
@@ -73,11 +83,22 @@ export function DayStrip({ entries, onOpenEntry }: Props) {
         accessibilityRole="text"
         accessibilityLabel="Nothing logged yet today"
       >
-        <View style={[styles.rail, { backgroundColor: surfaces.border }]} />
-        <View style={[styles.restingNode, { width: node, height: node, borderRadius: node / 2, borderColor: surfaces.border, backgroundColor: surfaces.background }]}>
-          <Ionicons name="restaurant-outline" size={node * 0.42} color={surfaces.textTertiary} />
+        <View style={[styles.emptyRail, { backgroundColor: surfaces.border }]} />
+        <View
+          style={[
+            styles.restingNode,
+            {
+              width: restingNode,
+              height: restingNode,
+              borderRadius: restingNode / 2,
+              borderColor: surfaces.border,
+              backgroundColor: surfaces.background,
+            },
+          ]}
+        >
+          <Ionicons name="restaurant-outline" size={restingNode * 0.45} color={surfaces.textTertiary} />
         </View>
-        <View style={[styles.rail, { backgroundColor: surfaces.border }]} />
+        <View style={[styles.emptyRail, { backgroundColor: surfaces.border }]} />
       </View>
     );
   }
@@ -184,9 +205,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    // Tight: the resting marker is a placeholder, and 5.6B.1's device
-    // review found it opening a void between the header and the day.
-    paddingVertical: spacing.xs,
+    // No vertical padding at all: the section gap above and below is the
+    // whole of the empty strip's footprint.
+  },
+  emptyRail: {
+    height: StyleSheet.hairlineWidth,
+    // Longer than the segments between foods — with one marker there is
+    // nothing to space, so the rail reads as the day rather than as a gap.
+    flex: 1,
   },
   restingNode: {
     alignItems: 'center',

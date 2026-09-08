@@ -371,7 +371,7 @@ describe('Fuel with no goal', () => {
     const tree = await mount(<Fuel />);
     const rendered = screen(tree);
 
-    expect(rendered).toContain('No food logged yet');
+    expect(rendered).toContain('No food logged today');
     expect(rendered).not.toContain('Calories today');
     expect(rendered).not.toMatch(/Protein\s+0 g/);
   });

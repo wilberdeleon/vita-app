@@ -2053,7 +2053,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | 🟡 Implemented — awaiting founder device review |
 | 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | 🟡 Implemented — awaiting founder review |
 | 5.6B | Fuel Home Identity Redesign | The Day Strip as Fuel's identity object; direct-on-background; the calorie ring, the CTA cards and the cross-feature tiles gone | 🟡 Direction approved on device; corrected in 5.6B.1 |
-| 5.6B.1 | Fuel Home Structure + Setup + Customization Polish | Structure restored without the bulk: collapsible meals, Water and Peptides back, Set up Fuel, and section reordering | 🟡 Implemented — awaiting founder device review |
+| 5.6B.1 | Fuel Home Structure + Setup + Customization Polish | Structure restored without the bulk: collapsible meals, Water and Peptides back, Set up Fuel, and section reordering | 🟡 Direction approved on device; hierarchy corrected in 5.6B.2 |
+| 5.6B.2 | Fuel Home Final Hierarchy + Customize Fuel | Nutrition first, Day Strip second; Water and Peptides as square modules; a Customize Fuel sheet for order, visibility and size | 🟡 Implemented — awaiting founder device review |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2334,6 +2335,43 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6B.2 — Fuel Home Final Hierarchy + Customize Fuel 🟡
+
+**Implemented 2026-09-08. Awaiting founder device review — not approved.** The hierarchy pass, and the last structural slice before 5.6B locks. **Zero domain changes**; nothing under `src/lib/nutrition`, `src/lib/water` or `src/lib/peptides` was touched.
+
+**The founder's verdict on 5.6B.1: visually interesting, wrong thing leading.** The header, date chip, utilities, Day Strip concept and its meal/time presentation, the nutrition rails, the collapsible meals, Water and Peptides returning, Add Food as one action, no ring, no summary card, no orange CTA and the direct-on-background treatment were all approved in direction. The objection was singular and structural: **Fuel's first practical question is *where am I today*, and the answer was below the fold.**
+
+**The default hierarchy is now Nutrition → Day Strip → Meals → Water → Peptides.** Nothing was redesigned to get there. The Day Strip is unchanged and remains Fuel's identity object; it follows the answer instead of preceding it.
+
+**Water and Peptides are square modules, side by side.** Two genuine designs rather than one stretched: the square stacks label, visual and reading in a column and ends in a text action; the wide lays them along a row with the action on the right and a rail beneath. Water carries the shared `ProgressRing` — Water's shape across the app, not a second hydration visualisation — with the percentage inside it, or the droplet when no goal exists. Peptides carries a violet badge and a count. **Read-only:** no Taken, no Skipped, no amount, no dose, no schedule editing. They take a hairline border and a radius because square geometry needs containment, and nothing else: no fill, no shadow, no glass.
+
+**Customize Fuel.** `•••` in the header opens a `VitaSheet` in Customize Home's language — a visibility check, the name, Square / Wide chips, Move up / Move down, a drag handle, and Reset Layout at the foot. Fuel's version is deliberately narrower than Home's:
+
+- **Nutrition and Meals cannot be hidden.** They are the feature; a screen you can empty until it no longer logs food is a screen that can be broken by accident. They show a quiet `Wide · Always shown` rather than a control that refuses.
+- **Only Water and Peptides offer a size**, because only they have two real designs. A square Nutrition, Day Strip or Meals is a layout nobody drew.
+- **No delete `×`.** Hiding is reversible in place and says so.
+- Hiding a section touches nothing but the layout: Water's goal, peptide data and both features' own screens are untouched.
+
+**Square pairing is deterministic and truthful.** Two squares *adjacent in the order* share a row. A wide section takes a whole row. A square with no square immediately after it keeps its own row **at square width** — never promoted to wide, never padded with a placeholder. Water square, Meals, Peptides square is three rows: nothing is teleported up the page to find a partner, because the order the user arranged is the order they see.
+
+**One layout record, extended rather than replaced.** `vita:v1:fuel:layout` now stores `{ order, hidden, sizes }`. `normalizeFuelLayout` reads 5.6B.1's bare array as an order and applies the new defaults around it, so a founder who arranged Fuel last week keeps that arrangement and gains square Water and Peptides. It also drops unknown ids, collapses duplicates, appends missing sections, **refuses to hide Nutrition or Meals**, and corrects any size a section has no design for. No second key, no destructive migration.
+
+**Nutrition has four states, and zeroes are never the subject.** No goals and no food: the section becomes *Set up Fuel* with its supporting line and a button, with `No food logged today` beneath — the invitation shrinks to a quiet link once it has been skipped. Goals and no food: the goals are stated, never reported as `0 / 2,000`. **Food and no goals: the real intake leads** — `1,340` · `Calories today`, the three macro figures — with *Set up Fuel →* secondary under it. Food and goals: the figure, the goal clause, the rail, and protein's denominator.
+
+**In-page arrange is one column.** Holding a section still enters arrange mode, and while it is on, every section is laid out one per row. Two sections sharing a row have the same vertical position and a vertical drag cannot tell them apart; the list being reordered has to be the list on screen. The pair reappears on *Done*. Arrange mode moves things only — size and visibility live in the sheet, so direct manipulation is not overloaded with three kinds of decision. **Move up / Move down step over a hidden section** rather than swapping with it, which would read as a dead button.
+
+**Two defects the device pass caught and fixed.** A lone square rendered into a full-width row — which *is* a wide module, the exact thing the rules forbid — now keeps its column with the other left empty. And the square's `maxHeight` clipped `fl oz` off `24.3 fl oz` at accessibility text sizes; the footprint is now a floor, never a ceiling, and the two squares stay level because the row stretches both to its tallest member.
+
+**Dead code removed.** `FuelEmptyDay.tsx` and `ARRANGE_SPRING`, both orphaned by 5.6B/5.6B.1 and unreferenced at `35c7ab0`; `NutritionContext`'s leftover composition-bar styles.
+
+**Boundaries unchanged.** No carb or fat target, ceiling or "do not exceed". No calorie, protein or macro recommendation, no TDEE, no BMR, no macro split, no goal generator. No VITA Score and no food grading. No composition bar. No peptide dose, protocol or titration. No quote.
+
+**Validation.** `npm test` **74 suites / 1947 tests** (1889 → 1947) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo-doctor` **20/21** and `expo install --check` both reporting the same finding: `expo` and `expo-router` are one patch behind (`57.0.20`/`57.0.19` vs `~57.0.21`/`~57.0.20`) after an upstream release since 5.6B.1. **Not changed here** — a dependency bump is outside this slice's authorization and is the founder's call. iOS export clean · **no dependency added** · no persistence key added or removed · verified on device in Dark, Light, accessibility-large and accessibility-XXXL.
+
+**Device coverage limit, stated plainly.** The Simulator MCP still refuses with the spurious Xcode-configuration error, so this environment can deep-link and screenshot but **cannot tap, drag or long-press**. The Customize Fuel sheet was inspected by temporarily forcing it open, screenshotting, and reverting the change before commit. The drag gestures — in-page and in the sheet — are covered by pure tests of `targetIndexFor` and by the Move up / Move down path that shares their helpers; **neither gesture has been verified by a finger.**
+
+**Still to verify — founder, on a real device:** whether Nutrition leading is the correction it should be, whether the square pair reads as premium rather than as dashboard widgets, whether Customize Fuel feels like Home's, whether the drag lands where expected, and whether the layout survives a force-quit.
 
 ### Slice 5.6B.1 — Fuel Home Structure + Setup + Customization Polish 🟡
 

@@ -7,6 +7,12 @@
  * Peptides were wanted here after all. These cover what came back, the four
  * goal/food states, arranging, and the one architectural rule that matters
  * most — **there is only ever one water goal.**
+ *
+ * 5.6B.2 adds the hierarchy correction and the customisation surface on top:
+ * Nutrition first, the Day Strip second, Water and Peptides as a pair of
+ * squares, and a Customize Fuel sheet that can hide the three optional
+ * sections, resize the two that have two designs, reorder everything and reset
+ * — persisting all of it.
  */
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -28,19 +34,20 @@ jest.mock('expo-router', () => ({
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Text, TextInput } from 'react-native';
+import { AccessibilityInfo, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Fuel from '../../../app/(vita)/(tabs)/fuel';
 import FuelSetup from '../../../app/(vita)/fuel/setup';
 import WaterGoalScreen from '../../../app/(vita)/water/goal';
-import { ToastProvider } from '../../../components/ui';
+import { ProgressRing, ToastProvider } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
 import { NutritionProvider, createEntry, type MealSlot, type VitaFood } from '../../../lib/nutrition';
 import { PeptideProvider } from '../../../lib/peptides';
 import { WaterProvider } from '../../../lib/water';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { FUEL_LAYOUT_KEY } from '../useFuelLayout';
+import { DEFAULT_FUEL_LAYOUT, type FuelLayout } from '../sections';
 
 const TODAY = todayLogDate();
 const GOALS_KEY = 'vita:v1:targets';
@@ -157,7 +164,7 @@ describe('the four core states', () => {
     const rendered = screen(await mount(<Fuel />));
 
     expect(rendered).toContain('Set up Fuel');
-    expect(rendered).toContain('No food logged yet');
+    expect(rendered).toContain('No food logged today');
     for (const slot of ['Breakfast', 'Lunch', 'Dinner', 'Snacks']) {
       expect(rendered).toContain(slot);
     }
@@ -411,7 +418,7 @@ describe('arranging the sections', () => {
     const tree = await mount(<Fuel />);
     await arrange(tree);
 
-    expect(control(tree, 'Move Today up')!.props.disabled).toBe(true);
+    expect(control(tree, 'Move Nutrition up')!.props.disabled).toBe(true);
     expect(control(tree, 'Move Peptides down')!.props.disabled).toBe(true);
   });
 
@@ -421,8 +428,10 @@ describe('arranging the sections', () => {
     await arrange(tree);
     await act(async () => control(tree, 'Move Peptides up')!.props.onPress());
 
-    const stored = JSON.parse((await AsyncStorage.getItem(FUEL_LAYOUT_KEY))!) as string[];
-    expect(stored.indexOf('peptides')).toBeLessThan(stored.indexOf('water'));
+    const stored = JSON.parse((await AsyncStorage.getItem(FUEL_LAYOUT_KEY))!) as {
+      order: string[];
+    };
+    expect(stored.order.indexOf('peptides')).toBeLessThan(stored.order.indexOf('water'));
   });
 
   it('restores a stored order on the next launch', async () => {
@@ -430,7 +439,7 @@ describe('arranging the sections', () => {
     const lines = texts(await mount(<Fuel />));
 
     expect(lines.indexOf('WATER')).toBeLessThan(lines.indexOf('PEPTIDES'));
-    expect(lines.indexOf('PEPTIDES')).toBeLessThan(lines.indexOf('No food logged yet'));
+    expect(lines.indexOf('PEPTIDES')).toBeLessThan(lines.indexOf('No food logged today'));
   });
 
   it('repairs a stored order written by another build', async () => {
@@ -491,5 +500,374 @@ describe('the meals section', () => {
 
     await act(async () => control(tree, 'Add food to Dinner')!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/fuel/add?meal=Dinner');
+  });
+});
+
+/* ── customizing Fuel ──────────────────────────────────────────────────── */
+
+/** Reads back what the screen actually persisted. */
+async function storedLayout(): Promise<FuelLayout> {
+  return JSON.parse((await AsyncStorage.getItem(FUEL_LAYOUT_KEY))!) as FuelLayout;
+}
+
+/** Opens the sheet the way a user does — through the header's `•••`. */
+async function customize(tree: ReactTestRenderer) {
+  await act(async () => control(tree, 'Customize Fuel')!.props.onPress());
+}
+
+/**
+ * Nodes carrying a `testID`, host elements only.
+ *
+ * `findAll` walks composites too, so a `<View testID>` matches twice — once as
+ * the RN component and once as the host it renders. Counting rows would be
+ * doubled without this.
+ */
+function byTestID(tree: ReactTestRenderer, match: (id: string) => boolean) {
+  return tree.root.findAll(
+    (node) => typeof node.type === 'string' && typeof node.props?.testID === 'string' && match(node.props.testID),
+  );
+}
+
+/** A section is on the screen when its wrapper is. */
+function hasSection(tree: ReactTestRenderer, id: string): boolean {
+  return byTestID(tree, (value) => value === `fuel-section-${id}`).length > 0;
+}
+
+/** The side-by-side rows currently rendered. */
+function pairs(tree: ReactTestRenderer) {
+  return byTestID(tree, (value) => value === 'fuel-pair');
+}
+
+describe('the default composition', () => {
+  it('leads with Nutrition and puts the Day Strip second', async () => {
+    /*
+     * The correction this slice exists for. Asserted on strings that appear
+     * in exactly one section: "Breakfast" is also the Day Strip's meal
+     * marker, so only "No foods logged" can locate the meals section.
+     */
+    await seed({ goals: { calories: 2000 }, meals: ['Breakfast'] });
+    const tree = await mount(<Fuel />);
+
+    expect(screen(tree)).toContain('2,000 goal');
+    const sections = byTestID(tree, (value) => value.startsWith('fuel-section-')).map((node) =>
+      String(node.props.testID).replace('fuel-section-', ''),
+    );
+    expect(sections).toEqual(['nutrition', 'dayStrip', 'meals', 'water', 'peptides']);
+  });
+
+  it('pairs Water and Peptides side by side', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+
+    expect(pairs(tree)).toHaveLength(1);
+    const inside = pairs(tree)[0]
+      .findAll(
+        (node) =>
+          typeof node.type === 'string' &&
+          String(node.props?.testID ?? '').startsWith('fuel-section-'),
+      )
+      .map((node) => String(node.props.testID));
+    expect(inside).toEqual(['fuel-section-water', 'fuel-section-peptides']);
+  });
+
+  it('keeps a lone square at square width rather than stretching it', async () => {
+    /*
+     * The §16 case, and the defect the 5.6B.2 device pass caught: Water
+     * square with Meals between it and Peptides square is two separate rows,
+     * and the square in each must still be a square. A lone square rendered
+     * into a full-width row *is* a wide module.
+     */
+    await seed({ layout: { order: ['nutrition', 'water', 'meals', 'peptides', 'dayStrip'] } });
+    const tree = await mount(<Fuel />);
+
+    expect(pairs(tree)).toHaveLength(0);
+    expect(byTestID(tree, (value) => value === 'fuel-square-row')).toHaveLength(2);
+    // Still squares, not the wide design.
+    expect(byTestID(tree, (value) => value.endsWith('-wide'))).toHaveLength(0);
+  });
+
+  it('renders both modules in their square design', async () => {
+    await seed({ waterGoal: { amount: 8, unit: 'cup' } });
+    const tree = await mount(<Fuel />);
+
+    expect(byTestID(tree, (value) => value === 'fuel-water-square')).toHaveLength(1);
+    expect(byTestID(tree, (value) => value === 'fuel-peptides-square')).toHaveLength(1);
+    expect(byTestID(tree, (value) => value.endsWith('-wide'))).toHaveLength(0);
+  });
+
+  it('drops the decorative ring at accessibility text sizes, keeping the words', async () => {
+    /*
+     * The RN jest preset reports `fontScale: 2`, which is exactly the case
+     * worth pinning: past `COMPACT_FONT_SCALE` the ring stands aside so the
+     * figures can have its 44pt. It is decorative — it encodes only what the
+     * two lines say — so nothing is lost.
+     */
+    await seed({ waterGoal: { amount: 8, unit: 'cup' } });
+    const tree = await mount(<Fuel />);
+
+    expect(tree.root.findAllByType(ProgressRing)).toHaveLength(0);
+    /*
+     * `of 64 fl oz`, not `of 8 cups`: the goal was authored in cups and the
+     * display preference defaults to fluid ounces, so Water converts it — the
+     * same behaviour the Water screen shows. The figure survives the ring
+     * being dropped, which is the point of the assertion.
+     */
+    expect(screen(tree)).toContain('of 64 fl oz');
+  });
+});
+
+describe('the Customize Fuel sheet', () => {
+  it('is reached from the header, and not before', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+
+    expect(control(tree, 'Hide Day Strip')).toBeUndefined();
+    expect(control(tree, 'Customize Fuel')).toBeDefined();
+
+    await customize(tree);
+    expect(control(tree, 'Hide Day Strip')).toBeDefined();
+    expect(control(tree, 'Reset Fuel layout to default')).toBeDefined();
+  });
+
+  it('hides and shows the Day Strip', async () => {
+    await seed({ meals: ['Breakfast'] });
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    await act(async () => control(tree, 'Hide Day Strip')!.props.onPress());
+    expect(hasSection(tree, 'dayStrip')).toBe(false);
+    // Meals keeps working with the strip gone — no feature depends on it.
+    expect(screen(tree)).toContain('300 cal · 1 food');
+
+    await act(async () => control(tree, 'Show Day Strip')!.props.onPress());
+    expect(hasSection(tree, 'dayStrip')).toBe(true);
+  });
+
+  it('hides and shows Water', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    await act(async () => control(tree, 'Hide Water')!.props.onPress());
+    expect(hasSection(tree, 'water')).toBe(false);
+
+    await act(async () => control(tree, 'Show Water')!.props.onPress());
+    expect(hasSection(tree, 'water')).toBe(true);
+  });
+
+  it('hides and shows Peptides', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    await act(async () => control(tree, 'Hide Peptides')!.props.onPress());
+    expect(hasSection(tree, 'peptides')).toBe(false);
+
+    await act(async () => control(tree, 'Show Peptides')!.props.onPress());
+    expect(hasSection(tree, 'peptides')).toBe(true);
+  });
+
+  it('offers no way to hide Nutrition or Meals', async () => {
+    // They define the feature. There is no control, rather than a control
+    // that refuses — and no delete × anywhere in the sheet.
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    expect(control(tree, 'Hide Nutrition')).toBeUndefined();
+    expect(control(tree, 'Hide Meals')).toBeUndefined();
+    expect(control(tree, /^Remove /)).toBeUndefined();
+    expect(screen(tree)).toContain('Wide · Always shown');
+  });
+
+  it('hiding Water leaves the Water feature untouched', async () => {
+    await seed({ waterGoal: { amount: 8, unit: 'cup' } });
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+    await act(async () => control(tree, 'Hide Water')!.props.onPress());
+
+    // The goal is still exactly where Water wrote it.
+    expect(JSON.parse((await AsyncStorage.getItem(WATER_GOAL_KEY))!)).toEqual({
+      amount: 8,
+      unit: 'cup',
+    });
+  });
+
+  it('sets Water wide and back to square', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    await act(async () => control(tree, 'Set Water to wide')!.props.onPress());
+    expect((await storedLayout()).sizes.water).toBe('wide');
+    // And with one square left, nothing is paired.
+    expect(pairs(tree)).toHaveLength(0);
+    expect(byTestID(tree, (value) => value === 'fuel-water-wide')).toHaveLength(1);
+
+    await act(async () => control(tree, 'Set Water to square')!.props.onPress());
+    expect((await storedLayout()).sizes.water).toBe('square');
+  });
+
+  it('sets Peptides wide and back to square', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    await act(async () => control(tree, 'Set Peptides to wide')!.props.onPress());
+    expect((await storedLayout()).sizes.peptides).toBe('wide');
+    expect(pairs(tree)).toHaveLength(0);
+    expect(byTestID(tree, (value) => value === 'fuel-peptides-wide')).toHaveLength(1);
+
+    await act(async () => control(tree, 'Set Peptides to square')!.props.onPress());
+    expect((await storedLayout()).sizes.peptides).toBe('square');
+  });
+
+  it('offers no size control for the three wide sections', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    for (const label of ['Nutrition', 'Day Strip', 'Meals']) {
+      expect(control(tree, `Set ${label} to square`)).toBeUndefined();
+      expect(control(tree, `Set ${label} to wide`)).toBeUndefined();
+    }
+  });
+
+  it('reorders with Move up, the same as the in-page arrows', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    await act(async () => control(tree, 'Move Peptides up')!.props.onPress());
+    expect((await storedLayout()).order).toEqual([
+      'nutrition',
+      'dayStrip',
+      'meals',
+      'peptides',
+      'water',
+    ]);
+  });
+
+  it('describes each row for a screen reader', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    const row = tree.root.findAll(
+      (node) => String(node.props?.accessibilityLabel ?? '').startsWith('Water,'),
+    )[0];
+    expect(row.props.accessibilityLabel).toBe('Water, visible, Square, position 4 of 5');
+  });
+
+  it('persists everything, and restores it on the next launch', async () => {
+    await seed();
+    const first = await mount(<Fuel />);
+    await customize(first);
+    await act(async () => control(first, 'Hide Day Strip')!.props.onPress());
+    await act(async () => control(first, 'Set Water to wide')!.props.onPress());
+    await act(async () => control(first, 'Move Peptides up')!.props.onPress());
+    await act(async () => first.unmount());
+
+    const stored = await storedLayout();
+    expect(stored.hidden).toEqual(['dayStrip']);
+    expect(stored.sizes.water).toBe('wide');
+
+    const second = await mount(<Fuel />);
+    expect(hasSection(second, 'dayStrip')).toBe(false);
+    expect(pairs(second)).toHaveLength(0);
+    expect(byTestID(second, (value) => value === 'fuel-water-wide')).toHaveLength(1);
+  });
+
+  it('resets to the founder-approved default', async () => {
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+    await act(async () => control(tree, 'Hide Water')!.props.onPress());
+    await act(async () => control(tree, 'Set Peptides to wide')!.props.onPress());
+    await act(async () => control(tree, 'Move Meals up')!.props.onPress());
+
+    await act(async () => control(tree, 'Reset Fuel layout to default')!.props.onPress());
+
+    expect(await storedLayout()).toEqual(DEFAULT_FUEL_LAYOUT);
+    expect(hasSection(tree, 'water')).toBe(true);
+    expect(pairs(tree)).toHaveLength(1);
+  });
+
+  it('works on a screen with no food, no goals and nothing scheduled', async () => {
+    // A section is structural: it does not disappear because its data is empty.
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    for (const label of ['Nutrition', 'Day Strip', 'Meals', 'Water', 'Peptides']) {
+      expect(control(tree, `Move ${label} down`)).toBeDefined();
+    }
+  });
+});
+
+/* ── arrange mode, and motion ──────────────────────────────────────────── */
+
+describe('arrange mode', () => {
+  const hold = async (tree: ReactTestRenderer) => {
+    const holdable = tree.root.findAll((node) => typeof node.props?.onLongPress === 'function')[0];
+    await act(async () => holdable.props.onLongPress());
+  };
+
+  it('breaks the pair into one section per row', async () => {
+    /*
+     * A vertical drag cannot tell two sections sharing a row apart, and the
+     * list being reordered has to be the list on screen. The pair comes back
+     * on Done.
+     */
+    await seed();
+    const tree = await mount(<Fuel />);
+    expect(pairs(tree)).toHaveLength(1);
+
+    await hold(tree);
+    expect(pairs(tree)).toHaveLength(0);
+    expect(hasSection(tree, 'water')).toBe(true);
+    expect(hasSection(tree, 'peptides')).toBe(true);
+
+    await act(async () => control(tree, 'Done arranging Fuel')!.props.onPress());
+    expect(pairs(tree)).toHaveLength(1);
+  });
+
+  it('steps over a hidden section rather than swapping with it', async () => {
+    // Hiding the Day Strip and moving Meals up has to move Meals above
+    // Nutrition — swapping with something invisible reads as a dead button.
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+    await act(async () => control(tree, 'Hide Day Strip')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    await hold(tree);
+    await act(async () => control(tree, 'Move Meals up')!.props.onPress());
+
+    const stored = await storedLayout();
+    expect(stored.hidden).toEqual(['dayStrip']);
+    expect(stored.order.indexOf('meals')).toBeLessThan(stored.order.indexOf('nutrition'));
+  });
+});
+
+describe('with Reduce Motion on', () => {
+  beforeEach(() => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('still reorders, still hides, still resets', async () => {
+    // The rule: no information may depend on animation. Everything the
+    // customisation does is reachable with every transition switched off.
+    await seed();
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+
+    await act(async () => control(tree, 'Move Peptides up')!.props.onPress());
+    await act(async () => control(tree, 'Hide Water')!.props.onPress());
+    expect(hasSection(tree, 'water')).toBe(false);
+
+    await act(async () => control(tree, 'Reset Fuel layout to default')!.props.onPress());
+    expect(await storedLayout()).toEqual(DEFAULT_FUEL_LAYOUT);
   });
 });

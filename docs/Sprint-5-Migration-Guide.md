@@ -277,6 +277,17 @@ Needed and not yet present: a range selector over site history — something lik
 - **A 1-D drag needs no geometry engine.** Measured heights and a midpoint rule are enough; Home's rectangles and candidate layouts are a grid's problem.
 - **Watch for the duplicate a correction creates.** Restoring the meal rows made the meal shortcut chips redundant — the second correction is often inside the first.
 
+**Patterns 5.6B.2 added:**
+
+- **"Clean" is not "empty", and "interesting" is not "leading".** Two consecutive corrections in opposite directions landed on the same rule: show useful information with strong hierarchy. The most distinctive object on a screen is not automatically the one that should open it.
+- **Extend the record, do not add a second key.** 5.6B.1 stored a bare array; 5.6B.2 needed order, visibility and sizes. Reading the old array as `{ order }` is a two-line normalizer and keeps every arrangement a user already made. A `vita:v1:fuel:layout:v2` would have silently reset them.
+- **A normalizer is the place to enforce a product invariant.** "Nutrition and Meals cannot be hidden" is not just a missing button: a hand-edited or future record that hides them is repaired on read, so no code path can produce a Fuel that does not log food.
+- **A lone square must still be a square.** A single square section rendered into a full-width row *is* the wide module — the layout the rules forbid. It keeps its column and the other half stays empty; a hole is not information, but a stretched widget is a lie.
+- **A fixed footprint must be a floor, never a ceiling.** Pinning `minHeight` *and* `maxHeight` clipped `fl oz` off `24.3 fl oz` at accessibility sizes. Information scales without limit; ornament does not. Equal heights come from the row stretching its children, not from both being capped.
+- **An edit mode should show the list it is editing.** Arrange mode lays the paired squares out one per row, because a vertical drag cannot distinguish two sections at the same height and the order being changed has to be the order on screen.
+- **Move up must step over what the user cannot see.** With a section hidden, swapping with it in the full order looks like a dead button. Reorder over the visible sequence and re-seat the hidden ones.
+- **Share the vocabulary, not necessarily the code.** Fuel's customization reads like Home's on purpose and duplicates none of `modules.ts`: Home has no concept of an unhideable module, and adding one would have meant editing a locked feature to save a hundred lines.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh
