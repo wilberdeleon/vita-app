@@ -255,6 +255,18 @@ Needed and not yet present: a range selector over site history — something lik
 - **`Your routine`, never `Recommended`.** The label says whose number it is. The moment it grades the number, the tracker has become an advisor.
 - **A test anchored to "today" is a test that fails one day in seven.** `TODAY - 1` fell into the previous week every Monday. Anchor fixtures to the window under test, not to the clock.
 
+**Patterns 5.6B added:**
+
+- **Before drawing a chart, look for the asset the feature already owns.** Fuel's food artwork existed, was carefully reasoned, and was being used at 36pt inside rows while a generic ring led the screen. The identity object was already in the codebase.
+- **Build the object, render it, then judge it.** The composition bar was implemented and deleted after one device screenshot: VITA's macro tokens are green/amber/red, and three of them side by side is a traffic light. Optional features are worth building to find out — and worth removing when the answer is no.
+- **A colour set that is fine individually can judge collectively.** Green, amber and red as separate macro dots say nothing; contiguous, they rank.
+- **An empty state is a state, not an apology.** A resting object plus one line beats a wall of zeroes, which is a scoreboard for a game nobody has played.
+- **Only show what exists.** Four meal rows saying *No foods logged* is a list of things the user has not done. An empty slot is the absence of information.
+- **One action per task.** Fuel had a filled CTA, a second CTA beside it, and four inline adds — all starting the same flow at the same weight.
+- **A feature screen is not a small Home.** Cross-domain tiles inside one feature are how a screen becomes a template; the overview surface already exists and is locked.
+- **Fixture timestamps must be built in local time.** A hand-written `T08:15:00.000Z` renders as 1:15 AM anywhere west of London, which looks like a sorting bug in a screenshot and is not one.
+- **Delete the components the redesign orphaned, in the same slice.** Five Fuel components died with the old screen; leaving them is how a codebase acquires two answers to the same question.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

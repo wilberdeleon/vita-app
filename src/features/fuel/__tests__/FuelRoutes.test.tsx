@@ -173,7 +173,8 @@ describe('Fuel', () => {
   it('renders an empty day without inventing anything eaten', async () => {
     const tree = await mount(<Fuel />, fakeRepository().repository);
     expect(screen(tree)).toContain('Fuel');
-    // Four meal slots are the structure of a day, and all are empty.
+    expect(screen(tree)).toContain('Nothing logged yet');
+    // The four slots remain as shortcuts — orientation, not obligation.
     for (const slot of ['Breakfast', 'Lunch', 'Dinner', 'Snacks']) {
       expect(screen(tree)).toContain(slot);
     }
@@ -194,16 +195,50 @@ describe('Fuel', () => {
     expect(control(tree, 'Add food to Breakfast')).toBeDefined();
   });
 
+  it('has one primary action, not four competing ones', async () => {
+    /*
+     * The old screen had a filled orange Log Food card, a Scan Barcode card
+     * beside it, and four `+ Add food` rows — four things starting the same
+     * task at the same weight.
+     */
+    const tree = await mount(<Fuel />, fakeRepository().repository);
+
+    expect(control(tree, 'Add food')).toBeDefined();
+    expect(control(tree, 'Log food — search, scan, or add')).toBeUndefined();
+    expect(control(tree, 'Scan barcode — quick scan a product')).toBeUndefined();
+    // The scanner survives as one header icon.
+    expect(control(tree, 'Scan a barcode')).toBeDefined();
+  });
+
+  it('carries no other feature on it', async () => {
+    // Cross-domain overview is Home's job, and Home is locked.
+    const tree = await mount(<Fuel />, fakeRepository().repository);
+    const rendered = screen(tree);
+
+    expect(rendered).not.toContain('Hydration');
+    expect(rendered).not.toContain('Peptides');
+  });
+
   it('opens logging with the meal already chosen', async () => {
     const tree = await mount(<Fuel />, fakeRepository().repository);
     await act(async () => control(tree, 'Add food to Dinner')!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/fuel/add?meal=Dinner');
   });
 
-  it('counts only the meals that actually have something in them', async () => {
+  it('shows only the meals that actually have something in them', async () => {
+    /*
+     * 5.6B: an empty slot is the absence of information, not information.
+     * The old screen listed all four with *No foods logged* whether or not
+     * anything had happened, which made an untouched day read as a list of
+     * things not done.
+     */
     const entry = createEntry({ food: food(), quantity: 1, meal: 'Breakfast', logDate: TODAY });
     const tree = await mount(<Fuel />, fakeRepository({ entries: [entry] }).repository);
-    expect(screen(tree)).toContain('No foods logged');
+    const rendered = screen(tree);
+
+    expect(rendered).toContain('Breakfast');
+    expect(rendered).not.toContain('No foods logged');
+    expect(rendered).not.toContain('Dinner');
   });
 });
 

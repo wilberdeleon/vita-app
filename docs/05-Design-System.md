@@ -518,6 +518,24 @@ iOS's `decimal-pad` and `number-pad` have no return key, so a focused numeric fi
 
 **`numbers-and-punctuation` is not covered by this rule** — it is a full keyboard with a return key and needs no accessory.
 
+## 27 — A feature's object is built from what only it has (slice 5.6B)
+
+**Every feature earns one meaningful visual subject, and it must be made of that feature's own material.**
+
+| Feature | Object | Made of |
+|---|---|---|
+| Water | the vessel | a volume that fills |
+| Peptides | the week strip and month grid | discrete answered/unanswered days |
+| Fuel | the **Day Strip** | the foods themselves, as artwork, in time order |
+
+Fuel had a calorie ring — the one object every calorie counter already ships, answering *how am I scoring* rather than *what did I eat*. The replacement is built on `foodVisual`/`foodArt`, an asset VITA already owned and was using at 36pt inside list rows while the ring took the top of the screen. **Look for the distinctive asset a feature already has before drawing a chart.**
+
+**A rail is structure, never progress.** The Day Strip and the Peptides week strip both run one neutral hairline end to end: it does not fill, does not stop at now, and carries no proportion. A rail that fills is a progress bar wearing a timeline's clothes.
+
+**Macro tokens are green, amber and red, so they may not be put side by side.** Three contiguous segments in those colours read as a traffic light — a health verdict — whatever the caption says. Individually they are fine; as a set they judge. 5.6B built a composition bar and removed it for exactly this.
+
+**One display-size subject per screen.** Fuel's is the food. The calorie figure is large but subordinate, and there is no quote: Home's quote is Home's identity, and a feature screen with real content to lead with does not need one.
+
 ---
 
 ## What this document still owes

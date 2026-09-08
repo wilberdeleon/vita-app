@@ -1,105 +1,116 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { Screen, ScreenHeader, Section, SectionHeader } from '../../../components/ui';
-import { FuelQuickActions } from '../../../features/fuel/components/FuelQuickActions';
-import { FuelSummaryCard } from '../../../features/fuel/components/FuelSummaryCard';
-import { FuelTrackerCard } from '../../../features/fuel/components/FuelTrackerCard';
-import { TodayMealsPanel } from '../../../features/fuel/components/TodayMealsPanel';
-import { usePeptideSummary } from '../../../lib/peptides';
-import { formatLogDateLong, useDailyNutrition } from '../../../lib/nutrition';
-import { useWaterToday } from '../../../lib/water';
+import { StyleSheet, Text } from 'react-native';
+import { Screen } from '../../../components/ui';
+import { AddFoodAction, GoalPrompt, MealShortcuts } from '../../../features/fuel/components/FuelActions';
+import { DayStrip } from '../../../features/fuel/components/DayStrip';
+import { FuelEmptyDay } from '../../../features/fuel/components/FuelEmptyDay';
+import { FuelHeader } from '../../../features/fuel/components/FuelHeader';
+import { NutritionContext } from '../../../features/fuel/components/NutritionContext';
+import { TodaysMeals } from '../../../features/fuel/components/TodaysMeals';
+import { formatLogDateShort } from '../../../lib/daily';
+import { hasAnyGoal, useDailyNutrition, type MealSlot } from '../../../lib/nutrition';
 import { palette, spacing, typography } from '../../../theme/tokens';
 
 /**
- * Fuel — a compact daily nutrition command centre, not a menu of cards.
+ * Fuel — **what did I eat today?**
  *
- * The screen answers, in order and without navigating anywhere: how much
- * have I eaten and how much is left · how do I log something right now ·
- * what have I actually eaten today, by meal · how are hydration and
- * peptides doing.
+ * ## What this replaced (slice 5.6B)
  *
- * What changed in the redesign is the *shape* of the screen, not the data
- * behind it. Every figure below comes from a shared domain —
- * `useDailyNutrition()` derives totals from the same entry array Home reads,
- * and since slice 3.2 `useWaterToday()` reads the same hydration state the
- * Water screen does, so the two can never disagree. Peptides is still its own
- * Sprint 0 fixture until slice 3.5. Nothing on this screen is a fixture
- * invented for the layout, and no provider, search, logging, favorite, or
- * barcode behaviour was touched.
+ * The previous screen was a calorie ring in a full-width card, a solid
+ * orange *Log Food* card beside a bordered *Scan Barcode* card, four meal
+ * rows inside another card — each saying *No foods logged* whether or not
+ * anything had happened — and two tiles reporting Hydration and Peptides.
+ * Six rounded surfaces before any food appeared. The founder's review on a
+ * real device was that it did not look like the same generation of VITA as
+ * the locked Dashboard, and the audit's diagnosis was that **the loudest
+ * object on the screen was the least Fuel-specific thing it could have
+ * drawn**: a calorie ring, which every calorie counter already has.
  *
- * Fuel scrolls, deliberately. Trying to fit meals, macros, actions, and two
- * secondary trackers into one viewport is what produced the oversized,
- * information-free cards this redesign replaces.
+ * ## The subject is the food
+ *
+ * `DayStrip` is Fuel's identity object, built from the food artwork VITA
+ * already owns. Water fills a vessel, Peptides draws a timeline of states,
+ * Fuel shows the things you actually ate, in the order you ate them. The
+ * nutrition figures follow it as context rather than leading as a score —
+ * which is also why there is no ring: with no goal there is nothing to be a
+ * fraction of, and with one a slim rail says it without the ceremony.
+ *
+ * ## Direct on the background
+ *
+ * Sprint 5's default. Nothing on this screen is in a card; sections are
+ * separated by space and hairlines, which is how the Peptides routine screen
+ * and Water's day already read.
+ *
+ * ## One action
+ *
+ * `Add food`, neutral, with the meal-aware `+` beside each logged meal as a
+ * shortcut and the scanner as one icon in the header. Previously four things
+ * competed to start the same task.
+ *
+ * ## Fuel is Fuel, not a small Dashboard
+ *
+ * The Hydration and Peptides tiles are gone. Cross-domain overview is what
+ * Home is for, and Home is locked and already does it; a feature screen
+ * carrying miniature versions of two other features is how Fuel came to feel
+ * like a template.
+ *
+ * Every figure still comes from `useDailyNutrition()`, the same engine Home
+ * reads, so the two cannot disagree. No domain file changed for this
+ * redesign.
  */
 export default function Fuel() {
   const today = useDailyNutrition();
-  const water = useWaterToday();
-  const peptides = usePeptideSummary();
+
+  const addFood = (meal?: MealSlot) =>
+    router.push(meal ? `/fuel/add?meal=${encodeURIComponent(meal)}` : '/fuel/add');
+
+  const openEntry = (entryId: string) =>
+    router.push(`/fuel/entry/${encodeURIComponent(entryId)}`);
+
+  const noGoals = !today.isLoading && !hasAnyGoal(today.targets);
+  const empty = !today.isLoading && today.isEmpty;
 
   return (
-    <Screen dockClearance contentGap={spacing.xl}>
-      <ScreenHeader title="Fuel" subtitle={formatLogDateLong(today.logDate)} settings />
-
-      {/*
-        * Goals are discoverable from where they matter, not only from
-        * Settings (founder direction, 5.6A.1). The card shows this line
-        * only while there are none; the editor itself is not duplicated
-        * here.
-        */}
-      <FuelSummaryCard
-        today={today}
-        onSetGoals={() => router.push('/settings/nutrition-goals')}
+    <Screen dockClearance contentGap={spacing.l} topInset={false}>
+      <FuelHeader
+        dateLabel={formatLogDateShort(today.logDate)}
+        onScan={() => router.push('/fuel/scan')}
+        onSettings={() => router.push('/settings')}
       />
 
-      {today.error ? <Text style={[styles.error, { color: palette.fat }]}>{today.error}</Text> : null}
+      {today.error ? (
+        <Text style={[styles.error, { color: palette.fat }]}>{today.error}</Text>
+      ) : null}
 
-      <FuelQuickActions />
+      {/* The hero, in both states — resting when the day is untouched. */}
+      <DayStrip entries={today.entries} onOpenEntry={openEntry} />
 
-      <Section
-        header={
-          <SectionHeader title="Today's Meals" actionLabel="View all" onAction={() => router.push('/fuel/log')} />
-        }
-      >
-        <TodayMealsPanel meals={today.meals} isLoading={today.isLoading} />
-      </Section>
+      {empty ? (
+        <>
+          <FuelEmptyDay targets={today.targets} />
+          <AddFoodAction onPress={() => addFood()} />
+          {/* Orientation, not obligation: what a day is made of, each one a
+              shortcut that carries its meal through to Food Detail. */}
+          <MealShortcuts onAddToMeal={addFood} />
+        </>
+      ) : (
+        <>
+          {/*
+            * Numbers follow the food. On a day with something in it these
+            * are the context for what is above, not the point of the screen.
+            */}
+          <NutritionContext today={today} />
+          <TodaysMeals
+            entries={today.entries}
+            onOpenEntry={openEntry}
+            onAddToMeal={addFood}
+          />
+          <AddFoodAction onPress={() => addFood()} />
+        </>
+      )}
 
-      <View style={styles.trackers}>
-        {/*
-          * Honest about what it knows. With a goal set this reads as progress;
-          * without one it states the day's total and nothing more, because
-          * inventing a target to divide by is how the old fixture came to
-          * claim `5 of 8 cups · 63%` to every user forever. The percent label
-          * is optional on this component precisely so it can be absent.
-          */}
-        <FuelTrackerCard
-          icon="water"
-          color={palette.water}
-          title="Hydration"
-          value={water.isEmpty ? 'None logged' : water.totalLabel}
-          progress={water.progress}
-          percentLabel={water.percent === null ? undefined : `${water.percent}%`}
-          actionLabel="+ Add Water"
-          onAction={() => router.push('/water')}
-        />
-        {/*
-          * Real state since slice 3.9, and no invented target.
-          *
-          * This tile ran on a fixture that told every user `1 of 3 logged`
-          * forever. There is no daily peptide goal in VITA, so there is
-          * nothing to divide by — the bar stays empty and the tile says what
-          * actually happened. The button is a door into the redesigned
-          * Peptides home; Fuel does not grow its own routine widget.
-          */}
-        <FuelTrackerCard
-          icon="medical-outline"
-          color={palette.peptide}
-          title="Peptides"
-          value={peptides.label}
-          progress={0}
-          actionLabel="View Peptides"
-          onAction={() => router.push('/peptides')}
-        />
-      </View>
+      {/* Only while the user has neither goal — see `GoalPrompt`. */}
+      {noGoals ? <GoalPrompt onPress={() => router.push('/settings/nutrition-goals')} /> : null}
     </Screen>
   );
 }
@@ -107,10 +118,5 @@ export default function Fuel() {
 const styles = StyleSheet.create({
   error: {
     ...typography.caption,
-  },
-  trackers: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    gap: spacing.m,
   },
 });

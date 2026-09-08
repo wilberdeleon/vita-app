@@ -329,8 +329,9 @@ describe('across a restart', () => {
     await act(async () => editor.unmount());
     mounted = null;
 
+    // An empty day states the goal quietly rather than reporting 0 / 2,200.
     const fuel = await mount(<Fuel />);
-    expect(screen(fuel)).toContain('2,200');
+    expect(screen(fuel)).toContain('2,200 calorie goal');
   });
 });
 
@@ -358,6 +359,21 @@ describe('Fuel with no goal', () => {
 
     expect(rendered).toContain('600');
     expect(rendered).toContain('Calories today');
+  });
+
+  it('leads an untouched day with the strip, not a wall of zeroes', async () => {
+    /*
+     * The founder's specific note: `0 Calories · Protein 0 · Carbs 0 · Fat
+     * 0` as the hero of a screen nobody has used yet is a scoreboard for a
+     * game that has not started.
+     */
+    await seed();
+    const tree = await mount(<Fuel />);
+    const rendered = screen(tree);
+
+    expect(rendered).toContain('Nothing logged yet');
+    expect(rendered).not.toContain('Calories today');
+    expect(rendered).not.toMatch(/Protein\s+0 g/);
   });
 
   it('shows macro totals with no denominator appended', async () => {
@@ -400,9 +416,11 @@ describe('Fuel with a goal the user set', () => {
     const tree = await mount(<Fuel />);
     const rendered = screen(tree);
 
-    expect(rendered).toContain('Calories remaining');
-    expect(rendered).toContain('1,400');
-    expect(rendered).toContain('30%');
+    // 5.6B states the goal beside the figure rather than as a ring and a
+    // percentage: `600 · Calories · 2,000 goal · 1,400 left`.
+    expect(rendered).toContain('600');
+    expect(rendered).toContain('2,000 goal');
+    expect(rendered).toContain('1,400 left');
   });
 
   it('reports going over factually, never as a failure', async () => {
@@ -410,7 +428,7 @@ describe('Fuel with a goal the user set', () => {
     const tree = await mount(<Fuel />);
     const rendered = screen(tree);
 
-    expect(rendered).toContain('Calories over');
+    expect(rendered).toContain('100 over');
     for (const shame of ['failed', 'exceeded', 'over budget', 'off track', 'bad']) {
       expect(rendered.toLowerCase()).not.toContain(shame);
     }
@@ -421,8 +439,8 @@ describe('Fuel with a goal the user set', () => {
     const tree = await mount(<Fuel />);
     const rendered = screen(tree);
 
-    expect(rendered).toContain('Protein Goal');
-    expect(rendered).toContain('150');
+    // `Protein  20 / 150 g` — a denominator only where a goal exists.
+    expect(rendered).toMatch(/Protein\s+20 \/ 150 g/);
   });
 });
 
@@ -504,7 +522,8 @@ describe('the contextual setup prompt', () => {
     const tree = await mount(<Fuel />);
 
     // Fuel stays usable without goals: this is not a gate and not a warning.
-    expect(screen(tree)).toContain('Log Food');
+    expect(screen(tree)).toContain('Add food');
+    expect(screen(tree)).toContain('Optional');
     const rendered = screen(tree).toLowerCase();
     for (const alarm of ['required', 'set up your', 'get started', 'finish setup', 'missing']) {
       expect(rendered).not.toContain(alarm);

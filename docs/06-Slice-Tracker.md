@@ -2052,6 +2052,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — audit approved; 5.6A implemented |
 | 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | 🟡 Implemented — awaiting founder device review |
 | 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | 🟡 Implemented — awaiting founder review |
+| 5.6B | Fuel Home Identity Redesign | The Day Strip as Fuel's identity object; direct-on-background; the calorie ring, the CTA cards and the cross-feature tiles gone | 🟡 Implemented — awaiting founder device review |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2332,6 +2333,34 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6B — Fuel Home Identity Redesign 🟡
+
+**Implemented 2026-09-07. Awaiting founder device review — not approved.** The visual redesign of Fuel Home. Search, the scanner's internals, Food Detail and Manual Entry are untouched — 5.6C and 5.6D. **Zero changes under `src/lib`.**
+
+**What the screen was.** A calorie ring in a full-width card · a solid-orange *Log Food* card beside a bordered *Scan Barcode* card · four meal rows inside another card, each saying *No foods logged* whether or not anything had happened · two tiles reporting Hydration and Peptides. Six rounded surfaces before any food appeared. The founder's device review was that it did not look like the same generation of VITA as the locked Dashboard, and the audit's diagnosis was sharper: **the loudest object on the screen was the least Fuel-specific thing it could have drawn.**
+
+**The Day Strip is Fuel's identity object.** Today's foods along a hairline rail, in the order they were logged, drawn with the artwork VITA already owns — `foodVisual` resolves a real product photograph first and falls back to a hand-drawn category illustration. Water fills a vessel, Peptides draws a timeline of states, Fuel shows **the things you actually ate**. The rail is one neutral weight end to end: it does not fill and carries no proportion, so it can never be mistaken for progress. It scrolls horizontally, because a fifteen-item day is a real day and no food may be silently dropped. Meal names are marked once where a meal begins, tinted with Fuel's own sunrise/midday/sunset language — which is what kept `mealAccent` alive rather than dead.
+
+**Numbers follow the food.** `1,610` · `Calories today` with no goal; `1,600` · `Calories · 1,200 goal · 400 over` with one, over a 3pt rail. **No ring** — with no goal there is nothing to be a fraction of, and with one a slim rail says it without the ceremony. Protein gains a denominator and a rail only when a protein goal exists; carbs and fat are totals, always.
+
+**The composition bar was built and removed.** The audit proposed it and §24 made it optional. Rendered, it was the most generic object on the screen: VITA's macro tokens are green, amber and red, so a contiguous tri-colour bar reads as a **traffic light** — precisely the health verdict §25 forbids. Recolouring to one hue made it unreadable, and adding a legend to explain a decoration is how a screen acquires a chart nobody asked for. The three figures above already say what the day was made of, in words.
+
+**Today's meals, direct on the background.** Only meals with food appear, each a heading with its own subtotal over compact rows carrying art, name, serving and calories. An empty slot is the absence of information, not information. **Zero cards on Fuel Home** — sections are separated by space and hairlines.
+
+**One action.** `Add food`, neutral with an orange accent. The scanner is one icon in the header; the meal-aware `+` sits quietly beside each logged meal. Four things previously competed to start the same task.
+
+**An empty day is a state, not a failure.** The strip rests, then *Nothing logged yet* · *Add your first food to build today's Fuel view.* · Add food · four meal shortcuts for orientation. A goal the user set is stated quietly (`2,000 calorie goal`) rather than reported as `0 / 2,000` and `0%` — a progress report on a day that has not started. **No wall of zeroes.**
+
+**Fuel is Fuel, not a small Dashboard.** The Hydration and Peptides tiles are gone: cross-domain overview is Home's job, and Home is locked and already does it.
+
+**Deleted as dead:** `FuelSummaryCard`, `FuelQuickActions`, `FuelTrackerCard`, `TodayMealsPanel`, `MealFoodRow`. **`/fuel/log` kept but no longer exposed** — the audit found it largely duplicates Home, and after the redesign it has **zero product references**. Deleting it would risk a live deep link for no gain; consolidating it is 5.6C's call.
+
+**Validation.** `npm test` **72 suites / 1841 tests** (1826 → 1841) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · **zero changes under `src/lib`** · no persistence key touched · verified on device in Dark and Light.
+
+**Preview harness:** `/fuel-preview` — thirteen scenarios over an in-memory repository, so a review pass leaves no residue in the founder's own log.
+
+**Still to verify — founder, on a real device:** whether Fuel now unmistakably belongs beside Home, whether the Day Strip reads as Fuel's object rather than a decoration, whether orange feels earned, and whether an empty day feels premium rather than unfinished.
 
 ### Slice 5.6A.1 — Goal Model Finalization 🟡
 

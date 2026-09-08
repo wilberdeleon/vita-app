@@ -6,6 +6,26 @@
 
 ---
 
+## ✅ Sprint 5 slice 5.6B — Fuel looks like VITA now (2026-09-07, awaiting founder device review)
+
+**Fuel's screen is built around your food.** A strip across the top shows what you ate today, in the order you ate it, drawn with VITA's own food illustrations — or the product's real photo when there is one. It replaces the calorie ring, which was the one thing every calorie app already has and which answered *how am I scoring* instead of *what did I eat*.
+
+**The numbers come after the food.** Your calories, then protein, carbs and fat. If you have set a calorie or protein goal, you see how the day sits against it with a thin line — no big ring, no percentage shouting at you. Carbs and fat are always plain totals.
+
+**An empty day no longer greets you with zeroes.** The strip rests, it says *Nothing logged yet*, and there is one **Add food** button plus four meal shortcuts. If you have goals set they are stated quietly rather than reported as `0 / 2,000`.
+
+**Only the meals you actually ate appear.** The old screen listed Breakfast, Lunch, Dinner and Snacks with *No foods logged* under each, whether or not anything had happened.
+
+**One way to add food**, with the barcode scanner as a small icon at the top. There used to be a big orange button, a second big button beside it, and four more inline — four things doing the same job.
+
+**Hydration and Peptides are gone from Fuel.** Your Home screen already brings everything together; Fuel is about food.
+
+**Nothing about your food is scored, graded or rated.** No VITA Score, no health rating, no good or bad foods, and no calorie or macro recommendations — your goals stay yours to set.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.
+
+---
+
 ## Current state (verified in repo — Sprint 2 in progress)
 
 **Slice 2.1 — Nutrition Foundation is built.** Fuel's daily calories, macros, meal grouping, and targets now come from **real logged food entries** through the shared nutrition domain at `src/lib/nutrition/`, not from a fixture. Fuel and the Food Log render an honest empty day when nothing is logged. The engine persists to AsyncStorage behind a `FoodLogRepository` interface, so Supabase later swaps in without touching a screen. Architecture detail: repo `docs/09-Technical-Documentation.md`.
