@@ -204,6 +204,10 @@ The two languages **share no hex**, so neither can be read as the other, and a t
 
 **A fixed `lineHeight` is a Dynamic Type bug.** React Native scales `fontSize` by the system setting and leaves `lineHeight` in raw points, so a fixed one becomes a ceiling the text grows through. Express it as a ratio of the scale. Likewise, a single word in a box too narrow to hold it is **clipped, not wrapped** — rows must wrap between their parts rather than letting one part claim the width.
 
+**These three rules are locked.** They were founder rulings during 5.6B.2–5.6B.4 and were approved on device with Fuel Home on 2026-09-09. They apply to every feature slice from here, not only to Fuel.
+
+**Cross-feature consistency, in general form.** When the same feature is represented in more than one place in VITA, **equivalent state uses equivalent semantics and presentation language**. This is not a demand for identical layouts: a compact widget may render less than a full screen, and context may change geometry and density. It may not change product meaning. The shipped examples are the Water compact module (Home + Fuel), the Peptides compact module (Home + Fuel), and the calorie summary (Fuel + Home's Fuel widget) — in each, one component or one derivation serves both surfaces.
+
 **A feature shown in two places is drawn by one component.** Founder ruling, 5.6B.3, after comparing Home and Fuel on device: Water and Peptides appeared on both screens with different objects, different copy and different footprints. **Equivalent data must produce equivalent presentation — the same, not similar.** The shape this takes:
 
 - **The drawing is shared.** `src/components/modules/` holds one compact module per feature that appears inside another feature's screen. Presentational only: a view model and callbacks in, no domain imports, no data hooks.

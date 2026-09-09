@@ -10,9 +10,9 @@
 |---|---|---|---|
 | 1 | Water | 5.2 | ✅ Approved and locked |
 | 2 | Dashboard | 5.3 | ✅ Approved and locked |
-| 3 | Peptides Home | 5.4 | ⬜ **Next** |
-| 4 | Routine / Injection Sites | 5.5 | ⬜ Planned |
-| 5 | Fuel | 5.6 | ⬜ Planned |
+| 3 | Peptides Home | 5.4 | ✅ Approved and locked |
+| 4 | Routine / Injection Sites | 5.5 | ✅ Approved and locked |
+| 5 | Fuel | 5.6 | 🟡 **Fuel Home (5.6B) approved and locked**; 5.6C Add/Search/Recent next |
 | 6 | Tools / Settings | 5.7 | ⬜ Planned |
 | 7 | Shared interaction / motion | 5.8 | ⬜ Planned |
 | 8 | BMI | 5.9 | ⬜ Planned |
@@ -316,6 +316,8 @@ Needed and not yet present: a range selector over site history — something lik
 
 **New section, added 2026-09-04.** Fuel was never part of Sprint 5's original plan — Sprint 2 built its functionality and its presentation predates the current identity. This slice brings the existing Fuel screens into the same product family.
 
+**Fuel Home is locked** — founder-approved on device 2026-09-09, across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4. The locked specification is `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*. **The plan below is kept as written**, because it records what Fuel was and what was expected of the migration; three of its expectations were overturned in the building and are corrected inline. **5.6C — Add / Search / Recent is next and has not started**; 5.6D covers the scanner internals, Food Detail and Manual Entry.
+
 **Files:** `src/app/(vita)/fuel/` — `index.tsx` · `log.tsx` · `search.tsx` · `food/[id].tsx` · `scan.tsx` and the surfaces around them · `features/fuel/`
 
 | Now | Becomes |
@@ -329,7 +331,15 @@ Needed and not yet present: a range selector over site history — something lik
 
 **Shared:** surface roles · typography variants · disclosure · haptics on a successful log · `VitaSheet` · press behaviour · Dynamic Type · Reduce Motion.
 
-**Feature-specific — Fuel should look like Fuel:** the **orange feature identity** · the meal colour language (Breakfast sunrise yellow · Lunch midday orange · Dinner sunset red-orange · Snacks neutral sage) · the three-tier food-visual system and `foodArt.ts` · the calorie ring. **Fuel does not adopt Home's widget-customization model** and is not restyled into Water's or Dashboard's layout.
+**Feature-specific — Fuel should look like Fuel:** the **orange feature identity** · the meal colour language · the three-tier food-visual system and `foodArt.ts`.
+
+**Three expectations this section got wrong, corrected at the lock:**
+
+- **The calorie ring is gone.** It was the most generic object on the screen — the shape every calorie counter already has — and it answered *how am I scoring* rather than *what did I eat*. Fuel leads with a consumed figure and a thin rail instead.
+- **Fuel did adopt a customization model**, deliberately narrower than Home's: section order, hide/show for the Day Strip, Water and Peptides only, and Square/Wide for Water and Peptides only. Nutrition and Meals are always shown; there is no page builder.
+- **The meal colours moved.** Breakfast is brand gold, Lunch Fuel orange, **Dinner a moon on dusk rose** — not the `palette.fat` sunset red, which read as an error — and Snacks stays neutral sage. Each has a deepened light-mode counterpart.
+
+Fuel is not restyled into Water's or Dashboard's layout. **Where a feature appears on more than one screen, though, one component draws it**: Water and Peptides share a compact module with Home, and calories a shared summary.
 
 **Frozen — presentation only, and this is not an architecture rewrite:** `src/lib/nutrition/` in full · the nutrition model and calculated totals · logging · meal editing · the Open Food Facts / USDA provider layer and its attribution · **barcode lookup and the `/fuel/scan` logging flow** · persistence · every existing real behaviour · current calorie and macro semantics, including the `Calories` / `cal` terminology decision.
 

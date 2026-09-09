@@ -6,7 +6,32 @@
 
 ---
 
-## Sprint 5 slice 5.6B.4 — calories say what they mean, and the day has a shape (2026-09-09, awaiting founder device review)
+## ✅ Fuel Home is finished (approved on 2026-09-09)
+
+**Wilber approved the Fuel home screen on his iPhone on 9 September 2026, and it is now locked.** That covers everything below — the redesign and all four rounds of corrections after it. Nobody is redesigning this screen again unless something is actually broken.
+
+**What you get when you open Fuel:**
+
+- **Your nutrition first.** The big number is what you have eaten today, with `Calories consumed` under it so it can't be misread. If you set a calorie goal, you also see what is left and a thin orange bar. Protein shows a goal if you set one. **Carbs and fat are just totals** — VITA sets no limit on either.
+- **Your four meals** — breakfast, lunch, dinner and snacks — each on one line with a small mark for the time of day, tap to open, tap to close, and a `+` to add straight into one.
+- **Water and peptides**, side by side at the bottom, showing exactly what Home shows.
+- **Add food**, always at the end.
+
+**You can rearrange it.** Tap `•••` → Customize Fuel to change the order, turn the day strip, water or peptides on and off, and switch water and peptides between square and wide. Nutrition and your meals always stay. There is a *Reset Layout* if you want the original back.
+
+**The day strip is off unless you turn it on.** It still exists and still works — the picture of your day's food in the order you ate it — but the simpler screen won.
+
+**Setting anything up is optional.** Calories, protein and water goals are all offered, all optional, and Fuel logs food perfectly well with none of them.
+
+**VITA still does not tell you what to eat.** It counts what you enter and compares it to goals *you* chose. It does not recommend calories, protein, carbs or fat, does not calculate a TDEE or a deficit, does not grade your day and does not score food. Nutrition guidance is something [[My Journey|Journey]] may take on later, with its own review — nothing of the sort exists today.
+
+**Still to come in Fuel:** the add / search / recent screens, then the scanner, food detail and manual entry. The home screen itself is done.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*.
+
+---
+
+## ✅ Sprint 5 slice 5.6B.4 — calories say what they mean, and the day has a shape (2026-09-09, approved)
 
 **The big number is what you ate.** Fuel now reads `1,340` above `Calories consumed`, with `660 left · 2,000 goal` under it. Home's Fuel card says the same thing in one line: `1,340 cal consumed · 660 left`. They are built from the same place, so they can never tell you two different things about the same day. Go past your goal and it says `400 over` in amber — a fact, not a telling-off.
 
@@ -20,7 +45,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.4.
 
 ---
 
-## Sprint 5 slice 5.6B.3 — water and peptides look the same everywhere (2026-09-08, awaiting founder device review)
+## ✅ Sprint 5 slice 5.6B.3 — water and peptides look the same everywhere (2026-09-08, approved)
 
 **Water and peptides now look identical on Home and on Fuel.** They were two different-looking versions of the same thing; they are one now, drawn by one piece of the app. Whatever your water says in one place, it says in the other.
 
@@ -34,7 +59,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.3.
 
 ---
 
-## Sprint 5 slice 5.6B.2 — nutrition leads, and Fuel is yours to arrange (2026-09-08, awaiting founder device review)
+## ✅ Sprint 5 slice 5.6B.2 — nutrition leads, and Fuel is yours to arrange (2026-09-08, approved)
 
 **Your nutrition is the first thing you see now.** Calories, how far into your goal you are, then protein, carbs and fat. The strip of your day's food follows it — it is still Fuel's own picture of your day, it just no longer stands in front of the answer.
 
@@ -52,7 +77,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.2.
 
 ---
 
-## Sprint 5 slice 5.6B.1 — the structure back, without the bulk (2026-09-07, awaiting founder device review)
+## ✅ Sprint 5 slice 5.6B.1 — the structure back, without the bulk (2026-09-07, approved)
 
 **Fuel has five sections now**, all sitting straight on the background: your day's food, your nutrition, your meals, water and peptides. The 5.6B redesign looked right but had taken too much out — this puts the useful parts back without bringing back the big cards.
 
@@ -70,7 +95,7 @@ Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.1.
 
 ---
 
-## ✅ Sprint 5 slice 5.6B — Fuel looks like VITA now (2026-09-07, awaiting founder device review)
+## ✅ Sprint 5 slice 5.6B — Fuel looks like VITA now (2026-09-07, approved)
 
 **Fuel's screen is built around your food.** A strip across the top shows what you ate today, in the order you ate it, drawn with VITA's own food illustrations — or the product's real photo when there is one. It replaces the calorie ring, which was the one thing every calorie app already has and which answered *how am I scoring* instead of *what did I eat*.
 

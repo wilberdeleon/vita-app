@@ -2049,14 +2049,14 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | ✅ Accepted subpass of 5.5 |
 | 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | ✅ Accepted subpass of 5.5 |
 | 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
-| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — audit approved; 5.6A implemented |
-| 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | 🟡 Implemented — awaiting founder device review |
-| 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | 🟡 Implemented — awaiting founder review |
-| 5.6B | Fuel Home Identity Redesign | The Day Strip as Fuel's identity object; direct-on-background; the calorie ring, the CTA cards and the cross-feature tiles gone | 🟡 Direction approved on device; corrected in 5.6B.1 |
-| 5.6B.1 | Fuel Home Structure + Setup + Customization Polish | Structure restored without the bulk: collapsible meals, Water and Peptides back, Set up Fuel, and section reordering | 🟡 Direction approved on device; hierarchy corrected in 5.6B.2 |
-| 5.6B.2 | Fuel Home Final Hierarchy + Customize Fuel | Nutrition first, Day Strip second; Water and Peptides as square modules; a Customize Fuel sheet for order, visibility and size | 🟡 Direction approved on device; polished in 5.6B.3 |
-| 5.6B.3 | Fuel Final Visual Polish + Shared Water/Peptides Identity | One Water and one Peptides module shared by Home and Fuel, drawn with VITA's own vessel; the Day Strip hidden by default; Nutrition typography | 🟡 Direction approved on device; finished in 5.6B.4 |
-| 5.6B.4 | Fuel Final Visual Cohesion + Shared Calorie Summary | One calorie summary behind Fuel and Home; macro category accents; meal rows regain their time of day | 🟡 Implemented — awaiting founder device review |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — **Fuel Home (5.6B) locked**; 5.6C Add/Search/Recent next |
+| 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | ✅ Accepted foundation of 5.6B |
+| 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | ✅ Accepted foundation of 5.6B |
+| 5.6B | **Fuel Home Identity** | The whole Fuel Home experience, across 5.6B and its four subpasses | ✅ Approved — founder device review, 2026-09-09. **Fuel Home locked.** |
+| 5.6B.1 | Fuel Home Structure + Setup + Customization Polish | Structure restored without the bulk: collapsible meals, Water and Peptides back, Set up Fuel, and section reordering | ✅ Accepted subpass of 5.6B |
+| 5.6B.2 | Fuel Home Final Hierarchy + Customize Fuel | Nutrition first; Water and Peptides as square modules; a Customize Fuel sheet for order, visibility and size | ✅ Accepted subpass of 5.6B |
+| 5.6B.3 | Fuel Final Visual Polish + Shared Water/Peptides Identity | One Water and one Peptides module shared by Home and Fuel, drawn with VITA's own vessel; the Day Strip hidden by default | ✅ Accepted subpass of 5.6B |
+| 5.6B.4 | Fuel Final Visual Cohesion + Shared Calorie Summary | One calorie summary behind Fuel and Home; macro category accents; meal rows regain their time of day | ✅ Accepted subpass of 5.6B |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2338,9 +2338,55 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
 
-### Slice 5.6B.4 — Fuel Final Visual Cohesion + Shared Calorie Summary 🟡
+### Slice 5.6B — closed ✅
 
-**Implemented 2026-09-09. Awaiting founder device review — not approved.** The last polish pass before 5.6B locks. **No structural change:** the header, Nutrition-first hierarchy, Meals, the Water/Peptides square pair, Add Food, Customize Fuel, section ordering and visibility, the Day Strip default and the shared Water and Peptides modules are all exactly as 5.6B.3 shipped them.
+**Founder-approved on real device, 2026-09-09. Fuel Home is locked.**
+
+5.6B shipped across five passes, and every earlier one was a genuine correction rather than a restatement — the visual generation and the Day Strip in 5.6B, the structure and Set up Fuel in 5.6B.1, the hierarchy and Customize Fuel in 5.6B.2, the shared Water and Peptides modules in 5.6B.3, the shared calorie summary and the macro and meal identities in 5.6B.4. **All five are accepted as one approved whole**; 5.6B.1–5.6B.4 are subpasses of 5.6B, not separate deliverables. **5.6A and 5.6A.1 are locked with them** — the test baseline and the goal model are what the rest was built on, and the founder's review covered the behaviour they produce.
+
+The approval covers **Fuel Home**. Add / Search / Recent (5.6C) and the scanner, Food Detail and Manual Entry (5.6D) are untouched by it and remain open.
+
+**The locked screen, surface by surface.**
+
+**Header.** Fuel flame + `Fuel` · a compact date chip · the barcode scanner · `•••` for Customize Fuel · Settings. The date chip drops to a second row past 1.2× text rather than shrinking. **No quote, no greeting, no wellness slogan** — Fuel is a feature screen with a subject, and the subject is directly beneath.
+
+**Default hierarchy.** Nutrition · Meals · Water · Peptides · Add Food. The header and Add Food are fixed and are not sections.
+
+**Nutrition.** The consumed figure leads — `1,340` above `Calories consumed`, so the number never has to be inferred — with `660 left · 2,000 goal` beneath it and a thin orange rail, both present only against a **user-authored** goal. Exactly at goal reads `Goal reached`, never `0 left`. Over reads `400 over · 1,200 goal` in amber: **never red, never an icon, never failure language.** Protein carries its consumed amount, and a `/ goal` and a rail only when the user set one. **Carbs and fat are factual totals** with no goal, no rail, no denominator and no ceiling, in every state. Four states are drawn deliberately: no goals and no food leads with the setup offer rather than a wall of zeroes; goals and no food states the goals; **food and no goals leads with the real intake** and offers setup quietly beneath it; food and goals measures both. Direct on the background — no card, no ring, no composition bar.
+
+**Meals.** Breakfast, Lunch, Dinner, Snacks — all four always visible as one compact row each, with a subtle time-of-day glyph and accent: sunrise, sun, **a moon**, and utensils on sage. Collapsed by default, session-local expansion, a subtotal and food count or `No foods logged`, and a meal-specific `+`. Expanded rows list the foods, and the foods stay neutral. **No meal mega-card.**
+
+**Water.** The same compact module Home draws, from the same derivation. Square by default, wide by choice, both real designs rather than one stretched. The square carries **VITA's own fillable vessel** — the object from 5.2, at a third size — with the percentage inside the module and the remainder beneath. Every figure is Water's: canonical millilitres, Water's goal, Water's display unit, Water's percentage. **There is no Fuel water goal and never will be**; setting one in Fuel calls Water's own writer.
+
+**Peptides.** The same compact module Home draws, square by default and wide by choice. A count, a violet badge and `View`. **Read-only, structurally** — the component has nothing to write with. No Taken, no Skipped, no amount, no schedule editing, no duplicated domain logic.
+
+**Customize Fuel.** `•••` opens a `VitaSheet` in Customize Home's language: a visibility check, the name, Square / Wide chips, Move up / Move down, a drag handle, and Reset Layout. Holding a section on the screen still enters arrange mode for direct reordering, and both paths resolve through the same helpers. **Nutrition and Meals cannot be hidden** — they are the feature, and a normalizer enforces it even against a hand-edited record. **Only Water and Peptides offer a size.** There is no delete control. Reset restores Nutrition · Meals · Water · Peptides visible, the Day Strip hidden, both squares square, and the canonical order.
+
+**Day Strip.** Kept, complete, and **hidden by default**. Chronological, drawn from real product photography and VITA's own food artwork, meal- and time-labelled, horizontally scrollable, each item tappable. The founder preferred the simpler composition; nobody lost the feature, and switching it on in Customize Fuel is remembered.
+
+**Set up Fuel.** Calories, protein and water, all optional, offered inside Nutrition when nothing is configured. Skipping is a real exit and is remembered. **Food logging, calorie totals, macros and the scanner all work with no setup at all.** No carb or fat fields, no suggested values, no goal generator, no mandatory onboarding.
+
+**These are settled, not open questions.** They are reopened only if an audit finds a real defect — not to revisit a decision already made.
+
+**The shared calorie summary is a product invariant.** One derivation — `calorieSummary` in `lib/nutrition` — produces both Fuel's three lines and Home's one. The locked concepts are *calories consumed*, *goal if configured*, *remaining or over*, and *progress*. The two surfaces may differ in copy and geometry; they may not differ in fact.
+
+**The cross-feature consistency rule, stated generally.** When the same feature is represented in more than one place in VITA, equivalent state uses equivalent semantics and presentation language. Water and Peptides satisfy it through shared components fed by domain-owned selectors; calories satisfy it through a shared summary. This does **not** mean every screen shares a layout — context may change geometry and density, but not product meaning.
+
+**Colour on Fuel carries category, never verdict.** Macro accents mean *which nutrient*; meal accents mean *what time of day*. They share no hex, a test asserts it, and **green is excluded outright** because green reads as *good*. Over-goal is amber. The palette's green/amber/red macro tokens are deliberately not used together anywhere on this screen.
+
+**The no-recommendation boundary is a locked Fuel product rule.** VITA may track food the user entered, calculate nutrition totals from that food's own data, compare calories against a **user-authored** calorie goal, compare protein against a **user-authored** protein goal, show water progress against the user's water goal, show factual carbohydrate and fat totals, and show factual history. VITA may **not** recommend calories, protein, carbohydrate or fat, calculate TDEE or BMR, prescribe a deficit, generate macro targets, grade diet adherence, score a food, assign a VITA Score, or recommend a meal plan. **Future Journey-guided nutrition assistance remains explicitly deferred** and requires its own design and content validation. This survives 5.6B.
+
+**Data safety, as audited at the lock.** No change to the `FoodEntry` schema, the food log, favourites, recents, custom foods, the Open Food Facts adapter, the USDA adapter, water history, the water goal key, peptide routines or logs, or Home's layout preferences. Fuel's customisation writes **two keys of its own and nothing else**: `vita:v1:fuel:layout` (section order, hidden sections, Water and Peptides sizes) and `vita:v1:fuel:setup` (one boolean, whether the setup offer was waved away). Goals continue to live at `vita:v1:targets` and the water goal at `vita:v1:water:goal`.
+
+**Carried forward, and not Fuel blockers** — all shared shell or shared primitives: `FloatingDock` crops its labels at accessibility text sizes · `PressableScale` does not propagate `flex` to its parent row · `ScreenHeader` truncates titles at accessibility text sizes · `EditableWidget.tsx` carries quote-formatting drift. Separately, **`expo` and `expo-router` are each one patch behind** the SDK 57 versions Expo now expects, which is why Doctor reports 20/21; it appeared during Fuel work and is a maintenance item, not a product regression. **5.6B is not reopened for any of them.**
+
+**Device coverage limit, recorded honestly.** Every pass of 5.6B was reviewed by the founder on a physical iPhone, which is what this approval rests on. The engineering environment could deep-link and screenshot but **could not tap, drag or long-press** — the Simulator MCP refuses with a spurious Xcode-configuration error — so meal expansion, the Customize sheet's drag and the in-page arrange gesture were verified by tests and by the founder, not by an automated finger.
+
+**No runtime change accompanied this approval.** The approved build is `641278f` on `sprint-5-identity-interaction`; the branch is **not merged**, by standing instruction.
+
+### Slice 5.6B.4 — Fuel Final Visual Cohesion + Shared Calorie Summary ✅
+
+**Implemented 2026-09-09. Founder-approved on real device 2026-09-09, as part of the 5.6B lock — see *Slice 5.6B — closed* above.** The last polish pass before the lock. **No structural change:** the header, Nutrition-first hierarchy, Meals, the Water/Peptides square pair, Add Food, Customize Fuel, section ordering and visibility, the Day Strip default and the shared Water and Peptides modules are all exactly as 5.6B.3 shipped them.
 
 **Three founder findings, three fixes.**
 
@@ -2364,11 +2410,11 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Device coverage limit, stated plainly.** The Simulator MCP still refuses with the spurious Xcode-configuration error, so this environment can deep-link and screenshot but **cannot tap, drag or long-press**. Meal expand/collapse and Customize Fuel are covered by route tests, not by a finger.
 
-**Still to verify — founder, on a real device:** whether Fuel and Home now agree at a glance for the same real day, whether the macro accents read as identity rather than as status, whether the pale protein violet sits comfortably above the Peptides module's deeper violet, and whether the meal glyphs add personality without clutter.
+**Verified on device and accepted at the 5.6B lock, 2026-09-09.**
 
-### Slice 5.6B.3 — Fuel Final Visual Polish + Shared Water/Peptides Identity 🟡
+### Slice 5.6B.3 — Fuel Final Visual Polish + Shared Water/Peptides Identity ✅
 
-**Implemented 2026-09-08. Awaiting founder device review — not approved.** The polish pass before 5.6B locks. No structural redesign: the header, the Nutrition-first hierarchy, collapsible meals, Add Food, Customize Fuel, reorder, hide/show and Square/Wide all stand exactly as 5.6B.2 shipped them.
+**Implemented 2026-09-08. Founder-approved on real device 2026-09-09, as part of the 5.6B lock — see *Slice 5.6B — closed* above.** The polish pass before the lock. No structural redesign: the header, the Nutrition-first hierarchy, collapsible meals, Add Food, Customize Fuel, reorder, hide/show and Square/Wide all stand exactly as 5.6B.2 shipped them.
 
 **The founder's finding: Home and Fuel showed the same two features two different ways.** Put side by side on device, Home's Water read `13%` above `40 fl oz to go` inside a 208pt square with a progress ring, while Fuel's read `24.3 fl oz` above `of 64 fl oz` inside a 168pt square with a smaller ring. Peptides was worse: the same day said `4 scheduled · 4 today` on Home and `None logged` on Fuel, because the two screens had been built on different selectors. The ruling was that they must **match**, not resemble.
 
@@ -2401,11 +2447,11 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 **Device coverage limit, stated plainly.** The Simulator MCP still refuses with the spurious Xcode-configuration error, so this environment can deep-link and screenshot but **cannot tap, drag or long-press**. Customize Fuel was inspected by temporarily forcing it open and reverting before commit; the drag gestures are covered by pure tests and by the Move up / Move down path that shares their helpers, and **have not been verified by a finger.**
 
-**Still to verify — founder, on a real device:** whether Home's and Fuel's squares now read as the same object, whether the vessel is the right size in a compact module, whether the Day Strip being off by default is the simplification it should be, and whether Nutrition now reads as polished as Home.
+**Verified on device and accepted at the 5.6B lock, 2026-09-09.**
 
-### Slice 5.6B.2 — Fuel Home Final Hierarchy + Customize Fuel 🟡
+### Slice 5.6B.2 — Fuel Home Final Hierarchy + Customize Fuel ✅
 
-**Implemented 2026-09-08. Awaiting founder device review — not approved.** The hierarchy pass, and the last structural slice before 5.6B locks. **Zero domain changes**; nothing under `src/lib/nutrition`, `src/lib/water` or `src/lib/peptides` was touched.
+**Implemented 2026-09-08. Founder-approved on real device 2026-09-09, as part of the 5.6B lock — see *Slice 5.6B — closed* above.** The hierarchy pass, and the last structural slice before the lock. **Zero domain changes**; nothing under `src/lib/nutrition`, `src/lib/water` or `src/lib/peptides` was touched.
 
 **The founder's verdict on 5.6B.1: visually interesting, wrong thing leading.** The header, date chip, utilities, Day Strip concept and its meal/time presentation, the nutrition rails, the collapsible meals, Water and Peptides returning, Add Food as one action, no ring, no summary card, no orange CTA and the direct-on-background treatment were all approved in direction. The objection was singular and structural: **Fuel's first practical question is *where am I today*, and the answer was below the fold.**
 
@@ -2438,11 +2484,11 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 **Device coverage limit, stated plainly.** The Simulator MCP still refuses with the spurious Xcode-configuration error, so this environment can deep-link and screenshot but **cannot tap, drag or long-press**. The Customize Fuel sheet was inspected by temporarily forcing it open, screenshotting, and reverting the change before commit. The drag gestures — in-page and in the sheet — are covered by pure tests of `targetIndexFor` and by the Move up / Move down path that shares their helpers; **neither gesture has been verified by a finger.**
 
-**Still to verify — founder, on a real device:** whether Nutrition leading is the correction it should be, whether the square pair reads as premium rather than as dashboard widgets, whether Customize Fuel feels like Home's, whether the drag lands where expected, and whether the layout survives a force-quit.
+**Verified on device and accepted at the 5.6B lock, 2026-09-09.**
 
-### Slice 5.6B.1 — Fuel Home Structure + Setup + Customization Polish 🟡
+### Slice 5.6B.1 — Fuel Home Structure + Setup + Customization Polish ✅
 
-**Implemented 2026-09-07. Awaiting founder device review — not approved.** A corrective refinement of 5.6B, not a revert. **Zero domain changes** beyond promoting one shared hook.
+**Implemented 2026-09-07. Founder-approved on real device 2026-09-09, as part of the 5.6B lock — see *Slice 5.6B — closed* above.** A corrective refinement of 5.6B, not a revert. **Zero domain changes** beyond promoting one shared hook.
 
 **The founder's verdict on 5.6B: right generation, too much subtraction.** The visual language, the Day Strip, direct-on-background and the removal of the ring, the two CTA cards and the meal mega-card were all approved. What went too far: the screen became sparse, the empty state felt unfinished, nutrition lost its weight, the meal structure people navigate by disappeared, and Water and Peptides were wanted here after all.
 
@@ -2466,11 +2512,11 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 **Validation.** `npm test` **74 suites / 1889 tests** (1841 → 1889) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · no persistence key changed or removed · verified on device in Dark.
 
-**Still to verify — founder, on a real device:** whether the screen now carries enough structure without feeling heavy, whether collapsible meals are the convenience that was missing, whether Water and Peptides sit well here, whether Set up Fuel reads as onboarding rather than settings, and whether arranging sections feels natural.
+**Verified on device and accepted at the 5.6B lock, 2026-09-09.**
 
-### Slice 5.6B — Fuel Home Identity Redesign 🟡
+### Slice 5.6B — Fuel Home Identity Redesign ✅
 
-**Implemented 2026-09-07. Awaiting founder device review — not approved.** The visual redesign of Fuel Home. Search, the scanner's internals, Food Detail and Manual Entry are untouched — 5.6C and 5.6D. **Zero changes under `src/lib`.**
+**Implemented 2026-09-07. Founder-approved on real device 2026-09-09, as part of the 5.6B lock — see *Slice 5.6B — closed* above.** The visual redesign of Fuel Home. Search, the scanner's internals, Food Detail and Manual Entry are untouched — 5.6C and 5.6D. **Zero changes under `src/lib`.**
 
 **What the screen was.** A calorie ring in a full-width card · a solid-orange *Log Food* card beside a bordered *Scan Barcode* card · four meal rows inside another card, each saying *No foods logged* whether or not anything had happened · two tiles reporting Hydration and Peptides. Six rounded surfaces before any food appeared. The founder's device review was that it did not look like the same generation of VITA as the locked Dashboard, and the audit's diagnosis was sharper: **the loudest object on the screen was the least Fuel-specific thing it could have drawn.**
 
@@ -2494,11 +2540,11 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 **Preview harness:** `/fuel-preview` — thirteen scenarios over an in-memory repository, so a review pass leaves no residue in the founder's own log.
 
-**Still to verify — founder, on a real device:** whether Fuel now unmistakably belongs beside Home, whether the Day Strip reads as Fuel's object rather than a decoration, whether orange feels earned, and whether an empty day feels premium rather than unfinished.
+**Verified on device and accepted at the 5.6B lock, 2026-09-09.**
 
-### Slice 5.6A.1 — Goal Model Finalization 🟡
+### Slice 5.6A.1 — Goal Model Finalization ✅
 
-**Implemented 2026-09-07. Awaiting founder review — not approved.** A focused product-model correction on top of 5.6A. **No visual redesign**: the Day Strip, the composition bar and the Fuel Home rebuild all remain 5.6B.
+**Implemented 2026-09-07. Founder-approved on real device 2026-09-09, as part of the 5.6B lock — see *Slice 5.6B — closed* above.** A focused product-model correction on top of 5.6A. **No visual redesign**: the Day Strip, the composition bar and the Fuel Home rebuild all remain 5.6B.
 
 **Goals are calories and protein. Nothing else.** The founder's ruling is that carbohydrate and fat are secondary totals rather than things people set out to hit — asking for four numbers turned setting a goal into a configuration exercise. Both remaining goals stay entirely user-authored and independently optional: neither, calories only, protein only, or both are all valid states.
 
@@ -2518,11 +2564,11 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 **Validation.** `npm test` **71 suites / 1826 tests** (1807 → 1826) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · `expo install --check` up to date · `expo-doctor` **21/21** · iOS export clean · **no dependency added** · no persistence key changed · food logs, favourites, recents, custom foods and the search cache untouched.
 
-**Still to verify — founder, on a real device:** that the editor offers only calories and protein, that *Set nutrition goals* appears with none set and disappears after setting either one, that it returns after clearing, and that carbs and fat never show a denominator in any state.
+**Verified on device and accepted at the 5.6B lock, 2026-09-09.**
 
-### Slice 5.6A — Fuel Characterization + Goal Truth 🟡
+### Slice 5.6A — Fuel Characterization + Goal Truth ✅
 
-**Implemented 2026-09-07. Awaiting founder device review — not approved.** No Fuel redesign: this slice is a test baseline and one product-truth fix. The Day Strip, the composition bar, the meal and scanner work and the new Add Food all remain 5.6B and later.
+**Implemented 2026-09-07. Founder-approved on real device 2026-09-09, as part of the 5.6B lock — see *Slice 5.6B — closed* above.** No Fuel redesign: this slice is a test baseline and one product-truth fix. The Day Strip, the composition bar, the meal and scanner work and the new Add Food all remain 5.6B and later.
 
 **Fuel had no tests, so tests came first.** The audit found zero coverage across ~6,990 lines. Written *before* any behaviour changed, so the goal fix could be shown not to have moved anything else: **six suites, 146 tests** over the pure arithmetic, the AsyncStorage repository, the provider, search fan-out and ranking, both external adapters, and the Fuel routes themselves. **No test touches the network** — the adapters are exercised over fixed payloads with `fetch` stubbed, and the registry over fake providers pushed into its own `PROVIDERS` array.
 
@@ -2548,11 +2594,11 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 **Still uncovered, honestly:** the scanner route (`expo-camera` and real permissions are not renderable in Jest — its state machine should be extracted in 5.6D), the search and add/recent/favourites *screens* (the search pipeline beneath them is covered), manual entry, and `useFoodSearch`'s debounce and cache.
 
-**Still to verify — founder, on a real device:** that a fresh install shows no 2,000/160/214/64 anywhere, that Settings → Nutrition Goals saves and clears, that a saved goal survives a restart, and that Home's Fuel widget reads `… cal` with no goal and `… cal left` with one.
+**Verified on device as part of the 5.6B review, 2026-09-09.** A fresh install shows none of 2,000/160/214/64 anywhere, Settings → Nutrition Goals saves and clears, a saved goal survives a restart, and Home's Fuel widget makes no claim about a target when none is set. (Its wording moved on in 5.6B.4: it now reads `… cal consumed`, with `… left` added only against a real goal.)
 
-### Slice 5.6 — Fuel Identity Refresh ⬜
+### Slice 5.6 — Fuel Identity Refresh — the audit ✅
 
-**Audited 2026-09-07. Awaiting founder design direction — not started, no code written.** The full audit is `docs/Sprint-5-Fuel-Identity-Audit.md`.
+**Audited 2026-09-07; the founder's design direction followed, and the slice implemented across 5.6A–5.6B.4.** The full audit is `docs/Sprint-5-Fuel-Identity-Audit.md`. **What follows is the audit as written, kept historical** — it records what Fuel was before the refresh and what it recommended, not the shipped result. For that, see *Slice 5.6B — closed*.
 
 **Three findings decide the slice.**
 

@@ -1,9 +1,13 @@
 # Sprint 5 — Slice 5.6 Fuel Identity Refresh
 # Planning & Identity Audit
 
-# ⬜ AWAITING FOUNDER DESIGN DIRECTION
+# ✅ RESOLVED — this audit is historical
 
-**Nothing in `src/` was modified to produce this document.** It is inspection and planning only. Slice 5.6 requires its own founder authorization before any code is written.
+**This document is the audit as written on 2026-09-07, kept unchanged.** It records what Fuel *was* before the refresh and what was recommended, not what shipped. The founder gave direction on every question below, Fuel Home was built across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4, and **5.6B was approved on a physical iPhone on 2026-09-09 and locked**.
+
+**For the shipped product, read `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*, not this file.** Where the two differ, the tracker is right — several recommendations here were overturned in the building, including the composition bar (built, rendered and deleted) and the Day Strip's prominence (it is hidden by default).
+
+**Nothing in `src/` was modified to produce this document.** It was inspection and planning only.
 
 | | |
 |---|---|
@@ -14,7 +18,7 @@
 | Working tree | Clean; local = remote |
 | Expo SDK | 57 (`~57.0.20`, React Native 0.86.3) |
 | Baseline | `npm test` — **64 suites / 1661 tests passing** · `tsc --noEmit` clean |
-| Sprint 5 | 5.1–5.5 ✅ locked · **5.6 next, not started** |
+| Sprint 5 (at the time of the audit) | 5.1–5.5 ✅ locked · **5.6 next, not started** |
 | Fuel size | ~6,990 lines across 9 routes, 16 components, 25 domain files |
 
 ---
