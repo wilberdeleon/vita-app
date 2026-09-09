@@ -10,6 +10,7 @@ import {
 import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { mealGroups } from '../dayStrip';
+import { mealAccent } from '../mealAccent';
 import { FoodAvatar } from './FoodAvatar';
 
 type Props = {
@@ -44,7 +45,7 @@ type Props = {
  * preference worth carrying across launches.
  */
 export function TodaysMeals({ entries, onOpenEntry, onAddToMeal }: Props) {
-  const { surfaces } = useTheme();
+  const { surfaces, scheme } = useTheme();
   const [open, setOpen] = useState<Partial<Record<MealSlot, boolean>>>({});
   const meals = mealGroups(entries);
 
@@ -53,6 +54,7 @@ export function TodaysMeals({ entries, onOpenEntry, onAddToMeal }: Props) {
       {meals.map((meal, index) => {
         const logged = meal.entries.length > 0;
         const expanded = logged && Boolean(open[meal.slot]);
+        const accent = mealAccent(meal.slot, scheme);
 
         return (
           <View
@@ -72,33 +74,66 @@ export function TodaysMeals({ entries, onOpenEntry, onAddToMeal }: Props) {
               accessibilityState={logged ? { expanded } : undefined}
               accessibilityLabel={
                 logged
-                  ? `${meal.slot}, ${meal.entries.length === 1 ? '1 food' : `${meal.entries.length} foods`}, ${formatCalories(meal.calories)} calories`
-                  : `Add food to ${meal.slot}`
+                  ? `${meal.slot}. ${formatCalories(meal.calories)} calories. ${
+                      meal.entries.length === 1 ? '1 food' : `${meal.entries.length} foods`
+                    }. ${expanded ? 'Expanded' : 'Collapsed'}.`
+                  : `${meal.slot}. No foods logged. Add food to ${meal.slot}`
               }
               accessibilityHint={
                 logged ? (expanded ? 'Collapses the meal' : 'Expands the meal') : undefined
               }
               style={({ pressed }) => [styles.heading, pressed && styles.pressed]}
             >
-              <Text style={[styles.slot, { color: surfaces.text }]} numberOfLines={1}>
-                {meal.slot}
-              </Text>
+              {/*
+                * The time of day, in one small glyph.
+                *
+                * Restored in 5.6B.4: the rows had become structurally right
+                * and visually dead, and a day reads better when breakfast
+                * looks like morning. It is **decorative** — the meal's name is
+                * right beside it and says the same thing — so it is hidden
+                * from assistive technology rather than announced twice. Small
+                * on purpose: the name stays the subject, and nothing about
+                * the row's height or rhythm changed to make room for it.
+                */}
+              <Ionicons
+                name={accent.icon}
+                size={16}
+                color={accent.color}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
 
-              <Text style={[styles.meta, { color: surfaces.textTertiary }]} numberOfLines={1}>
-                {logged
-                  ? `${formatCalories(meal.calories)} cal · ${meal.entries.length === 1 ? '1 food' : `${meal.entries.length} foods`}`
-                  : 'No foods logged'}
-              </Text>
+              <Text style={[styles.slot, { color: surfaces.text }]}>{meal.slot}</Text>
 
-              {logged ? (
-                <Ionicons
-                  name={expanded ? 'chevron-up' : 'chevron-down'}
-                  size={15}
-                  color={surfaces.textTertiary}
-                />
-              ) : (
-                <Ionicons name="add" size={17} color={palette.primary} />
-              )}
+              {/*
+                * The summary and its chevron travel together, and the row
+                * wraps between the name and this group rather than squeezing
+                * either.
+                *
+                * The 5.6B.4 device pass found `Br`, `L`, `D` and `S` at
+                * accessibility sizes: the summary held `flex: 1`, the name got
+                * whatever was left, and a single word in a box too narrow to
+                * hold it is clipped rather than wrapped. The name is the row's
+                * subject and never shrinks now; the summary drops to a second
+                * line when the two no longer fit side by side.
+                */}
+              <View style={styles.trailing}>
+                <Text style={[styles.meta, { color: surfaces.textTertiary }]}>
+                  {logged
+                    ? `${formatCalories(meal.calories)} cal · ${meal.entries.length === 1 ? '1 food' : `${meal.entries.length} foods`}`
+                    : 'No foods logged'}
+                </Text>
+
+                {logged ? (
+                  <Ionicons
+                    name={expanded ? 'chevron-up' : 'chevron-down'}
+                    size={15}
+                    color={surfaces.textTertiary}
+                  />
+                ) : (
+                  <Ionicons name="add" size={17} color={palette.primary} />
+                )}
+              </View>
             </Pressable>
 
             {expanded ? (
@@ -160,7 +195,10 @@ const styles = StyleSheet.create({
   heading: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.m,
+    // Wraps rather than crops — see the note in the row. At ordinary text
+    // sizes this is a single line and nothing about the rhythm changes.
+    flexWrap: 'wrap',
+    columnGap: spacing.s,
     paddingVertical: spacing.m,
     minHeight: 48,
   },
@@ -169,11 +207,17 @@ const styles = StyleSheet.create({
   },
   slot: {
     ...typography.bodyMedium,
-    flexShrink: 1,
+  },
+  trailing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+    // Takes the right edge when there is room and drops to its own line when
+    // there is not. Never squeezes the name.
+    marginLeft: 'auto',
   },
   meta: {
     ...typography.caption,
-    flex: 1,
     textAlign: 'right',
   },
   entries: {

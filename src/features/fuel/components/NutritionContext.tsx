@@ -1,14 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale, ProgressBar } from '../../../components/ui';
 import {
+  calorieSummary,
   formatAmount,
-  formatCalories,
   hasAnyGoal,
   progress,
   roundForDisplay,
   type DailyNutrition,
+  type MacroKey,
 } from '../../../lib/nutrition';
+import { macroAccent } from '../macroAccent';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -197,89 +199,103 @@ function NutritionFigures({
   configured: boolean;
   onSetUp: () => void;
 }) {
-  const { surfaces } = useTheme();
+  const { surfaces, scheme } = useTheme();
+  const { fontScale } = useWindowDimensions();
 
   const consumed = roundForDisplay(today.nutrition);
-  const goal = today.targets?.calories;
   const proteinGoal = today.targets?.protein;
-  const over = (today.caloriesOver ?? 0) > 0;
+  /*
+   * **The same summary Home's Fuel widget is built from.** Every calorie
+   * string on this screen comes out of `calorieSummary`, so the two can render
+   * differently — a square widget cannot carry three lines — and still cannot
+   * disagree. See `lib/nutrition/state/calorieSummary.ts`.
+   */
+  const calories = calorieSummary(today, today.isLoading);
 
   return (
     <View style={styles.section}>
-      <View
-        accessible
-        accessibilityRole="text"
-        accessibilityLabel={
-          goal === undefined
-            ? `${formatCalories(consumed.calories)} calories today`
-            : `Calories. ${formatCalories(consumed.calories)} of ${formatCalories(goal)} goal. ${
-                over
-                  ? `${formatCalories(today.caloriesOver ?? 0)} over.`
-                  : `${formatCalories(today.caloriesRemaining ?? 0)} remaining.`
-              }`
-        }
-      >
-        <Text style={[styles.calories, { color: over ? OVER_ACCENT : surfaces.text }]}>
-          {formatCalories(consumed.calories)}
+      <View accessible accessibilityRole="text" accessibilityLabel={calories.spoken}>
+        {/*
+          * **The large number always means consumed.** Founder ruling: it read
+          * as *remaining* on Home and *consumed* here, which is the one thing
+          * a headline figure must not leave to inference. The caption says so
+          * outright rather than relying on the reader knowing.
+          *
+          * Amber when the goal is passed — never red, never an icon, never a
+          * warning. Passing a target is worth noticing and not worth being
+          * scolded for.
+          */}
+        <Text
+          style={[
+            styles.calories,
+            /*
+             * The line box has to scale with the type.
+             *
+             * React Native scales `fontSize` by the system text setting and
+             * leaves `lineHeight` in raw points, so a fixed one is a fixed
+             * *ceiling* — at accessibility sizes the 51pt figure overflowed
+             * its 37pt line and landed on the caption beneath it. The device
+             * pass caught it; this is the same tracking and rhythm, expressed
+             * as a ratio so it survives every size.
+             */
+            { lineHeight: Math.round(37 * fontScale) },
+            { color: calories.state === 'over' ? OVER_ACCENT : surfaces.text },
+          ]}
+        >
+          {calories.figure}
         </Text>
         <Text style={[styles.caloriesLabel, { color: surfaces.textSecondary }]}>
-          {goal === undefined
-            ? 'Calories today'
-            : `Calories · ${formatCalories(goal)} goal · ${
-                over
-                  ? `${formatCalories(today.caloriesOver ?? 0)} over`
-                  : `${formatCalories(today.caloriesRemaining ?? 0)} left`
-              }`}
+          {calories.caption}
         </Text>
+        {calories.goalLine ? (
+          <Text style={[styles.caloriesGoal, { color: surfaces.textTertiary }]}>
+            {calories.goalLine}
+          </Text>
+        ) : null}
       </View>
 
       {/* A rail only where there is a real target to fill it. */}
-      {goal === undefined ? null : (
+      {calories.progress === null ? null : (
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <ProgressBar
-            progress={today.calorieProgress ?? 0}
+            progress={calories.progress}
             height={3}
-            color={over ? OVER_ACCENT : palette.primary}
+            color={calories.state === 'over' ? OVER_ACCENT : palette.primary}
           />
         </View>
       )}
 
       <View style={[styles.macros, { borderTopColor: surfaces.border }]}>
         <Macro
+          macro="protein"
           label="Protein"
           value={`${formatAmount(consumed.protein)}${proteinGoal === undefined ? '' : ` / ${proteinGoal}`} g`}
           spoken={
             proteinGoal === undefined
-              ? `Protein. ${formatAmount(consumed.protein)} grams.`
-              : `Protein. ${formatAmount(consumed.protein)} of ${proteinGoal} gram goal.`
+              ? `${formatAmount(consumed.protein)} grams protein.`
+              : `${formatAmount(consumed.protein)} grams of ${proteinGoal} gram protein goal.`
           }
           rail={proteinGoal === undefined ? null : progress(consumed.protein, proteinGoal)}
-          /*
-           * Neutral, not `palette.protein`.
-           *
-           * The macro tokens are green, amber and red, and a **green** bar
-           * under protein is the same traffic-light reading that got the
-           * composition bar deleted in 5.6B — green says *good*, and VITA
-           * does not grade what anyone ate. Calories carry the feature
-           * colour because they are the section's subject; protein's rail is
-           * secondary progress and is drawn as secondary text.
-           */
-          railColor={surfaces.textSecondary}
+          accent={macroAccent('protein', scheme)}
           /* Alignment only — see `Macro`. Nothing is drawn. */
           reserveRail={proteinGoal !== undefined}
         />
         <Macro
+          macro="carbs"
           label="Carbs"
           value={`${formatAmount(consumed.carbs)} g`}
-          spoken={`Carbs. ${formatAmount(consumed.carbs)} grams.`}
+          spoken={`${formatAmount(consumed.carbs)} grams carbohydrates.`}
           rail={null}
+          accent={macroAccent('carbs', scheme)}
           reserveRail={proteinGoal !== undefined}
         />
         <Macro
+          macro="fat"
           label="Fat"
           value={`${formatAmount(consumed.fat)} g`}
-          spoken={`Fat. ${formatAmount(consumed.fat)} grams.`}
+          spoken={`${formatAmount(consumed.fat)} grams fat.`}
           rail={null}
+          accent={macroAccent('fat', scheme)}
           reserveRail={proteinGoal !== undefined}
         />
       </View>
@@ -295,19 +311,30 @@ function NutritionFigures({
 }
 
 function Macro({
+  macro,
   label,
   value,
   spoken,
   rail,
-  railColor,
+  accent,
   reserveRail = false,
 }: {
+  macro: MacroKey;
   label: string;
   value: string;
   spoken: string;
   /** `null` when this macro has no goal — carbs and fat never do. */
   rail: number | null;
-  railColor?: string;
+  /**
+   * The macro's **category** colour — see `macroAccent`.
+   *
+   * It marks which of the three this is and means nothing else: not good, not
+   * bad, not over, not under. It is carried by the small label and, where a
+   * goal exists, by the rail; the figure itself stays neutral and
+   * high-contrast, which is as far as identity goes before it starts looking
+   * like a status.
+   */
+  accent: string;
   /**
    * Hold the rail's height in a column that has no rail, so the three
    * columns end level.
@@ -323,8 +350,14 @@ function Macro({
   const { surfaces } = useTheme();
 
   return (
-    <View style={styles.macro} accessible accessibilityRole="text" accessibilityLabel={spoken}>
-      <Text style={[styles.macroLabel, { color: surfaces.textTertiary }]} numberOfLines={1}>
+    <View
+      style={styles.macro}
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={spoken}
+      testID={`fuel-macro-${macro}`}
+    >
+      <Text style={[styles.macroLabel, { color: accent }]} numberOfLines={1}>
         {label}
       </Text>
       <Text style={[styles.macroValue, { color: surfaces.text }]} numberOfLines={2}>
@@ -334,7 +367,7 @@ function Macro({
         reserveRail ? <View style={styles.macroRailSpace} /> : null
       ) : (
         <View style={styles.macroRail}>
-          <ProgressBar progress={rail} height={2} color={railColor ?? surfaces.textSecondary} />
+          <ProgressBar progress={rail} height={2} color={accent} />
         </View>
       )}
     </View>
@@ -362,12 +395,19 @@ const styles = StyleSheet.create({
      * was compensating for.
      */
     ...typography.display,
-    lineHeight: 37,
     letterSpacing: -0.6,
+    /* `lineHeight` is applied inline — it depends on the text scale. */
   },
   caloriesLabel: {
+    // The caption that makes the figure unambiguous. Body-weight, not a
+    // whisper: it is the half of the headline that carries the meaning.
+    ...typography.bodyMedium,
+    fontSize: 15,
+  },
+  caloriesGoal: {
     ...typography.caption,
-    fontSize: 14,
+    fontSize: 13.5,
+    marginTop: 1,
   },
   macros: {
     flexDirection: 'row',
@@ -384,9 +424,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   macroLabel: {
+    // Small, coloured, and slightly tracked — an eyebrow that identifies the
+    // column. The weight goes to the figure below it.
     ...typography.micro,
-    fontSize: 12,
-    letterSpacing: 0.3,
+    fontSize: 11.5,
+    fontWeight: '600',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
   },
   macroValue: {
     // 17pt — the same size the shared Water and Peptides modules give their

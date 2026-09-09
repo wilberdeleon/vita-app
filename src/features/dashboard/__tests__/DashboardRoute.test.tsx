@@ -411,7 +411,10 @@ describe('the Fuel strip', () => {
     // Terse on screen so it does not truncate beside the action; the spoken
     // label carries the full phrase.
     expect(screen(tree)).toContain('No meals');
-    expect(control(tree, /^Fuel,.*no meals logged yet/)).toBeDefined();
+    // 5.6B.4: the headline says what the figure means, and with no goal set
+    // it makes no claim about a target.
+    expect(screen(tree)).toContain('0 cal consumed');
+    expect(control(tree, /^Fuel\. .*No calorie goal set/)).toBeDefined();
     expect(control(tree, 'Log food')).toBeDefined();
   });
 
@@ -422,7 +425,7 @@ describe('the Fuel strip', () => {
     expect(mockPush).toHaveBeenCalledWith('/fuel/add');
 
     mockPush.mockClear();
-    await act(async () => control(tree, /^Fuel,/)!.props.onPress());
+    await act(async () => control(tree, /^Fuel[.,]/)!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/fuel');
   });
 
@@ -753,7 +756,7 @@ describe('accessibility', () => {
     for (const label of [
       /^Water[.,]/,
       'Add water',
-      /^Fuel,/,
+      /^Fuel[.,]/,
       'Log food',
       /^Peptides[.,]/,
       'Peptide Calculator',
@@ -799,7 +802,7 @@ describe('square widgets', () => {
     await act(async () => control(tree, 'Fuel, Square')!.props.onPress());
     await act(async () => control(tree, 'Close')!.props.onPress());
 
-    for (const label of [/^Water[.,]/, /^Peptides[.,]/, /^Fuel,/]) {
+    for (const label of [/^Water[.,]/, /^Peptides[.,]/, /^Fuel[.,]/]) {
       const style = styleOf(control(tree, label)!);
       expect(style.minHeight).toBe(SQUARE_HEIGHT);
       expect(style.maxHeight).toBe(SQUARE_HEIGHT);
@@ -1346,16 +1349,15 @@ describe('the system text size', () => {
      * truncation is only ever acceptable for a secondary label.
      *
      * The goal is authored here because since 5.6A there is no invented one:
-     * `cal left` is a statement about a target, and the strip only makes it
-     * when the user has actually set one. Without this the widget correctly
-     * reads `0 cal`.
+     * the remainder is a statement about a target, and the strip only makes
+     * it when the user has actually set one.
      */
     mockFontScale = 1.6;
     await AsyncStorage.setItem('vita:v1:targets', JSON.stringify({ calories: 2000 }));
     const tree = await mount(fakeWater());
     const fuel = tree.root
       .findAllByType(Text)
-      .find((node) => String(node.props.children?.[0] ?? '').includes('cal left'));
+      .find((node) => String(node.props.children?.[0] ?? '').includes('cal consumed'));
 
     expect(fuel).toBeDefined();
     expect(Number(fuel!.props.numberOfLines)).toBeGreaterThan(1);
@@ -1372,7 +1374,7 @@ describe('the system text size', () => {
     await act(async () => control(large, 'Fuel, Square')!.props.onPress());
     await act(async () => control(large, 'Close')!.props.onPress());
 
-    const heights = [/^Water[.,]/, /^Peptides[.,]/, /^Fuel,/].map((label) => {
+    const heights = [/^Water[.,]/, /^Peptides[.,]/, /^Fuel[.,]/].map((label) => {
       const style = styleOf(control(large, label)!);
       expect(style.minHeight).toBe(style.maxHeight);
       return style.minHeight;

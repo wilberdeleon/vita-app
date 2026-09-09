@@ -2055,7 +2055,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6B | Fuel Home Identity Redesign | The Day Strip as Fuel's identity object; direct-on-background; the calorie ring, the CTA cards and the cross-feature tiles gone | 🟡 Direction approved on device; corrected in 5.6B.1 |
 | 5.6B.1 | Fuel Home Structure + Setup + Customization Polish | Structure restored without the bulk: collapsible meals, Water and Peptides back, Set up Fuel, and section reordering | 🟡 Direction approved on device; hierarchy corrected in 5.6B.2 |
 | 5.6B.2 | Fuel Home Final Hierarchy + Customize Fuel | Nutrition first, Day Strip second; Water and Peptides as square modules; a Customize Fuel sheet for order, visibility and size | 🟡 Direction approved on device; polished in 5.6B.3 |
-| 5.6B.3 | Fuel Final Visual Polish + Shared Water/Peptides Identity | One Water and one Peptides module shared by Home and Fuel, drawn with VITA's own vessel; the Day Strip hidden by default; Nutrition typography | 🟡 Implemented — awaiting founder device review |
+| 5.6B.3 | Fuel Final Visual Polish + Shared Water/Peptides Identity | One Water and one Peptides module shared by Home and Fuel, drawn with VITA's own vessel; the Day Strip hidden by default; Nutrition typography | 🟡 Direction approved on device; finished in 5.6B.4 |
+| 5.6B.4 | Fuel Final Visual Cohesion + Shared Calorie Summary | One calorie summary behind Fuel and Home; macro category accents; meal rows regain their time of day | 🟡 Implemented — awaiting founder device review |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2336,6 +2337,34 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6B.4 — Fuel Final Visual Cohesion + Shared Calorie Summary 🟡
+
+**Implemented 2026-09-09. Awaiting founder device review — not approved.** The last polish pass before 5.6B locks. **No structural change:** the header, Nutrition-first hierarchy, Meals, the Water/Peptides square pair, Add Food, Customize Fuel, section ordering and visibility, the Day Strip default and the shared Water and Peptides modules are all exactly as 5.6B.3 shipped them.
+
+**Three founder findings, three fixes.**
+
+**1 — The calorie headline meant two different things.** Fuel led with `1,340` meaning *consumed*; Home's Fuel widget led with `660 cal left` meaning *remaining*. Both described the same day and neither was wrong, but the same position on two screens carried opposite meanings — and each screen had written its own copy from the same totals. **`calorieSummary` in `lib/nutrition` is now the only derivation.** Fuel renders `1,340` · `Calories consumed` · `660 left · 2,000 goal` with the orange rail; Home renders `1,340 cal consumed · 660 left · 2 of 4 meals` with the same rail and the same progress. Different strings — a widget that size cannot carry three lines — from one function, so they cannot disagree. Four states are covered end to end: no goal (the total alone, no rail, no claim about a target), under, **exactly at goal (`Goal reached`, never `0 left`)**, and over (`120 over · 1,500 goal`, in amber, with no red, no icon and no failure language).
+
+**2 — The macros read like database values.** Each now carries a small uppercase accent label and, for protein, a matching rail. **The colours mean category identity and nothing else** — not good, not bad, not over, not under. Protein takes the muted violet Home already uses for dusk rather than `palette.peptide`'s deep purple, because the Peptides module sits a few hundred pixels below; carbs an amber distinct from Fuel's red-orange; fat a desaturated steel blue kept well away from Water's. **The palette's own macro tokens are deliberately unused**: green, amber and red side by side are the traffic light that got the composition bar deleted, and green says *good*. The figures stay neutral and high-contrast in both schemes; the accent never touches a number. Each scheme has its own value — brand hues wash out on cream.
+
+**3 — The meal rows had lost their time of day.** A small tinted glyph returns beside each name: sunrise for Breakfast, sun for Lunch, **a moon for Dinner** (founder direction, replacing the `palette.fat` red that read as an error), utensils on sage for Snacks. Small, decorative, hidden from assistive technology — the name is right beside it. Empty rows keep their identity, which is what stops an untouched day looking dead, and the foods inside an expanded meal stay neutral so the tint never appears to grade an item. **Meal colours and macro colours share no hex**, and a test asserts it.
+
+**Two defects the device pass caught and fixed.** The calorie figure's `lineHeight` was a fixed 37pt while React Native scales `fontSize` and not `lineHeight` — at accessibility sizes the 51pt figure landed on the caption beneath it; it is now a ratio. And the meal rows cropped to `Br`, `L`, `D`, `S` at the same sizes, because the trailing summary held `flex: 1` and a single word in a box too narrow to hold it is clipped rather than wrapped. The name never shrinks now and the summary drops to a second line.
+
+**Dashboard scope.** Only the Fuel widget's calorie copy, its semantics, its progress source and the `accessibilityHint` that took `Opens Fuel` out of the label. Shape, size, icon, Log button, grid, spacing, header, quote, greeting, Quick Tools, Today's Schedule, Water, Peptides and Home customization: **untouched**.
+
+**Accessibility.** Fuel and Home speak the same sentence — `1,340 calories consumed. 2,000 calorie goal. 660 calories remaining.` Macros speak `20 grams of 200 gram protein goal.`, `40 grams carbohydrates.`, `10 grams fat.` — no colour needed to understand any of them. Meal rows announce `Lunch. 616 calories. 1 food. Collapsed.` and `Dinner. No foods logged. Add food to Dinner`.
+
+**Boundaries unchanged.** No carb or fat target, ceiling or limit. No calorie, protein or macro recommendation, no TDEE, no BMR, no macro split. No VITA Score, no food grading, no composition bar. No Fuel quote. The goal model is untouched.
+
+**Validation.** `npm test` **77 suites / 2014 tests** (1974 → 2014) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS export clean · **no dependency added** · no persistence key added or removed · verified on device in Dark, Light and accessibility-large, on **both Home and Fuel**.
+
+**Known maintenance, carried forward unchanged.** `expo install --check` and `expo-doctor` (**20/21**) report `expo 57.0.20` and `expo-router 57.0.19` one patch behind. Excluded by this authorization; a separate maintenance action once Fuel Home locks.
+
+**Device coverage limit, stated plainly.** The Simulator MCP still refuses with the spurious Xcode-configuration error, so this environment can deep-link and screenshot but **cannot tap, drag or long-press**. Meal expand/collapse and Customize Fuel are covered by route tests, not by a finger.
+
+**Still to verify — founder, on a real device:** whether Fuel and Home now agree at a glance for the same real day, whether the macro accents read as identity rather than as status, whether the pale protein violet sits comfortably above the Peptides module's deeper violet, and whether the meal glyphs add personality without clutter.
 
 ### Slice 5.6B.3 — Fuel Final Visual Polish + Shared Water/Peptides Identity 🟡
 

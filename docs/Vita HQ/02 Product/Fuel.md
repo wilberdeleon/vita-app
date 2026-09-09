@@ -6,6 +6,20 @@
 
 ---
 
+## Sprint 5 slice 5.6B.4 — calories say what they mean, and the day has a shape (2026-09-09, awaiting founder device review)
+
+**The big number is what you ate.** Fuel now reads `1,340` above `Calories consumed`, with `660 left · 2,000 goal` under it. Home's Fuel card says the same thing in one line: `1,340 cal consumed · 660 left`. They are built from the same place, so they can never tell you two different things about the same day. Go past your goal and it says `400 over` in amber — a fact, not a telling-off.
+
+**Protein, carbs and fat have their own colours now.** Violet, amber and a cool blue. **They only mean which one is which** — not good, not bad, not too much or too little. VITA has no opinion about your macro split and no limit for carbs or fat, so there is nothing for a colour to grade. The numbers themselves stay plain white so nothing looks like a warning.
+
+**Your meals look like times of day again.** A sunrise on Breakfast, a sun on Lunch, **a moon on Dinner**, and cutlery on Snacks. Small marks beside the name — enough to make the list feel like a day rather than a spreadsheet. Empty meals keep their mark too.
+
+**Nothing else moved.** Water and peptides are exactly as they were, the day strip is still off unless you turn it on, and Customize Fuel works the same way.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.4.
+
+---
+
 ## Sprint 5 slice 5.6B.3 — water and peptides look the same everywhere (2026-09-08, awaiting founder device review)
 
 **Water and peptides now look identical on Home and on Fuel.** They were two different-looking versions of the same thing; they are one now, drawn by one piece of the app. Whatever your water says in one place, it says in the other.

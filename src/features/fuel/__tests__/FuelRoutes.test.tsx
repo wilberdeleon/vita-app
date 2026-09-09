@@ -192,13 +192,13 @@ describe('Fuel', () => {
     expect(screen(tree)).toContain('600');
 
     // Opening the meal reveals the food itself.
-    await act(async () => control(tree, /^Lunch, 1 food/)!.props.onPress());
+    await act(async () => control(tree, /^Lunch\. /)!.props.onPress());
     expect(screen(tree)).toContain('Oats');
   });
 
   it('offers the meal-specific way in', async () => {
     const tree = await mount(<Fuel />, fakeRepository().repository);
-    expect(control(tree, 'Add food to Breakfast')).toBeDefined();
+    expect(control(tree, /Add food to Breakfast$/)).toBeDefined();
   });
 
   it('has one primary action, not four competing ones', async () => {
@@ -234,7 +234,7 @@ describe('Fuel', () => {
 
   it('opens logging with the meal already chosen', async () => {
     const tree = await mount(<Fuel />, fakeRepository().repository);
-    await act(async () => control(tree, 'Add food to Dinner')!.props.onPress());
+    await act(async () => control(tree, /Add food to Dinner$/)!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/fuel/add?meal=Dinner');
   });
 

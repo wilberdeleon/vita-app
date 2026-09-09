@@ -300,6 +300,16 @@ Needed and not yet present: a range selector over site history — something lik
 - **Green is never neutral.** A green progress rail under protein says *good*, which is a verdict, and it is the same reading that got the composition bar deleted a slice earlier.
 - **Reserve space, never draw an empty track.** Carbs and fat hold the height of protein's rail so the columns end level; drawing the track would imply a target they must never have.
 
+**Patterns 5.6B.4 added:**
+
+- **A headline figure must name what it measures.** `1,340` meant consumed on Fuel and `660 cal left` meant remaining on Home. Neither was wrong; together they were ambiguous. `Calories consumed` under the number costs one line and removes the question.
+- **Same information at two sizes, one derivation.** `calorieSummary` produces Fuel's three lines and Home's one. A compact surface may render less; it may not compute its own version of the same fact.
+- **Name the states, don't re-derive them.** `'under' | 'met' | 'over'` exists because "exactly at goal" and "under by zero" are the same arithmetic and different sentences — `0 left` is arithmetic, `Goal reached` is English.
+- **Colour that identifies is not colour that judges — but only if it is kept apart.** Macro accents and meal accents share no hex on purpose, and a test enforces it; the moment one is reused for the other, a meal row starts looking like it is grading the food in it.
+- **Green cannot be a category colour in a nutrition app.** It says *good* before it says anything else. Amber is the whole of VITA's "worth noticing" vocabulary; red stays reserved for errors.
+- **`lineHeight` does not scale with Dynamic Type.** RN scales `fontSize` and leaves `lineHeight` in points, so a fixed one is a ceiling the text grows through and lands on whatever is below. Express it as a ratio.
+- **A single word in a too-narrow box is clipped, not wrapped.** `numberOfLines={2}` does not save `Breakfast` from becoming `Br`. Let the *row* wrap between its parts, and never let a secondary summary hold `flex: 1` against the subject.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

@@ -112,6 +112,11 @@ export { MIN_QUERY_LENGTH, useFoodSearch, type FoodSearchState, type FoodSearchS
 export { NutritionProvider, useNutrition } from './state/NutritionProvider';
 export { useDailyNutrition, type DailyNutrition } from './state/useDailyNutrition';
 export {
+  calorieSummary,
+  type CalorieState,
+  type CalorieSummaryView,
+} from './state/calorieSummary';
+export {
   RECENT_LIMIT,
   RECENT_MAX_DAYS,
   collapseToRecents,

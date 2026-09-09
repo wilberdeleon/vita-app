@@ -191,6 +191,19 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 **Deliberately not shared:** Water looks like Water · Peptides looks like Peptides · Fuel looks like Fuel · Journey will look like Journey. This is §14 (*feature-specific vs shared*) stated as a rollout rule: **features must not be standardized into identical cards or widgets**, which would reproduce the old template sameness in a new palette.
 
+**Colour in Fuel carries category, never verdict.** Founder ruling, 5.6B.4. Two separate colour languages live on Fuel Home and neither says anything about the quality of a day:
+
+- **Macro accents** — protein, carbohydrate, fat — mean *which nutrient*. They are a small label tint and, where a user-authored goal exists, a matching rail. They never colour a figure, and **green is excluded outright**: green reads as *good*, which is a verdict. The palette's own `protein` / `carbs` / `fat` tokens are green, amber and red and are deliberately not used together anywhere on this screen — three of them side by side is a traffic light, which is what got the composition bar built and deleted in 5.6B.
+- **Meal accents** — Breakfast, Lunch, Dinner, Snacks — mean *what time of day*. They tint a small glyph beside the name and nothing else; the foods inside an expanded meal stay neutral, so a tint can never appear to grade an item.
+
+The two languages **share no hex**, so neither can be read as the other, and a test asserts it. An over-goal state is amber, never red: passing a target is worth noticing and is not an error.
+
+**Every accent is a light/dark pair.** Brand hues drawn for black wash out on cream — the 5.3C quote, `BodyMap`'s zone and the week strip's `waterSoft` were all the same bug. A single hex that "works in both" is how a colour inverts its own hierarchy across themes.
+
+**A figure that leads a screen must say what it measures.** Fuel's headline read `1,340` and Home's read `660 cal left` — the same day, the same position, opposite meanings. The rule the fix establishes: **the large number is always intake, and the caption underneath names it.** Where the same information appears at two sizes, one derivation produces both — the strings may differ, the facts may not.
+
+**A fixed `lineHeight` is a Dynamic Type bug.** React Native scales `fontSize` by the system setting and leaves `lineHeight` in raw points, so a fixed one becomes a ceiling the text grows through. Express it as a ratio of the scale. Likewise, a single word in a box too narrow to hold it is **clipped, not wrapped** — rows must wrap between their parts rather than letting one part claim the width.
+
 **A feature shown in two places is drawn by one component.** Founder ruling, 5.6B.3, after comparing Home and Fuel on device: Water and Peptides appeared on both screens with different objects, different copy and different footprints. **Equivalent data must produce equivalent presentation — the same, not similar.** The shape this takes:
 
 - **The drawing is shared.** `src/components/modules/` holds one compact module per feature that appears inside another feature's screen. Presentational only: a view model and callbacks in, no domain imports, no data hooks.

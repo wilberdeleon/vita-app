@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale, ProgressBar } from '../../../components/ui';
-import type { DailyNutrition } from '../../../lib/nutrition';
+import { calorieSummary, type DailyNutrition } from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { ModuleSize } from '../modules';
@@ -35,55 +35,71 @@ type Props = {
  * with a shorter bar. Neither is the other squeezed.
  *
  * **Every figure is real** and comes from `useDailyNutrition()` — the engine
- * Fuel itself reads, so Home and Fuel cannot disagree. An empty day says so
- * rather than showing a plausible number, and **no score of any kind** is
- * computed here: not a VITA Score, not a grade, not a rating. None is
- * authorised and none is invented.
+ * Fuel itself reads — and since 5.6B.4 every calorie *sentence* comes from
+ * `calorieSummary`, the one derivation Fuel's own section also uses. An empty
+ * day says so rather than showing a plausible number, and **no score of any
+ * kind** is computed here: not a VITA Score, not a grade, not a rating. None
+ * is authorised and none is invented.
+ *
+ * **Shape, size, icon and button are untouched** by that change: 5.6B.4
+ * authorised the calorie copy and its semantics on this locked surface, and
+ * nothing else.
  */
 export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
   const { surfaces } = useTheme();
   const { fontScale } = useWindowDimensions();
   const compact = isCompactSquare(fontScale);
 
-  const consumed = Math.round(today.nutrition.calories);
   /*
-   * Zero when the user has authored no calorie goal (slice 5.6A). The
-   * branches below were already written for that case — `target <= 0`
-   * states the plain total and renders no bar — so goal truth reached this
-   * locked surface without a redesign.
+   * **The same summary Fuel's own Nutrition section is built from.**
+   *
+   * Until 5.6B.4 this file did its own arithmetic and wrote its own copy, and
+   * the founder's device comparison found the result: Fuel led with `1,340`
+   * meaning *consumed* while this led with `660 cal left` meaning *remaining*.
+   * Both described the same day and neither was wrong — but the same figure
+   * position meant two different things across two screens.
+   *
+   * Now every calorie string here comes out of `calorieSummary`. The two
+   * screens still render differently, because a widget this size cannot carry
+   * three lines; they cannot **disagree**, because there is one derivation.
    */
-  const target = Math.round(today.targets?.calories ?? 0);
-  const remaining = Math.max(0, target - consumed);
-  const over = Math.max(0, consumed - target);
-  const progress = target > 0 ? Math.min(1, consumed / target) : 0;
+  const calories = calorieSummary(today, today.isLoading);
 
-  const value = today.isLoading
-    ? '—'
-    : target <= 0
-      ? `${consumed.toLocaleString()} cal`
-      : over > 0
-        ? `${over.toLocaleString()} cal over`
-        : `${remaining.toLocaleString()} cal left`;
+  /* `616 cal consumed` — unambiguous at a glance, which is the whole fix. */
+  const value = calories.compact;
 
-  const detail = today.isLoading
+  const meals = today.isLoading
     ? ''
     : today.isEmpty
       ? 'No meals'
       : `${today.mealsLoggedCount} of ${today.totalMealSlots} meals`;
 
-  const spoken = `Fuel, ${value}, ${
-    today.isEmpty ? 'no meals logged yet' : detail
-  }. Opens Fuel`;
+  /*
+   * What is left, then the meals. The goal itself is not repeated: it is
+   * already carried by the remainder and the rail, and a fourth figure is
+   * what makes a compact widget stop being compact.
+   */
+  const detail = [calories.compactDetail, meals].filter(Boolean).join(' · ');
+
+  const spoken = `Fuel. ${calories.spoken}${meals ? ` ${meals} logged.` : ''}`;
 
   /* Decorative — the module states the same figures in words. Rendered only
      against a real target: a bar with nothing to fill is the "empty track
      reads as complete" problem in miniature. */
   const bar =
-    target > 0 ? (
+    calories.progress === null ? null : (
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <ProgressBar progress={progress} color={palette.primary} height={3} />
+        {/*
+          * Amber once the goal is passed, matching Fuel's own rail. Never
+          * red: passing a target is not an error.
+          */}
+        <ProgressBar
+          progress={calories.progress}
+          color={calories.state === 'over' ? palette.carbs : palette.primary}
+          height={3}
+        />
       </View>
-    ) : null;
+    );
 
   const logAction = (
     <PressableScale
@@ -109,6 +125,7 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
         onLongPress={onLongPress}
         delayLongPress={450}
         accessibilityLabel={spoken}
+        accessibilityHint="Opens Fuel"
       >
         <View style={styles.head}>
           <Ionicons name="flame" size={14} color={palette.primary} />
@@ -141,6 +158,7 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
       onLongPress={onLongPress}
       delayLongPress={450}
       accessibilityLabel={spoken}
+      accessibilityHint="Opens Fuel"
     >
       <View style={styles.wideRow}>
         <View style={[styles.badge, { backgroundColor: `${palette.primary}1A` }]}>

@@ -358,7 +358,7 @@ describe('Fuel with no goal', () => {
     const rendered = screen(tree);
 
     expect(rendered).toContain('600');
-    expect(rendered).toContain('Calories today');
+    expect(rendered).toContain('Calories consumed');
   });
 
   it('leads an untouched day with the strip, not a wall of zeroes', async () => {
@@ -372,7 +372,7 @@ describe('Fuel with no goal', () => {
     const rendered = screen(tree);
 
     expect(rendered).toContain('No food logged today');
-    expect(rendered).not.toContain('Calories today');
+    expect(rendered).not.toContain('Calories consumed');
     expect(rendered).not.toMatch(/Protein\s+0 g/);
   });
 

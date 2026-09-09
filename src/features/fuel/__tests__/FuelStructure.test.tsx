@@ -180,7 +180,7 @@ describe('the four core states', () => {
     expect(rendered).toContain('2,000 calorie goal');
     expect(rendered).toContain('150 g protein goal');
     expect(rendered).not.toContain('0%');
-    expect(rendered).not.toContain('Calories today');
+    expect(rendered).not.toContain('Calories consumed');
     // Setup is done, so the invitation is gone.
     expect(rendered).not.toContain('Set your daily intake goals');
   });
@@ -190,7 +190,7 @@ describe('the four core states', () => {
     const rendered = screen(await mount(<Fuel />));
 
     expect(rendered).toContain('300');
-    expect(rendered).toContain('Calories today');
+    expect(rendered).toContain('Calories consumed');
     expect(rendered).toContain('Protein');
     expect(rendered).not.toMatch(/\/\s*150/);
   });
@@ -393,7 +393,7 @@ describe('arranging the sections', () => {
      * is also the Day Strip's meal marker, so it cannot locate the meals
      * section. "No foods logged" only ever appears there.
      */
-    expect(lines.indexOf('Calories today')).toBeLessThan(lines.indexOf('No foods logged'));
+    expect(lines.indexOf('Calories consumed')).toBeLessThan(lines.indexOf('No foods logged'));
     expect(lines.indexOf('No foods logged')).toBeLessThan(lines.indexOf('Water'));
     expect(lines.indexOf('Water')).toBeLessThan(lines.indexOf('Peptides'));
   });
@@ -483,10 +483,10 @@ describe('the meals section', () => {
     const tree = await mount(<Fuel />);
     expect(screen(tree)).not.toContain('Oats');
 
-    await act(async () => control(tree, /^Breakfast, 1 food/)!.props.onPress());
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
     expect(screen(tree)).toContain('Oats');
 
-    await act(async () => control(tree, /^Breakfast, 1 food/)!.props.onPress());
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
     expect(screen(tree)).not.toContain('Oats');
   });
 
@@ -494,16 +494,16 @@ describe('the meals section', () => {
     await seed({ meals: ['Breakfast'] });
     const tree = await mount(<Fuel />);
 
-    expect(control(tree, /^Breakfast, 1 food/)!.props.accessibilityState.expanded).toBe(false);
-    await act(async () => control(tree, /^Breakfast, 1 food/)!.props.onPress());
-    expect(control(tree, /^Breakfast, 1 food/)!.props.accessibilityState.expanded).toBe(true);
+    expect(control(tree, /^Breakfast\. /)!.props.accessibilityState.expanded).toBe(false);
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
+    expect(control(tree, /^Breakfast\. /)!.props.accessibilityState.expanded).toBe(true);
   });
 
   it('adds straight into an empty meal', async () => {
     await seed();
     const tree = await mount(<Fuel />);
 
-    await act(async () => control(tree, 'Add food to Dinner')!.props.onPress());
+    await act(async () => control(tree, /Add food to Dinner$/)!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/fuel/add?meal=Dinner');
   });
 });

@@ -63,7 +63,7 @@ const RESTING_NODE = 32;
  * marks where the day will be drawn and gets out of the way.
  */
 export function DayStrip({ entries, onOpenEntry }: Props) {
-  const { surfaces } = useTheme();
+  const { surfaces, scheme } = useTheme();
   const { fontScale } = useWindowDimensions();
 
   /* Grows with the text, like the Peptides nodes — a fixed avatar beside
@@ -124,7 +124,7 @@ export function DayStrip({ entries, onOpenEntry }: Props) {
           <Text
             style={[
               styles.meal,
-              { color: item.startsMeal ? mealAccent(item.meal).color : 'transparent' },
+              { color: item.startsMeal ? mealAccent(item.meal, scheme).color : 'transparent' },
             ]}
             numberOfLines={1}
             accessibilityElementsHidden
