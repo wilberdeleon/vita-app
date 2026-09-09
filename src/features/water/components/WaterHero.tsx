@@ -3,7 +3,7 @@ import { PressableScale } from '../../../components/ui';
 import type { WaterToday } from '../../../lib/water';
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
-import { WaterVessel } from './WaterVessel';
+import { WaterVessel } from '../../../components/ui';
 
 type Props = {
   today: WaterToday;

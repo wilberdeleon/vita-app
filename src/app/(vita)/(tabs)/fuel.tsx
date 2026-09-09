@@ -7,10 +7,7 @@ import { AddFoodAction } from '../../../features/fuel/components/FuelActions';
 import { CustomizeFuelSheet } from '../../../features/fuel/components/CustomizeFuelSheet';
 import { DayStrip } from '../../../features/fuel/components/DayStrip';
 import { FuelHeader } from '../../../features/fuel/components/FuelHeader';
-import {
-  FuelPeptidesModule,
-  FuelWaterModule,
-} from '../../../features/fuel/components/FuelModules';
+import { CompactPeptidesModule, CompactWaterModule } from '../../../components/modules';
 import { NutritionContext } from '../../../features/fuel/components/NutritionContext';
 import { TodaysMeals } from '../../../features/fuel/components/TodaysMeals';
 import {
@@ -28,8 +25,8 @@ import { useFuelLayout } from '../../../features/fuel/useFuelLayout';
 import { useFuelSetup } from '../../../features/fuel/useFuelSetup';
 import { formatLogDateShort } from '../../../lib/daily';
 import { useDailyNutrition, type MealSlot } from '../../../lib/nutrition';
-import { usePeptideSummary } from '../../../lib/peptides';
-import { useWaterToday } from '../../../lib/water';
+import { compactPeptidesView, usePeptides } from '../../../lib/peptides';
+import { compactWaterView, useWaterToday } from '../../../lib/water';
 import { vitaHaptic } from '../../../lib/haptics';
 import { palette, spacing, typography } from '../../../theme/tokens';
 
@@ -89,14 +86,14 @@ type Props = {
  * work with no goals at all.
  *
  * Every figure comes from the domain that owns it — `useDailyNutrition`,
- * `useWaterToday`, `usePeptideSummary` — so Fuel cannot disagree with Water,
+ * `useWaterToday`, `usePeptides` — so Fuel cannot disagree with Water,
  * Peptides or Home. **No domain file changed for this screen**, and nothing
  * here writes to Water or Peptides.
  */
 export default function Fuel({ layout: layoutOverride }: Props = {}) {
   const today = useDailyNutrition();
   const water = useWaterToday();
-  const peptides = usePeptideSummary();
+  const peptides = usePeptides();
   const persisted = useFuelLayout();
   const setup = useFuelSetup();
 
@@ -155,39 +152,37 @@ export default function Fuel({ layout: layoutOverride }: Props = {}) {
           <TodaysMeals entries={today.entries} onOpenEntry={openEntry} onAddToMeal={addFood} />
         );
 
+      /*
+       * Water and Peptides are drawn by the **same components Home draws**,
+       * from the **same derivations** — `compactWaterView` in Water's domain
+       * and `compactPeptidesView` in the peptide domain. The founder's 5.6B.3
+       * device comparison found the two screens showing one feature two ways;
+       * equivalent data now cannot produce a different reading here than it
+       * does on Home, because there is only one of each.
+       *
+       * The size, however, is Fuel's own: presentation is shared, the layout
+       * preference is not. Making Water wide here does not touch Home.
+       */
       case 'water':
         return (
-          <FuelWaterModule
+          <CompactWaterModule
+            view={compactWaterView(water)}
             size={sectionSize(layout, 'water')}
-            value={water.isEmpty ? 'None logged' : water.totalLabel}
-            detail={water.hasGoal && water.goalLabel ? `of ${water.goalLabel}` : 'No goal set'}
-            spoken={
-              water.hasGoal && water.percent !== null
-                ? `Water. ${water.totalLabel} of ${water.goalLabel}. ${water.percent} percent.`
-                : `Water. ${water.isEmpty ? 'None logged' : water.totalLabel} today. No daily goal set.`
-            }
-            /* No goal means nothing to be a fraction of — not a ring at zero. */
-            progress={water.hasGoal ? water.progress : null}
-            percent={water.hasGoal ? water.percent : null}
             onAdd={() => router.push('/water?add=1')}
+            onOpen={() => router.push('/water')}
+            onLongPress={enterArranging}
+            testID={`fuel-water-${sectionSize(layout, 'water')}`}
           />
         );
 
       case 'peptides':
         return (
-          <FuelPeptidesModule
+          <CompactPeptidesModule
+            view={compactPeptidesView(peptides.today, peptides.isEmpty, peptides.isLoading)}
             size={sectionSize(layout, 'peptides')}
-            value={peptides.label}
-            /* Only when both numbers exist does a second line say anything the
-               first does not. Counts only: no amount, no status, no score. */
-            detail={
-              peptides.loggedToday > 0 && peptides.scheduledToday > 0
-                ? `${peptides.scheduledToday} scheduled`
-                : null
-            }
-            spoken={`Peptides. ${peptides.label}.`}
-            outstanding={peptides.scheduledToday > peptides.loggedToday}
             onOpen={() => router.push('/peptides')}
+            onLongPress={enterArranging}
+            testID={`fuel-peptides-${sectionSize(layout, 'peptides')}`}
           />
         );
     }

@@ -34,7 +34,7 @@ import { Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import IdentityPrototype from '../../../app/(vita)/identity';
-import { WaterVessel, halfWidthAt } from '../components/WaterVessel';
+import { WaterVessel, halfWidthAt } from '../WaterVessel';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 let mounted: ReactTestRenderer | null = null;

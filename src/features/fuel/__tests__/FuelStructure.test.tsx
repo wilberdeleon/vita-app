@@ -40,7 +40,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Fuel from '../../../app/(vita)/(tabs)/fuel';
 import FuelSetup from '../../../app/(vita)/fuel/setup';
 import WaterGoalScreen from '../../../app/(vita)/water/goal';
-import { ProgressRing, ToastProvider } from '../../../components/ui';
+import { ToastProvider, WaterVessel } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
 import { NutritionProvider, createEntry, type MealSlot, type VitaFood } from '../../../lib/nutrition';
 import { PeptideProvider } from '../../../lib/peptides';
@@ -168,8 +168,8 @@ describe('the four core states', () => {
     for (const slot of ['Breakfast', 'Lunch', 'Dinner', 'Snacks']) {
       expect(rendered).toContain(slot);
     }
-    expect(rendered).toContain('WATER');
-    expect(rendered).toContain('PEPTIDES');
+    expect(rendered).toContain('Water');
+    expect(rendered).toContain('Peptides');
     expect(rendered).toContain('Add food');
   });
 
@@ -357,16 +357,21 @@ describe('the shared water goal', () => {
     await seed({ waterGoal: { amount: 8, unit: 'cup' } });
     const rendered = screen(await mount(<Fuel />));
 
-    expect(rendered).toContain('WATER');
-    expect(rendered).toMatch(/of 64 fl oz|of 8 cups/);
+    expect(rendered).toContain('Water');
+    // Home's wording, now Fuel's too: the percentage leads and the remainder
+    // supports it. 8 cups reads as 64 fl oz — the display preference is
+    // Water's, and Fuel does not get its own.
+    expect(rendered).toMatch(/64 fl oz to go|0%/);
   });
 
   it('states the total with no goal, and no fake percentage', async () => {
     await seed();
     const rendered = screen(await mount(<Fuel />));
 
-    expect(rendered).toContain('WATER');
-    expect(rendered).toContain('None logged');
+    expect(rendered).toContain('Water');
+    // The day's real total leads, and no percentage is invented for a goal
+    // that does not exist — the same reading Home gives.
+    expect(rendered).toContain('No goal set');
     expect(rendered).not.toContain('0%');
   });
 });
@@ -389,8 +394,8 @@ describe('arranging the sections', () => {
      * section. "No foods logged" only ever appears there.
      */
     expect(lines.indexOf('Calories today')).toBeLessThan(lines.indexOf('No foods logged'));
-    expect(lines.indexOf('No foods logged')).toBeLessThan(lines.indexOf('WATER'));
-    expect(lines.indexOf('WATER')).toBeLessThan(lines.indexOf('PEPTIDES'));
+    expect(lines.indexOf('No foods logged')).toBeLessThan(lines.indexOf('Water'));
+    expect(lines.indexOf('Water')).toBeLessThan(lines.indexOf('Peptides'));
   });
 
   it('opens on a long press, and offers Done', async () => {
@@ -438,8 +443,8 @@ describe('arranging the sections', () => {
     await seed({ layout: ['water', 'peptides', 'dayStrip', 'nutrition', 'meals'] });
     const lines = texts(await mount(<Fuel />));
 
-    expect(lines.indexOf('WATER')).toBeLessThan(lines.indexOf('PEPTIDES'));
-    expect(lines.indexOf('PEPTIDES')).toBeLessThan(lines.indexOf('No food logged today'));
+    expect(lines.indexOf('Water')).toBeLessThan(lines.indexOf('Peptides'));
+    expect(lines.indexOf('Peptides')).toBeLessThan(lines.indexOf('No food logged today'));
   });
 
   it('repairs a stored order written by another build', async () => {
@@ -447,8 +452,8 @@ describe('arranging the sections', () => {
     await seed({ layout: ['movement', 'water', 'water'] });
     const rendered = screen(await mount(<Fuel />));
 
-    expect(rendered).toContain('WATER');
-    expect(rendered).toContain('PEPTIDES');
+    expect(rendered).toContain('Water');
+    expect(rendered).toContain('Peptides');
     expect(rendered).toContain('Breakfast');
   });
 
@@ -538,21 +543,34 @@ function pairs(tree: ReactTestRenderer) {
   return byTestID(tree, (value) => value === 'fuel-pair');
 }
 
+/** The sections on screen, in the order they are drawn. */
+function sectionsOf(tree: ReactTestRenderer): string[] {
+  return byTestID(tree, (value) => value.startsWith('fuel-section-')).map((node) =>
+    String(node.props.testID).replace('fuel-section-', ''),
+  );
+}
+
 describe('the default composition', () => {
-  it('leads with Nutrition and puts the Day Strip second', async () => {
+  it('leads with Nutrition, then Meals, then the pair — and no Day Strip', async () => {
     /*
-     * The correction this slice exists for. Asserted on strings that appear
-     * in exactly one section: "Breakfast" is also the Day Strip's meal
-     * marker, so only "No foods logged" can locate the meals section.
+     * 5.6B.2 put Nutrition first. 5.6B.3 switched the Day Strip off by
+     * default: seeing Nutrition, the strip and four meal rows together, the
+     * founder ruled the strip added density without adding an answer.
      */
     await seed({ goals: { calories: 2000 }, meals: ['Breakfast'] });
     const tree = await mount(<Fuel />);
 
     expect(screen(tree)).toContain('2,000 goal');
-    const sections = byTestID(tree, (value) => value.startsWith('fuel-section-')).map((node) =>
-      String(node.props.testID).replace('fuel-section-', ''),
-    );
-    expect(sections).toEqual(['nutrition', 'dayStrip', 'meals', 'water', 'peptides']);
+    expect(sectionsOf(tree)).toEqual(['nutrition', 'meals', 'water', 'peptides']);
+  });
+
+  it('brings the Day Strip back when it is switched on', async () => {
+    await seed({ meals: ['Breakfast'] });
+    const tree = await mount(<Fuel />);
+    await customize(tree);
+    await act(async () => control(tree, 'Show Day Strip')!.props.onPress());
+
+    expect(sectionsOf(tree)).toEqual(['nutrition', 'meals', 'water', 'peptides', 'dayStrip']);
   });
 
   it('pairs Water and Peptides side by side', async () => {
@@ -595,24 +613,25 @@ describe('the default composition', () => {
     expect(byTestID(tree, (value) => value.endsWith('-wide'))).toHaveLength(0);
   });
 
-  it('drops the decorative ring at accessibility text sizes, keeping the words', async () => {
+  it('drops the decorative vessel at accessibility text sizes, keeping the words', async () => {
     /*
      * The RN jest preset reports `fontScale: 2`, which is exactly the case
-     * worth pinning: past `COMPACT_FONT_SCALE` the ring stands aside so the
-     * figures can have its 44pt. It is decorative — it encodes only what the
-     * two lines say — so nothing is lost.
+     * worth pinning: past `COMPACT_FONT_SCALE` the vessel stands aside so the
+     * figures can have its space. It is decorative — it encodes only what the
+     * two lines say — so nothing is lost. Home behaves identically, because
+     * it is the same component.
      */
     await seed({ waterGoal: { amount: 8, unit: 'cup' } });
     const tree = await mount(<Fuel />);
 
-    expect(tree.root.findAllByType(ProgressRing)).toHaveLength(0);
+    expect(tree.root.findAllByType(WaterVessel)).toHaveLength(0);
     /*
-     * `of 64 fl oz`, not `of 8 cups`: the goal was authored in cups and the
-     * display preference defaults to fluid ounces, so Water converts it — the
-     * same behaviour the Water screen shows. The figure survives the ring
-     * being dropped, which is the point of the assertion.
+     * `64 fl oz`, not `8 cups`: the goal was authored in cups and the display
+     * preference defaults to fluid ounces, so Water converts it — the same
+     * behaviour the Water screen shows. The figure survives the vessel being
+     * dropped, which is the point of the assertion.
      */
-    expect(screen(tree)).toContain('of 64 fl oz');
+    expect(screen(tree)).toContain('64 fl oz to go');
   });
 });
 
@@ -621,26 +640,50 @@ describe('the Customize Fuel sheet', () => {
     await seed();
     const tree = await mount(<Fuel />);
 
-    expect(control(tree, 'Hide Day Strip')).toBeUndefined();
+    expect(control(tree, 'Show Day Strip')).toBeUndefined();
     expect(control(tree, 'Customize Fuel')).toBeDefined();
 
     await customize(tree);
-    expect(control(tree, 'Hide Day Strip')).toBeDefined();
+    // It starts hidden, so the control offers to show it.
+    expect(control(tree, 'Show Day Strip')).toBeDefined();
     expect(control(tree, 'Reset Fuel layout to default')).toBeDefined();
   });
 
-  it('hides and shows the Day Strip', async () => {
+  it('shows and hides the Day Strip, which starts off', async () => {
     await seed({ meals: ['Breakfast'] });
     const tree = await mount(<Fuel />);
     await customize(tree);
 
-    await act(async () => control(tree, 'Hide Day Strip')!.props.onPress());
+    // Meals works with the strip off — no feature depends on it.
     expect(hasSection(tree, 'dayStrip')).toBe(false);
-    // Meals keeps working with the strip gone — no feature depends on it.
     expect(screen(tree)).toContain('300 cal · 1 food');
 
     await act(async () => control(tree, 'Show Day Strip')!.props.onPress());
     expect(hasSection(tree, 'dayStrip')).toBe(true);
+
+    await act(async () => control(tree, 'Hide Day Strip')!.props.onPress());
+    expect(hasSection(tree, 'dayStrip')).toBe(false);
+  });
+
+  it('remembers the Day Strip being switched on, and Reset switches it off', async () => {
+    /*
+     * The distinction the founder drew: a *default* that changed must not
+     * overwrite a *choice* somebody made. Turning the strip on is a choice
+     * and survives a relaunch; Reset Layout is the deliberate way back.
+     */
+    await seed();
+    const first = await mount(<Fuel />);
+    await customize(first);
+    await act(async () => control(first, 'Show Day Strip')!.props.onPress());
+    await act(async () => first.unmount());
+
+    const second = await mount(<Fuel />);
+    expect(hasSection(second, 'dayStrip')).toBe(true);
+
+    await customize(second);
+    await act(async () => control(second, 'Reset Fuel layout to default')!.props.onPress());
+    expect(hasSection(second, 'dayStrip')).toBe(false);
+    expect((await storedLayout()).hidden).toEqual(['dayStrip']);
   });
 
   it('hides and shows Water', async () => {
@@ -741,10 +784,10 @@ describe('the Customize Fuel sheet', () => {
     await act(async () => control(tree, 'Move Peptides up')!.props.onPress());
     expect((await storedLayout()).order).toEqual([
       'nutrition',
-      'dayStrip',
       'meals',
       'peptides',
       'water',
+      'dayStrip',
     ]);
   });
 
@@ -756,26 +799,25 @@ describe('the Customize Fuel sheet', () => {
     const row = tree.root.findAll(
       (node) => String(node.props?.accessibilityLabel ?? '').startsWith('Water,'),
     )[0];
-    expect(row.props.accessibilityLabel).toBe('Water, visible, Square, position 4 of 5');
+    expect(row.props.accessibilityLabel).toBe('Water, visible, Square, position 3 of 5');
   });
 
   it('persists everything, and restores it on the next launch', async () => {
     await seed();
     const first = await mount(<Fuel />);
     await customize(first);
-    await act(async () => control(first, 'Hide Day Strip')!.props.onPress());
+    await act(async () => control(first, 'Hide Water')!.props.onPress());
     await act(async () => control(first, 'Set Water to wide')!.props.onPress());
     await act(async () => control(first, 'Move Peptides up')!.props.onPress());
     await act(async () => first.unmount());
 
     const stored = await storedLayout();
-    expect(stored.hidden).toEqual(['dayStrip']);
+    expect(stored.hidden).toEqual(['dayStrip', 'water']);
     expect(stored.sizes.water).toBe('wide');
 
     const second = await mount(<Fuel />);
-    expect(hasSection(second, 'dayStrip')).toBe(false);
+    expect(hasSection(second, 'water')).toBe(false);
     expect(pairs(second)).toHaveLength(0);
-    expect(byTestID(second, (value) => value === 'fuel-water-wide')).toHaveLength(1);
   });
 
   it('resets to the founder-approved default', async () => {
@@ -835,11 +877,10 @@ describe('arrange mode', () => {
   it('steps over a hidden section rather than swapping with it', async () => {
     // Hiding the Day Strip and moving Meals up has to move Meals above
     // Nutrition — swapping with something invisible reads as a dead button.
-    await seed();
+    // The strip between Nutrition and Meals, switched off: moving Meals up
+    // has to reach Nutrition rather than swap with something invisible.
+    await seed({ layout: { order: ['nutrition', 'dayStrip', 'meals', 'water', 'peptides'] } });
     const tree = await mount(<Fuel />);
-    await customize(tree);
-    await act(async () => control(tree, 'Hide Day Strip')!.props.onPress());
-    await act(async () => control(tree, 'Close')!.props.onPress());
 
     await hold(tree);
     await act(async () => control(tree, 'Move Meals up')!.props.onPress());

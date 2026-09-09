@@ -54,6 +54,7 @@ export { WATER_DOMAIN, WaterKeys } from './data/keys';
 
 export { WaterProvider, useWater, type WaterContextValue } from './state/WaterProvider';
 export { useWaterToday, type WaterToday } from './state/useWaterToday';
+export { compactWaterView, type CompactWaterView } from './state/compactWater';
 export { useWaterWeek } from './state/useWaterWeek';
 export {
   WEEK_DAYS,

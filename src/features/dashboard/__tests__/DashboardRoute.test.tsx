@@ -54,7 +54,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Dashboard from '../../../app/(vita)/(tabs)/dashboard';
 import { EditableWidget } from '../components/EditableWidget';
 import type { DashboardModuleId } from '../modules';
-import { ProgressRing, ToastProvider } from '../../../components/ui';
+import { ToastProvider, WaterVessel } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
 import { NutritionProvider } from '../../../lib/nutrition';
 import { PeptideProvider } from '../../../lib/peptides';
@@ -196,7 +196,7 @@ async function seedRects(tree: ReactTestRenderer) {
 
 /** Enter edit mode the way a finger does, then give it something to measure. */
 async function enterEditMode(tree: ReactTestRenderer) {
-  await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+  await act(async () => holdable(tree, /^Water[.,]/)!.props.onLongPress());
   await seedRects(tree);
 }
 
@@ -397,7 +397,7 @@ describe('the Water module', () => {
     expect(mockPush).toHaveBeenCalledWith('/water?add=1');
 
     mockPush.mockClear();
-    await act(async () => control(tree, /^Water,/)!.props.onPress());
+    await act(async () => control(tree, /^Water[.,]/)!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/water');
   });
 });
@@ -442,7 +442,7 @@ describe('the Peptides module', () => {
     const rendered = screen(tree);
 
     expect(rendered).toMatch(/No routines yet|Nothing scheduled/);
-    expect(control(tree, /^Peptides,/)).toBeDefined();
+    expect(control(tree, /^Peptides[.,]/)).toBeDefined();
   });
 
   it('never uses obligation, judgement or scoring language', async () => {
@@ -459,7 +459,7 @@ describe('the Peptides module', () => {
 
   it('opens Peptides', async () => {
     const tree = await mount(fakeWater());
-    await act(async () => control(tree, /^Peptides,/)!.props.onPress());
+    await act(async () => control(tree, /^Peptides[.,]/)!.props.onPress());
     expect(mockPush).toHaveBeenCalledWith('/peptides');
   });
 });
@@ -751,11 +751,11 @@ describe('accessibility', () => {
     const tree = await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }));
 
     for (const label of [
-      /^Water,/,
+      /^Water[.,]/,
       'Add water',
       /^Fuel,/,
       'Log food',
-      /^Peptides,/,
+      /^Peptides[.,]/,
       'Peptide Calculator',
       'Injection Sites',
       'All tools',
@@ -799,7 +799,7 @@ describe('square widgets', () => {
     await act(async () => control(tree, 'Fuel, Square')!.props.onPress());
     await act(async () => control(tree, 'Close')!.props.onPress());
 
-    for (const label of [/^Water,/, /^Peptides,/, /^Fuel,/]) {
+    for (const label of [/^Water[.,]/, /^Peptides[.,]/, /^Fuel,/]) {
       const style = styleOf(control(tree, label)!);
       expect(style.minHeight).toBe(SQUARE_HEIGHT);
       expect(style.maxHeight).toBe(SQUARE_HEIGHT);
@@ -810,7 +810,7 @@ describe('square widgets', () => {
     // The empty and populated states are the same object; only the contents
     // differ. A widget must not shrink because a day happens to be quiet.
     const empty = await mount(fakeWater());
-    const emptyHeight = styleOf(control(empty, /^Water,/)!).minHeight;
+    const emptyHeight = styleOf(control(empty, /^Water[.,]/)!).minHeight;
     await act(async () => empty.unmount());
     mounted = null;
 
@@ -820,14 +820,14 @@ describe('square widgets', () => {
         entries: [createWaterEntry({ amount: 32, unit: 'floz' })],
       }),
     );
-    expect(styleOf(control(full, /^Water,/)!).minHeight).toBe(emptyHeight);
+    expect(styleOf(control(full, /^Water[.,]/)!).minHeight).toBe(emptyHeight);
     expect(emptyHeight).toBe(SQUARE_HEIGHT);
   });
 
   it('pins the footprint at both ends, so content cannot push it either way', async () => {
     // A minimum alone is what 5.3B had, and it let a busy widget grow.
     const tree = await mount(fakeWater());
-    for (const label of [/^Water,/, /^Peptides,/]) {
+    for (const label of [/^Water[.,]/, /^Peptides[.,]/]) {
       const style = styleOf(control(tree, label)!);
       expect(style.minHeight).toBe(style.maxHeight);
     }
@@ -999,7 +999,7 @@ describe('rearranging on Home', () => {
     // Nothing announces itself as removable until the hold.
     expect(control(tree, 'Remove Water from Home')).toBeUndefined();
 
-    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+    await act(async () => holdable(tree, /^Water[.,]/)!.props.onLongPress());
 
     for (const label of ['Remove Water from Home', 'Remove Peptides from Home', 'Remove Fuel from Home']) {
       expect(control(tree, label)).toBeDefined();
@@ -1012,7 +1012,7 @@ describe('rearranging on Home', () => {
      * tapping empty space is neither discoverable nor reachable by voice.
      */
     const tree = await mount(fakeWater());
-    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+    await act(async () => holdable(tree, /^Water[.,]/)!.props.onLongPress());
 
     const done = control(tree, 'Done rearranging Home');
     expect(done).toBeDefined();
@@ -1027,22 +1027,22 @@ describe('rearranging on Home', () => {
 
   it('removes a widget from Home without destroying anything', async () => {
     const tree = await mount(fakeWater());
-    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+    await act(async () => holdable(tree, /^Water[.,]/)!.props.onLongPress());
     await act(async () => control(tree, 'Remove Water from Home')!.props.onPress());
     await act(async () => control(tree, 'Done rearranging Home')!.props.onPress());
 
-    expect(control(tree, /^Water,/)).toBeUndefined();
+    expect(control(tree, /^Water[.,]/)).toBeUndefined();
 
     // It is hidden, not deleted — Customize Home offers it straight back.
     await act(async () => control(tree, 'Customize Home')!.props.onPress());
     await act(async () => control(tree, 'Show Water')!.props.onPress());
     await act(async () => control(tree, 'Close')!.props.onPress());
-    expect(control(tree, /^Water,/)).toBeDefined();
+    expect(control(tree, /^Water[.,]/)).toBeDefined();
   });
 
   it('says "remove", never "delete", because no data is touched', async () => {
     const tree = await mount(fakeWater());
-    await act(async () => holdable(tree, /^Water,/)!.props.onLongPress());
+    await act(async () => holdable(tree, /^Water[.,]/)!.props.onLongPress());
 
     const spoken = tree.root
       .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
@@ -1120,7 +1120,7 @@ describe('the remove control', () => {
     await enterEditMode(tree);
     await act(async () => control(tree, 'Remove Water from Home')!.props.onPress());
 
-    expect(control(tree, /^Water,/)).toBeUndefined();
+    expect(control(tree, /^Water[.,]/)).toBeUndefined();
     // The day's real entries are untouched — hiding a widget is a view
     // preference, and nothing about Water's own records changed.
     expect(await repository.getEntries(TODAY)).toHaveLength(1);
@@ -1372,7 +1372,7 @@ describe('the system text size', () => {
     await act(async () => control(large, 'Fuel, Square')!.props.onPress());
     await act(async () => control(large, 'Close')!.props.onPress());
 
-    const heights = [/^Water,/, /^Peptides,/, /^Fuel,/].map((label) => {
+    const heights = [/^Water[.,]/, /^Peptides[.,]/, /^Fuel,/].map((label) => {
       const style = styleOf(control(large, label)!);
       expect(style.minHeight).toBe(style.maxHeight);
       return style.minHeight;
@@ -1386,24 +1386,27 @@ describe('the system text size', () => {
   it('stands the decorative ring aside rather than letting text collide', async () => {
     /*
      * The 5.3C defect was Water's total overlapping its status line inside a
-     * footprint that could not grow. At a large text size the ring — which
+     * footprint that could not grow. At a large text size the vessel — which
      * encodes only what the words already say, and is hidden from screen
-     * readers either way — gives up its 56pt.
+     * readers either way — gives up its space.
      */
     mockFontScale = 1.5;
     const tree = await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }));
 
     // The reading survives in full; only the decoration went.
     expect(screen(tree)).toContain('0%');
-    expect(control(tree, /^Water,/)).toBeDefined();
-    expect(tree.root.findAll((node) => node.type === ProgressRing)).toHaveLength(0);
+    expect(control(tree, /^Water[.,]/)).toBeDefined();
+    expect(tree.root.findAll((node) => node.type === WaterVessel)).toHaveLength(0);
   });
 
-  it('keeps the ring at the default text size', async () => {
+  it('keeps the vessel at the default text size', async () => {
     // The counterpart to the test above — the compact presentation must be a
     // response to large text, not the shipped design.
+    //
+    // A vessel rather than a ring since 5.6B.3: Water owns a distinctive
+    // object and Home was drawing the generic shape every health app has.
     const tree = await mount(fakeWater({ goal: createWaterGoal(64, 'floz') }));
-    expect(tree.root.findAll((node) => node.type === ProgressRing).length).toBeGreaterThan(0);
+    expect(tree.root.findAll((node) => node.type === WaterVessel).length).toBeGreaterThan(0);
   });
 
   it('says exactly the same thing at every text size', async () => {
@@ -1415,13 +1418,13 @@ describe('the system text size', () => {
     });
 
     const normal = await mount(repository);
-    const spokenNormal = String(control(normal, /^Water,/)!.props.accessibilityLabel);
+    const spokenNormal = String(control(normal, /^Water[.,]/)!.props.accessibilityLabel);
     await act(async () => normal.unmount());
     mounted = null;
 
     mockFontScale = 1.6;
     const large = await mount(repository);
-    expect(String(control(large, /^Water,/)!.props.accessibilityLabel)).toBe(spokenNormal);
+    expect(String(control(large, /^Water[.,]/)!.props.accessibilityLabel)).toBe(spokenNormal);
     expect(screen(large)).toContain('50%');
   });
 

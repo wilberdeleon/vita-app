@@ -264,34 +264,3 @@ export function useRoutineWeek(
 }
 
 
-/**
- * A one-line summary for Fuel's Peptides tile.
- *
- * **Facts only, and no goal** (slice 3.9). The tile ran on a fixture that
- * claimed `1 of 3 logged` to every user forever — a count that was invented
- * and a target that has never existed. VITA has no daily peptide goal, so
- * there is nothing to divide by and no progress to draw. What it can honestly
- * say is how many administrations were recorded today and how many routines
- * the user's own schedule covers.
- *
- * Deliberately tiny: Fuel gets a summary and a door, not a second Peptides
- * screen embedded in a nutrition one.
- */
-export function usePeptideSummary(): { loggedToday: number; scheduledToday: number; label: string } {
-  const { logsForDate, today } = usePeptideContext();
-  const { today: scheduled } = usePeptides();
-
-  return useMemo(() => {
-    const loggedToday = logsForDate(today).length;
-    return {
-      loggedToday,
-      scheduledToday: scheduled.length,
-      label:
-        loggedToday > 0
-          ? `${loggedToday} logged today`
-          : scheduled.length > 0
-            ? `${scheduled.length} scheduled`
-            : 'None logged',
-    };
-  }, [logsForDate, today, scheduled]);
-}

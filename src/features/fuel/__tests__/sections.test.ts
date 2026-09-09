@@ -36,20 +36,31 @@ function withOrder(order: FuelSection[]): FuelLayout {
 }
 
 describe('the default hierarchy', () => {
-  it('leads with Nutrition, then the Day Strip', () => {
-    // The 5.6B.2 correction: the screen's first question is answered first,
-    // and the identity object follows it rather than preceding it.
+  it('leads with Nutrition and ends with the Day Strip', () => {
+    // 5.6B.2 answered the screen's first question first. 5.6B.3 moved the Day
+    // Strip to the end, because it is the one section that starts off.
     expect([...DEFAULT_FUEL_ORDER]).toEqual([
       'nutrition',
+      'meals',
+      'water',
+      'peptides',
       'dayStrip',
+    ]);
+  });
+
+  it('starts with the Day Strip hidden, and nothing else', () => {
+    /*
+     * The founder's 5.6B.3 reversal: seeing Nutrition, the strip and four
+     * meal rows together, the strip added density without adding an answer.
+     * Hidden, not deleted — it is still a section anyone can switch on.
+     */
+    expect(DEFAULT_FUEL_LAYOUT.hidden).toEqual(['dayStrip']);
+    expect(visibleFuelSections(DEFAULT_FUEL_LAYOUT)).toEqual([
+      'nutrition',
       'meals',
       'water',
       'peptides',
     ]);
-  });
-
-  it('shows every section', () => {
-    expect(DEFAULT_FUEL_LAYOUT.hidden).toEqual([]);
   });
 
   it('starts Water and Peptides square, and everything else wide', () => {
@@ -78,6 +89,31 @@ describe('normalizing what came back from storage', () => {
       sizes: { ...base().sizes, water: 'wide' },
     };
     expect(normalizeFuelLayout(stored)).toEqual(stored);
+  });
+
+  it('honours a stored empty hidden list rather than re-applying the default', () => {
+    /*
+     * **The 5.6B.3 rule that matters most.** The default changed; a choice
+     * someone already made did not. A record carrying `hidden: []` was
+     * written by a person using Customize Fuel and means *show everything* —
+     * quietly hiding their Day Strip because the default moved would be the
+     * app overruling them.
+     */
+    const layout = normalizeFuelLayout({
+      order: ['nutrition', 'dayStrip', 'meals', 'water', 'peptides'],
+      hidden: [],
+      sizes: base().sizes,
+    });
+    expect(layout.hidden).toEqual([]);
+    expect(visibleFuelSections(layout)).toContain('dayStrip');
+  });
+
+  it('applies the default when a record carries no visibility list at all', () => {
+    // Nothing was ever chosen, so there is nothing to preserve.
+    expect(normalizeFuelLayout({ order: [...DEFAULT_FUEL_ORDER] }).hidden).toEqual(['dayStrip']);
+    expect(normalizeFuelLayout({ order: [...DEFAULT_FUEL_ORDER], hidden: 'nope' }).hidden).toEqual([
+      'dayStrip',
+    ]);
   });
 
   it('falls back when there is nothing usable stored', () => {
@@ -162,8 +198,13 @@ describe('a layout written by 5.6B.1', () => {
   });
 
   it('gains the new visibility and size defaults', () => {
+    /*
+     * A bare array never expressed a visibility choice — the shape had no
+     * place to put one — so it takes 5.6B.3's default. The *order* it did
+     * express is kept.
+     */
     const layout = normalizeFuelLayout(['dayStrip', 'nutrition', 'meals', 'water', 'peptides']);
-    expect(layout.hidden).toEqual([]);
+    expect(layout.hidden).toEqual(['dayStrip']);
     expect(layout.sizes.water).toBe('square');
     expect(layout.sizes.peptides).toBe('square');
   });
@@ -183,14 +224,16 @@ describe('a layout written by 5.6B.1', () => {
 });
 
 describe('showing and hiding', () => {
-  it('hides and shows the Day Strip', () => {
-    const hiddenStrip = toggleSection(base(), 'dayStrip');
-    expect(isSectionHidden(hiddenStrip, 'dayStrip')).toBe(true);
-    expect(visibleFuelSections(hiddenStrip)).not.toContain('dayStrip');
+  it('shows and hides the Day Strip, which starts hidden', () => {
+    expect(isSectionHidden(base(), 'dayStrip')).toBe(true);
 
-    const shownAgain = toggleSection(hiddenStrip, 'dayStrip');
-    expect(isSectionHidden(shownAgain, 'dayStrip')).toBe(false);
-    expect(visibleFuelSections(shownAgain)).toContain('dayStrip');
+    const shown = toggleSection(base(), 'dayStrip');
+    expect(isSectionHidden(shown, 'dayStrip')).toBe(false);
+    expect(visibleFuelSections(shown)).toContain('dayStrip');
+
+    const hiddenAgain = toggleSection(shown, 'dayStrip');
+    expect(isSectionHidden(hiddenAgain, 'dayStrip')).toBe(true);
+    expect(visibleFuelSections(hiddenAgain)).not.toContain('dayStrip');
   });
 
   it('hides and shows Water', () => {
@@ -215,9 +258,9 @@ describe('showing and hiding', () => {
 
   it('returns a section to where it was, not to the bottom', () => {
     // Hidden sections hold their absolute slot, so showing one again puts it
-    // back between the same two neighbours.
-    let layout = toggleSection(base(), 'dayStrip');
-    layout = moveVisibleSection(layout, 'meals', -1);
+    // back where it sat rather than at the end of the list.
+    let layout = { ...base(), order: ['nutrition', 'dayStrip', 'meals', 'water', 'peptides'] as FuelSection[] };
+    layout = moveVisibleSection(layout, 'water', -1);
     layout = toggleSection(layout, 'dayStrip');
     expect(layout.order.indexOf('dayStrip')).toBe(1);
   });
@@ -253,7 +296,7 @@ describe('sizing', () => {
   it('changes nothing else', () => {
     const next = setSectionSize(base(), 'water', 'wide');
     expect(next.order).toEqual(base().order);
-    expect(next.hidden).toEqual([]);
+    expect(next.hidden).toEqual(['dayStrip']);
     expect(next.sizes.peptides).toBe('square');
   });
 });
@@ -268,8 +311,8 @@ describe('reset', () => {
     expect(layout).not.toEqual(DEFAULT_FUEL_LAYOUT);
 
     expect(defaultFuelLayout()).toEqual({
-      order: ['nutrition', 'dayStrip', 'meals', 'water', 'peptides'],
-      hidden: [],
+      order: ['nutrition', 'meals', 'water', 'peptides', 'dayStrip'],
+      hidden: ['dayStrip'],
       sizes: {
         nutrition: 'wide',
         dayStrip: 'wide',
@@ -285,28 +328,28 @@ describe('moving one place in the full order', () => {
   const layout = base();
 
   it('moves a section up', () => {
-    expect(moveSection(layout, 'meals', -1).order).toEqual([
+    expect(moveSection(layout, 'water', -1).order).toEqual([
       'nutrition',
-      'meals',
-      'dayStrip',
       'water',
+      'meals',
       'peptides',
+      'dayStrip',
     ]);
   });
 
   it('moves a section down', () => {
     expect(moveSection(layout, 'meals', 1).order).toEqual([
       'nutrition',
-      'dayStrip',
       'water',
       'meals',
       'peptides',
+      'dayStrip',
     ]);
   });
 
   it('does nothing at either end', () => {
     expect(moveSection(layout, 'nutrition', -1)).toEqual(layout);
-    expect(moveSection(layout, 'peptides', 1)).toEqual(layout);
+    expect(moveSection(layout, 'dayStrip', 1)).toEqual(layout);
   });
 
   it('never mutates the layout it was given', () => {
@@ -323,14 +366,18 @@ describe('moving among the sections on screen', () => {
    * that swaps two sections the user cannot both see reads as broken.
    */
   it('agrees with the full-order move when nothing is hidden', () => {
+    // Everything on screen, so the visible list and the full order are one.
+    const shown = toggleSection(base(), 'dayStrip');
     for (const id of FUEL_SECTIONS) {
-      expect(moveVisibleSection(base(), id, -1)).toEqual(moveSection(base(), id, -1));
-      expect(moveVisibleSection(base(), id, 1)).toEqual(moveSection(base(), id, 1));
+      expect(moveVisibleSection(shown, id, -1)).toEqual(moveSection(shown, id, -1));
+      expect(moveVisibleSection(shown, id, 1)).toEqual(moveSection(shown, id, 1));
     }
   });
 
   it('steps over a hidden section', () => {
-    const hidden = toggleSection(base(), 'dayStrip');
+    // The strip sitting between Nutrition and Meals, switched off: moving
+    // Meals up has to reach Nutrition, not swap with something invisible.
+    const hidden = withOrder(['nutrition', 'dayStrip', 'meals', 'water', 'peptides']);
     const moved = moveVisibleSection(hidden, 'meals', -1);
     expect(visibleFuelSections(moved)).toEqual(['meals', 'nutrition', 'water', 'peptides']);
   });
@@ -338,13 +385,13 @@ describe('moving among the sections on screen', () => {
   it('does nothing at either end of the visible list', () => {
     const hidden = toggleSection(base(), 'peptides');
     expect(moveVisibleSection(hidden, 'nutrition', -1)).toEqual(hidden);
-    // Water is last on screen even though Peptides is last in the order.
+    // Water is last on screen even though the Day Strip is last in the order.
     expect(moveVisibleSection(hidden, 'water', 1)).toEqual(hidden);
   });
 
-  it('keeps the hidden section hidden', () => {
+  it('keeps the hidden sections hidden', () => {
     const hidden = toggleSection(base(), 'water');
-    expect(moveVisibleSection(hidden, 'meals', -1).hidden).toEqual(['water']);
+    expect(moveVisibleSection(hidden, 'meals', -1).hidden).toEqual(['dayStrip', 'water']);
   });
 });
 
@@ -361,24 +408,27 @@ describe('dropping a dragged section', () => {
   });
 
   it('returns the same layout when nothing moved', () => {
-    expect(reorderSection(layout, 'meals', 2)).toEqual(layout);
+    expect(reorderSection(layout, 'meals', 1)).toEqual(layout);
   });
 
   it('drops among the visible sections when one is hidden', () => {
-    const hidden = toggleSection(base(), 'dayStrip');
-    const moved = reorderVisibleSection(hidden, 'peptides', 0);
+    const moved = reorderVisibleSection(base(), 'peptides', 0);
     expect(visibleFuelSections(moved)).toEqual(['peptides', 'nutrition', 'meals', 'water']);
     expect(moved.hidden).toEqual(['dayStrip']);
   });
 });
 
 describe('laying the sections out in rows', () => {
-  it('pairs Water and Peptides by default', () => {
-    expect(buildFuelRows(base())).toEqual([
+  it('is Nutrition, Meals and the pair by default — no Day Strip', () => {
+    expect(buildFuelRows(base())).toEqual([['nutrition'], ['meals'], ['water', 'peptides']]);
+  });
+
+  it('slots the Day Strip in when it is switched on', () => {
+    expect(buildFuelRows(toggleSection(base(), 'dayStrip'))).toEqual([
       ['nutrition'],
-      ['dayStrip'],
       ['meals'],
       ['water', 'peptides'],
+      ['dayStrip'],
     ]);
   });
 
@@ -399,7 +449,6 @@ describe('laying the sections out in rows', () => {
     layout = setSectionSize(layout, 'peptides', 'wide');
     expect(buildFuelRows(layout)).toEqual([
       ['nutrition'],
-      ['dayStrip'],
       ['meals'],
       ['water'],
       ['peptides'],
@@ -412,7 +461,10 @@ describe('laying the sections out in rows', () => {
      * rows: the order the user arranged is the order they see, whatever that
      * costs in whitespace.
      */
-    const layout = withOrder(['nutrition', 'water', 'meals', 'peptides', 'dayStrip']);
+    const layout = toggleSection(
+      withOrder(['nutrition', 'water', 'meals', 'peptides', 'dayStrip']),
+      'dayStrip',
+    );
     expect(buildFuelRows(layout)).toEqual([
       ['nutrition'],
       ['water'],
@@ -428,17 +480,15 @@ describe('laying the sections out in rows', () => {
   });
 
   it('reflows when the section between two squares is hidden', () => {
-    const layout = toggleSection(
-      withOrder(['nutrition', 'water', 'dayStrip', 'peptides', 'meals']),
-      'dayStrip',
-    );
+    // The strip is off by default, so these two squares pair across it.
+    const layout = withOrder(['nutrition', 'water', 'dayStrip', 'peptides', 'meals']);
     expect(buildFuelRows(layout)).toEqual([['nutrition'], ['water', 'peptides'], ['meals']]);
   });
 
   it('drops a hidden section from the rows entirely', () => {
     const rows = buildFuelRows(toggleSection(base(), 'water')).flat();
     expect(rows).not.toContain('water');
-    expect(rows).toEqual(['nutrition', 'dayStrip', 'meals', 'peptides']);
+    expect(rows).toEqual(['nutrition', 'meals', 'peptides']);
   });
 
   it('leaves a lone square in its own row rather than stretching it', () => {

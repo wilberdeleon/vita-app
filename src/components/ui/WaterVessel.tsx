@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
-import { motion, palette } from '../../../theme/tokens';
-import { useTheme } from '../../../theme/ThemeProvider';
-import { useReducedMotion } from '../../../theme/useReducedMotion';
+import { motion, palette } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
+import { useReducedMotion } from '../../theme/useReducedMotion';
 
 type Props = {
   /**
@@ -213,10 +213,21 @@ for (let i = 0; i < LINE_STOPS; i += 1) {
  *
  * No wave simulation, no perpetual motion, no particles, no splash. The object
  * is still when the day is still and moves only when the number changes —
- * `motion confirms, it never decorates`. And it stays **Water's**: it is not a
- * `ProgressObject`, it takes no colour or shape props, and Peptides and Fuel
- * do not inherit it. Features are allowed to look different now; that is the
- * point of the sprint.
+ * `motion confirms, it never decorates`.
+ *
+ * ## It is still Water's, and it now lives in `components/ui`
+ *
+ * It is not a `ProgressObject`: it takes no colour prop, no shape prop and no
+ * label prop, and **Peptides and Fuel's own data do not inherit it.** What
+ * changed in 5.6B.3 is where hydration is *reported*: the founder's device
+ * comparison of Home against Fuel found the two showing the same feature with
+ * two different objects, and ruled that the compact Water module should carry
+ * this vessel rather than a generic ring. Home, Fuel and the Water screen now
+ * all draw the same thing, at three sizes.
+ *
+ * That makes it shared presentation, so it sits under `components/ui` — where
+ * `src/components/ui` contains zero business logic, which this has none of: a
+ * fraction and a width in, a drawing out. Water's domain is untouched.
  */
 export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hydration' }: Props) {
   const { scheme } = useTheme();
@@ -232,6 +243,17 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
 
   const height = (width / VIEW_W) * VIEW_H;
   const scale = width / VIEW_W;
+  /**
+   * Stroke widths are authored in viewBox units, which means they shrink with
+   * the drawing — and the 5.6B.3 device pass found where that breaks: at the
+   * 38pt width the compact module uses, a 1.5-unit edge renders at under half
+   * a pixel and the vessel reads as a dark slab rather than as a bottle.
+   *
+   * So the strokes below are stated in **points** and converted here. The
+   * Water screen's 116pt hero is within 3% of the authored size and is
+   * visually unchanged; the small one keeps a real outline.
+   */
+  const stroke = (points: number) => (points * VIEW_W) / width;
 
   const fill = useRef(new Animated.Value(0)).current;
   const completion = useRef(new Animated.Value(0)).current;
@@ -406,9 +428,9 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
         pointerEvents="none"
       >
         <G transform={`translate(${CX} ${VIEW_H / 2}) scale(0.972) translate(${-CX} ${-VIEW_H / 2})`}>
-          <Path d={VESSEL} fill="none" stroke={innerStroke} strokeWidth={1} />
+          <Path d={VESSEL} fill="none" stroke={innerStroke} strokeWidth={stroke(1)} />
         </G>
-        <Path d={VESSEL} fill="none" stroke={edgeStroke} strokeWidth={1.5} />
+        <Path d={VESSEL} fill="none" stroke={edgeStroke} strokeWidth={stroke(1.5)} />
       </Svg>
 
       {/*
@@ -431,7 +453,7 @@ export function WaterVessel({ progress, width = VIEW_W, accessibilityLabel = 'Hy
           {/* 1.5 rather than 1.75 — the first device render read a touch
               insistent, and the instruction when completion feels strong is
               to reduce it rather than to add anything. */}
-          <Path d={VESSEL} fill="none" stroke={palette.gold} strokeWidth={1.5} />
+          <Path d={VESSEL} fill="none" stroke={palette.gold} strokeWidth={stroke(1.5)} />
         </Svg>
       </Animated.View>
     </View>

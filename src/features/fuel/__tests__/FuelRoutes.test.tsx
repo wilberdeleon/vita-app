@@ -216,20 +216,20 @@ describe('Fuel', () => {
     expect(control(tree, 'Scan a barcode')).toBeDefined();
   });
 
-  it('carries water and peptides as compact square modules, not tiles', async () => {
+  it('carries water and peptides as the same compact modules Home draws', async () => {
     /*
-     * 5.6B removed them; the founder's review put them back, and 5.6B.2 made
-     * them a pair of squares at the foot of the screen. What did not come
-     * back is the old shape — heavy tiles with shadows and a progress bar
-     * that had nothing to fill.
+     * 5.6B removed them; the founder's review put them back; 5.6B.2 made them
+     * a pair of squares; 5.6B.3 made them *the same component Home uses*,
+     * after the founder compared the two screens and found one feature drawn
+     * two ways.
      */
     const tree = await mount(<Fuel />, fakeRepository().repository);
     const rendered = screen(tree);
 
-    expect(rendered).toContain('WATER');
-    expect(rendered).toContain('PEPTIDES');
+    expect(rendered).toContain('Water');
+    expect(rendered).toContain('Peptides');
     expect(control(tree, 'Add water')).toBeDefined();
-    expect(control(tree, 'View peptides')).toBeDefined();
+    expect(control(tree, /^Peptides\./)).toBeDefined();
   });
 
   it('opens logging with the meal already chosen', async () => {

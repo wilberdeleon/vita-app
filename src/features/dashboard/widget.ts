@@ -1,70 +1,36 @@
 import { Platform } from 'react-native';
-import { palette, radii } from '../../theme/tokens';
+import { palette } from '../../theme/tokens';
 import type { TimePeriod } from './greeting';
 
 /**
- * The one square-widget geometry, shared by every square module.
+ * The square geometry, and the Dynamic Type threshold that goes with it.
  *
- * **Founder ruling, slice 5.3C: Water, Peptides and Fuel squares are the same
- * size.** In 5.3B each set its own `minHeight`, so Peptides — which has the
- * least to say — sat visibly shorter than Water beside it, and a widget's
- * footprint changed with how much data happened to exist that day. A grid of
- * widgets has to hold still: the shape is the container, not the content.
+ * **Moved to `components/modules/geometry.ts` in 5.6B.3 and re-exported here.**
+ * Fuel now draws the same Water and Peptides modules Home does, and a shared
+ * component on two different footprints would not actually match — so the
+ * footprint moved to where the shared components live. Every Home component
+ * still imports these names from this file and nothing about the locked
+ * Dashboard grid changed; there is simply one definition now instead of two
+ * that could drift.
  *
- * Height rather than aspect ratio because the cell width is whatever half the
- * screen minus gaps comes to, and a true square would be a different height on
- * every device. This is a fixed, deliberate proportion that reads as square on
- * the phones VITA targets.
- *
- * Internal layouts stay feature-specific — the point is one *footprint*, not
- * one design.
- *
- * **The number is set by the busiest square, not the emptiest.** Water with
- * no goal carries the most: a label, a ring, a total, a status line and an
- * Add control. At 172 that stack overflowed and the total collided with the
- * status line on device — which is what the 5.3C device pass caught. One
- * shared footprint means the shared value has to clear the worst case, and
- * the quieter modules centre themselves in the space rather than shrinking to
- * fit their content, which is the whole point of the ruling. **Raised again
- * in 5.3D** to carry that slice's larger type.
- *
- * This is the base, at the system's default text size. `squareHeight()` below
- * is what a component should actually use.
+ * The reasoning behind each number is recorded at the definition.
  */
-export const SQUARE_HEIGHT = 208;
-
-/** A square widget is a little rounder than a wide strip; it reads as an object. */
-export const SQUARE_RADIUS = radii.glassLarge;
-export const WIDE_RADIUS = radii.card;
+export {
+  COMPACT_FONT_SCALE,
+  SQUARE_HEIGHT,
+  SQUARE_RADIUS,
+  WIDE_RADIUS,
+  isCompactSquare,
+  squareHeight,
+} from '../../components/modules/geometry';
 
 /** Quick Tools tiles share their own geometry, for the same reason. */
 export const TOOL_TILE_HEIGHT = 72;
 
 /**
- * Dynamic Type: the point at which a square drops its decorative visual.
- *
- * **VITA respects the device's text-size setting** — nothing in this app
- * passes `allowFontScaling={false}`, and nothing here starts. But a fixed
- * footprint and growing text eventually collide, and 5.3C already shipped
- * that collision once. Past this multiplier the square switches to a compact
- * presentation: the ring and the calorie bar step aside and their space goes
- * to the words.
- *
- * Both are already `accessibilityElementsHidden` — they encode only what the
- * text states outright — so nothing is lost that a screen reader ever had.
- * **No data is abbreviated away**: the figures and their spoken labels are
- * identical at every text size.
- */
-export const COMPACT_FONT_SCALE = 1.25;
-
-export function isCompactSquare(fontScale: number): boolean {
-  return fontScale >= COMPACT_FONT_SCALE;
-}
-
-/**
  * How far *decoration* is allowed to grow.
  *
- * The distinction this slice settles: **information scales without limit,
+ * The distinction slice 5.3D settles: **information scales without limit,
  * ornament does not.** At the largest accessibility sizes the quote reached
  * four lines and pushed every real figure off the screen — a decorative line
  * had taken the space belonging to the day's actual data, which is the
@@ -76,23 +42,6 @@ export function isCompactSquare(fontScale: number): boolean {
  * states a fact carries a cap, and nothing ever will; a test asserts it.
  */
 export const DECORATIVE_FONT_CAP = 1.35;
-
-/**
- * The shared square footprint at a given system text scale.
- *
- * **Still one height for all three modules** — the 5.3C ruling is about Water,
- * Peptides and Fuel matching each other, not about the grid ignoring
- * accessibility. Growing text needs somewhere to go, and a square that
- * refuses to grow can only clip it.
- *
- * Damped rather than proportional: at the same point the text demands more
- * room, `isCompactSquare` hands back the ring's 56pt, so following the scale
- * exactly would leave the square half empty.
- */
-export function squareHeight(fontScale: number): number {
-  const scale = Math.min(Math.max(fontScale, 1), 2);
-  return Math.round(SQUARE_HEIGHT * (1 + (scale - 1) * 0.6));
-}
 
 /** The same treatment for a tool tile, which also allows a second line. */
 export function toolTileHeight(fontScale: number): number {

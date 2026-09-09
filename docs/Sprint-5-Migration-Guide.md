@@ -288,6 +288,18 @@ Needed and not yet present: a range selector over site history — something lik
 - **Move up must step over what the user cannot see.** With a section hidden, swapping with it in the full order looks like a dead button. Reorder over the visible sequence and re-seat the hidden ones.
 - **Share the vocabulary, not necessarily the code.** Fuel's customization reads like Home's on purpose and duplicates none of `modules.ts`: Home has no concept of an unhideable module, and adding one would have meant editing a locked feature to save a hundred lines.
 
+**Patterns 5.6B.3 added:**
+
+- **Two screens showing one feature will diverge unless one component draws it.** Not "similar components kept in sync" — one component, one derivation, one footprint. Home said `4 scheduled · 4 today` and Fuel said `None logged` about the same day, and neither was wrong given the selector it was built on.
+- **Put the copy rules in the domain, not in the component.** `compactWaterView` and `compactPeptidesView` are where the wording is decided and tested; the shared components take a view model and cannot word anything.
+- **Assert the sharing, not the pixels.** The regression test mounts both routes over the same storage and compares the `view` props, locating the module *by component type* — so a screen that goes back to drawing its own fails immediately.
+- **Reach for the feature's own object before a generic one.** Water had a vessel; both compact modules were drawing a ring.
+- **Stroke widths authored in viewBox units vanish when the drawing shrinks.** At 38pt a 1.5-unit edge renders under half a pixel and a bottle reads as a slab. State strokes in points and convert.
+- **A changed default must not overwrite a made choice.** The two are only distinguishable if the record says which it is: a stored `hidden: []` is an answer, an absent `hidden` is silence. Reset is the deliberate way back to the new default.
+- **A fixed footprint is not the cause of clipping — an undersized one is.** 5.6B.2 removed the ceiling; the real fix was adopting the larger shared height, which also made the two screens identical.
+- **Green is never neutral.** A green progress rail under protein says *good*, which is a verdict, and it is the same reading that got the composition bar deleted a slice earlier.
+- **Reserve space, never draw an empty track.** Carbs and fat hold the height of protein's rail so the columns end level; drawing the track would imply a target they must never have.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

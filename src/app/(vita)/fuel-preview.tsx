@@ -106,13 +106,14 @@ type Scenario = {
   layout?: FuelLayout;
 };
 
-/** Reads as the sentence it describes: `wide('water')`, `hide('dayStrip')`. */
+/** Reads as the sentence it describes: `wide('water')`, `toggle('dayStrip')`. */
 const composed = (...steps: ((layout: FuelLayout) => FuelLayout)[]): FuelLayout =>
   steps.reduce((layout, step) => step(layout), defaultFuelLayout());
 
 const wide = (id: 'water' | 'peptides') => (layout: FuelLayout) =>
   setSectionSize(layout, id, 'wide');
-const hide = (id: 'dayStrip' | 'water' | 'peptides') => (layout: FuelLayout) =>
+/** Also switches the Day Strip *on*, since 5.6B.3 starts it off. */
+const toggle = (id: 'dayStrip' | 'water' | 'peptides') => (layout: FuelLayout) =>
   toggleSection(layout, id);
 
 /** One ordinary day, reused by the scenarios that are about composition. */
@@ -129,7 +130,7 @@ const WATER: WaterGoal = { amount: 8, unit: 'cup' };
 const SCENARIOS: Scenario[] = [
   /* The composition this slice ships — the first thing to look at. */
   {
-    key: 'default-final',
+    key: 'final-default',
     label: 'Default',
     entries: DAY(),
     targets: GOALS,
@@ -315,13 +316,13 @@ const SCENARIOS: Scenario[] = [
     },
   },
   {
-    key: 'daystrip-hidden',
-    label: 'Day Strip hidden',
+    key: 'daystrip-enabled',
+    label: 'Day Strip on',
     entries: DAY(),
     targets: GOALS,
     waterGoal: WATER,
     waterMl: 720,
-    layout: composed(hide('dayStrip')),
+    layout: composed(toggle('dayStrip')),
   },
   {
     key: 'water-hidden',
@@ -330,7 +331,7 @@ const SCENARIOS: Scenario[] = [
     targets: GOALS,
     waterGoal: WATER,
     waterMl: 720,
-    layout: composed(hide('water')),
+    layout: composed(toggle('water')),
   },
   {
     key: 'peptides-hidden',
@@ -339,8 +340,25 @@ const SCENARIOS: Scenario[] = [
     targets: GOALS,
     waterGoal: WATER,
     waterMl: 720,
-    layout: composed(hide('peptides')),
+    layout: composed(toggle('peptides')),
   },
+  {
+    key: 'no-water-goal',
+    label: 'Water · no goal',
+    entries: DAY(),
+    targets: GOALS,
+    waterMl: 480,
+  },
+  {
+    key: 'no-peptides',
+    label: 'No peptides',
+    entries: DAY(),
+    targets: GOALS,
+    waterGoal: WATER,
+    waterMl: 720,
+  },
+  { key: 'nutrition-goals', label: 'Nutrition · goals', entries: DAY(), targets: GOALS },
+  { key: 'nutrition-no-goals', label: 'Nutrition · no goals', entries: DAY() },
   {
     key: 'long-text',
     label: 'Long text',

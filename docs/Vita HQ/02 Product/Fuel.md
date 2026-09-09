@@ -6,6 +6,20 @@
 
 ---
 
+## Sprint 5 slice 5.6B.3 — water and peptides look the same everywhere (2026-09-08, awaiting founder device review)
+
+**Water and peptides now look identical on Home and on Fuel.** They were two different-looking versions of the same thing; they are one now, drawn by one piece of the app. Whatever your water says in one place, it says in the other.
+
+**Water shows the VITA bottle.** The same fillable bottle the Water screen uses, filling towards the same goal — not the generic progress circle it had before. With no goal set it simply sits there and shows your day's total; it does not pretend you are at 0% of something you never chose.
+
+**The day strip is off to begin with.** With your nutrition at the top and your meals underneath it, the strip was adding clutter rather than an answer — especially on a busy day. It is not gone: turn it back on any time in `•••` → Customize Fuel, and it works exactly as it did. If you already turned it on, it stays on.
+
+**Nutrition got a final tidy.** Slightly larger macro figures, cleaner spacing, and the protein bar is no longer green — green reads as *good*, and VITA does not grade what you ate.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6B.3.
+
+---
+
 ## Sprint 5 slice 5.6B.2 — nutrition leads, and Fuel is yours to arrange (2026-09-08, awaiting founder device review)
 
 **Your nutrition is the first thing you see now.** Calories, how far into your goal you are, then protein, carbs and fat. The strip of your day's food follows it — it is still Fuel's own picture of your day, it just no longer stands in front of the answer.

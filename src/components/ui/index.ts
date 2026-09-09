@@ -20,3 +20,4 @@ export { Stepper } from './Stepper';
 export { TextField } from './TextField';
 export { ToastProvider, useToast, type ToastOptions } from './Toast';
 export { NumericField } from './NumericField';
+export { WaterVessel } from './WaterVessel';

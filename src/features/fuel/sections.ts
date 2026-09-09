@@ -38,8 +38,11 @@
  * the two customisation surfaces feel like one app.
  */
 
-/** In the founder-approved default order (5.6B.2): nutrition leads. */
-export const FUEL_SECTIONS = ['nutrition', 'dayStrip', 'meals', 'water', 'peptides'] as const;
+/**
+ * In the founder-approved default order (5.6B.3): nutrition leads, and the Day
+ * Strip sits last because it is the one section that starts hidden.
+ */
+export const FUEL_SECTIONS = ['nutrition', 'meals', 'water', 'peptides', 'dayStrip'] as const;
 
 export type FuelSection = (typeof FUEL_SECTIONS)[number];
 
@@ -65,15 +68,31 @@ export const FUEL_SECTION_REGISTRY: Record<FuelSection, SectionMeta> = {
 };
 
 /**
- * Nutrition, then the strip, then the meals, then the pair.
+ * Nutrition, the meals, then the pair — and the Day Strip, off.
  *
- * **The hierarchy correction this slice exists for.** 5.6B.1 opened with the
- * Day Strip, which is the most distinctive thing on the screen and the wrong
- * thing to lead with: Fuel's first practical question is *where am I today*,
- * and the answer to it was below the fold. The strip is personality and
- * context; it now sits directly under the answer rather than in front of it.
+ * **Two founder corrections, one after the other.** 5.6B.1 opened with the Day
+ * Strip, which is the most distinctive thing on the screen and the wrong thing
+ * to lead with: Fuel's first practical question is *where am I today*, and the
+ * answer was below the fold. 5.6B.2 moved Nutrition to the top and left the
+ * strip second — and seeing Nutrition, the strip and four meal rows together
+ * on device, the founder ruled the strip added density without adding an
+ * answer, particularly on a busy day when its markers crowd.
+ *
+ * **So the strip is hidden by default, not deleted.** It is a full section in
+ * Customize Fuel and behaves exactly as it always did once switched on. That
+ * distinction matters: nobody lost a feature, and a screen that starts simple
+ * can be made denser on purpose.
  */
 export const DEFAULT_FUEL_ORDER: readonly FuelSection[] = FUEL_SECTIONS;
+
+/**
+ * What a *new* layout hides — the Day Strip, and nothing else.
+ *
+ * Only ever applied to a layout that has never recorded a visibility choice.
+ * A stored record that carries a `hidden` list is that user's own answer and
+ * is honoured exactly, including an empty one.
+ */
+export const DEFAULT_HIDDEN: readonly FuelSection[] = ['dayStrip'];
 
 export type FuelLayout = {
   order: FuelSection[];
@@ -92,7 +111,7 @@ const DEFAULT_FUEL_SIZES: Record<FuelSection, FuelSectionSize> = {
 /** What *Reset Layout* restores, and what a user with no record gets. */
 export const DEFAULT_FUEL_LAYOUT: FuelLayout = {
   order: [...DEFAULT_FUEL_ORDER],
-  hidden: [],
+  hidden: [...DEFAULT_HIDDEN],
   sizes: { ...DEFAULT_FUEL_SIZES },
 };
 
@@ -100,7 +119,7 @@ export const DEFAULT_FUEL_LAYOUT: FuelLayout = {
 export function defaultFuelLayout(): FuelLayout {
   return {
     order: [...DEFAULT_FUEL_ORDER],
-    hidden: [],
+    hidden: [...DEFAULT_HIDDEN],
     sizes: { ...DEFAULT_FUEL_SIZES },
   };
 }
@@ -121,6 +140,9 @@ function isSection(value: unknown): value is FuelSection {
  *   the new visibility and size defaults applied around it. That is the
  *   migration, and it is silent by design: someone who arranged Fuel last week
  *   keeps their arrangement and gains square Water and Peptides;
+ * - **a stored `hidden` list honoured exactly, an absent one defaulted** — see
+ *   the note at the code. This is what lets 5.6B.3 change the default without
+ *   overwriting a choice somebody already made;
  * - unknown ids dropped, so a section removed in a later build cannot linger;
  * - duplicates collapsed to their first appearance;
  * - sections missing from a stored order appended in default order, which is
@@ -159,10 +181,29 @@ export function normalizeFuelLayout(stored: unknown): FuelLayout {
     if (!seen.has(id)) order.push(id);
   }
 
-  const rawHidden = Array.isArray(record.hidden) ? record.hidden : [];
-  const hidden = [
-    ...new Set(rawHidden.filter(isSection).filter((id) => FUEL_SECTION_REGISTRY[id].hideable)),
-  ];
+  /*
+   * **A stored visibility list is an answer; a missing one is a question.**
+   *
+   * 5.6B.3 changed the default — the Day Strip now starts hidden — and the
+   * founder's instruction was not to overwrite a choice someone already made
+   * just because the default moved. Those two things are only compatible if
+   * the two cases are told apart, and they can be: a record that carries a
+   * `hidden` array was written by someone using Customize Fuel, so it is
+   * honoured exactly, **including an empty one, which means "show everything"
+   * and not "no preference"**. A record with no `hidden` field at all — every
+   * layout 5.6B.1 saved, since it stored a bare order — has never expressed a
+   * visibility choice, so it takes the new default.
+   *
+   * *Reset Layout* is the deliberate way back to the default, and it writes a
+   * fresh `hidden` list of its own.
+   */
+  const hidden = Array.isArray(record.hidden)
+    ? [
+        ...new Set(
+          record.hidden.filter(isSection).filter((id) => FUEL_SECTION_REGISTRY[id].hideable),
+        ),
+      ]
+    : [...DEFAULT_HIDDEN];
 
   const rawSizes =
     typeof record.sizes === 'object' && record.sizes !== null

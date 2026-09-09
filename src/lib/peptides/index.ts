@@ -154,8 +154,8 @@ export {
   useResolvedSetup,
   useRoutineForDefinition,
   useRoutineWeek,
-  usePeptideSummary,
   type PeptidesView,
   type ResolvedSetup,
   type TodayRoutine,
 } from './state/usePeptides';
+export { compactPeptidesView, type CompactPeptidesView } from './state/compactPeptides';

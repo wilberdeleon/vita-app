@@ -254,21 +254,33 @@ function NutritionFigures({
               : `Protein. ${formatAmount(consumed.protein)} of ${proteinGoal} gram goal.`
           }
           rail={proteinGoal === undefined ? null : progress(consumed.protein, proteinGoal)}
-          color={palette.protein}
+          /*
+           * Neutral, not `palette.protein`.
+           *
+           * The macro tokens are green, amber and red, and a **green** bar
+           * under protein is the same traffic-light reading that got the
+           * composition bar deleted in 5.6B — green says *good*, and VITA
+           * does not grade what anyone ate. Calories carry the feature
+           * colour because they are the section's subject; protein's rail is
+           * secondary progress and is drawn as secondary text.
+           */
+          railColor={surfaces.textSecondary}
+          /* Alignment only — see `Macro`. Nothing is drawn. */
+          reserveRail={proteinGoal !== undefined}
         />
         <Macro
           label="Carbs"
           value={`${formatAmount(consumed.carbs)} g`}
           spoken={`Carbs. ${formatAmount(consumed.carbs)} grams.`}
           rail={null}
-          color={palette.carbs}
+          reserveRail={proteinGoal !== undefined}
         />
         <Macro
           label="Fat"
           value={`${formatAmount(consumed.fat)} g`}
           spoken={`Fat. ${formatAmount(consumed.fat)} grams.`}
           rail={null}
-          color={palette.fat}
+          reserveRail={proteinGoal !== undefined}
         />
       </View>
 
@@ -287,14 +299,26 @@ function Macro({
   value,
   spoken,
   rail,
-  color,
+  railColor,
+  reserveRail = false,
 }: {
   label: string;
   value: string;
   spoken: string;
   /** `null` when this macro has no goal — carbs and fat never do. */
   rail: number | null;
-  color: string;
+  railColor?: string;
+  /**
+   * Hold the rail's height in a column that has no rail, so the three
+   * columns end level.
+   *
+   * **Space, not a track.** Nothing is drawn: an empty progress track under
+   * carbs would imply a target they do not have and must never have. This is
+   * the alternative to a ragged row — the founder's note was that the three
+   * should look intentionally related, and a column that is 6pt shorter than
+   * its neighbour looks like a mistake rather than like a distinction.
+   */
+  reserveRail?: boolean;
 }) {
   const { surfaces } = useTheme();
 
@@ -306,9 +330,11 @@ function Macro({
       <Text style={[styles.macroValue, { color: surfaces.text }]} numberOfLines={2}>
         {value}
       </Text>
-      {rail === null ? null : (
+      {rail === null ? (
+        reserveRail ? <View style={styles.macroRailSpace} /> : null
+      ) : (
         <View style={styles.macroRail}>
-          <ProgressBar progress={rail} height={2} color={color} />
+          <ProgressBar progress={rail} height={2} color={railColor ?? surfaces.textSecondary} />
         </View>
       )}
     </View>
@@ -325,15 +351,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   calories: {
+    /*
+     * The section's subject, and deliberately not bigger than that.
+     *
+     * `typography.display` at its authored tracking reads loose for a figure
+     * — digits want tighter spacing than words — and the negative margin that
+     * used to pull the label up under it was a hack standing in for a line
+     * height. A real `lineHeight` does the same job honestly and survives
+     * Dynamic Type, where a negative margin does not scale with the text it
+     * was compensating for.
+     */
     ...typography.display,
+    lineHeight: 37,
+    letterSpacing: -0.6,
   },
   caloriesLabel: {
     ...typography.caption,
-    fontSize: 13.5,
-    marginTop: -spacing.xs,
+    fontSize: 14,
   },
   macros: {
     flexDirection: 'row',
+    // Equal thirds with a generous gutter: three columns of the same width
+    // read as one row of related figures rather than as three labels that
+    // happened to line up.
     gap: spacing.l,
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: spacing.m,
@@ -341,22 +381,28 @@ const styles = StyleSheet.create({
   },
   macro: {
     flex: 1,
-    gap: 1,
+    gap: 2,
   },
   macroLabel: {
     ...typography.micro,
-    fontSize: 11.5,
-    letterSpacing: 0.4,
+    fontSize: 12,
+    letterSpacing: 0.3,
   },
   macroValue: {
-    // A step up from the 15pt body: the founder's note was that nothing on
-    // this section should read as small print.
+    // 17pt — the same size the shared Water and Peptides modules give their
+    // value line, so the figures across Fuel and Home sit at one weight.
+    // Nothing on this section should read as small print.
     ...typography.bodyMedium,
-    fontSize: 16.5,
+    fontSize: 17,
     fontWeight: '600',
   },
   macroRail: {
-    marginTop: spacing.xs,
+    marginTop: spacing.s,
+  },
+  macroRailSpace: {
+    // The rail's own height plus its margin. Empty on purpose.
+    marginTop: spacing.s,
+    height: 2,
   },
   setupTitle: {
     ...typography.heading,

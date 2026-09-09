@@ -191,6 +191,17 @@ Division of ownership, **as revised by the 2026-09-01 identity insertion**: **Sp
 
 **Deliberately not shared:** Water looks like Water · Peptides looks like Peptides · Fuel looks like Fuel · Journey will look like Journey. This is §14 (*feature-specific vs shared*) stated as a rollout rule: **features must not be standardized into identical cards or widgets**, which would reproduce the old template sameness in a new palette.
 
+**A feature shown in two places is drawn by one component.** Founder ruling, 5.6B.3, after comparing Home and Fuel on device: Water and Peptides appeared on both screens with different objects, different copy and different footprints. **Equivalent data must produce equivalent presentation — the same, not similar.** The shape this takes:
+
+- **The drawing is shared.** `src/components/modules/` holds one compact module per feature that appears inside another feature's screen. Presentational only: a view model and callbacks in, no domain imports, no data hooks.
+- **The copy rules belong to the domain.** `compactWaterView` lives in `lib/water`, `compactPeptidesView` in `lib/peptides` — one derivation each, tested there. Two screens writing their own ternaries is how `4 scheduled` and `None logged` came to describe the same day.
+- **The footprint is shared too.** A shared component on two different heights still does not match.
+- **Presentation is shared; layout preference is not.** Home stores its own layout and Fuel its own. Making Water wide on Fuel must never touch Home.
+- **Where a screen already has the approved design, the other converges to it.** There is no merge and no compromise version.
+- **Two modules, not a framework.** Exactly two features are shown in more than one place, so there are exactly two files. A third feature would get a third file, not a configuration system.
+
+**A feature's own object beats a generic one.** The compact modules drew a progress ring until 5.6B.3; Water already owned a fillable vessel, and a ring is the shape every health app has. The same vessel now renders at three sizes from one component — a feature identity is worth carrying into every place the feature is reported, and stroke widths authored in viewBox units must be converted to points so an outline survives being scaled down.
+
 **Customization is per-feature, and each feature's is as narrow as its product allows.** Home's square/wide widget grid, visibility and order controls, on-Home edit mode and drag reorder approved in 5.3 are a **Home-specific model** built on this language. Fuel gained its own in 5.6B.2, in the **same interaction language and a deliberately smaller model**: `•••` opens a sheet, rows carry a visibility check, a name, Square / Wide chips, arrows and a handle, and Reset Layout sits at the foot — so someone who has arranged Home already knows how to work it.
 
 **The rule this establishes: a feature may offer order, selective visibility and contextual sizing — never a page builder.**

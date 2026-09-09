@@ -15,7 +15,7 @@ import {
   TodaySchedule,
   type ScheduleItem,
 } from '../../features/dashboard/components/TodaySchedule';
-import { WaterVessel } from '../../features/water/components/WaterVessel';
+import { WaterVessel } from '../../components/ui';
 import { vitaHaptic } from '../../lib/haptics';
 import { palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
