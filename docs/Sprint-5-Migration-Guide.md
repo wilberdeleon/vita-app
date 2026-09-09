@@ -310,6 +310,17 @@ Needed and not yet present: a range selector over site history — something lik
 - **`lineHeight` does not scale with Dynamic Type.** RN scales `fontSize` and leaves `lineHeight` in points, so a fixed one is a ceiling the text grows through and lands on whatever is below. Express it as a ratio.
 - **A single word in a too-narrow box is clipped, not wrapped.** `numberOfLines={2}` does not save `Breakfast` from becoming `Br`. Let the *row* wrap between its parts, and never let a secondary summary hold `flex: 1` against the subject.
 
+**Patterns 5.6C added:**
+
+- **A screen's first step must not be another menu.** Add Food listed five destinations, so reaching a food took two taps before any typing. Put the thing almost everyone wants — the search field — on the screen, and put the fast paths under it as rows rather than as buttons that open screens containing rows.
+- **A locked screen makes its neighbours look old overnight.** Nothing about `FoodRow` changed in 5.6B; Fuel Home stopped using cards, and that alone turned every search result into a visitor from Sprint 2. Auditing the *neighbours* is part of locking a screen.
+- **Four screens formatting one food is four chances to disagree.** One `foodRowView`, one `FoodListRow`, and the same yogurt reads the same wherever it is found.
+- **A context line is an identity, not a sentence.** `Adding to Lunch` in grey beside a sun-in-orange on the screen it came from is one product speaking two languages. Read the shared mapping.
+- **Two routes rendering two versions of one experience is a divergence waiting to happen.** `/fuel/search` renders `/fuel/add`; the path stays because it is already reachable, but there is one implementation.
+- **A hook whose bugs are invisible in a screenshot needs tests before anything else.** `useFoodSearch`'s debounce and stale-response guard cannot be seen in a still image and cost a rate limit or a visibly jumping list when wrong.
+- **Provider identity is not row content.** A partial failure is a successful search; only a total failure is a state, and it never names a provider, a status code or an endpoint.
+- **The name is the one string that must never be cropped.** It is what the eye is scanning for. Cap the supporting line instead.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh

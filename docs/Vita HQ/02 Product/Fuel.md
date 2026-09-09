@@ -6,6 +6,26 @@
 
 ---
 
+## Sprint 5 slice 5.6C — adding food is one screen now (2026-09-09, awaiting founder device review)
+
+**Tapping *Add food* opens a search box, not a menu.** It used to be a list of five things to tap before you could type anything. Now the search field is right there, with **Scan** and **Manual** as two small buttons beside it.
+
+**Underneath: what you actually eat.** Your recent foods and your favourites, as real rows you can tap straight into. Start typing and they step aside for the results.
+
+**Every food looks the same everywhere.** Search, recents and favourites all use the same row as your meals on the Fuel home screen — same picture, same name, same calories on the right. A food you find in search looks like the same food once it is in your day.
+
+**The meal comes with you.** Add food from Dinner and you see the moon and the word *Dinner* at the top — the exact same mark the Dinner row uses — and it stays with you through search, the scanner and manual entry, right up to logging.
+
+**If search fails**, it says so in plain words with a *Try again*, and never mentions a database name or an error code. If one food source is down and another works, you just get results.
+
+**Still no suggestions.** VITA does not recommend foods, rank them against your goals, or score them. Search results are search results.
+
+**Coming next in Fuel:** the scanner, food detail and manual entry screens.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6C.
+
+---
+
 ## ✅ Fuel Home is finished (approved on 2026-09-09)
 
 **Wilber approved the Fuel home screen on his iPhone on 9 September 2026, and it is now locked.** That covers everything below — the redesign and all four rounds of corrections after it. Nobody is redesigning this screen again unless something is actually broken.

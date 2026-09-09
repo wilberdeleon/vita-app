@@ -2057,6 +2057,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6B.2 | Fuel Home Final Hierarchy + Customize Fuel | Nutrition first; Water and Peptides as square modules; a Customize Fuel sheet for order, visibility and size | ✅ Accepted subpass of 5.6B |
 | 5.6B.3 | Fuel Final Visual Polish + Shared Water/Peptides Identity | One Water and one Peptides module shared by Home and Fuel, drawn with VITA's own vessel; the Day Strip hidden by default | ✅ Accepted subpass of 5.6B |
 | 5.6B.4 | Fuel Final Visual Cohesion + Shared Calorie Summary | One calorie summary behind Fuel and Home; macro category accents; meal rows regain their time of day | ✅ Accepted subpass of 5.6B |
+| 5.6C | Add / Search / Recent Identity Refresh | Add Food opens on search; one food-row family across Search, Recents and Favorites; Fuel Home's meal identity carried through | 🟡 Implemented — awaiting founder device review |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2084,9 +2085,9 @@ The ruling followed founder review of production Water and Dashboard: with two f
 
 **Findings carried forward now belong to 5.8**, not 5.7: `PressableScale`'s `flex` trap, `FloatingDock` label cropping at accessibility text sizes, the `Toast` and `FuelQuickActions` reduce-motion gaps, the numeric-accessory tone inconsistency, and converging the four hand-rolled sheets onto `VitaSheet`. Removing the identity prototype and its `__DEV__` Settings row now falls to **5.10** at the latest.
 
-### Slice 5.1 — VITA Design Language + Identity Prototype 🟡
+### Slice 5.1 — VITA Design Language + Identity Prototype ✅
 
-**Implemented 2026-09-02. Awaiting founder identity review — not approved.**
+**Implemented 2026-09-02. Founder-approved and locked** — 5.1 and 5.1A are the language every slice since has been built in.
 
 **The design language is authored** in `docs/05-Design-System.md` → *The VITA Design Language*: sixteen sections covering surface roles, feature colour, typography, spacing, radius, borders, interaction, motion, reduce motion, haptics, progressive disclosure, completion, empty states, feature-specific vs shared, the accessibility floor, and light/dark. `docs/Sprint-5-Migration-Guide.md` maps every remaining screen onto it so 5.2–5.8 are mechanical rather than exploratory.
 
@@ -2150,7 +2151,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 ### Slice 5.2 — Interactive Water Experience ✅
 
-**Implemented 2026-09-03. Awaiting founder device review — not approved.** The first production feature in the Sprint 5 identity.
+**Implemented 2026-09-03. Founder-approved on real device and locked — see *Slice 5.2 — closed* for the accepted state.** The first production feature in the Sprint 5 identity.
 
 **What it replaced.** A summary `Card`, a full-width button that pushed an entire screen, a `Card` holding seven bars, and a `Card` holding the day's drinks — four stacked rounded rectangles down a scroll.
 
@@ -2206,7 +2207,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 ### Slice 5.3 — Dashboard Identity Redesign ✅
 
-**Implemented 2026-09-03. Awaiting founder device review — not approved.**
+**Implemented 2026-09-03. Founder-approved on real device 2026-09-04, with subpasses 5.3A–5.3D.**
 
 **A data-source audit came before any layout.** Of the fourteen things the old Home displayed, **six were fixtures**: steps (`6,842`), sleep (`6.4 h`), workouts (`1 / 3`), a streak (`12`), the entire Journey card, and the Movement and Recovery goal pillars — every one a plausible number shown to every user forever. The founder ruling settled it: real data or nothing. `features/dashboard/mock.ts`, `api.ts` and `types.ts` are deleted, and with them `HomeHeader`, `HomeSummaryCard`, `JourneyCard`, `MacrosCard`, `MacroRow`, `QuickStatsRow`, `MetricTile`, `MealRow` and `JourneySection`.
 
@@ -2238,7 +2239,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 ### Slice 5.3A — Dashboard Composition + Customization ✅
 
-**Implemented 2026-09-03. Awaiting founder device review — not approved.** Composition only: **no fixture returned**, and every figure still comes from the feature that owns it.
+**Implemented 2026-09-03. Accepted subpass of 5.3, approved on device 2026-09-04.** Composition only: **no fixture returned**, and every figure still comes from the feature that owns it.
 
 **The greeting became an eyebrow.** `Good night, Wilber.` at 26px is now `GOOD NIGHT, WILBER` in small uppercase gold, with a factual line beneath it and a compact date chip beside it. The chip is deliberately inert and announced as text — VITA has no calendar destination, and styling a button that goes nowhere is the dead-affordance problem slice 4.1 cleaned out of Settings.
 
@@ -2276,7 +2277,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 ### Slice 5.3B — Dashboard Widget Layout + Density ✅
 
-**Implemented 2026-09-03. Awaiting founder device review — not approved.** Composition and customization only; **no fixture returned** and every figure still comes from the feature that owns it.
+**Implemented 2026-09-03. Accepted subpass of 5.3, approved on device 2026-09-04.** Composition and customization only; **no fixture returned** and every figure still comes from the feature that owns it.
 
 **A two-column widget grid.** Modules now have **two genuinely designed shapes** rather than one stretched: `square` and `wide`. `buildGrid` derives rows from the visible modules and their spans — a wide module takes a row, two squares share one, and **a square with no partner keeps its column beside an empty cell rather than being promoted to wide**, because stretching would render the square design at proportions nobody drew. Nothing stores a position, so what the user arranged and what Home renders cannot disagree.
 
@@ -2308,7 +2309,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 ### Slice 5.3C — Dashboard Direct Manipulation + Visual Polish ✅
 
-**Implemented 2026-09-03. Awaiting founder device review — not approved.** Geometry, customization and interaction only; **no fixture returned**, no domain code touched, and every figure still comes from the feature that owns it. The whole diff is `features/dashboard/` plus its route.
+**Implemented 2026-09-03. Accepted subpass of 5.3, approved on device 2026-09-04.** Geometry, customization and interaction only; **no fixture returned**, no domain code touched, and every figure still comes from the feature that owns it. The whole diff is `features/dashboard/` plus its route.
 
 **One square footprint, set by the busiest square.** In 5.3B each module carried its own `minHeight`, so Peptides sat visibly shorter than Water beside it and a widget's size changed with how much data happened to exist. `SQUARE_HEIGHT` in `features/dashboard/widget.ts` is now the single geometry, clamped at **both** ends — `flex: 1` resolves a flex basis of 0 on the main axis, which would win over a plain `height` and collapse the cell, so a minimum alone was not enough. **The value is set by the worst case, not the average**: the device pass caught Water-with-no-goal overflowing 172pt, its total colliding with its status line, so the shared height is 192 and the quieter modules centre themselves in the space. That is the ruling working as intended — a grid holds still.
 
@@ -2337,6 +2338,47 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6C — Add / Search / Recent Identity Refresh 🟡
+
+**Implemented 2026-09-09. Awaiting founder device review — not approved.** The food-discovery screens brought into the language Fuel Home locked in. **No Fuel Home change, no Dashboard change, no scanner, Food Detail or Manual Entry work** — 5.6D owns those.
+
+**The visual audit, before any code.** Against locked Fuel Home, Add Food and its neighbours were still Sprint 2:
+
+- **Add Food was a menu.** Five destinations — Scan Barcode, Search Food, Add Manually, Recent Foods, Favorites — so reaching a food took two taps before any typing, and search was a row in a card.
+- **Every row was a card.** `FoodRow` sat on `ListRow`, which draws a filled surface with a border and a shadow. Fuel Home stopped using that in 5.6B, so the *same food* was a card in Search and a bare row in a meal.
+- **Four variants of one thing.** Favorites wrapped `FoodRow` in its own flex layout to hang an external heart beside it; Search, Recents and Favorites each assembled the subtitle inline.
+- **Titles from the old casing** — `Log Food`, `Search Food`, `Recent Foods` — beside Fuel Home's sentence case.
+- **Meal context was grey subtitle text**, `Adding to Lunch`, while Fuel Home drew a sun in warm orange for the same fact.
+- **Two search experiences**: `/fuel/search` had one, and `/fuel/add` was the menu pointing at it.
+
+**Add Food opens on search.** The field is the subject of the screen, with Scan and Manual as two small neutral outlined actions beneath it — not two cards. Under those, **Recent and Favorites as real rows you can tap**, five of each, with `All` links to the full lists. Typing replaces both with results: nobody scrolls past yesterday's lunch to reach what they just typed. With nothing logged and nothing favourited, one quiet line.
+
+**One food row, everywhere.** `FoodListRow` is Fuel Home's meal row — direct on the background, a hairline above, the same 32pt `FoodAvatar` through the same three-tier resolver, the same type. `foodRowView` derives what it shows, so Search, Recents and Favorites cannot word the same food differently. **The name carries no line limit** — it is what someone is scanning for, and the device pass caught `Clif Bar Cool Mint…` under a two-line cap.
+
+**Meal context is Fuel Home's own.** `MealContext` reads `mealAccent` — the same function the meal rows call — so Breakfast is sunrise, Lunch the sun, **Dinner the moon** and Snacks utensils on sage, on Add Food exactly as on Fuel Home, in both schemes. One mapping, not two. It speaks as `Adding to Breakfast`; the glyph is decorative.
+
+**One search experience.** `/fuel/search` renders `/fuel/add`. The route stays because it is already reachable and a working path that vanishes is worse than one that resolves somewhere sensible — but there is one implementation.
+
+**The search engine is untouched.** Open Food Facts and USDA, the parallel fan-out, dedupe, ranking, per-provider failure isolation and both caches are exactly as they were. What changed is what the screen says about them: **nothing**. A partial failure renders results and stays silent; only a total failure becomes `Couldn't search right now` with a `Try again`, and no status code, endpoint or provider name appears anywhere.
+
+**`useFoodSearch` is covered for the first time.** The 5.6 audit listed it as a gap, and it is the one part of Fuel where a mistake is invisible in a screenshot. Sixteen tests: the two-character floor, one request for a word typed letter by letter, the in-flight state, **a slow earlier response discarded when a newer query has started**, a cleared query abandoning a pending search, results, empty, partial failure, total failure, a thrown request, no providers configured, retry, and the query cache both serving a repeat and refusing to serve the wrong query. No network call is made.
+
+**Characterization first.** The navigation and meal-query behaviour was pinned against the screens as they stood at `d5ba0eb` — including a throwaway probe run against the old routes to record their exact push targets — before any presentation changed. All four meals survive Search, Recents, Favorites, Scan and Manual.
+
+**Two defects the device pass caught and fixed.** Scan and Manual sat left-aligned with dead space beside them — `PressableScale` applies its `style` to an inner animated view, so the `flex` never reached the row; they are wrapped in flex cells now, the workaround used at seven other call sites. And Add Food's Recent and Favorites sections had misaligned calorie columns, because one showed a heart and the other did not; the heart stays in both, and is hidden only on the full Favorites screen where every row is favourited.
+
+**Dead code removed.** `FoodRow.tsx`, orphaned the moment its last caller moved to `FoodListRow`.
+
+**Boundaries unchanged.** No recommended foods, no healthy alternatives, no better-choice marker, no ranking against a goal and no suggested meals — search relevance is the provider layer's. No VITA Score, no grade, no traffic-light health UI. **No one-tap log**: the serving, the amount and the meal are still chosen in Food Detail, which is the correctness checkpoint.
+
+**Validation.** `npm test` **80 suites / 2067 tests** (2014 → 2067) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS export clean · **no dependency added** · no persistence key added or removed · verified on device in Dark, Light and accessibility-large.
+
+**Known maintenance, carried forward unchanged.** `expo` and `expo-router` remain one patch behind, which is why Doctor reports 20/21. Excluded by this authorization.
+
+**Device coverage limit, stated plainly.** The Simulator MCP still refuses with the spurious Xcode error, so this environment can deep-link and screenshot but **cannot type**. The idle screen, the meal contexts, Light and Dynamic Type were inspected on device; **the search states — loading, results, no results, partial and total failure — were verified by tests only**, because reaching them needs a keyboard.
+
+**Still to verify — founder, on a real device:** whether Add Food now feels immediate, whether a food row in Search reads as the same object as a food row inside a meal on Fuel Home, whether the meal glyph on Add Food matches the one on the meal row it was launched from, and how the search states look with real network results.
 
 ### Slice 5.6B — closed ✅
 
@@ -2656,7 +2698,7 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 ### Slice 5.5D — Weekly Swipe Navigation + Routine-Aware Unit Conversion ✅
 
-**Implemented 2026-09-07. Awaiting founder device review — not approved.** Two fixes, no redesign. **Zero changes under `src/lib/`**, no dependency added, no persistence touched.
+**Implemented 2026-09-07. Founder-approved on real device 2026-09-07 as part of the 5.5 lock — see *Slice 5.5 — closed* above.** Two fixes, no redesign. **Zero changes under `src/lib/`**, no dependency added, no persistence touched.
 
 **A date-fragile test failed at the baseline, before anything was changed.** `agrees that a day before the routine started belongs to neither view` started the routine at `TODAY − 1` and expected the week strip to show a day before it — which is only true when today is not a Monday. It passed on the 6th and failed on the 7th. The start date is anchored to the displayed week's Sunday now, so Monday through Saturday precede it on every day of the week. A product bug it was not; a test that could only be trusted six days in seven it was.
 
@@ -2696,7 +2738,7 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 ### Slice 5.5C — Routine Setup + Peptides Activity Finalization ✅
 
-**Implemented 2026-09-06. Awaiting founder device review — not approved.** **Zero changes under `src/lib/`** — the whole slice is presentation, selectors and one shared UI primitive.
+**Implemented 2026-09-06. Founder-approved on real device 2026-09-07 as part of the 5.5 lock — see *Slice 5.5 — closed* above.** **Zero changes under `src/lib/`** — the whole slice is presentation, selectors and one shared UI primitive.
 
 **The ~2-month history limit was not a bug.** §3 asked for investigation before architecture, and the investigation found the floor logic correct: `getEarliestDay` enumerates every day key in storage, nothing prunes by age, and stepping back from a 200-day-old fixture reaches February in seven presses. What the founder opened were the *month-mixed* preview scenarios, which seed a fortnight — so two months was the whole truth about them. **One genuine defect did surface**: the 5.5B regression asserted `toContain('Taken')` after stepping back, and the Month summary renders the word "Taken" on every month ever drawn, so that test would have passed with navigation frozen. It now asserts the month reached, by name, at two months, six months, a year and sixteen months, plus coming forward again and revisiting a cached month without a second read. New `month-deep` preview fixture seeds 60, 180 and 365 days back so the founder can prove it on device.
 
@@ -2734,7 +2776,7 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 ### Slice 5.5B — Historical Month Loading + Final Routine/Month Polish ✅
 
-**Implemented 2026-09-05. Awaiting founder device review — not approved.** Five focused items, and one narrow authorised domain exception.
+**Implemented 2026-09-05. Founder-approved on real device 2026-09-07 as part of the 5.5 lock — see *Slice 5.5 — closed* above.** Five focused items, and one narrow authorised domain exception.
 
 **`T` no longer means two days.** A chip reading `T Left Thigh` could be Tuesday or Thursday, and `S` could be Saturday or Sunday. `compactWeekday` gives two letters only where one is ambiguous — **M · T · W · TH · F · S · SU** — used by the routine's site chips and the Injection Sites day badges. **The calendar headers were deliberately left alone**: seven columns in fixed positions are not ambiguous, and forcing `TH`/`SU` there would make the grid worse to read. Every caller speaks the full weekday name to VoiceOver; "T H" is not a word.
 

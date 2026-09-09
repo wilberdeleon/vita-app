@@ -208,6 +208,12 @@ The two languages **share no hex**, so neither can be read as the other, and a t
 
 **Cross-feature consistency, in general form.** When the same feature is represented in more than one place in VITA, **equivalent state uses equivalent semantics and presentation language**. This is not a demand for identical layouts: a compact widget may render less than a full screen, and context may change geometry and density. It may not change product meaning. The shipped examples are the Water compact module (Home + Fuel), the Peptides compact module (Home + Fuel), and the calorie summary (Fuel + Home's Fuel widget) — in each, one component or one derivation serves both surfaces.
 
+**Equivalent patterns reuse equivalent presentation.** Founder ruling, 5.6C, stated as a standing contract for all future VITA work: **the latest approved screens are the visual source of truth**, and a new screen must look like it belongs to them. If an equivalent pattern already exists — a row, a section heading, an input, a button, an empty state, a divider, a date chip, a disclosure — **reuse it**. Where reuse needs a small shared extraction, that is preferred over two visually divergent implementations; it is not a licence to build a universal framework.
+
+This does not flatten the features. Fuel keeps orange, food art and meal identity; Water keeps the vessel; Peptides keeps violet. What must stay coherent underneath is typography, spacing rhythm, surface philosophy, icon scale, button treatment, disclosure style, accessibility approach and motion restraint. *Same product, different feature.*
+
+**The first application: Fuel's food rows.** Search, Recents and Favorites render one `FoodListRow`, derived by one `foodRowView`, so the same food cannot read one way in search results and another in the list of things already eaten. The row *is* Fuel Home's meal row. Meal context on Add Food reads `mealAccent` — the same mapping the meal rows use — rather than defining a second badge.
+
 **A feature shown in two places is drawn by one component.** Founder ruling, 5.6B.3, after comparing Home and Fuel on device: Water and Peptides appeared on both screens with different objects, different copy and different footprints. **Equivalent data must produce equivalent presentation — the same, not similar.** The shape this takes:
 
 - **The drawing is shared.** `src/components/modules/` holds one compact module per feature that appears inside another feature's screen. Presentational only: a view model and callbacks in, no domain imports, no data hooks.
