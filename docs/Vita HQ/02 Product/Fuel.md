@@ -6,7 +6,7 @@
 
 ---
 
-## Sprint 5 slice 5.6C — adding food is one screen now (2026-09-09, awaiting founder device review)
+## ✅ Adding food is one screen now (approved on 2026-09-09)
 
 **Tapping *Add food* opens a search box, not a menu.** It used to be a list of five things to tap before you could type anything. Now the search field is right there, with **Scan** and **Manual** as two small buttons beside it.
 

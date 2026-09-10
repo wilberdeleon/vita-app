@@ -12,7 +12,7 @@
 | 2 | Dashboard | 5.3 | ✅ Approved and locked |
 | 3 | Peptides Home | 5.4 | ✅ Approved and locked |
 | 4 | Routine / Injection Sites | 5.5 | ✅ Approved and locked |
-| 5 | Fuel | 5.6 | 🟡 **Fuel Home (5.6B) approved and locked**; 5.6C Add/Search/Recent next |
+| 5 | Fuel | 5.6 | 🟡 **Fuel Home (5.6B) and Food Discovery (5.6C) approved and locked**; 5.6D scanner / Food Detail / Manual Entry next |
 | 6 | Tools / Settings | 5.7 | ⬜ Planned |
 | 7 | Shared interaction / motion | 5.8 | ⬜ Planned |
 | 8 | BMI | 5.9 | ⬜ Planned |
@@ -36,7 +36,7 @@ For each screen: what generic pattern is there now · what role it should take �
 
 ---
 
-# Slice 5.2 — Water — ✅ IMPLEMENTED 2026-09-03 (awaiting founder device review)
+# Slice 5.2 — Water — ✅ LOCKED (implemented 2026-09-03, founder-approved on device)
 
 *Outcome recorded below the original plan. Two things went differently and both are worth carrying: `/water/add` was **removed** rather than kept as a fallback, and the provider gained a `boolean` return so a failed write can never raise a success signal — see the Slice Tracker.*
 
@@ -327,7 +327,7 @@ Needed and not yet present: a range selector over site history — something lik
 
 **New section, added 2026-09-04.** Fuel was never part of Sprint 5's original plan — Sprint 2 built its functionality and its presentation predates the current identity. This slice brings the existing Fuel screens into the same product family.
 
-**Fuel Home is locked** — founder-approved on device 2026-09-09, across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4. The locked specification is `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*. **The plan below is kept as written**, because it records what Fuel was and what was expected of the migration; three of its expectations were overturned in the building and are corrected inline. **5.6C — Add / Search / Recent is next and has not started**; 5.6D covers the scanner internals, Food Detail and Manual Entry.
+**Fuel Home is locked** — founder-approved on device 2026-09-09, across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4. The locked specification is `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*. **The plan below is kept as written**, because it records what Fuel was and what was expected of the migration; three of its expectations were overturned in the building and are corrected inline. **5.6C — Fuel Food Discovery is locked too** — founder-approved on device 2026-09-09, covering Add Food, Search, Recent and Favorites. **5.6D covers the scanner, Food Detail and Manual Entry.**
 
 **Files:** `src/app/(vita)/fuel/` — `index.tsx` · `log.tsx` · `search.tsx` · `food/[id].tsx` · `scan.tsx` and the surfaces around them · `features/fuel/`
 

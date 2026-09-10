@@ -2049,7 +2049,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | ✅ Accepted subpass of 5.5 |
 | 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | ✅ Accepted subpass of 5.5 |
 | 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
-| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — **Fuel Home (5.6B) locked**; 5.6C Add/Search/Recent next |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — **Fuel Home (5.6B) and Food Discovery (5.6C) locked**; 5.6D scanner / Food Detail / Manual Entry next |
 | 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | ✅ Accepted foundation of 5.6B |
 | 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | ✅ Accepted foundation of 5.6B |
 | 5.6B | **Fuel Home Identity** | The whole Fuel Home experience, across 5.6B and its four subpasses | ✅ Approved — founder device review, 2026-09-09. **Fuel Home locked.** |
@@ -2057,7 +2057,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6B.2 | Fuel Home Final Hierarchy + Customize Fuel | Nutrition first; Water and Peptides as square modules; a Customize Fuel sheet for order, visibility and size | ✅ Accepted subpass of 5.6B |
 | 5.6B.3 | Fuel Final Visual Polish + Shared Water/Peptides Identity | One Water and one Peptides module shared by Home and Fuel, drawn with VITA's own vessel; the Day Strip hidden by default | ✅ Accepted subpass of 5.6B |
 | 5.6B.4 | Fuel Final Visual Cohesion + Shared Calorie Summary | One calorie summary behind Fuel and Home; macro category accents; meal rows regain their time of day | ✅ Accepted subpass of 5.6B |
-| 5.6C | Add / Search / Recent Identity Refresh | Add Food opens on search; one food-row family across Search, Recents and Favorites; Fuel Home's meal identity carried through | 🟡 Implemented — awaiting founder device review |
+| 5.6C | **Fuel Food Discovery** | Add Food opens on search; one food-row family across Search, Recents and Favorites; Fuel Home's meal identity carried through | ✅ Approved — founder device review, 2026-09-09. **Add / Search / Recent / Favorites locked.** |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2123,7 +2123,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 ### Slice 5.1A — Identity Prototype Visual Polish ✅
 
-**Implemented 2026-09-02. Awaiting founder device review — 5.1 is not formally locked until it passes.** Polish only: no concept was reinterpreted, no production screen was touched, and no dependency was added.
+**Implemented 2026-09-02. Founder-approved on real device as part of the 5.1 lock — see the 5.1 entry above.** Polish only: no concept was reinterpreted, no production screen was touched, and no dependency was added.
 
 **Quick-add controls — the primary item.** They were narrow vertical pills with the number stacked over a compressed `FL OZ`, wasting the horizontal room the sheet had. Now **four equal-width controls across the sheet**, number and unit on one baseline (`8 oz`), number dominant, comfortable padding, 56pt minimum height. `oz` replaces `FL OZ`: the sheet is titled Add Water and every amount is a volume, so the longer form bought precision nobody needed at the cost of the layout.
 
@@ -2183,7 +2183,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 ### Slice 5.2A — Water Custom Amount Keyboard Polish ✅
 
-**Implemented 2026-09-03. Awaiting founder verification.** Closeout polish on one item, plus one regression it uncovered.
+**Implemented 2026-09-03. Founder-approved on real device as part of the 5.2 lock — see the 5.2 entry above.** Closeout polish on one item, plus one regression it uncovered.
 
 **The Done key.** iOS's decimal pad has no return key, so a focused custom-amount field left no obvious way to put the keyboard away. `NumericKeyboardAccessory` **already existed** — built in Sprint 3 after founder device QA found the identical problem on the peptide calculator — so this is reuse, not a new component and not a new dependency. `AddWaterSheet` now uses `NumericField` and renders the bar once while the custom field is on screen.
 
@@ -2339,9 +2339,25 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
 
-### Slice 5.6C — Add / Search / Recent Identity Refresh 🟡
+### Slice 5.6C — Fuel Food Discovery — closed ✅
 
-**Implemented 2026-09-09. Awaiting founder device review — not approved.** The food-discovery screens brought into the language Fuel Home locked in. **No Fuel Home change, no Dashboard change, no scanner, Food Detail or Manual Entry work** — 5.6D owns those.
+**Founder-approved on a physical iPhone, 2026-09-09. Add Food, Search, Recent and Favorites are locked.** Approved implementation: `89b5773 — feat(sprint-5): unify fuel add and search`.
+
+The founder verified on device: Add Food · typing into Search · live search behaviour · clearing Search · Recent · Favorites · all four meal contexts · search-result selection · meal-context preservation · visual consistency with locked Fuel Home · the shared food-row presentation · Light and Dark.
+
+**The locked product invariants.** These are not restyleable by a later slice:
+
+- **`/fuel/add` is search-first.** It is *not* a menu asking anyone to choose between Search, Scan, Recent, Favorites and Manual before beginning. The hierarchy is fixed: header `Add food` → optional meal context → the search field → Scan and Manual as small neutral utilities → idle Recent and Favorites. Typing replaces the idle content with results.
+- **Meal context survives the whole flow** — Add Food, Search, Recent, Favorites, Scan, Manual, Food Detail and the log write. **One mapping**, `mealAccent`: Breakfast sunrise, Lunch sun, Dinner moon, Snacks utensils, at the identical accents Fuel Home uses. A later screen may not define its own.
+- **One food row.** Equivalent food state derives an equivalent display name, brand/serving detail, calorie string, food visual and spoken description — `foodRowView` and `FoodListRow`. A later slice may not reinvent a second row.
+- **One food visual**, in priority order: a usable real product image, then VITA's `foodArt` fallback. No screen may grow its own grey placeholder while the shared resolver can serve it.
+- **One search experience.** `/fuel/add` and `/fuel/search` may not become visually different search products. The foundation stays OFF + USDA, parallel provider search, failure isolation, dedupe, ranking, cache, normalized `VitaFood`. **No recommendation ranking, no health scoring.**
+- **Recent means recently used** — not frequently recommended, not suggested, not goal-ranked, not analytics. Add Food shows a compact subset; `/fuel/recent` is the full list, same row.
+- **Favorites are user-authored.** No automatic favorites, no algorithmic suggestions. Add Food shows a compact subset; `/fuel/favorites` is the full list, same row.
+
+**Data safety, confirmed at lock.** 5.6C changed no `FoodEntry` persistence, no food log, no Recent semantics, no Favorites persistence, no custom foods, no OFF or USDA adapter, no nutrition goals, and nothing in Water, Peptides, Dashboard or Fuel Home.
+
+The food-discovery screens were brought into the language Fuel Home locked in. **No Fuel Home change, no Dashboard change, no scanner, Food Detail or Manual Entry work** — 5.6D owns those.
 
 **The visual audit, before any code.** Against locked Fuel Home, Add Food and its neighbours were still Sprint 2:
 
@@ -2378,7 +2394,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Device coverage limit, stated plainly.** The Simulator MCP still refuses with the spurious Xcode error, so this environment can deep-link and screenshot but **cannot type**. The idle screen, the meal contexts, Light and Dynamic Type were inspected on device; **the search states — loading, results, no results, partial and total failure — were verified by tests only**, because reaching them needs a keyboard.
 
-**Still to verify — founder, on a real device:** whether Add Food now feels immediate, whether a food row in Search reads as the same object as a food row inside a meal on Fuel Home, whether the meal glyph on Add Food matches the one on the meal row it was launched from, and how the search states look with real network results.
+**Answered by the founder's device review.** Add Food reads as immediate; a food row in Search reads as the same object as a food row inside a meal on Fuel Home; the meal glyph on Add Food matches the meal row it was launched from; and the search states were exercised with real network results by the founder typing on the device, which is the coverage this environment could not produce.
 
 ### Slice 5.6B — closed ✅
 
