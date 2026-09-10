@@ -1,38 +1,49 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { Button, EmptyState, Screen, ScreenHeader, useToast } from '../../../../components/ui';
 import { FavoriteButton } from '../../../../features/fuel/components/FavoriteButton';
-import { FoodAvatar } from '../../../../features/fuel/components/FoodAvatar';
+import { FoodFacts } from '../../../../features/fuel/components/FoodFacts';
+import { FoodIdentity } from '../../../../features/fuel/components/FoodIdentity';
+import { MealContext } from '../../../../features/fuel/components/MealContext';
 import { NutritionDetailList } from '../../../../features/fuel/components/NutritionDetailList';
-import { NutritionSummary } from '../../../../features/fuel/components/NutritionSummary';
 import { PortionEditor } from '../../../../features/fuel/components/PortionEditor';
 import {
   editableServings,
   foodFromEntry,
-  formatPortion,
   nutritionForServing,
   readCachedFoodSync,
   traceBarcode,
   useNutrition,
   type MealSlot,
 } from '../../../../lib/nutrition';
-import { palette, spacing, typography } from '../../../../theme/tokens';
-import { useTheme } from '../../../../theme/ThemeProvider';
+import { palette, typography } from '../../../../theme/tokens';
 
 /**
  * Edits an existing log entry — how much was eaten and at which meal, never
  * what the food itself is.
  *
- * That distinction is the point. Changing this entry to two servings must
- * not rewrite "Protein Oats" to 600 kcal per serving for every future log;
- * the food definition is left completely alone, and only the entry's
- * mutable fields change.
+ * ## The distinction this screen exists to protect
  *
- * Everything below the hero is the same set of components Food Detail uses,
- * on purpose: the add flow and the edit flow must never drift apart on
- * serving arithmetic, and two editors would guarantee that they eventually
- * did.
+ * Changing this entry to two servings must not rewrite "Greek yogurt" to 280
+ * calories per serving for every future log, and must not touch any other
+ * entry of the same food. The food definition is left completely alone, and
+ * only the entry's mutable fields change: `id`, `logDate`, `loggedAt` and
+ * `foodRef` are never written, so this stays the same eating event — which
+ * will matter once sync and history exist. §47, and a test asserts it directly.
+ *
+ * The entry carries its **own snapshot**, so a logged meal stays openable and
+ * editable after its custom food is deleted or its cache entry evicted.
+ * Historical entries are historical.
+ *
+ * ## One family with Food Detail
+ *
+ * Everything below the header is the same set of components Food Detail uses,
+ * on purpose: the add flow and the edit flow must never drift apart on serving
+ * arithmetic, and two editors would guarantee that they eventually did. 5.6D
+ * extended that from the controls to the presentation — the same identity
+ * block, the same macro language, the same meal mark — so this reads as the
+ * screen it was logged from rather than as a form. §46.
  */
 export default function EditLogEntry() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,7 +51,6 @@ export default function EditLogEntry() {
 
   const { entries, findFood, updateEntry, removeEntry, restoreEntry } = useNutrition();
   const { showToast } = useToast();
-  const { surfaces } = useTheme();
 
   const entry = entries.find((candidate) => candidate.id === entryId);
 
@@ -62,9 +72,9 @@ export default function EditLogEntry() {
    *
    * `/fuel/entry/[id]` is a single route, so navigating from one entry to
    * another updates `params` without remounting and a `useState` initializer
-   * never re-runs — the second entry would inherit the first one's quantity
-   * and meal. Same defect class that made a scanned barcode show an earlier
-   * product on Food Detail.
+   * never re-runs — the second entry would inherit the first one's quantity and
+   * meal. Same defect class that made a scanned barcode show an earlier product
+   * on Food Detail.
    */
   useEffect(() => {
     if (!entry) return;
@@ -77,11 +87,11 @@ export default function EditLogEntry() {
   /**
    * What this screen is showing, from the stored entry itself.
    *
-   * Device QA reported the wrong product **here**, on a screen that reads
-   * the log rather than a provider. If the trace shows the scan resolved
-   * correctly and this snapshot is wrong, the fault is in the write; if the
-   * snapshot matches what the provider returned, the wrong identity arrived
-   * from upstream and was recorded faithfully.
+   * Device QA reported the wrong product **here**, on a screen that reads the
+   * log rather than a provider. If the trace shows the scan resolved correctly
+   * and this snapshot is wrong, the fault is in the write; if the snapshot
+   * matches what the provider returned, the wrong identity arrived from
+   * upstream and was recorded faithfully.
    */
   useEffect(() => {
     if (!entry) return;
@@ -103,7 +113,7 @@ export default function EditLogEntry() {
   if (!entry || !resolved || !serving || !preview) {
     return (
       <Screen>
-        <ScreenHeader title="Edit Entry" back />
+        <ScreenHeader title="Edit entry" back />
         <EmptyState
           icon="help-circle-outline"
           title="This entry is no longer in your log"
@@ -112,8 +122,6 @@ export default function EditLogEntry() {
       </Screen>
     );
   }
-
-  const subtitle = entry.brand ?? undefined;
 
   /**
    * Favoriting here acts on the *food*, never the eating event: it leaves
@@ -126,9 +134,7 @@ export default function EditLogEntry() {
     if (saving) return;
     setSaving(true);
 
-    // Only the user-selected mutable fields. `id`, `logDate`, `loggedAt`,
-    // and `foodRef` are untouched, so this stays the same eating event —
-    // which will matter once sync and history exist.
+    // Only the user-selected mutable fields.
     await updateEntry(entry.id, {
       meal,
       serving: {
@@ -161,15 +167,14 @@ export default function EditLogEntry() {
 
   return (
     <Screen>
-      <ScreenHeader title="Edit Entry" back action={<FavoriteButton food={food} />} />
+      <ScreenHeader title="Edit entry" back action={<FavoriteButton food={food} />} />
 
-      <View style={styles.hero}>
-        <FoodAvatar food={food} size={64} />
-        <Text style={[styles.name, { color: surfaces.text }]}>{entry.name}</Text>
-        {subtitle ? <Text style={[styles.subtitle, { color: surfaces.textTertiary }]}>{subtitle}</Text> : null}
-      </View>
+      {/* Follows the picker, so moving the entry to Dinner shows the moon. */}
+      <MealContext meal={meal} />
 
-      <NutritionSummary nutrition={preview} portionLabel={formatPortion(quantity, serving.label)} />
+      <FoodIdentity food={food} servingLabel={serving.label} />
+
+      <FoodFacts nutrition={preview} servingLabel={serving.label} quantity={quantity} />
 
       <PortionEditor
         servings={resolved.servings}
@@ -183,9 +188,21 @@ export default function EditLogEntry() {
 
       <NutritionDetailList nutrition={preview} />
 
-      <Button label="Save Changes" onPress={handleSave} disabled={saving} />
+      <Button label="Save changes" variant="neutral" onPress={handleSave} disabled={saving} />
 
-      <Pressable onPress={handleRemove} hitSlop={8} accessibilityRole="button">
+      {/*
+        * Destructive, in the red VITA reserves for exactly this, and quiet
+        * enough not to compete with Save. It gained an accessible name in
+        * 5.6D — it was an unlabelled pressable, so a screen reader announced
+        * the one irreversible control on the screen as "button". §48, §77.
+        */}
+      <Pressable
+        onPress={handleRemove}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={`Remove ${entry.name} from log`}
+        style={styles.removeRow}
+      >
         <Text style={[styles.remove, { color: palette.fat }]}>Remove from log</Text>
       </Pressable>
     </Screen>
@@ -193,24 +210,13 @@ export default function EditLogEntry() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginVertical: spacing.s,
-  },
-  name: {
-    ...typography.title,
-    marginTop: spacing.s,
-    textAlign: 'center',
-  },
-  subtitle: {
-    ...typography.caption,
-    textAlign: 'center',
+  removeRow: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   remove: {
     ...typography.captionMedium,
     fontWeight: '600',
     textAlign: 'center',
-    paddingVertical: spacing.s,
   },
 });

@@ -289,7 +289,8 @@ describe('adding a food to the log', () => {
     const tree = await mount(<FoodDetail />, fake.repository);
 
     expect(screen(tree)).toContain('Oats');
-    await act(async () => control(tree, /Add to Log/i)!.props.onPress());
+    // The primary action names its destination since 5.6D — `Add to Dinner`.
+    await act(async () => control(tree, /^Add to (Breakfast|Lunch|Dinner|Snacks)$/)!.props.onPress());
 
     const [stored] = fake.day();
     expect(stored.name).toBe('Oats');

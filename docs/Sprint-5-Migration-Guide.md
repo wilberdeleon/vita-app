@@ -12,7 +12,7 @@
 | 2 | Dashboard | 5.3 | ✅ Approved and locked |
 | 3 | Peptides Home | 5.4 | ✅ Approved and locked |
 | 4 | Routine / Injection Sites | 5.5 | ✅ Approved and locked |
-| 5 | Fuel | 5.6 | 🟡 **Fuel Home (5.6B) and Food Discovery (5.6C) approved and locked**; 5.6D scanner / Food Detail / Manual Entry next |
+| 5 | Fuel | 5.6 | 🟡 **Fuel Home (5.6B) and Food Discovery (5.6C) approved and locked**; 5.6D implemented, awaiting founder device review |
 | 6 | Tools / Settings | 5.7 | ⬜ Planned |
 | 7 | Shared interaction / motion | 5.8 | ⬜ Planned |
 | 8 | BMI | 5.9 | ⬜ Planned |
@@ -321,13 +321,25 @@ Needed and not yet present: a range selector over site history — something lik
 - **Provider identity is not row content.** A partial failure is a successful search; only a total failure is a state, and it never names a provider, a status code or an endpoint.
 - **The name is the one string that must never be cropped.** It is what the eye is scanning for. Cap the supporting line instead.
 
+**Patterns 5.6D added:**
+
+- **Characterize a screen before you redesign it — especially the one no test has ever rendered.** The scanner had zero coverage because `expo-camera` and a real permission prompt are not renderable in Jest. That is a reason to mock the camera, not a reason to ship a barcode flow no test has run. Mocking `CameraView` so it hands its own `onBarcodeScanned` back to the test makes a "scan" a real call through the screen's handler.
+- **The same measurement at two scopes needs two derivations, not one.** `calorieSummary` answers *how is the day going*; `foodFacts` answers *what is in this thing*. Merging them is how `Calories consumed` ends up over a food nobody has eaten.
+- **A view model that cannot express a goal cannot grow one.** `foodFacts` has no field for a target, a rail or a remainder, and a test asserts its exact key set. That is stronger than a rule in a document.
+- **Category colour must be read from the mapping, not copied into the screen.** A test that hardcodes `#D68FA5` passes when the mapping and the screen are wrong the same way. Assert that the screen agrees with the shared function.
+- **Green cannot be a macro colour, and `palette.protein` still is.** The tokens stayed green/amber/red for three slices while Fuel Home moved on, so Food Detail kept drawing a traffic light under an unlogged food. A token nobody re-pointed is not neutral — it is the old decision, still shipping.
+- **A disabled primary action answers nothing.** It is the control a person presses to find out what is wrong. Let it be pressed and show the problems; keep the guarantee in the handler, not in the `disabled` prop.
+- **A visible label is not an accessible name.** `TextField` drew its label as ordinary text with no relationship to the input, so every labelled field in the app was anonymous to VoiceOver. Found only because a characterization test could not locate a field by name.
+- **`findAll` walks composites; filtering to host nodes can return nothing at all.** Under this RN preset a `Pressable`'s `onPress` never reaches a host element, so an "every control is named" check passed on an empty list. Assert a non-zero count alongside the property.
+- **A preview fixture needs a stable id.** `createEntry` mints a random one, which is right for a log and wrong for a harness whose screen reads its id from the URL — the deep link becomes unwritable and changes every reload.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh
 
 **New section, added 2026-09-04.** Fuel was never part of Sprint 5's original plan — Sprint 2 built its functionality and its presentation predates the current identity. This slice brings the existing Fuel screens into the same product family.
 
-**Fuel Home is locked** — founder-approved on device 2026-09-09, across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4. The locked specification is `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*. **The plan below is kept as written**, because it records what Fuel was and what was expected of the migration; three of its expectations were overturned in the building and are corrected inline. **5.6C — Fuel Food Discovery is locked too** — founder-approved on device 2026-09-09, covering Add Food, Search, Recent and Favorites. **5.6D covers the scanner, Food Detail and Manual Entry.**
+**Fuel Home is locked** — founder-approved on device 2026-09-09, across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4. The locked specification is `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*. **The plan below is kept as written**, because it records what Fuel was and what was expected of the migration; three of its expectations were overturned in the building and are corrected inline. **5.6C — Fuel Food Discovery is locked too** — founder-approved on device 2026-09-09, covering Add Food, Search, Recent and Favorites. **5.6D — the scanner, Food Detail, Manual Entry and Edit Entry — is implemented and awaiting founder device review.**
 
 **Files:** `src/app/(vita)/fuel/` — `index.tsx` · `log.tsx` · `search.tsx` · `food/[id].tsx` · `scan.tsx` and the surfaces around them · `features/fuel/`
 

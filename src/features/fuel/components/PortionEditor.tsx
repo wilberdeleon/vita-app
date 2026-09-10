@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { Chip, SectionHeader, Stepper } from '../../../components/ui';
 import { formatQuantity, type MealSlot, type ServingOption } from '../../../lib/nutrition';
-import { palette, spacing, typography } from '../../../theme/tokens';
+import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { MealPicker } from './MealPicker';
 
@@ -24,14 +24,33 @@ const MAX_QUANTITY = 99;
  * The three decisions that turn a food definition into a log entry: which
  * serving, how many, which meal.
  *
- * Extracted as its own component because editing an existing entry needs
- * exactly the same three controls with exactly the same arithmetic. Building
- * this into the Food Detail screen would have guaranteed a second, subtly
- * different editor later.
+ * Shared by Food Detail and Edit Entry since slice 2.3, because editing an
+ * existing entry needs exactly the same three controls with exactly the same
+ * arithmetic, and building them into one screen would have guaranteed a
+ * second, subtly different editor later.
  *
- * The serving picker only appears when the food actually offers a choice.
- * Custom foods carry one serving today; provider foods will carry several,
- * and nothing here assumes either.
+ * ## What 5.6D changed, and what it did not
+ *
+ * **The controls are unchanged.** Same `Chip` for a serving, same `Stepper`
+ * for the amount, same steps, same bounds, same `formatQuantity`. Nothing
+ * about the model or the arithmetic moved.
+ *
+ * What changed is the surround. The quantity row was a bordered, filled card —
+ * a card inside a screen that was already three cards deep — and Fuel Home
+ * stopped speaking that way in 5.6B. It is now direct on the background under
+ * the same uppercase `SectionHeader` the rest of Fuel uses, separated by the
+ * same hairline. §66, §67, §68.
+ *
+ * ## Serving labels are the provider's, not ours
+ *
+ * A serving picker appears only when the food genuinely offers a choice; one
+ * serving is not a choice, and a picker with a single option is furniture. The
+ * labels are whatever the provider gave — `1 bar (68 g)`, `100 g` — and
+ * nothing here invents a serving a food does not have. §38.
+ *
+ * The row wraps rather than truncating: a provider label is a phrase, not a
+ * unit noun, and at accessibility text sizes the amount control drops beneath
+ * it instead of squeezing it. §70, §71.
  */
 export function PortionEditor({
   servings,
@@ -56,7 +75,7 @@ export function PortionEditor({
                 key={`${option.label}-${index}`}
                 label={option.label}
                 selected={index === servingIndex}
-                color={palette.primary}
+                accessibilityLabel={`Serving: ${option.label}`}
                 onPress={() => onServingChange(index)}
               />
             ))}
@@ -65,20 +84,23 @@ export function PortionEditor({
       ) : null}
 
       <View>
-        <SectionHeader title="Quantity" />
-        <View style={[styles.quantityRow, { borderColor: surfaces.border, backgroundColor: surfaces.card }]}>
+        <SectionHeader title="Amount" />
+        <View style={[styles.quantityRow, { borderTopColor: surfaces.border }]}>
           <View style={styles.servingLabel}>
-            <Text style={[styles.servingText, { color: surfaces.text }]} numberOfLines={1}>
-              {serving.label}
-            </Text>
+            {/*
+              * No line cap. The serving is a fact about what is being logged,
+              * and a provider phrase clipped to `1 bar (6…` is the same defect
+              * `FoodListRow` records for a food's name.
+              */}
+            <Text style={[styles.servingText, { color: surfaces.text }]}>{serving.label}</Text>
             <Text style={[styles.servingHint, { color: surfaces.textTertiary }]}>
-              {quantity === 1 ? 'Serving size' : `× ${formatQuantity(quantity)}`}
+              {quantity === 1 ? 'One serving' : `× ${formatQuantity(quantity)}`}
             </Text>
           </View>
           {/*
-            No suffix: the serving's own label sits to the left, and provider
-            labels are full phrases ("1 bar (68 g)") rather than unit nouns,
-            so appending one reads as "1 1 bar (68 g)".
+            No suffix on the stepper: the serving's own label sits to the left,
+            and provider labels are full phrases ("1 bar (68 g)") rather than
+            unit nouns, so appending one reads as "1 1 bar (68 g)".
           */}
           <Stepper
             value={quantity}
@@ -92,7 +114,7 @@ export function PortionEditor({
       </View>
 
       <View>
-        <SectionHeader title="Add to" />
+        <SectionHeader title="Meal" />
         <MealPicker value={meal} onChange={onMealChange} />
       </View>
     </View>
@@ -112,18 +134,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    // Wraps at accessibility text sizes rather than crushing the label — the
+    // same treatment Add Food's Scan/Manual row needed on device in 5.6C.
+    flexWrap: 'wrap',
     gap: spacing.m,
-    borderRadius: 20,
-    borderWidth: 1,
-    paddingVertical: spacing.m,
-    paddingHorizontal: spacing.l,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: spacing.m,
   },
   servingLabel: {
+    flexGrow: 1,
     flexShrink: 1,
+    flexBasis: 140,
     gap: 2,
   },
   servingText: {
     ...typography.bodyMedium,
+    fontSize: 17,
   },
   servingHint: {
     ...typography.caption,

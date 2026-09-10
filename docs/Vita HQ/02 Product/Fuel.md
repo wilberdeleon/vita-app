@@ -6,6 +6,32 @@
 
 ---
 
+## Sprint 5 slice 5.6D — the screens after you pick a food (2026-09-09, awaiting founder device review)
+
+**Picking a food, scanning one, or typing one in now looks like the rest of Fuel.** Before this, you went from a beautiful home screen through a clean search to a food screen that looked like it came from another app — a big centred photo over a stack of four cards, with green, amber and red dots under the nutrition.
+
+**The food looks like the row you tapped.** Same picture, same name, same brand line — one size up. A long name wraps in full instead of trailing off.
+
+**Protein, carbs and fat are the same three colours everywhere.** The violet, amber and steel blue you see on the Fuel home screen. **The old green/amber/red is gone** — three foods' worth of traffic light under something you have not even eaten yet read as a verdict, and VITA does not grade food.
+
+**Nothing here compares a food to your goals.** No "you have 400 calories left", no percentage, no target. This screen answers what is in the food and what portion you are logging. Your daily goals stay on the Fuel home screen.
+
+**The meal comes with you, and you can see it.** Add from Dinner and the moon is at the top of every screen — the scanner, the food, the manual form — the same mark the Dinner row uses. Change the meal and the mark changes with it.
+
+**The button says where the food is going.** *Add to Dinner*, not *Add to Log*.
+
+**The scanner just reads barcodes.** It says *Center the barcode in the frame*, and if it cannot find the product it says *Food not found* and offers search, manual entry or another scan. It never mentions a database name or an error code, and **it does not score or rate anything.**
+
+**Typing a food in by hand is grouped like a person thinks:** the food, the serving, then the nutrition. No example numbers in the boxes — an *e.g. 2000* in a calorie field is a suggestion, and VITA does not suggest what your numbers should be.
+
+**Editing something you already logged** now looks like the screen you logged it from, and changing it never rewrites the food itself or any other day.
+
+**Coming next in Fuel:** nothing — Fuel's visual refresh finishes here, pending review.
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6D.
+
+---
+
 ## ✅ Adding food is one screen now (approved on 2026-09-09)
 
 **Tapping *Add food* opens a search box, not a menu.** It used to be a list of five things to tap before you could type anything. Now the search field is right there, with **Scan** and **Manual** as two small buttons beside it.
@@ -20,7 +46,7 @@
 
 **Still no suggestions.** VITA does not recommend foods, rank them against your goals, or score them. Search results are search results.
 
-**Coming next in Fuel:** the scanner, food detail and manual entry screens.
+**What came next:** the scanner, food detail and manual entry screens — slice 5.6D, above.
 
 Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6C.
 
