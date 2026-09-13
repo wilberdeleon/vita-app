@@ -118,11 +118,11 @@ export default function FuelSetup() {
       <SectionHeader title="Nutrition" />
 
       <NumericField
-        label="Daily calorie goal (kcal)"
+        label="Daily calorie goal (cal)"
         placeholder="Optional"
         value={calories}
         onChangeText={setCalories}
-        accessibilityLabel="Daily calorie goal in kcal, optional"
+        accessibilityLabel="Daily calorie goal in Calories, optional"
       />
       <NumericField
         label="Daily protein goal (g)"

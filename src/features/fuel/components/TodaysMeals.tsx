@@ -152,9 +152,22 @@ export function TodaysMeals({ entries, onOpenEntry, onAddToMeal }: Props) {
                   >
                     <FoodAvatar food={entry} size={32} />
                     <View style={styles.rowText}>
-                      <Text style={[styles.name, { color: surfaces.text }]} numberOfLines={1}>
-                        {entry.name}
-                      </Text>
+                      {/*
+                        * No line limit on the name.
+                        *
+                        * 5.6E found this cropping a 74-character provider name to
+                        * one line — the identical defect the founder rejected on
+                        * `FoodListRow` in 5.6C (`Clif Bar Cool Mint…`). The same
+                        * food read in full in Search and as an ellipsis once it
+                        * was in a meal, which is exactly what the one-food-row
+                        * ruling forbids, and at accessibility text sizes it left
+                        * a few characters of the string a person is scanning for.
+                        *
+                        * The row is `minHeight`, never a fixed height, so it
+                        * simply grows. The supporting serving line below still
+                        * caps at one — a secondary line may; the subject may not.
+                        */}
+                      <Text style={[styles.name, { color: surfaces.text }]}>{entry.name}</Text>
                       <Text style={[styles.serving, { color: surfaces.textTertiary }]} numberOfLines={1}>
                         {formatPortion(entry.serving.quantity, entry.serving.label)}
                       </Text>

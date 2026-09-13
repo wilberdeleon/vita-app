@@ -21,7 +21,9 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * `Optional` says the only thing that needs saying.
  */
 const FIELDS: Record<GoalField, { label: string; unit: string }> = {
-  calories: { label: 'Daily calorie goal', unit: 'kcal' },
+  // `cal`, never `kcal` — the Design System's calorie-terminology rule, and
+  // the same label Fuel's own setup screen shows for this exact number.
+  calories: { label: 'Daily calorie goal', unit: 'cal' },
   protein: { label: 'Daily protein goal', unit: 'g' },
 };
 

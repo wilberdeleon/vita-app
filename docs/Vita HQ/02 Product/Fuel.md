@@ -26,7 +26,25 @@
 
 **Editing something you already logged** now looks like the screen you logged it from, and changing it never rewrites the food itself or any other day.
 
-**Coming next in Fuel:** one final pass over the whole feature end to end, checking that Home, discovery, the scanner, food detail, logging and editing all feel like one thing.
+**Coming next in Fuel:** nothing — the final end-to-end pass is done and waiting on review.
+
+---
+
+## Sprint 5 slice 5.6E — the final read-through (2026-09-13, awaiting founder device review)
+
+**A check of the whole feature rather than another redesign.** Every screen had already been approved, so the job was to walk Fuel end to end — home, adding, searching, scanning, food detail, logging, editing, setup — and look for anything that still disagreed with itself. Almost everything already matched, which is the answer we wanted.
+
+**Two things were wrong, and both are fixed.**
+
+A **long food name was cut off with an ellipsis** once it was logged into a meal on the Fuel home screen, even though the same food showed in full in search. Names now read in full in both places, and the row just gets taller.
+
+Both places you can set a **daily calorie goal** said `(kcal)`. VITA's copy says *Calories* or *cal*, never `kcal`. Fixed on both.
+
+**Two differences were looked at and deliberately left alone.** The *Save* button on Fuel's setup screen is a full pill while the buttons on food detail are rounded rectangles — but the pill is what Water and Peptides use, so changing Fuel would have made it the odd one out. And calories inside an expanded meal show as `210` rather than `210 cal`, because the meal's own total right above already says `cal`. Both are for you to rule on.
+
+**Still no scoring, grading or recommendations anywhere in Fuel.**
+
+Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6E.
 
 Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6D.
 

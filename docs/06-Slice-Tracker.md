@@ -2049,7 +2049,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | ✅ Accepted subpass of 5.5 |
 | 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | ✅ Accepted subpass of 5.5 |
 | 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
-| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — **Fuel Home (5.6B), Food Discovery (5.6C) and the Logging Flow (5.6D) locked**; 5.6E end-to-end audit next |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — **5.6B, 5.6C and 5.6D locked**; 5.6E end-to-end audit implemented, awaiting founder device review |
 | 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | ✅ Accepted foundation of 5.6B |
 | 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | ✅ Accepted foundation of 5.6B |
 | 5.6B | **Fuel Home Identity** | The whole Fuel Home experience, across 5.6B and its four subpasses | ✅ Approved — founder device review, 2026-09-09. **Fuel Home locked.** |
@@ -2059,6 +2059,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6B.4 | Fuel Final Visual Cohesion + Shared Calorie Summary | One calorie summary behind Fuel and Home; macro category accents; meal rows regain their time of day | ✅ Accepted subpass of 5.6B |
 | 5.6C | **Fuel Food Discovery** | Add Food opens on search; one food-row family across Search, Recents and Favorites; Fuel Home's meal identity carried through | ✅ Approved — founder device review, 2026-09-09. **Add / Search / Recent / Favorites locked.** |
 | 5.6D | **Fuel Logging Flow** | The screens *after* a food is chosen brought into the same Fuel language — one food identity, one macro identity, one meal identity | ✅ Approved — founder device review, 2026-09-13. **Scanner / Food Detail / Manual / Edit locked.** |
+| 5.6E | Fuel End-to-End Audit | The final Fuel quality gate — the whole feature audited as one connected experience; two defects fixed, nothing redesigned | 🟡 Implemented — awaiting founder device review |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2339,6 +2340,47 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 **Still to verify — founder, on a real device:** whether the shared square footprint reads right with real data in it, whether the hold-to-edit gesture feels natural and its 450ms delay is right, whether a drag-and-drop swap lands where expected, whether the jiggle is too subtle or about right, and whether the serif quote and the daypart colours land.
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
+
+### Slice 5.6E — Fuel End-to-End Audit 🟡
+
+**Implemented 2026-09-13. Awaiting founder device review — not approved.** The final Fuel quality gate: the whole feature audited as one connected experience rather than as a list of screens. **Not a redesign.** Every component had already passed founder device QA, so the brief was to preserve what works and change only what is demonstrably wrong.
+
+**Three runtime files changed. That is the whole diff**, and each is a defect with a written rule behind it.
+
+**Finding 1 — a logged food's name was cropped on Fuel Home.** `TodaysMeals` still carried `numberOfLines={1}` on the food name inside an expanded meal. 5.6C removed exactly that cap from `FoodListRow` after the founder saw `Clif Bar Cool Mint…` on device, and recorded the ruling that **the name is the one string that must never be cropped**. So the same food read in full in Search and as an ellipsis once it was inside a meal — the one-food-row invariant broken on the screen that owns the family — and at accessibility text sizes a 74-character provider name became a few characters of the string a person is scanning for. Proved by probe before it was touched: `numberOfLines = 1` on a real long name in a real expanded meal.
+
+**This is a change to a locked screen, enumerated as §22 requires.** It is one deleted prop on one `Text`. The row is `minHeight: 48` and has never had a fixed height, so it simply grows; the supporting serving line still caps at one, because a secondary line may truncate and the subject may not. Nothing at default text size with an ordinary name is affected.
+
+**Finding 2 — `kcal` reached user-facing copy, on two screens.** The Design System has said since Sprint 2 that **user-facing copy says `Calories`, or `cal` where a row is tight, never `kcal`** — presentation only, with internal fields and provider payloads unaffected. Both screens that edit the daily calorie goal — `/fuel/setup` and Settings → Nutrition Goals — labelled the same number `Daily calorie goal (kcal)`, and spoke it as "in kcal". Two screens editing one value, both breaking one written rule, and no test had ever looked at the copy. Now `(cal)`, matching the `(g)` and `(fl oz)` beside it.
+
+**Nothing else was changed, and that is the audit's result rather than its shortfall.** The flows, the identities and the derivations were already coherent:
+
+- **Calories agree across Fuel and Home in all four goal states** — no goal, under, exactly at, over — through the one `calorieSummary`. Already covered by four existing tests.
+- **Water and Peptides cannot disagree** between Fuel, Home and their own features: `compactWaterView` and `compactPeptidesView` consume labels **already formatted** by the shared hook the full screens render from. No test was added, because asserting that two consumers of one string are equal tests nothing.
+- **One `mealAccent`**, consumed by `TodaysMeals`, `MealContext`, `DayStrip` and `ScannerFrame`. **One `macroAccent`**, consumed by `NutritionContext`, `FoodFacts` and Manual Entry. **One `foodVisual`** behind every `FoodAvatar`. A repository-wide search found no second mapping, no meal-keyed record outside `mealAccent`, and no macro or meal hex used outside its own file.
+- **One numeric keyboard accessory**, inside `NumericField` itself. No screen declares a second.
+- **Recent is strictly chronological**, deduped by food identity, newest first — no frequency ranking, no recommendation, no goal-based ordering.
+- **`/fuel/setup` did not need a redesign.** It already uses the uppercase section headings, direct-on-background fields, the neutral primary and the sentence-case task header; `kcal` was its only violation. §35's condition for a visual correction was not otherwise met.
+- **No preview route is reachable from product navigation**, and all three harnesses are `__DEV__`-gated.
+
+**`/fuel/log`, audited again and deliberately left alone.** It still renders a `Card` and a filled-orange `+ Log Food`, and it is still reached by **nothing** — zero references in `src/`. §63's condition holds, so it stays for deep-link back-compatibility rather than being redesigned or deleted for tidiness. `LoggedEntryRow` is used only by it. A test now asserts the *unreachability* rather than the appearance: if a later slice surfaces the route, that test fails and the screen has to be brought into the locked language first.
+
+**Two differences examined and classified as intentional, not fixed.**
+
+- **The pill primary on `/fuel/setup`** (`borderRadius: 999`) against `radii.control` on `Button`. It looked like a Fuel inconsistency until the survey showed the pill is the established treatment on **locked** Water and Peptides CTAs, Peptides setup and Settings → Nutrition Goals. Changing Fuel Setup would make it diverge from four approved screens to match three. The product genuinely has two primary-action geometries; that is a shared button-vocabulary question for a later slice, not something an audit should settle unilaterally. **Reported, not changed.**
+- **Calories inside an expanded meal read `210`, not `210 cal`.** The meal's own subtotal directly above it says `210 cal · 1 food`, so the column is unambiguous, and the accessible label speaks "calories" either way. Defensible density in a dense collapsible list — §21 explicitly warns against forcing identical geometry where context differs. **Flagged for the founder to rule on rather than changed**, since it is a real difference and the call is theirs.
+
+**Home's daypart accents share three hexes with meal and macro accents** — `DAYPART_ACCENT_LIGHT` on Dashboard. Not duplication: a daypart is not a meal, the two sets are keyed differently and mean different things, and `macroAccent`'s own docstring warns against coupling the languages. Left alone deliberately.
+
+**Tests: nine added, and only where the audit found something uncovered.** Both defects had been invisible to all 2,215 existing tests. `FuelAudit.test.tsx` holds the name-crop invariant on both halves of the row family, the serving line's permission to cap, the row's freedom to grow, a no-`kcal` guard that reads **string literals across every screen** rather than one mounted route, and three standing checks — preview routes unreachable, `/fuel/log` unreferenced, one keyboard accessory. Nothing already covered elsewhere was restated.
+
+**Validation.** `npm test` **84 suites / 2224 tests** (2215 → 2224, +9) · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS export clean · **no dependency added or updated** · **no persistence key added, removed or touched** · no live network in any test.
+
+**Expo patch drift has widened and now deserves its own slice.** At 5.6D it was two packages; it is now **nine** — `expo`, `expo-blur`, `expo-camera`, `expo-constants`, `expo-font`, `expo-haptics`, `expo-linking`, `expo-router`, `expo-splash-screen`, each one patch behind. Doctor still reports 20/21 (one check failed). **`package.json` and the lockfile are byte-identical to `cf53a01`** — these are patch releases Expo published upstream in the intervening days, not drift this slice caused. §55 excludes upgrading them here. Worth noting that `expo-camera` is now in the list and the scanner depends on it.
+
+**Device coverage limit, stated plainly.** This environment can deep-link and screenshot but **cannot type, tap, drag or use a camera.** Fuel Home (dark, light, populated and empty), `/fuel/setup`, `/fuel/add`, `/fuel/recent` and the logging-flow preview states were inspected. **The name-crop fix could not be seen on device** — reaching an expanded meal needs a tap — so it was verified by probe and is now held by test. Every flow that needs touch, typing or the camera is founder work.
+
+**Still to verify — founder, on a real device:** whether a long food name inside an expanded meal now reads in full and the row grows cleanly; whether the bare calorie figure inside a meal should gain `cal`; whether the Setup pill versus the rounded-rect primary elsewhere bothers you; and the nine end-to-end flows, which need touch.
 
 ### Slice 5.6D — Fuel Logging Flow — closed ✅
 

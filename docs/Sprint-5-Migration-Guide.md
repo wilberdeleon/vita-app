@@ -12,7 +12,7 @@
 | 2 | Dashboard | 5.3 | ✅ Approved and locked |
 | 3 | Peptides Home | 5.4 | ✅ Approved and locked |
 | 4 | Routine / Injection Sites | 5.5 | ✅ Approved and locked |
-| 5 | Fuel | 5.6 | 🟡 **Fuel Home (5.6B), Food Discovery (5.6C) and the Logging Flow (5.6D) approved and locked**; 5.6E end-to-end audit next |
+| 5 | Fuel | 5.6 | 🟡 **5.6B, 5.6C and 5.6D approved and locked**; 5.6E end-to-end audit implemented, awaiting founder device review |
 | 6 | Tools / Settings | 5.7 | ⬜ Planned |
 | 7 | Shared interaction / motion | 5.8 | ⬜ Planned |
 | 8 | BMI | 5.9 | ⬜ Planned |
@@ -333,13 +333,22 @@ Needed and not yet present: a range selector over site history — something lik
 - **`findAll` walks composites; filtering to host nodes can return nothing at all.** Under this RN preset a `Pressable`'s `onPress` never reaches a host element, so an "every control is named" check passed on an empty list. Assert a non-zero count alongside the property.
 - **A preview fixture needs a stable id.** `createEntry` mints a random one, which is right for a log and wrong for a harness whose screen reads its id from the URL — the deep link becomes unwritable and changes every reload.
 
+**Patterns 5.6E added:**
+
+- **A locking ruling applies to the whole family, not to the file it was written on.** "The name is never cropped" was decided about `FoodListRow`; Fuel Home's own meal row kept its `numberOfLines={1}` for two slices because nobody re-read the *other* implementations of the same idea. When a rule is recorded, sweep every consumer of the pattern.
+- **Audit the copy, not only the components.** `kcal` survived on two screens editing one number, against a rule written in Sprint 2, because every test asserted behaviour and none read a label. A string-literal assertion over the whole source tree catches what a per-screen render never will.
+- **Classify a difference before fixing it.** Fuel Setup's pill primary looked like a Fuel inconsistency; the survey showed the pill is what four *locked* screens use, and "fixing" Fuel would have made it the odd one out. Count the surfaces before assuming the minority is wrong.
+- **Two consumers of one pre-formatted string cannot disagree.** The Fuel/Home/Water agreement needs no test because `compactWaterView` takes labels the shared hook already produced. Architecture that makes a bug impossible beats a test that checks it did not happen.
+- **Prove a defect before touching a locked screen, and prove it the way the screen actually renders.** The name crop was confirmed by a throwaway probe that expanded a real meal on a real `Fuel` mount, not inferred from reading the JSX.
+- **An audit that changes almost nothing is a passing audit.** Three runtime files, two of them one-word copy fixes. The temptation on a slice named "polish" is to find work; the discipline is to report that the flow was already coherent.
+
 ---
 
 # Slice 5.6 — Fuel Identity Refresh
 
 **New section, added 2026-09-04.** Fuel was never part of Sprint 5's original plan — Sprint 2 built its functionality and its presentation predates the current identity. This slice brings the existing Fuel screens into the same product family.
 
-**Fuel Home is locked** — founder-approved on device 2026-09-09, across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4. The locked specification is `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*. **The plan below is kept as written**, because it records what Fuel was and what was expected of the migration; three of its expectations were overturned in the building and are corrected inline. **5.6C — Fuel Food Discovery is locked too** — founder-approved on device 2026-09-09, covering Add Food, Search, Recent and Favorites. **5.6D — the Fuel Logging Flow is locked too** — founder-approved on device 2026-09-13, covering the scanner, Food Detail, Manual Entry and Edit Entry. **5.6E is the end-to-end Fuel audit.**
+**Fuel Home is locked** — founder-approved on device 2026-09-09, across 5.6A, 5.6A.1, 5.6B and subpasses 5.6B.1–5.6B.4. The locked specification is `docs/06-Slice-Tracker.md` → *Slice 5.6B — closed*. **The plan below is kept as written**, because it records what Fuel was and what was expected of the migration; three of its expectations were overturned in the building and are corrected inline. **5.6C — Fuel Food Discovery is locked too** — founder-approved on device 2026-09-09, covering Add Food, Search, Recent and Favorites. **5.6D — the Fuel Logging Flow is locked too** — founder-approved on device 2026-09-13, covering the scanner, Food Detail, Manual Entry and Edit Entry. **5.6E — the end-to-end audit — is implemented and awaiting founder device review.**
 
 **Files:** `src/app/(vita)/fuel/` — `index.tsx` · `log.tsx` · `search.tsx` · `food/[id].tsx` · `scan.tsx` and the surfaces around them · `features/fuel/`
 
