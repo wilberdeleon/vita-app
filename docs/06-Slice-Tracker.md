@@ -2049,7 +2049,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.5B | Historical Month Loading + Final Routine/Month Polish | Real history beyond the warm window, day selection, month summary, unambiguous weekday labels | ✅ Accepted subpass of 5.5 |
 | 5.5C | Routine Setup + Peptides Activity Finalization | Preparation-first setup with an *Already prepared* path, the calculator behind a disclosure, a peptide descriptor, the Done key made an input-system behaviour, and a month across all routines | ✅ Accepted subpass of 5.5 |
 | 5.5D | Weekly Swipe Navigation + Routine-Aware Unit Conversion | The week strip dragged like a timeline, and a calculator whose headline is the amount the user entered | ✅ Accepted subpass of 5.5 |
-| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — **Fuel Home (5.6B) and Food Discovery (5.6C) locked**; 5.6D implemented, awaiting founder device review |
+| 5.6 | **Fuel Identity Refresh** | Existing Fuel screens into the same product family — presentation only, **not an architecture rewrite** | 🟡 In progress — **Fuel Home (5.6B), Food Discovery (5.6C) and the Logging Flow (5.6D) locked**; 5.6E end-to-end audit next |
 | 5.6A | Fuel Characterization + Goal Truth | A real Fuel test baseline, and the end of invented nutrition goals | ✅ Accepted foundation of 5.6B |
 | 5.6A.1 | Goal Model Finalization | Goals narrowed to calories and protein; carbs and fat are totals; first-time setup made discoverable from Fuel | ✅ Accepted foundation of 5.6B |
 | 5.6B | **Fuel Home Identity** | The whole Fuel Home experience, across 5.6B and its four subpasses | ✅ Approved — founder device review, 2026-09-09. **Fuel Home locked.** |
@@ -2058,7 +2058,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6B.3 | Fuel Final Visual Polish + Shared Water/Peptides Identity | One Water and one Peptides module shared by Home and Fuel, drawn with VITA's own vessel; the Day Strip hidden by default | ✅ Accepted subpass of 5.6B |
 | 5.6B.4 | Fuel Final Visual Cohesion + Shared Calorie Summary | One calorie summary behind Fuel and Home; macro category accents; meal rows regain their time of day | ✅ Accepted subpass of 5.6B |
 | 5.6C | **Fuel Food Discovery** | Add Food opens on search; one food-row family across Search, Recents and Favorites; Fuel Home's meal identity carried through | ✅ Approved — founder device review, 2026-09-09. **Add / Search / Recent / Favorites locked.** |
-| 5.6D | Scanner / Food Detail / Manual Entry Identity Refresh | The screens *after* a food is chosen brought into the same Fuel language — one food identity, one macro identity, one meal identity | 🟡 Implemented — awaiting founder device review |
+| 5.6D | **Fuel Logging Flow** | The screens *after* a food is chosen brought into the same Fuel language — one food identity, one macro identity, one meal identity | ✅ Approved — founder device review, 2026-09-13. **Scanner / Food Detail / Manual / Edit locked.** |
 | 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
 | 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
@@ -2340,9 +2340,44 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
 
-### Slice 5.6D — Scanner / Food Detail / Manual Entry Identity Refresh 🟡
+### Slice 5.6D — Fuel Logging Flow — closed ✅
 
-**Implemented 2026-09-09. Awaiting founder device review — not approved.** The screens *after* a food is chosen, brought into the language Fuel Home and Add Food locked in. **No Fuel Home change, no Dashboard change, no Water or Peptides change, and no change to Add Food, Search, Recent or Favorites** — those are locked, and the diff proves it.
+**Founder-approved on a physical iPhone, 2026-09-13. The scanner, Food Detail, Manual Entry and Edit Entry are locked.** Approved implementation: `cf53a01 — feat(sprint-5): unify fuel logging flow`.
+
+The founder verified on device: the scanner and real camera behaviour · the barcode flow · Food Detail · Manual Entry · Edit Entry · meal-context continuity · macro visual consistency · food visual consistency · serving and quantity behaviour · logging · the current Fuel visual language.
+
+**The approved Food Detail hierarchy, as reviewed.** This exact direction is approved and is not to be redesigned without a demonstrated defect:
+
+```
+Dinner                        ← shared MealContext, mealAccent
+Greek yogurt                  ← shared FoodIdentity, foodVisual resolver
+Fage · 1 container (170 g)
+1 CONTAINER (170 G)           ← the portion these figures describe
+140  Calories                 ← this serving, never "Calories consumed"
+PROTEIN   CARBS   FAT         ← macroAccent; accent on the label only
+18 g      6 g     4 g         ← values neutral and high-contrast
+AMOUNT
+1 container (170 g)  − 1 +
+MEAL
+Breakfast  Lunch  Dinner  Snacks
+Add to Dinner                 ← neutral primary, names its destination
+```
+
+**The locked product invariants.** Not restyleable by a later slice:
+
+- **The scanner is barcode acquisition, and only that.** Permission, capture, normalization to GTIN-14, lookup, duplicate-scan suppression, success into the shared Food Detail, not-found, lookup failure, retry, Search and Manual fallbacks, and meal-context preservation. It does **not** score, grade, rate, recommend alternatives or analyse ingredient risk. No VITA Score, and it is not becoming Yuka.
+- **One macro identity**, `macroAccent`: protein a restrained dusk violet, carbs warm amber, fat cool steel blue, values neutral. Colour means **category**, never good, bad, healthy, unhealthy, warning, success, over or under. No Fuel screen may choose another mapping.
+- **One meal identity**, `mealAccent`: Breakfast sunrise, Lunch sun, **Dinner moon**, Snacks utensils — the same glyph, accent and semantics on Fuel Home, Add Food, the scanner, Food Detail, Manual Entry and Edit Entry. No local duplicates.
+- **One food visual**, `foodVisual` via `FoodAvatar`: a usable real image, then VITA's `foodArt`. No separate detail or scanner placeholder system.
+- **Manual Entry is the manual equivalent of Food Detail** — task header, shared meal context, direct grouped Food / Serving / Nutrition, the same macro identity, `TextField`/`NumericField` conventions, concise inline validation, a neutral Save, and no schema jargon.
+- **Manual validation, explicitly approved.** Save may stay enabled on an incomplete form. Pressed with invalid or missing data it shows inline errors, **persists nothing**, and does not navigate as though it succeeded. The safety invariant is that invalid data never reaches storage — *not* that the button is disabled. This is not to be reverted because an older characterization test expected a disabled control.
+- **Edit Entry is the same visual family**, loads the `FoodEntry` snapshot, edits amount, serving and meal, saves, and deletes. Editing one entry never mutates the provider or catalog `VitaFood`, another historical entry, or any other snapshot.
+- **The primary action is neutral** and names its destination. No return to a full-width orange slab; Fuel orange is an earned accent.
+- **`TextField` labels are programmatically connected to their inputs** — a shared accessibility correction made in 5.6D, not to be reverted.
+
+**Data safety, confirmed at lock.** 5.6D changed no `VitaFood` schema, no `FoodEntry` schema, no food-log architecture, no OFF or USDA adapter, no ranking, dedupe or search cache, no Recent or Favorites semantics, no nutrition goals, and nothing in Water, Peptides, Dashboard, Fuel Home or the Add/Search presentation. **No persistence key was added.**
+
+The screens *after* a food is chosen were brought into the language Fuel Home and Add Food locked in. **No Fuel Home change, no Dashboard change, no Water or Peptides change, and no change to Add Food, Search, Recent or Favorites** — those are locked, and the diff proves it.
 
 **Characterization first, and it was overdue.** The scanner had **no test at all**, and Manual Entry had none; Food Detail and Edit Entry had four between them. 61 tests were written against the four screens **as they stood at `c12c623`**, before a line of presentation moved — `expo-camera` replaced by a view that hands the scan callback back to the test, and the barcode lookup stubbed at the provider registry, so a "scan" runs through the screen's own handler and **no test reaches Open Food Facts or USDA**. Everything the redesign then had to keep true is in that file: what is written, which meal it lands in, that a code held in frame fires exactly one lookup, and what a stored entry may change.
 
@@ -2385,7 +2420,7 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Device coverage limit, stated plainly.** This environment can deep-link and screenshot but **cannot type, tap or use a camera**. Dark, Light and accessibility-extra-large were inspected on the simulator across Food Detail, Manual Entry, Edit Entry and the scanner fixtures. **The live camera, a real barcode scan, a real lookup, typing into Manual Entry and pressing Save were verified by tests only.**
 
-**Still to verify — founder, on a real device:** whether the flow from Fuel Home through Add Food to Food Detail reads as one continuous feature; whether Dinner's moon is the same mark on all five screens; whether the macro colours are the same three on Fuel Home, Food Detail and Manual Entry; a real barcode resolving through the camera; and whether Manual Entry's numeric Done bar behaves.
+**Answered by the founder's device review.** The flow from Fuel Home through Add Food to Food Detail reads as one continuous feature; Dinner's moon is the same mark on all five screens; the macro colours are the same three on Fuel Home, Food Detail and Manual Entry; a real barcode resolves through the real camera into the shared Food Detail; and Manual Entry's numeric Done bar behaves. The founder exercised the camera, the keyboard and the touch targets this environment cannot.
 
 ### Slice 5.6C — Fuel Food Discovery — closed ✅
 

@@ -6,7 +6,7 @@
 
 ---
 
-## Sprint 5 slice 5.6D — the screens after you pick a food (2026-09-09, awaiting founder device review)
+## ✅ The screens after you pick a food (approved on 2026-09-13)
 
 **Picking a food, scanning one, or typing one in now looks like the rest of Fuel.** Before this, you went from a beautiful home screen through a clean search to a food screen that looked like it came from another app — a big centred photo over a stack of four cards, with green, amber and red dots under the nutrition.
 
@@ -26,7 +26,7 @@
 
 **Editing something you already logged** now looks like the screen you logged it from, and changing it never rewrites the food itself or any other day.
 
-**Coming next in Fuel:** nothing — Fuel's visual refresh finishes here, pending review.
+**Coming next in Fuel:** one final pass over the whole feature end to end, checking that Home, discovery, the scanner, food detail, logging and editing all feel like one thing.
 
 Engineering detail: repo `docs/06-Slice-Tracker.md` → slice 5.6D.
 
@@ -189,7 +189,7 @@ The founders' read on Fuel as built today: **too basic, too bulky, overusing lar
 
 **Same feature architecture, significantly more refined presentation** — this is explicitly *not* a functional redesign. The slice evaluates: information density · typography scale · number sizing · spacing · card sizing · empty space · hierarchy · search-result density · Food Detail density · logging confirmation · meal rows · Food Log presentation. The governing principle, recorded on [[Design Bible]]: **size communicates importance, not availability.**
 
-**Built for the Fuel landing screen 2026-08-21 — pending founder review** (slice 2.9; the other Fuel surfaces still to come). Fuel now opens as a daily nutrition command centre rather than a menu of cards: a calorie ring beside the Calories-remaining headline with macro bars below · a prominent **Log Food** action beside **Scan Barcode** · **Today's Meals** as four rows in one panel, where a logged meal shows its actual foods (serving, calories, favorite heart) and an untouched meal is a single compact row · a `+ Add food` per meal that opens the existing logging flow with that meal already selected · Hydration and Peptides reduced to half-width secondary modules. Two things a person previously had to leave Fuel to see — what they ate, and how to log something — are now on the screen itself.
+**Superseded — historical record of slice 2.9 (2026-08-21).** Everything described in this paragraph was replaced by the Sprint 5 Fuel refresh: the calorie ring, the filled *Log Food* and *Scan Barcode* cards and the Today's Meals panel are all gone. Read the ✅ sections above for the current product. Fuel now opens as a daily nutrition command centre rather than a menu of cards: a calorie ring beside the Calories-remaining headline with macro bars below · a prominent **Log Food** action beside **Scan Barcode** · **Today's Meals** as four rows in one panel, where a logged meal shows its actual foods (serving, calories, favorite heart) and an untouched meal is a single compact row · a `+ Add food` per meal that opens the existing logging flow with that meal already selected · Hydration and Peptides reduced to half-width secondary modules. Two things a person previously had to leave Fuel to see — what they ate, and how to log something — are now on the screen itself.
 
 Two decisions worth carrying: **Snacks is neutral sage, not the reference's purple** (purple is the locked Atlas/peptide domain color and the Peptides module sits just below), and **`kcal` is gone from user-facing copy** in favor of *Calories* / *cal* app-wide. Both flagged for founder confirmation. Detail: repo `docs/06-Slice-Tracker.md`, `docs/05-Design-System.md`.
 
