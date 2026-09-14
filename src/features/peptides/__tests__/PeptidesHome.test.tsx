@@ -35,6 +35,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
+import { Ionicons } from '@expo/vector-icons';
 import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -53,6 +54,7 @@ import {
 } from '../../../lib/peptides';
 import { WaterProvider } from '../../../lib/water/state/WaterProvider';
 import type { WaterRepository } from '../../../lib/water/data/WaterRepository';
+import { palette } from '../../../theme/tokens';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 const TODAY = todayLogDate();
@@ -420,6 +422,75 @@ describe('with no routines at all', () => {
 
     await press(tree, 'Add to Routine');
     expect(mockPush).toHaveBeenCalledWith('/peptides/catalog');
+  });
+
+  it('says what a routine would give you, not just that there is none', async () => {
+    /*
+     * The copy was `Add a peptide to start tracking it.` — primitive, and
+     * vague about what tracking means. §9 asked for a concise factual line
+     * that names what the feature does.
+     */
+    const tree = await mount(repositoryWith([]).repository);
+    expect(screen(tree)).toContain('Add a routine to start tracking your schedule and activity.');
+  });
+
+  it('wears the same Peptides mark the approved compact module draws', async () => {
+    /*
+     * The founder's rejection was that the empty screen had almost no
+     * Peptides identity beyond a giant button. The mark is the fix, and it is
+     * **the existing one** — `medical` in `palette.peptide`, the glyph the
+     * compact module on Home and Fuel already uses — not a new logo.
+     */
+    const tree = await mount(repositoryWith([]).repository);
+    const marks = tree.root
+      .findAllByType(Ionicons)
+      .filter((node) => node.props.name === 'medical' && node.props.color === palette.peptide);
+
+    expect(marks.length).toBeGreaterThan(0);
+    // Larger than an inline icon, and not a hero illustration.
+    expect(Number(marks[0].props.size)).toBeGreaterThanOrEqual(24);
+    expect(Number(marks[0].props.size)).toBeLessThanOrEqual(40);
+  });
+
+  it('hides the mark from assistive technology — the header already says Peptides', async () => {
+    const tree = await mount(repositoryWith([]).repository);
+    const orb = tree.root.findAll(
+      (node) =>
+        node.props?.accessibilityElementsHidden === true &&
+        node.findAllByType(Ionicons).some((icon) => icon.props.name === 'medical'),
+    );
+    expect(orb.length).toBeGreaterThan(0);
+  });
+
+  it('no longer floods the screen with a saturated violet slab', async () => {
+    /*
+     * The founder's explicit rejection. The action is the shared neutral
+     * primary now — the treatment `Button variant="neutral"` gives every
+     * other primary in VITA — so violet survives only on the mark.
+     *
+     * Asserted as "the control is not filled with the feature colour" rather
+     * than by naming a hex, so it keeps holding if the neutral fill changes.
+     */
+    const tree = await mount(repositoryWith([]).repository);
+    const cta = control(tree, 'Add to Routine');
+    expect(cta).toBeDefined();
+
+    const fills = [cta.props.style]
+      .flat(4)
+      .filter(Boolean)
+      .map((style: { backgroundColor?: string }) => String(style?.backgroundColor ?? ''));
+    expect(fills).not.toContain(palette.peptide);
+  });
+
+  it('invents no routine, no schedule and no dose to fill the space', async () => {
+    // §8: an empty state may not draw a fake week, a fake completion or a
+    // fake amount. Nothing on this screen may imply a routine exists.
+    const tree = await mount(repositoryWith([]).repository);
+    const rendered = screen(tree);
+
+    for (const forbidden of ['Taken', 'Skipped', 'No response', 'mg', 'Scheduled', 'scheduled today']) {
+      expect(rendered).not.toContain(forbidden);
+    }
   });
 
   it('offers exactly one way to add, wherever it is', async () => {

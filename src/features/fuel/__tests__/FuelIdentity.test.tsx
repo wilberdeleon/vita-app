@@ -235,16 +235,82 @@ describe('Home and Fuel', () => {
 
     const home = await mount(<Dashboard />);
     const homeText = screen(home);
+    /*
+     * Home carries all three facts as statistics — updated 2026-09-13.
+     *
+     * This test used to assert Home did **not** show the goal, on the
+     * reasoning that a fourth figure stops a compact widget being compact.
+     * The founder's device review overturned that: the widget is taller now,
+     * and consumed / remaining / goal are three statistics in descending
+     * weight rather than one sentence. What still differs between the screens
+     * is the *treatment*, not the facts.
+     */
     expect(homeText).toContain('616 cal consumed');
     expect(homeText).toContain('884 left');
-    // The goal is carried by the remainder and the rail; a fourth figure is
-    // what stops a compact widget being compact.
-    expect(homeText).not.toContain('1,500 goal');
+    expect(homeText).toContain('1,500 goal');
+    /* And never as a run-on sentence — the shape that truncated on device. */
+    expect(homeText).not.toMatch(/616 cal consumed · 884 left/);
     await act(async () => home.unmount());
     mounted = null;
 
     const fuel = await mount(<Fuel />);
     expect(screen(fuel)).toContain('884 left · 1,500 goal');
+  });
+
+  it('sets Home’s three facts as statistics, never as a sentence', async () => {
+    /*
+     * The 2026-09-13 founder correction, and the structural property behind
+     * it. Home used to render `180 cal consumed · 1,320 left · 1 of 4 meals`
+     * inside **one** `Text` capped at one line, which truncated on a real
+     * device. The data was right; the hierarchy was prose.
+     *
+     * Each fact is its own node now, so none can push another off the screen —
+     * and this asserts the absence of the combined node rather than the
+     * presence of a layout, because the combined node is what broke.
+     */
+    await seed({ calories: 616, goals: { calories: 1500 } });
+    const home = await mount(<Dashboard />);
+
+    const combined = home.root
+      .findAllByType(Text)
+      .map((node) => String(node.props.children ?? ''))
+      .filter((text) => /cal consumed.*left|left.*cal consumed|consumed ·/.test(text));
+    expect(combined).toEqual([]);
+
+    /* And the meal count is gone from the widget entirely — §26. */
+    expect(screen(home)).not.toMatch(/\d+ of \d+ meals/);
+  });
+
+  it('keeps every Home calorie figure neutral — no colour is a verdict', async () => {
+    /*
+     * §23. Fuel orange is the flame and the rail. A green remainder would read
+     * as approval and a red one as an error, and VITA has no opinion about
+     * either number.
+     */
+    await seed({ calories: 616, goals: { calories: 1500 } });
+    const home = await mount(<Dashboard />);
+
+    const figures = home.root
+      .findAllByType(Text)
+      .filter((node) => /^[\d,]+$/.test(String(node.props.children ?? '')));
+    expect(figures.length).toBeGreaterThan(0);
+
+    for (const node of figures) {
+      const colours = [node.props.style]
+        .flat(4)
+        .filter(Boolean)
+        .map((style: { color?: string }) => String(style?.color ?? ''));
+      expect(colours).not.toContain(palette.protein);
+      expect(colours).not.toContain(palette.fat);
+    }
+  });
+
+  it('says Goal reached on Home too, rather than nothing left', async () => {
+    await seed({ calories: 1500, goals: { calories: 1500 } });
+    const home = await mount(<Dashboard />);
+
+    expect(screen(home)).toContain('Goal reached');
+    expect(screen(home)).not.toMatch(/\b0 left\b/);
   });
 
   it('make no claim about a target on Home when none is set', async () => {

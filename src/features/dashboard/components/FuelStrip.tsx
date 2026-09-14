@@ -65,23 +65,26 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
    */
   const calories = calorieSummary(today, today.isLoading);
 
-  /* `616 cal consumed` — unambiguous at a glance, which is the whole fix. */
-  const value = calories.compact;
-
-  const meals = today.isLoading
-    ? ''
-    : today.isEmpty
-      ? 'No meals'
-      : `${today.mealsLoggedCount} of ${today.totalMealSlots} meals`;
-
   /*
-   * What is left, then the meals. The goal itself is not repeated: it is
-   * already carried by the remainder and the rail, and a fourth figure is
-   * what makes a compact widget stop being compact.
+   * **Statistics, not a sentence.**
+   *
+   * This used to be `[calories.compactDetail, meals].join(' · ')` rendered
+   * inside the same `Text` as `calories.compact`, which produced
+   * `180 cal consumed · 1,320 left · 1 of 4 meals` under `numberOfLines={1}`
+   * and an ellipsis on a real device. The founder's ruling was that the data
+   * was right and the hierarchy was wrong: consumed, remaining and the goal
+   * are three facts of descending importance, and prose flattens them into
+   * one.
+   *
+   * So each is read separately and set separately. Nothing here is
+   * concatenated, nothing is capped to a line count, and there is no
+   * `adjustsFontSizeToFit` anywhere in this file any more.
+   *
+   * **The meal count is gone.** It was the third clause in the sentence that
+   * broke, it competed with the figures the widget exists for, and Fuel Home
+   * already lists every meal. The founder's §26 default was to omit it.
    */
-  const detail = [calories.compactDetail, meals].filter(Boolean).join(' · ');
-
-  const spoken = `Fuel. ${calories.spoken}${meals ? ` ${meals} logged.` : ''}`;
+  const spoken = `Fuel. ${calories.spoken}`;
 
   /* Decorative — the module states the same figures in words. Rendered only
      against a real target: a bar with nothing to fill is the "empty track
@@ -100,6 +103,23 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
         />
       </View>
     );
+
+  /**
+   * One statistic — the figure, then what it counts.
+   *
+   * The figure is the subject and stays neutral and high-contrast; the label
+   * under it is quiet. No value on this widget is coloured: green would read
+   * as approval of a number VITA has no opinion about, and red as an error.
+   * Fuel's orange lives on the flame and the rail.
+   */
+  const stat = (figure: string, label: string, wide: boolean) => (
+    <View style={wide ? styles.stat : styles.statSquare}>
+      <Text style={[wide ? styles.statFigure : styles.statFigureSquare, { color: surfaces.text }]}>
+        {figure}
+      </Text>
+      <Text style={[styles.statLabel, { color: surfaces.textTertiary }]}>{label}</Text>
+    </View>
+  );
 
   const logAction = (
     <PressableScale
@@ -132,16 +152,25 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
           <Text style={[styles.label, { color: surfaces.textSecondary }]}>Fuel</Text>
         </View>
 
+        {/*
+          * The same hierarchy as wide, stacked for the narrower footprint —
+          * consumed, then what is left, then the goal. Not the wide layout
+          * squeezed: the two statistics sit over each other rather than
+          * beside, because 164pt cannot hold two figures side by side.
+          *
+          * `adjustsFontSizeToFit` is gone. It silently shrank the figure
+          * instead of letting the layout adapt, which is what §34 forbids and
+          * what made the square quietly illegible at large text.
+          */}
         <View style={styles.squareBody}>
-          <Text style={[styles.squareValue, { color: surfaces.text }]} numberOfLines={2} adjustsFontSizeToFit>
-            {value}
-          </Text>
-          <Text
-            style={[styles.squareDetail, { color: surfaces.textTertiary }]}
-            numberOfLines={compact ? 2 : 1}
-          >
-            {detail}
-          </Text>
+          {stat(calories.figure, 'cal consumed', false)}
+          {calories.statFigure && calories.statLabel ? (
+            <Text style={[styles.squareDetail, { color: surfaces.textTertiary }]}>
+              {calories.statFigure} {calories.statLabel}
+            </Text>
+          ) : calories.state === 'met' ? (
+            <Text style={[styles.squareDetail, { color: surfaces.textTertiary }]}>Goal reached</Text>
+          ) : null}
         </View>
 
         {/* Decorative, and the first thing to give way to larger text. */}
@@ -151,6 +180,15 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
     );
   }
 
+  /*
+   * Wide — the shipped default, and the shape the founder reviewed.
+   *
+   * Identity and the action on the top row; the statistics beneath them, with
+   * room to be read. It is taller than the 64pt bar it replaces, which the
+   * founder authorised explicitly: the old height was the reason three facts
+   * had to be squeezed onto one line. Quick Tools and Today's Schedule simply
+   * sit lower now, and neither was changed to make that happen.
+   */
   return (
     <PressableScale
       style={[styles.wide, { borderColor: surfaces.border }]}
@@ -160,26 +198,38 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
       accessibilityLabel={spoken}
       accessibilityHint="Opens Fuel"
     >
-      <View style={styles.wideRow}>
+      <View style={styles.wideHead}>
         <View style={[styles.badge, { backgroundColor: `${palette.primary}1A` }]}>
           <Ionicons name="flame" size={16} color={palette.primary} />
         </View>
-
-        <View style={styles.wideText}>
-          <Text style={[styles.label, { color: surfaces.textSecondary }]}>Fuel</Text>
-          {/* A figure is information, so it wraps rather than truncating once
-            the text is large — 5.3D found `2,000 c…` on a wide Fuel strip. */}
-        <Text
-          style={[styles.wideValue, { color: surfaces.text }]}
-          numberOfLines={compact ? 3 : 1}
-        >
-            {value}
-            {detail ? <Text style={[styles.detail, { color: surfaces.textTertiary }]}> · {detail}</Text> : null}
-          </Text>
-        </View>
-
+        <Text style={[styles.label, { color: surfaces.textSecondary }]}>Fuel</Text>
+        <View style={styles.spacer} />
         {logAction}
       </View>
+
+      {/*
+        * Two statistics side by side, and they **wrap** rather than shrink:
+        * at accessibility text sizes the second drops beneath the first
+        * instead of either being compressed. That is the §34 requirement, and
+        * the reason `flexBasis` is set rather than a fixed width.
+        */}
+      <View style={styles.statsRow}>
+        {stat(calories.figure, 'cal consumed', true)}
+        {calories.statFigure && calories.statLabel
+          ? stat(calories.statFigure, calories.statLabel, true)
+          : null}
+      </View>
+
+      {/*
+        * The quiet third line. `1,500 goal` where one exists; `Goal reached`
+        * on a day that landed exactly on it — a sentence rather than a
+        * statistic, in the same restrained treatment and never in green.
+        */}
+      {calories.goalLabel || calories.state === 'met' ? (
+        <Text style={[styles.goal, { color: surfaces.textTertiary }]}>
+          {calories.state === 'met' ? `Goal reached · ${calories.goalLabel}` : calories.goalLabel}
+        </Text>
+      ) : null}
 
       {bar}
     </PressableScale>
@@ -210,12 +260,75 @@ const styles = StyleSheet.create({
     borderRadius: WIDE_RADIUS,
     padding: spacing.m,
     gap: spacing.s,
-    minHeight: 64,
+    /*
+     * Taller than the 64pt bar this replaces, by founder authorisation.
+     *
+     * A `minHeight` rather than a height: the content decides, and at
+     * accessibility text sizes the statistics wrap and the module grows past
+     * this. 64pt was the constraint that forced three facts onto one line.
+     */
+    minHeight: 116,
   },
-  wideRow: {
+  wideHead: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.s,
+  },
+  spacer: {
+    flex: 1,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    // Wraps at accessibility sizes instead of compressing either figure.
+    flexWrap: 'wrap',
     gap: spacing.m,
+    rowGap: spacing.s,
+  },
+  stat: {
+    gap: 1,
+    /*
+     * **Content decides when the row breaks.**
+     *
+     * `flexShrink: 0` with an automatic basis means a statistic is never
+     * compressed below the width of the figure inside it, so once the two no
+     * longer fit side by side `flexWrap` puts the second on its own line.
+     *
+     * The first attempt set a fixed `flexBasis`, and the row therefore never
+     * wrapped: at accessibility-extra-large both statistics still "fitted"
+     * two across, each got half a 390pt card, and `1,320` **broke mid-number**
+     * into `1,32` / `0` — worse than truncating, because it reads as two
+     * figures. Scaling that basis by `fontScale` was the second attempt and
+     * missed for the same underlying reason: the wrap has to follow the text
+     * that is actually rendered, not a number multiplied by a guess.
+     */
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: 'auto',
+  },
+  statSquare: {
+    gap: 1,
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
+  statFigure: {
+    ...typography.heading,
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+  },
+  statFigureSquare: {
+    ...typography.heading,
+    fontSize: TYPE.squareValue,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  statLabel: {
+    ...typography.caption,
+    fontSize: TYPE.support,
+  },
+  goal: {
+    ...typography.caption,
+    fontSize: TYPE.support,
   },
   head: {
     flexDirection: 'row',
@@ -235,12 +348,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     alignSelf: 'stretch',
   },
-  squareValue: {
-    ...typography.heading,
-    fontSize: TYPE.squareValue,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
   squareDetail: {
     ...typography.caption,
     fontSize: TYPE.support,
@@ -252,20 +359,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  wideText: {
-    flex: 1,
-    gap: 1,
-  },
-  wideValue: {
-    ...typography.bodyMedium,
-    fontSize: TYPE.wideValue,
-    fontWeight: '700',
-  },
-  detail: {
-    ...typography.caption,
-    fontSize: TYPE.support,
-    fontWeight: '400',
   },
   action: {
     flexDirection: 'row',
