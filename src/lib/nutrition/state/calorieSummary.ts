@@ -34,6 +34,28 @@ export type CalorieSummaryView = {
   /** Home's calorie context: `884 left`, `120 over`, `Goal reached`, `null`. */
   compactDetail: string | null;
 
+  /**
+   * The second stat, **split** so a surface can set the figure and its label
+   * in different type — `884` over `left`, `120` over `over`.
+   *
+   * Added 2026-09-13 for Home's Fuel widget. It had been rendering
+   * `compactDetail` inside the same `Text` as `compact`, which produced
+   * `180 cal consumed · 1,320 left · 1 of 4 meals` on one capped line and an
+   * ellipsis on a real device — the founder's rejection. Splitting it here
+   * rather than in the widget keeps the rule that **every calorie string in
+   * VITA comes out of this file**, so Fuel Home and Home still cannot
+   * disagree about a day.
+   *
+   * Both are `null` when there is no goal, and when the goal is exactly met —
+   * `Goal reached` is a sentence, not a statistic, and `compactDetail`
+   * already carries it.
+   */
+  statFigure: string | null;
+  /** `left` or `over`. Lower case: it sits under a figure, not over one. */
+  statLabel: string | null;
+  /** `1,500 goal`, or `null` with no goal. Quiet, and never the subject. */
+  goalLabel: string | null;
+
   /** The facts, spoken. Identical on both screens. */
   spoken: string;
 };
@@ -94,6 +116,9 @@ export function calorieSummary(
       goalLine: null,
       compact: '—',
       compactDetail: null,
+      statFigure: null,
+      statLabel: null,
+      goalLabel: null,
       spoken: 'Fuel. Loading.',
     };
   }
@@ -114,6 +139,11 @@ export function calorieSummary(
       goalLine: null,
       compact: `${figure} cal consumed`,
       compactDetail: null,
+      /* Nothing to be a fraction of, so no second stat and no goal label —
+         never an empty stat column holding a dash. */
+      statFigure: null,
+      statLabel: null,
+      goalLabel: null,
       spoken: `${figure} calories consumed. No calorie goal set.`,
     };
   }
@@ -146,6 +176,11 @@ export function calorieSummary(
     goalLine: `${context} · ${goalLabel} goal`,
     compact: `${figure} cal consumed`,
     compactDetail: context,
+    /* A statistic only where there is a number. `Goal reached` stays a
+       sentence and reaches a surface through `compactDetail`. */
+    statFigure: state === 'over' ? formatCalories(over) : state === 'under' ? formatCalories(remaining) : null,
+    statLabel: state === 'over' ? 'over' : state === 'under' ? 'left' : null,
+    goalLabel: `${goalLabel} goal`,
     spoken: `${figure} calories consumed. ${goalLabel} calorie goal. ${
       state === 'over'
         ? `${formatCalories(over)} calories over.`

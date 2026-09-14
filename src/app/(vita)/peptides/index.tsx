@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { PressableScale, Screen, ScreenHeader, useToast } from '../../../components/ui';
+import { Button, PressableScale, Screen, ScreenHeader, useToast } from '../../../components/ui';
 import { ActivityLink } from '../../../features/peptides/components/ActivityLink';
 import { NeedsSetupNotice } from '../../../features/peptides/components/NeedsSetupNotice';
 import { RoutineList } from '../../../features/peptides/components/RoutineList';
@@ -155,26 +155,67 @@ export default function Peptides() {
         */}
       {peptides.isEmpty && !peptides.isLoading ? (
         <View style={styles.empty}>
-          <Text style={[styles.emptyTitle, { color: surfaces.text }]}>No routines yet</Text>
-          <Text style={[styles.emptyBody, { color: surfaces.textTertiary }]}>
-            Add a peptide to start tracking it.
-          </Text>
           {/*
-            * A filled CTA rather than the shared `Button`, for one reason:
-            * `Button` takes no `accessibilityLabel`, and an empty state's
-            * single action is the last place to leave a control unnamed.
-            * Changing that primitive belongs to a slice that owns it.
+            * The feature's own mark, and the reason this screen reads as
+            * Peptides before a single word is read.
+            *
+            * It is the **same glyph in the same tinted orb** the approved
+            * compact module draws on Home and Fuel — `medical` in
+            * `palette.peptide` on a 10% violet ground — at 72pt rather than
+            * 40. Larger than an inline icon, deliberately not a hero
+            * illustration, and not a new logo: §7 asks for the mark that
+            * already exists, and inventing a second one is how a feature ends
+            * up with two identities.
+            *
+            * Decorative: the word `Peptides` is in the header directly above,
+            * so announcing this would say it twice.
             */}
-          <PressableScale
-            onPress={() => router.push('/peptides/catalog')}
-            haptic="selection"
-            style={[styles.cta, { backgroundColor: palette.peptide }]}
-            accessibilityLabel="Add to Routine"
-            accessibilityHint="Opens the peptide catalog"
+          <View
+            style={[styles.mark, { backgroundColor: `${palette.peptide}1A` }]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           >
-            <Ionicons name="add" size={18} color={palette.textOnColor} />
-            <Text style={[styles.ctaLabel, { color: palette.textOnColor }]}>Add to Routine</Text>
-          </PressableScale>
+            <Ionicons name="medical" size={32} color={palette.peptide} />
+          </View>
+
+          <View style={styles.emptyText}>
+            <Text style={[styles.emptyTitle, { color: surfaces.text }]}>No routines yet</Text>
+            <Text style={[styles.emptyBody, { color: surfaces.textTertiary }]}>
+              Add a routine to start tracking your schedule and activity.
+            </Text>
+          </View>
+
+          {/*
+            * The shared neutral primary, at its own width.
+            *
+            * This was a full-width saturated violet pill — the largest colour
+            * block in the app, on the emptiest screen in it, which is the
+            * founder's §10 rejection. It is now `Button variant="neutral"`:
+            * the treatment 5.6D extracted and Food Detail's `Add to Dinner`
+            * uses, so the first action a new user meets speaks the same
+            * language as every other primary in VITA.
+            *
+            * The wrapper holds `alignSelf`, so the button sizes to its label
+            * instead of spanning a screen that has nothing else on it.
+            *
+            * The local `PressableScale` it replaced carried a comment saying
+            * the shared `Button` could not be used because it took no
+            * `accessibilityLabel`. **That stopped being true in 5.6D**, when
+            * `Button` gained both the label and the neutral variant — the
+            * reason for the one-off had quietly expired.
+            */}
+          <View style={styles.ctaCell}>
+            <Button
+              label="Add to Routine"
+              icon="add"
+              variant="neutral"
+              onPress={() => {
+                vitaHaptic('selection');
+                router.push('/peptides/catalog');
+              }}
+              accessibilityLabel="Add to Routine"
+            />
+          </View>
         </View>
       ) : null}
 
@@ -265,9 +306,37 @@ const styles = StyleSheet.create({
     gap: spacing.xl,
   },
   empty: {
-    gap: spacing.m,
+    /*
+     * The upper-middle of the screen, occupied on purpose.
+     *
+     * Left-aligned, like every other VITA screen, rather than centred: a
+     * stack floating in the middle of a black page is the onboarding-splash
+     * composition §11 rules out. But it does not sit directly under the
+     * header either — that was the "hugs the top-left with the rest of the
+     * screen abandoned" half of the same rule, and it is what the founder saw.
+     *
+     * So the group is dropped a deliberate distance, and given real internal
+     * air, so the space that remains below reads as margin rather than as the
+     * screen having run out of things to say.
+     */
+    gap: spacing.xl,
     alignItems: 'flex-start',
-    paddingTop: spacing.xl,
+    paddingTop: spacing.xxxl * 2,
+  },
+  mark: {
+    /*
+     * 72pt — the compact module's 40pt mark, scaled for a screen where it is
+     * the only object. Large enough to carry the feature's identity on its
+     * own, well short of a hero illustration.
+     */
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    gap: spacing.xs,
   },
   emptyTitle: {
     ...typography.heading,
@@ -278,20 +347,9 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontSize: 14.5,
   },
-  cta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.s,
-    borderRadius: 999,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.m,
-    minHeight: 48,
-    marginTop: spacing.xs,
-  },
-  ctaLabel: {
-    ...typography.bodyMedium,
-    fontSize: 16,
-    fontWeight: '600',
+  ctaCell: {
+    // The button sizes to its label rather than to the empty screen.
+    alignSelf: 'flex-start',
   },
   error: {
     ...typography.caption,

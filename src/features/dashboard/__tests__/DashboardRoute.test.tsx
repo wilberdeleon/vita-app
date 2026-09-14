@@ -408,12 +408,21 @@ describe('the Fuel strip', () => {
   it('states an empty day honestly', async () => {
     const tree = await mount(fakeWater());
 
-    // Terse on screen so it does not truncate beside the action; the spoken
-    // label carries the full phrase.
-    expect(screen(tree)).toContain('No meals');
-    // 5.6B.4: the headline says what the figure means, and with no goal set
-    // it makes no claim about a target.
+    /*
+     * 5.6B.4: the headline says what the figure means, and with no goal set it
+     * makes no claim about a target.
+     *
+     * **The meal count is deliberately absent** since the 2026-09-13 founder
+     * correction. It was the third clause in the concatenated sentence that
+     * truncated on device, and Fuel Home already lists every meal — §26's
+     * default was to omit it rather than find it a quieter corner.
+     */
     expect(screen(tree)).toContain('0 cal consumed');
+    expect(screen(tree)).not.toMatch(/of 4 meals|No meals/);
+    /* No goal, so no second statistic and no goal label — never an empty stat
+       column, and never a fabricated denominator. */
+    expect(screen(tree)).not.toMatch(/\d+ left/);
+    expect(screen(tree)).not.toMatch(/\d+ goal/);
     expect(control(tree, /^Fuel\. .*No calorie goal set/)).toBeDefined();
     expect(control(tree, 'Log food')).toBeDefined();
   });
@@ -1343,24 +1352,34 @@ describe('the system text size', () => {
     }
   });
 
-  it('wraps a figure rather than truncating it once the text is large', async () => {
+  it('never truncates or shrinks a Fuel figure, at any text size', async () => {
     /*
-     * 5.3D found `2,000 c…` on the wide Fuel strip. A value is information;
-     * truncation is only ever acceptable for a secondary label.
+     * 5.3D found `2,000 c…` on the wide Fuel strip and the fix then was to let
+     * the line wrap. The 2026-09-13 founder correction went further: a figure
+     * and its label are **separate** `Text` nodes now, so there is no combined
+     * string left to cap.
+     *
+     * This asserts the stronger property — no capped line count on any Fuel
+     * figure, and no `adjustsFontSizeToFit`, which used to shrink the square's
+     * value silently rather than letting the layout adapt (§34).
      *
      * The goal is authored here because since 5.6A there is no invented one:
-     * the remainder is a statement about a target, and the strip only makes
-     * it when the user has actually set one.
+     * the remainder is a statement about a target, and the strip only makes it
+     * when the user has actually set one.
      */
     mockFontScale = 1.6;
     await AsyncStorage.setItem('vita:v1:targets', JSON.stringify({ calories: 2000 }));
     const tree = await mount(fakeWater());
-    const fuel = tree.root
-      .findAllByType(Text)
-      .find((node) => String(node.props.children?.[0] ?? '').includes('cal consumed'));
 
-    expect(fuel).toBeDefined();
-    expect(Number(fuel!.props.numberOfLines)).toBeGreaterThan(1);
+    const figures = tree.root
+      .findAllByType(Text)
+      .filter((node) => /^[\d,]+$/.test(String(node.props.children ?? '')));
+    expect(figures.length).toBeGreaterThan(0);
+
+    for (const node of figures) {
+      expect(node.props.numberOfLines).toBeUndefined();
+      expect(node.props.adjustsFontSizeToFit).toBeFalsy();
+    }
   });
 
   it('keeps every square equal at a large text size, and gives them more room', async () => {

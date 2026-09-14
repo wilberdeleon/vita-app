@@ -2341,6 +2341,36 @@ Drawn as four layers with **no SVG clip path anywhere**: the silhouette is gener
 
 **Founder device review: the direction is approved.** Composition, widget grid, quote, daypart greeting, Quick Tools, Today's Schedule, customization, square/wide and direct edit mode all stand. Three notes: the drag felt static, the remove control was in the wrong corner, and the lettering read slightly small throughout. Addressed in 5.3D.
 
+### Post-closeout founder visual correction — 2026-09-13 🟡
+
+**Founder-directed, and narrow. Awaiting founder device review.** Two surfaces, found during physical-iPhone QA of the maintenance build. **Neither reopens a feature's architecture, and 5.6 stays closed.**
+
+**Attributed before anything was changed.** The founder saw both while testing `maintenance/expo-sdk-57-patches`, whose commit was dependency-only. `git diff sprint-5-identity-interaction..maintenance/expo-sdk-57-patches -- src` is **empty**, and both flagged components are byte-identical on the two branches. **These are not Expo patch regressions** — they are pre-existing product states that a real-device pass exposed, which is what a real-device pass is for.
+
+**Peptides, zero routines.** A title, one primitive line and a **full-width saturated violet pill**, above a large expanse of black. The populated experience was locked in 5.4/5.5; this branch of it never received the same attention, and the CTA predates the neutral-primary work — its own comment said the shared `Button` could not be used because it took no `accessibilityLabel`, which **stopped being true in 5.6D**. The reason for the one-off had expired without anyone noticing.
+
+It now leads with **the mark the approved compact module already draws** — `medical` in `palette.peptide` on a 10% violet ground, at 72pt rather than 40, decorative because the header says the word — then `No routines yet`, then `Add a routine to start tracking your schedule and activity.`, then `Button variant="neutral"` sized to its own label. Violet survives on the mark alone; the canvas stays neutral. The group sits in the upper-middle rather than under the header.
+
+**No empty weekly scaffold.** §8 offered one; reusing `RoutineDayStrip` needs seven fabricated `StripDay` marks and a day handler for a routine that does not exist — the fake schedule data the same section forbids — and `RoutineDayMark` has no value meaning *no routine*. §8's escape clause applies, and the remaining space is flagged for a founder ruling rather than filled with invented content.
+
+**Home's Fuel widget.** It rendered `180 cal consumed · 1,320 left · 1 of 4 meals` inside **one** `Text` capped at one line, and truncated on device. The data was right — the shared `calorieSummary` was already the single source — and the hierarchy was wrong: three facts of descending importance flattened into a sentence by a 64pt module height.
+
+It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consumed` beside `1,320` over `left`; a quiet `1,500 goal`; the Fuel-orange rail. `minHeight` went 64 → 116 by founder authorisation, and Quick Tools and Today's Schedule simply sit lower — **neither was changed, and the schedule is not capped.** The **meal count is gone**: it was the third clause in the sentence that broke, and Fuel Home already lists every meal.
+
+**The shared derivation stayed shared.** `calorieSummary` gained `statFigure`, `statLabel` and `goalLabel` — presentation fields over numbers it already computed — so the widget formats nothing itself and Fuel Home and Home still cannot disagree about a day. No calorie arithmetic changed.
+
+**A defect this pass created and fixed.** At accessibility-extra-large the rebuilt widget broke `1,320` into `1,32` / `0`. The stat blocks had a fixed `flexBasis`, so the row never wrapped and each figure was squeezed to half a card; scaling that basis by `fontScale` missed for the same reason. `flexShrink: 0` with an automatic basis fixed it — content decides when the row breaks — and it was re-verified on device.
+
+**`adjustsFontSizeToFit` is gone** from the square variant, which had been shrinking its figure silently instead of letting the layout adapt.
+
+**Preview.** `dashboard-preview` — DEV-only, in-memory, nothing reaching storage — because three of the four calorie states are unreachable on a device without actually eating. It controls **data, not layout**: `Dashboard` takes no props, and giving it a layout override would change a locked screen's API for a preview's benefit. Wide is what the founder's feedback targets; square is covered by tests.
+
+**Validation.** 84 suites / **2,232 tests** (2,224 → 2,232, +8) · `tsc` and strict-unused clean · iOS export clean · **no dependency touched** · **no persistence key touched** · verified on device in Dark, Light and accessibility-extra-large.
+
+**Locks respected.** Populated Peptides, Water, Fuel Home, Add/Search, the scanner, Food Detail, Manual, Edit, Quick Tools, Today's Schedule and the dock are all untouched. The only locked-surface change is the Fuel widget the founder authorised.
+
+**Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
+
 ### Slice 5.6 — Fuel Identity Refresh — CLOSED ✅
 
 **The whole Fuel experience is founder-approved on a physical iPhone and locked, 2026-09-13.** This is the formal Fuel closeout.
