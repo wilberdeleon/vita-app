@@ -23,15 +23,20 @@ The two prerequisite decisions that gated this sprint's UI work resolved 2026-07
 
 **Opened 2026-09-02** on branch `sprint-5-identity-interaction`, cut from `main` at `8dce19c` (Sprint 4 merged the same day). Founder-authorized against the approved **Sprint 5 Planning & Architecture Audit** (repo `docs/Sprint-5-Planning-Audit.md`), which ruled on eleven decisions in its §W.
 
-**Three slices are founder-approved on device and locked.**
+**Six slices are founder-approved on device and locked.**
 
 - **5.1 — VITA Design Language + Identity Prototype ✅** (with 5.1A). The identity system: direct-content hierarchy · surface roles · feature-specific visual objects · restrained feature colour · `VitaSheet` · the motion foundation · haptics · Dynamic Type / accessibility direction · Reduce Motion · Light/Dark · the Water identity prototype.
 - **5.2 — Interactive Water Experience ✅** (with 5.2A). Production [[Water]] is now the real feature reference for the hydration vessel, direct-content hierarchy, the tactile Add Water sheet, unit flexibility, history/log presentation, and feature-specific identity.
 - **5.3 — Dashboard Identity Redesign ✅** (with subpasses 5.3A–5.3D, approved 2026-09-04). Compact VITA header · time-aware daypart greeting · classical quote treatment · date chip · **real-data-only** [[Dashboard]] · Fuel/Water/Peptides widgets · square/wide widget layout · Quick Tools · Today's Schedule · Home customization · direct edit mode · drag/reorder · accessibility and Dynamic Type · Dark/Light · Reduce Motion.
 
-**These three are not reopened.** They are revisited only if a later audit finds a real defect.
+- **5.4 — [[Peptides]] Home Redesign ✅** and **5.5 — Routine + [[Injection Site Tracking|Injection Site]] Experience ✅** (with subpasses 5.5A–5.5D, both approved together 2026-09-07, which **locks the whole Peptides experience**). Today as the hero · one setup notice · routines progressively disclosed · the weekly timeline · monthly activity · real history beyond the warm window · preparation-first routine setup · the calculator behind a disclosure · weekly swipe navigation · routine-aware unit conversion.
+- **5.6 — [[Fuel]] Identity Refresh ✅ COMPLETE** (2026-09-13), across six passes: 5.6A a real test baseline and the end of invented goals · 5.6A.1 goals narrowed to calories and protein · **5.6B** Fuel Home, locked 2026-09-09 · **5.6C** Add / Search / Recent / Favorites, locked 2026-09-09 · **5.6D** Scanner / Food Detail / Manual / Edit, locked 2026-09-13 · **5.6E** the end-to-end audit, locked 2026-09-13. Fuel had **zero tests** when the slice opened; the sprint suite is now 84 suites / 2,224 tests.
 
-**5.4 — Peptides Home Redesign is next**, and requires its own founder authorization before anything is built.
+**These six are not reopened.** They are revisited only if a later audit finds a real defect.
+
+**5.7 — Tools + [[Settings]] Identity Integration is next**, and requires its own founder authorization before anything is built. **A round of Expo SDK 57 patch maintenance is taken first**, on its own branch — see repo `docs/Sprint-5-Migration-Guide.md`.
+
+*Status corrected 2026-09-13: this page still showed 5.4 as next and 5.4–5.6 as planned, three approvals after the fact. The same drift the 5.6C pass found in the repo tracker — an approval recorded in one place and not the other.*
 
 ### ⚠️ Scope amended 2026-09-04 — the identity must reach every built surface
 
@@ -44,10 +49,10 @@ The ruling followed founder review of production Water and Dashboard: with two f
 | 5.1 | VITA Design Language + Identity Prototype | ✅ Approved |
 | 5.2 | Interactive [[Water]] Experience | ✅ Approved |
 | 5.3 | [[Dashboard]] Identity Redesign | ✅ Approved |
-| 5.4 | [[Peptides]] Home Redesign | ⬜ **Next** |
-| 5.5 | Routine + [[Injection Site Tracking\|Injection Site]] Experience | ⬜ Planned |
-| 5.6 | **[[Fuel]] Identity Refresh** *(new)* | ⬜ Planned |
-| 5.7 | **Tools + [[Settings]] Identity Integration** | ⬜ Planned |
+| 5.4 | [[Peptides]] Home Redesign | ✅ Approved |
+| 5.5 | Routine + [[Injection Site Tracking\|Injection Site]] Experience | ✅ Approved |
+| 5.6 | **[[Fuel]] Identity Refresh** *(new)* | ✅ **Complete / locked** |
+| 5.7 | **Tools + [[Settings]] Identity Integration** | ⬜ **Next** |
 | 5.8 | Motion + Microinteraction Unification | ⬜ Planned |
 | 5.9 | **[[BMI Calculator|BMI]] Calculator** | ⬜ Planned |
 | 5.10 | Founder Identity Audit | ⬜ Planned |

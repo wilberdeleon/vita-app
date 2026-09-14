@@ -26,11 +26,23 @@
 
 **Editing something you already logged** now looks like the screen you logged it from, and changing it never rewrites the food itself or any other day.
 
-**Coming next in Fuel:** nothing — the final end-to-end pass is done and waiting on review.
+**Fuel is finished.** Every screen has been approved on a real iPhone.
 
 ---
 
-## Sprint 5 slice 5.6E — the final read-through (2026-09-13, awaiting founder device review)
+## ✅ Fuel is done (2026-09-13)
+
+**The whole Fuel redesign is finished and approved.** It took six passes over eleven days: a test baseline and the end of invented goals, then the home screen, then adding and searching for food, then the scanner and the screens that log it, then a final read-through of the lot.
+
+What you get: a home screen that leads with what you actually ate · goals you set yourself, or none at all · four meals with their own time of day · water and peptides shared with the Home screen so they can never disagree · adding food that opens on a search box · one food row everywhere · a barcode scanner that just reads barcodes · and a food screen that tells you what is in the thing rather than what it thinks of it.
+
+**What Fuel still refuses to do:** recommend how much you should eat, work out your calorie needs, suggest foods, grade anything, or give a food a score. That is not a gap; it is the product.
+
+**Next up is not Fuel.** Tools and Settings get the same treatment — after a round of routine dependency maintenance.
+
+---
+
+## ✅ The final read-through (approved on 2026-09-13)
 
 **A check of the whole feature rather than another redesign.** Every screen had already been approved, so the job was to walk Fuel end to end — home, adding, searching, scanning, food detail, logging, editing, setup — and look for anything that still disagreed with itself. Almost everything already matched, which is the answer we wanted.
 
