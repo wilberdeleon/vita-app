@@ -2371,6 +2371,55 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Slice 5.7A — Tools + Settings Characterization ✅
+
+**An audit before an edit.** Six screens read in full and compared against the locked VITA language, with nothing changed. Recorded here so 5.7B–5.7E have a written starting point rather than a recollection.
+
+#### What exists
+
+| Screen | Route | Lines | State |
+|---|---|---|---|
+| Settings Home | `/settings` | 147 | Honest since 4.1, old-VITA visually |
+| Units | `/settings/units` | 71 | Honest, close to current language |
+| Nutrition Goals | `/settings/nutrition-goals` | 235 | Its own docstring deferred the visuals to 5.7 |
+| Tools Hub | `/tools` | 69 | Honest, same row vocabulary as Settings |
+| Peptide Calculator | `/tools/peptide-calculator` | 142 | Utility flow, boundaries intact |
+| Injection Sites | `/tools/injection-sites` | 434 | Body map; the largest of the six |
+
+**Every row on every one of these screens is real.** Slice 4.1 removed the five chevron-bearing rows that went nowhere — Profile over mock auth, Notifications over infrastructure that does not exist, an `Imperial (lb, oz)` claim VITA has never supported, Privacy & Data, and a destructive-red Sign Out over a no-op — and none has come back. Tools Hub has never listed BMI, the scanner, a Research Library or a "Coming Soon" row. **There was nothing fake to remove in 5.7B**, which is worth stating plainly because the authorization's §15 and §45 both expected there might be.
+
+#### Old-VITA findings — concrete, with the mechanism
+
+1. **Card soup, and the primitive that causes it.** `ListRow` is `borderRadius: radii.card` + `borderWidth: 1` + `shadows.card`, unconditionally. Settings Home draws six of them and Tools Hub two, so a *list* renders as a stack of floating objects. This is the single largest reason Settings reads as a leftover from the old app. **Already scheduled**: the Migration Guide has listed *"a flat in-panel `ListRow` variant"* as 5.7's work since slice 5.1.
+
+2. **Six Fuel-orange orbs on a screen that owns no Fuel.** `ListRow`'s `iconColor` defaults to `palette.primary` and `IconBadge` draws it as a 36pt tinted disc. Appearance, Units, Nutrition Goals, Tools & Reference and Version each wore one. Orange is a **feature identity** in VITA, and five of them on Settings is the loudest thing on the screen saying something untrue.
+
+3. **Appearance was a row that did nothing.** A `ListRow` with no `chevron` and no `onPress` — visually identical to the four beside it that navigate — with the `SegmentedTabs` that *is* the setting floating underneath on `marginTop: -spacing.s`. Two objects for one control, and a dead affordance of exactly the kind 4.1 was opened to remove.
+
+4. **`Tools & Reference` twice, six points apart** — as the section header and as the row title under it.
+
+5. **A hand-rolled primary on Nutrition Goals.** `Save goals` was a `PressableScale` filled with `surfaces.text` at `borderRadius: 999` — a **second implementation** of the neutral primary shared since 5.6D, and one whose geometry disagreed with it (a full pill where every Fuel commit is `radii.control`). Its `Clear goals` was a near-match for Edit Entry's destructive treatment, missing the weight and the centring.
+
+6. **`ListRow` caps both its title and its subtitle at one line.** A Dynamic Type crop on the longest strings in Settings at the largest text sizes.
+
+#### What was already right, and left alone
+
+- **Section labels.** `SectionHeader`'s uppercase micro eyebrow is Dashboard's own `QUICK TOOLS` / `TODAY'S SCHEDULE` language. Reused, not replaced.
+- **Units reuses Water's `UnitSelector` and Water's store.** The founder ruling on Open Question #16: Settings reads and writes the one source rather than creating a second that can disagree. The saturated blue selector is Water's approved control, and §43 says to keep established control styling — so it stays.
+- **The Peptide Calculator's boundaries.** No suggested dose, no typical dose, no frequency, no verdict, no red/green grading. Its disclaimer is accurate. `UnitConversion` is the same component the setup form uses, under the same labels, since the 3.10 audit closed the drift between them.
+- **Injection Sites is historical and reference only.** No "best site", no "next site", no rotation recommendation. The taxonomy is intact.
+- **Version reads from the Expo config**, never a literal — the fix that stopped it claiming `0.1.0 (Sprint 0)` three sprints later.
+
+#### Test coverage found
+
+25 tests on `SettingsRoutes`, 70 on `ToolsRoutes`, plus `lib/preferences` (provider + repository) and Nutrition Goals' own suite under `features/fuel`.
+
+**One real gap, found here and closed in 5.7B:** `lib/preferences` pinned that `setMode` persists and resolves a scheme, and `SettingsRoutes` pinned that an `Appearance` row rendered — but **nothing asserted the control on this screen actually drives the theme.** The one wire between a user's tap and the app's appearance was untested, on a screen about to be rebuilt. The audit found it; the three tests closing it were written alongside the 5.7B implementation rather than ahead of it.
+
+#### Deferred, by instruction
+
+Tools Hub, the Peptide Calculator and Injection Sites are **audited and unchanged** — their runtime work is 5.7C and 5.7D (§39). The calculator's `(MG)` / `(ML)` label casing is the 3.10 convention and a 5.7D question, not a defect.
+
 ### Founder correction pass — 2026-09-15 ✅ APPROVED / LOCKED
 
 **The second correction, and it corrects the first.** Founder-directed and narrow. **Approved on a physical iPhone 2026-09-15** — the compact Dashboard Fuel widget and the Peptides zero-routine first-use state are both locked, and the 128.3pt widget height was accepted as it stands. **5.6 stays closed** and no feature's architecture reopened.

@@ -354,7 +354,17 @@ describe('the audit’s standing checks', () => {
 
         const source = readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
         for (const literal of source.match(/(['"`])(?:\\.|(?!\1)[\s\S])*\1/g) ?? []) {
-          if (/\/(fuel|peptides|fuel-logging)-preview/.test(literal)) offenders.push(`${path}: ${literal}`);
+          /*
+           * **Any** preview route, not a named list.
+           *
+           * This enumerated `fuel`, `peptides` and `fuel-logging` when it was
+           * written, and then `dashboard-preview` (2026-09-13) and
+           * `settings-preview` (2026-09-15) were added and neither was
+           * covered — a guard that has to be extended by hand is a guard that
+           * silently stops guarding. The rule is about the *shape* of the
+           * route, so the pattern is too.
+           */
+          if (/\/[a-z-]+-preview\b/.test(literal)) offenders.push(`${path}: ${literal}`);
         }
       }
     };
