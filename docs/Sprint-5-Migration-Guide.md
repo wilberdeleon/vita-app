@@ -474,6 +474,7 @@ Extension point is already documented at `src/lib/preferences/model/types.ts`. *
 # Cross-cutting cleanup for 5.7
 
 - **Migrate the eight hand-drawn outlined actions onto `Button variant="outline"`.** The variant was added 2026-09-15 for the Peptides first-use CTA, and it is a promotion of a treatment already drawn by hand at Fuel Home's `Add food`, Home's `Log` and `Add` pills, Fuel's `Set up Fuel`, Water's `Set goal`, and a routine's `Taken` and `Skipped`. Each of those is on a locked screen, so they migrate in the slice that next touches them — **never in bulk**.
+- ~~**A flat in-panel `ListRow` variant** — today each row carries its own border and shadow, so a list reads as a stack of cards.~~ **Done 2026-09-15 in 5.7B**: `ListRow variant="flat"`, taken from the row locked Peptides and Fuel lists already draw. `'card'` stays the default, so the 23 existing call sites are unchanged and migrate in the slices that next touch their screens — **never in bulk**.
 - **`AccentRail` is available for the macro rails.** Fuel Home's calorie rail and Home's Fuel widget share it; the protein macro rail directly below the calorie rail still draws `ProgressBar` with the neutral `surfaces.track`, so one screen now carries two track treatments. Deliberate — §13 of the 2026-09-15 correction authorised the *calorie* rail — and a founder question rather than a defect.
 
 ---

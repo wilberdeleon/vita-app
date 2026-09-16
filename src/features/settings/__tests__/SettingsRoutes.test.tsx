@@ -53,12 +53,14 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Settings from '../../../app/(vita)/settings/index';
 import Units from '../../../app/(vita)/settings/units';
 import WaterLog from '../../../app/(vita)/water/index';
-import { ListRow, ToastProvider } from '../../../components/ui';
+import { ListRow, SegmentedTabs, ToastProvider } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
 import type { WaterRepository } from '../../../lib/water/data/WaterRepository';
 import { createWaterEntry } from '../../../lib/water/model/entries';
 import type { WaterEntry, WaterGoal, WaterPreferences } from '../../../lib/water/model/types';
 import { WaterProvider } from '../../../lib/water/state/WaterProvider';
+import { THEME_MODES } from '../../../lib/preferences';
+import { palette } from '../../../theme/tokens';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 const TODAY = todayLogDate();
@@ -191,18 +193,87 @@ describe('every visible row is real', () => {
      * goals VITA had previously invented and offered no way to set — the
      * row exists precisely so the feature is not dead behind an API nobody
      * could call.
+     *
+     * **`Appearance` left this list in 5.7B, and gained nothing and lost
+     * nothing by it.** It had been a `ListRow` with no `chevron` and no
+     * `onPress` — a card that looked exactly like the four beside it that
+     * navigate, and did nothing when pressed — with the segmented control
+     * that *is* the setting floating underneath on a negative margin. It is
+     * now a label over its own control. The setting is asserted directly
+     * below; what is gone is a row that was never a row.
      */
     const shipped = rows(tree)
       .map((row) => row.title)
       .filter((title) => title !== 'Identity Prototype');
 
-    expect(shipped).toEqual([
-      'Appearance',
-      'Units',
-      'Nutrition Goals',
-      'Tools & Reference',
-      'Version',
-    ]);
+    expect(shipped).toEqual(['Units', 'Nutrition Goals', 'Tools & Reference', 'Version']);
+  });
+
+  it('offers Appearance as its control rather than as a row that does nothing', async () => {
+    /*
+     * The other half of the 5.7B change, and the reason it is an improvement
+     * rather than a removal: every theme mode is still reachable, still
+     * labelled, and still announced as one group.
+     */
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    expect(screen(tree)).toContain('Appearance');
+    /* No row named Appearance — and so no chevron-less card pretending. */
+    expect(rows(tree).map((row) => row.title)).not.toContain('Appearance');
+
+    const tabs = tree.root.findAllByType(SegmentedTabs);
+    expect(tabs).toHaveLength(1);
+    expect(tabs[0].props.groupLabel).toBe('Appearance');
+    /* The order `THEME_MODES` declares, unchanged by this slice — §20 keeps
+       Appearance's behaviour, including which end System sits at. */
+    expect(tabs[0].props.options).toEqual(['Light', 'Dark', 'System']);
+  });
+
+  it('draws its rows flat rather than as a stack of cards', async () => {
+    /*
+     * The 5.7B identity change, asserted structurally.
+     *
+     * Every row on this screen was a `radii.card` surface with a border and
+     * `shadows.card` — six floating objects carrying six short facts down a
+     * whole screen, which is the "card soup" the sprint exists to remove.
+     * They are flat now: direct on the background, separated by hairlines,
+     * which is the row the locked Peptides and Fuel lists already draw.
+     *
+     * Asserted through the variant rather than by reading styles, because the
+     * variant is the decision and the styles are its consequence.
+     */
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    expect(rows(tree).length).toBeGreaterThan(3);
+    for (const row of rows(tree)) {
+      expect(row.variant).toBe('flat');
+    }
+  });
+
+  it('spends no feature colour on a setting that belongs to no feature', async () => {
+    /*
+     * §44. `ListRow`'s icon badge defaults to `palette.primary`, so before
+     * this slice Appearance, Units, Nutrition Goals, Tools and Version each
+     * wore a 36pt **Fuel-orange** disc — on a screen where nothing belongs to
+     * Fuel. Orange is a feature identity in VITA, not decoration.
+     *
+     * Feature colour now appears only where the setting genuinely is that
+     * feature's: Water blue on Units, Fuel orange on Nutrition Goals. Generic
+     * rows take secondary text, and no row is ever coloured — only its glyph.
+     */
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    const colourOf = (title: string) =>
+      rows(tree).find((row) => row.title === title)?.iconColor;
+
+    expect(colourOf('Units')).toBe(palette.water);
+    expect(colourOf('Nutrition Goals')).toBe(palette.primary);
+    /* Tools serves no one feature, and a version number serves none at all. */
+    expect(colourOf('Tools & Reference')).toBeUndefined();
+    expect(colourOf('Version')).toBeUndefined();
   });
 
   /**
@@ -247,6 +318,57 @@ describe('every visible row is real', () => {
     const tree = await mount(<Settings />, repository);
     expect(screen(tree)).not.toMatch(/Imperial/i);
     expect(screen(tree)).not.toMatch(/\blb\b/);
+  });
+});
+
+describe('Appearance', () => {
+  /**
+   * The gap 5.7A found, closed before 5.7B touched the screen.
+   *
+   * `lib/preferences` already pinned that `setMode` persists and resolves a
+   * scheme, and `SettingsRoutes` already pinned that an `Appearance` row
+   * rendered — but **nothing asserted the control on this screen actually
+   * drives the theme.** The one wire between a user's tap and the app's
+   * appearance was untested, on a screen about to be rebuilt.
+   */
+  it('changes the active mode from the segmented control', async () => {
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+    const tabs = tree.root.findAllByType(SegmentedTabs)[0];
+
+    /* System is the shipped default and where `THEME_MODES` puts it. */
+    expect(tabs.props.selectedIndex).toBe(2);
+
+    await act(async () => tabs.props.onChange(1));
+    expect(tree.root.findAllByType(SegmentedTabs)[0].props.selectedIndex).toBe(1);
+
+    await act(async () => tree.root.findAllByType(SegmentedTabs)[0].props.onChange(0));
+    expect(tree.root.findAllByType(SegmentedTabs)[0].props.selectedIndex).toBe(0);
+  });
+
+  it('offers exactly the three real modes and invents no fourth', async () => {
+    /* No "Auto", no "High contrast", no scheduled mode — §20 permits none,
+       and `ThemeMode` has no room for one. */
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    const options = tree.root.findAllByType(SegmentedTabs)[0].props.options as string[];
+    expect(options).toHaveLength(3);
+    expect(options.map((label) => label.toLowerCase())).toEqual([...THEME_MODES]);
+  });
+
+  it('never hands the selector a feature colour', async () => {
+    /*
+     * §44, and a real legibility constraint rather than taste: brand ink is
+     * the light theme's structural accent and disappears against near-black,
+     * so a coloured `activeColor` here would make the current choice
+     * unreadable in Dark. Unset, `SegmentedTabs` takes the theme's own
+     * neutral — the treatment locked Water and Peptides setup use.
+     */
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    expect(tree.root.findAllByType(SegmentedTabs)[0].props.activeColor).toBeUndefined();
   });
 });
 

@@ -34,7 +34,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Fuel from '../../../app/(vita)/(tabs)/fuel';
 import NutritionGoals from '../../../app/(vita)/settings/nutrition-goals';
-import { ToastProvider } from '../../../components/ui';
+import { Button, ToastProvider } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
 import { NutritionProvider, createEntry, type VitaFood } from '../../../lib/nutrition';
 import { PeptideProvider } from '../../../lib/peptides';
@@ -290,6 +290,47 @@ describe('setting a goal', () => {
     for (const phrase of ['recommend', 'suggested', 'typical', 'healthy', 'too high', 'too low']) {
       expect(rendered).not.toContain(phrase);
     }
+  });
+
+  it('commits through the shared primary, not a second copy of it', async () => {
+    /*
+     * 5.7B. The save was a hand-rolled `PressableScale` filled with
+     * `surfaces.text` at `borderRadius: 999` — a **second implementation** of
+     * a treatment that has been shared since 5.6D, and one whose geometry
+     * disagreed with it: a full pill where every Fuel commit is
+     * `radii.control`. §22 asks this screen to match Fuel's product language,
+     * and the way to do that is to render the same component.
+     *
+     * Asserted as the component rather than as a style, because the component
+     * is the decision. A future change to the neutral primary then reaches
+     * this screen automatically, which is the whole point.
+     */
+    await seed();
+    const tree = await mount(<NutritionGoals />);
+
+    const buttons = tree.root.findAllByType(Button);
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].props.label).toBe('Save goals');
+    expect(buttons[0].props.variant).toBe('neutral');
+    /* Neutral, not a feature colour — Settings spends none on a commit. */
+    expect(buttons[0].props.color).toBeUndefined();
+  });
+
+  it('keeps saving and clearing behaving exactly as before', async () => {
+    /*
+     * The guard on a visual-only slice: the control changed, the contract did
+     * not. One save writes the goal; one clear removes it; the toast wording
+     * and the storage call are the ones 5.6A shipped.
+     */
+    await seed();
+    const tree = await mount(<NutritionGoals />);
+
+    await type(tree, /^Daily calorie goal/, '1800');
+    await act(async () => control(tree, 'Save goals')!.props.onPress());
+    expect(await storedGoals()).toEqual({ calories: 1800 });
+
+    await act(async () => control(tree, 'Clear goals')!.props.onPress());
+    expect(await storedGoals()).toBeNull();
   });
 
   it('uses the shared numeric keyboard, with no screen-specific accessory', async () => {

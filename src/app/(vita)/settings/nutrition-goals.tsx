@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import {
+  Button,
   NumericField,
   PressableScale,
   Screen,
@@ -48,11 +49,25 @@ function parseGoal(raw: string): number | null {
  * authoring path a requirement rather than a nicety — removing the invented
  * figures without one would have left a feature nobody could reach.
  *
- * ## Deliberately plain
+ * ## Plain by design, then finished in 5.7B
  *
- * This is functional infrastructure, not the final visual identity. Fuel's
- * own language arrives in 5.6B and Settings' in 5.7; a considered design
- * here would be work thrown away twice. Four fields, a save, and a clear.
+ * This shipped as functional infrastructure in 5.6A with a note saying the
+ * visual identity would arrive with Fuel's in 5.6B and Settings' in 5.7 — a
+ * considered design at the time would have been work thrown away twice.
+ * **5.7B is that slice**, and the only thing it changed here is the commit
+ * action: a hand-rolled full-width white pill (`borderRadius: 999`, the
+ * theme's text colour as a fill) became `Button variant="neutral"`, the
+ * shared primary that Food Detail's *Add to Dinner* and Fuel's own saves
+ * use.
+ *
+ * Two faults in one swap. The pill was a **second implementation** of a
+ * treatment that has been shared since 5.6D, and its geometry disagreed with
+ * it — a full 999 radius where every Fuel commit is `radii.control`. §22
+ * asks this screen to match current Fuel product language; the way to do
+ * that is to render the same component, not to copy its pixels again.
+ *
+ * **Nothing else moved.** Same fields, same labels, same validation, same
+ * toast, same `updateTargets` call, same storage.
  *
  * ## Two goals, both optional
  *
@@ -166,19 +181,13 @@ export default function NutritionGoals() {
         Your goals are yours to choose. VITA doesn't set them for you or suggest what they should be.
       </Text>
 
-      <PressableScale
-        onPress={() => void save()}
+      <Button
+        label="Save goals"
+        variant="neutral"
         disabled={saving || invalid.length > 0}
-        haptic="selection"
-        style={[
-          styles.save,
-          { backgroundColor: surfaces.text },
-          (saving || invalid.length > 0) && styles.disabled,
-        ]}
+        onPress={() => void save()}
         accessibilityLabel="Save goals"
-      >
-        <Text style={[styles.saveLabel, { color: surfaces.background }]}>Save goals</Text>
-      </PressableScale>
+      />
 
       {configured ? (
         <PressableScale
@@ -208,21 +217,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     marginTop: -spacing.s,
   },
-  save: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-    paddingVertical: 14,
-    minHeight: 50,
-  },
-  disabled: {
-    opacity: 0.4,
-  },
-  saveLabel: {
-    ...typography.bodyMedium,
-    fontSize: 16,
-    fontWeight: '600',
-  },
   clear: {
     alignItems: 'center',
     paddingVertical: spacing.s,
@@ -230,6 +224,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   clearLabel: {
+    /* The destructive treatment Edit Entry's `Remove from log` uses — same
+       token, same weight, same centring. It was a half-match before. */
     ...typography.captionMedium,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

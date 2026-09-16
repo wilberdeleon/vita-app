@@ -2371,6 +2371,86 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Slice 5.7B — Settings Identity Integration 🟡
+
+**Implemented, awaiting founder device review.** Presentation only: **no destination, no preference, no stored value and no persistence key moved.** The screen was already honest — 4.1 saw to that — and it looked like the old app, which is the whole of what 5.7 was opened for.
+
+#### Settings Home — before
+
+```
+PREFERENCES
+ ( ) Appearance                              <- card, orange orb, no chevron, no action
+ [ Light | Dark | System ]                   <- floating control, negative margin
+ ( ) Units                                >  <- card, orange orb
+ ( ) Nutrition Goals                      >  <- card, orange orb
+TOOLS & REFERENCE
+ ( ) Tools & Reference                    >  <- card, orange orb, title repeats the header
+ ABOUT
+ ( ) Version                        1.0.0    <- card, orange orb
+```
+
+Six rounded, bordered, shadowed cards carrying six short facts down a whole screen, five of them wearing a 36pt Fuel-orange disc.
+
+#### Settings Home — after
+
+```
+PREFERENCES
+ Appearance
+ [ Light | Dark | System ]
+ ─────────────────────────────────────────
+ 💧 Units                                 >
+TRACKING
+ ─────────────────────────────────────────
+ 🚩 Nutrition Goals                       >
+    Calories and protein — both optional
+TOOLS
+ ─────────────────────────────────────────
+ 🔧 Tools & Reference                     >
+    Peptide calculator and injection sites
+ABOUT
+ ─────────────────────────────────────────
+ Version                             1.0.0
+```
+
+Direct on the background, hairline separators, neutral glyphs. **Four groups over five real rows**, each containing a real destination.
+
+#### What changed, and what it reused
+
+**`ListRow variant="flat"`** — the variant the Migration Guide has had scheduled for this slice since 5.1. The geometry is not new either: hairline top rule, `spacing.m` vertical padding, a 56pt floor, a 16pt tertiary chevron — the row **locked Peptides Home's *Your routines* region and Fuel Home's meals already draw**, lifted into the shared primitive so the two stop being one design written out twice. `'card'` stays the default, so all 23 existing call sites are byte-identical.
+
+A flat row also lets its title and subtitle **wrap to two lines** where a card still caps at one. Settings titles are the shortest strings in the app at the default text size and among the longest at accessibility sizes, and §32 forbids clipping a value to protect a layout.
+
+**Feature colour, spent once each.** Water blue on Units — Water's own preference, read and written through Water's own store — and Fuel orange on Nutrition Goals. Nothing on Appearance, Tools or Version. §16's rule exactly: the glyph carries the identity, the row never does.
+
+**Appearance became a label over its control.** The row it replaced had no chevron and no `onPress`.
+
+**Nutrition Goals commits through the shared primary.** `Button variant="neutral"` in place of a hand-rolled `borderRadius: 999` fill. `Clear goals` gained the weight and centring that made it a near-match rather than a match for Edit Entry's destructive treatment. Same fields, same labels, same validation, same toast, same `updateTargets` call.
+
+**Units is unchanged** apart from inheriting the screen's rhythm. Its `UnitSelector` is Water's approved control and §43 keeps established control styling.
+
+#### Two defects this pass found in its own device verification
+
+Neither was visible to Jest, which has no layout. Both were found by screenshotting the real screen and looking at it.
+
+1. **`Units` read as an ungrouped row under someone else's header.** It sat in its own block, so `Screen`'s section gap pushed it **62pt** clear of the control above it. It is a preference like Appearance and now sits in the same group.
+2. **Group separation was 28pt plus row slack** — `SectionHeader` already carries `marginTop: spacing.s`, so the default `contentGap` compounded it into the "giant section whitespace" §15 names. `Screen contentGap` is `spacing.m` here.
+
+#### Preview
+
+`settings-preview` — `__DEV__`-only, in-memory, six scenarios: Settings, Units at two stored units, and Nutrition Goals with no goals, both goals and calories only. Nothing reaches storage. **It deliberately does not stub the theme**: Appearance writes through the real provider, because the one thing that control needs verified is that tapping a mode changes the app, and a faked one would be showing a control that does nothing.
+
+#### Validation
+
+84 suites / **2,257 tests** (2,249 → 2,257, +8) · `tsc` and strict-unused clean · iOS Expo export clean · **no dependency change, no new persistence key, no schema migration** — `git diff` over `src` contains no `vita:v1:` literal, and the four `router.push` targets are character-identical apart from indentation.
+
+**Verified on an iPhone 17 Pro simulator** in Dark and Light and at accessibility-extra-large: rows grow, titles and subtitles wrap, nothing clips, hairlines stay legible on cream, and the feature glyphs read in both themes.
+
+#### Scope held
+
+**Tools Hub's runtime is untouched** (§39) — audited in 5.7A, redesigned in 5.7C. No BMI, no Research Library, no scanner scoring, no new settings functionality, no Journey, no Photos, no Atlas, no 5.8 motion work. The `ScreenHeader` truncation and `FloatingDock` crop remain deferred; §31 says not to turn this slice into a global rewrite, and neither makes a touched screen unusable.
+
+**Still to verify — founder, on a real device:** whether Settings now reads as the same app as Dashboard, Fuel, Water and Peptides; whether four section headers over five rows is the right amount of grouping or one too many; whether the single-row groups want their leading hairline at all; and whether `SegmentedTabs` crowds `System` at accessibility sizes enough to matter (it is the shared control, used on locked Water and Peptides setup, so changing it is not this slice's call).
+
 ### Slice 5.7A — Tools + Settings Characterization ✅
 
 **An audit before an edit.** Six screens read in full and compared against the locked VITA language, with nothing changed. Recorded here so 5.7B–5.7E have a written starting point rather than a recollection.
