@@ -469,6 +469,23 @@ Extension point is already documented at `src/lib/preferences/model/types.ts`. *
 
 ---
 
+# Cross-cutting cleanup for 5.7
+
+- **Migrate the eight hand-drawn outlined actions onto `Button variant="outline"`.** The variant was added 2026-09-15 for the Peptides first-use CTA, and it is a promotion of a treatment already drawn by hand at Fuel Home's `Add food`, Home's `Log` and `Add` pills, Fuel's `Set up Fuel`, Water's `Set goal`, and a routine's `Taken` and `Skipped`. Each of those is on a locked screen, so they migrate in the slice that next touches them — **never in bulk**.
+- **`AccentRail` is available for the macro rails.** Fuel Home's calorie rail and Home's Fuel widget share it; the protein macro rail directly below the calorie rail still draws `ProgressBar` with the neutral `surfaces.track`, so one screen now carries two track treatments. Deliberate — §13 of the 2026-09-15 correction authorised the *calorie* rail — and a founder question rather than a defect.
+
+---
+
+# A testing trap worth knowing
+
+**`PressableScale`'s flex trap has a testing twin.** Because the primitive applies its `style` to an inner `Animated.View`, the node a test finds by `onPress` + `accessibilityLabel` carries the handlers and the spoken name but **no style**. So `[control.props.style].flat(4)` returns an empty array, and every `expect(styles).not.toContain(…)` written against it passes on nothing.
+
+One such assertion shipped on 2026-09-13 and was found on 2026-09-15 (`no longer floods the screen with a saturated violet slab`). When asserting how a `PressableScale`-based control is painted, walk into it for the node that actually carries the style — and assert the collection is non-empty first, so the test cannot go quiet again.
+
+**The same shape of trap applies to text.** A `Text` whose children include nested `Text` spans — Home's `180 / 1,500 cal` — yields only its own direct string children to the usual `texts()` helper, so the phrase is reported as three separate lines and could break without any test noticing. `DashboardRoute.test.tsx` and `FuelIdentity.test.tsx` both carry a recursive `readingOf` for this.
+
+---
+
 # What 5.1 deliberately did not do
 
 No production screen was redesigned. `Card`'s 23 call sites, `SectionHeader`'s 28 and `ScreenHeader`'s 31 are untouched — migration happens in the slice that redesigns the screen, never in bulk. The only production files 5.1 touched are listed in `docs/06-Slice-Tracker.md` → slice 5.1.

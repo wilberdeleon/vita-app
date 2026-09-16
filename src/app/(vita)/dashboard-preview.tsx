@@ -25,9 +25,11 @@ import Dashboard from './(tabs)/dashboard';
  *
  * ## Why this exists
  *
- * The 2026-09-13 founder correction rebuilt the widget's hierarchy, and the
- * four states it has to get right are under goal, exactly at goal, over goal
- * and no goal at all. Three of those are unreachable on a device without
+ * The 2026-09-13 founder correction rebuilt the widget's hierarchy and the
+ * 2026-09-15 one rebuilt it again — `180 / 1,500 cal` over `1,320 left`,
+ * compact. The four states it has to get right are under goal, exactly at
+ * goal, over goal and no goal at all. Three of those are unreachable on a
+ * device without
  * actually eating — an over-goal day means logging two thousand calories of
  * fixture food into the founder's real log, which is precisely what a preview
  * exists to avoid.
@@ -35,6 +37,13 @@ import Dashboard from './(tabs)/dashboard';
  * The same harness `fuel-preview` and `peptides-preview` established, with the
  * same guarantee: **each scenario builds its own in-memory repository, and
  * nothing reaches storage.**
+ *
+ * It earned its keep twice. The 2026-09-15 pass used it to measure the wide
+ * widget at **159.7pt before and 128.3pt after** on a real simulator, and to
+ * catch a defect no test could see: an explicit `lineHeight` on the
+ * three-weight calorie line left 95pt of empty space above the figure at
+ * accessibility-extra-large. Both readings came from screenshots of these
+ * scenarios.
  *
  * ## What it deliberately cannot do
  *

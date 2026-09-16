@@ -54,7 +54,7 @@ import {
 } from '../../../lib/peptides';
 import { WaterProvider } from '../../../lib/water/state/WaterProvider';
 import type { WaterRepository } from '../../../lib/water/data/WaterRepository';
-import { palette } from '../../../theme/tokens';
+import { lightSurfaces, palette } from '../../../theme/tokens';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 const TODAY = todayLogDate();
@@ -462,24 +462,210 @@ describe('with no routines at all', () => {
     expect(orb.length).toBeGreaterThan(0);
   });
 
-  it('no longer floods the screen with a saturated violet slab', async () => {
+  it('draws the action as an outline, not as the brightest block on the page', async () => {
     /*
-     * The founder's explicit rejection. The action is the shared neutral
-     * primary now — the treatment `Button variant="neutral"` gives every
-     * other primary in VITA — so violet survives only on the mark.
+     * Two founder rejections in one assertion.
      *
-     * Asserted as "the control is not filled with the feature colour" rather
-     * than by naming a hex, so it keeps holding if the neutral fill changes.
+     * It began as a full-width saturated violet pill — the largest colour
+     * block in the app, on the emptiest screen in it. The 2026-09-13
+     * correction made it `variant="neutral"`, the shared high-contrast
+     * primary. That fixed the violet and produced the opposite fault: on a
+     * near-black page a solid white-on-black fill is not an invitation, it is
+     * a slab. §24's ruling is an **outlined** neutral action.
+     *
+     * So: no feature-colour fill, no high-contrast fill, a real border, and
+     * the violet kept for the glyph. Asserted through the theme's own tokens
+     * rather than hexes, so it holds in either scheme.
      */
     const tree = await mount(repositoryWith([]).repository);
     const cta = control(tree, 'Add to Routine');
     expect(cta).toBeDefined();
 
-    const fills = [cta.props.style]
-      .flat(4)
-      .filter(Boolean)
-      .map((style: { backgroundColor?: string }) => String(style?.backgroundColor ?? ''));
+    /*
+     * Read off the node that actually paints, not off the pressable.
+     *
+     * `PressableScale` applies its `style` to an inner `Animated.View` — the
+     * flex trap recorded in the Migration Guide — so the control `control()`
+     * finds carries the handlers and the spoken name while the fill and the
+     * border live one level down. Reading `cta.props.style` returns nothing,
+     * which is how the previous version of this test passed vacuously.
+     */
+    const styles = cta
+      .findAll((node) => node.props?.style !== undefined)
+      .flatMap((node) => [node.props.style].flat(4))
+      .filter(Boolean) as { backgroundColor?: string; borderWidth?: number; borderColor?: string }[];
+    const fills = styles.map((style) => String(style?.backgroundColor ?? ''));
+    expect(fills.filter(Boolean).length).toBeGreaterThan(0);
+
+    /* Not the feature colour, and not the solid primary either. */
     expect(fills).not.toContain(palette.peptide);
+    expect(fills).not.toContain(lightSurfaces.text);
+    /* The interior is the page's own card colour — it recedes. */
+    expect(fills).toContain(lightSurfaces.card);
+    /* And it is legible as a control, because it has an edge. */
+    expect(styles.some((style) => Number(style?.borderWidth) > 0)).toBe(true);
+    expect(styles.map((style) => String(style?.borderColor ?? ''))).toContain(lightSurfaces.border);
+
+    /* The violet survives on the plus, which is where colour belongs. */
+    const plus = cta.findAllByType(Ionicons).filter((icon) => icon.props.name === 'add');
+    expect(plus).toHaveLength(1);
+    expect(plus[0].props.color).toBe(palette.peptide);
+  });
+
+  it('carries the first-use note about professional guidance', async () => {
+    /*
+     * §25. The one genuinely useful thing this screen can add without
+     * fabricating a routine, and the reason the composition reaches down the
+     * page rather than trailing off after the button.
+     *
+     * The copy is the founder's, verbatim.
+     */
+    const tree = await mount(repositoryWith([]).repository);
+    const rendered = screen(tree);
+
+    expect(rendered).toContain('Before you begin');
+    expect(rendered).toContain(
+      'VITA is for tracking. Consult a qualified healthcare professional before starting or changing a routine.',
+    );
+  });
+
+  it('never puts VITA in the position of advising', async () => {
+    /*
+     * §25's three prohibitions, and the reason the note is worth testing
+     * rather than just writing: the difference between *consult a
+     * professional* and *ask your doctor what dose to take* is the difference
+     * between a tracking tool and a clinical one, and VITA is the first.
+     *
+     * So the note may not recommend, may not send the reader to ask about a
+     * dose, and may not imply that any supervision lives inside this app.
+     */
+    const tree = await mount(repositoryWith([]).repository);
+    const rendered = screen(tree).toLowerCase();
+
+    for (const forbidden of [
+      'vita recommends',
+      'we recommend',
+      'what dose',
+      'your dose',
+      'supervis',
+      'monitored by',
+      'approved by',
+      'prescrib',
+    ]) {
+      expect(rendered).not.toContain(forbidden);
+    }
+  });
+
+  it('keeps the note restrained rather than alarming', async () => {
+    /*
+     * §26. Muted violet and a hairline — not red, not a warning glyph, not a
+     * bounded card. Red is the colour this app uses for genuine errors and
+     * nothing else; using it here would read as *danger* where the intent is
+     * *context*.
+     */
+    const tree = await mount(repositoryWith([]).repository);
+
+    const eyebrow = tree.root
+      .findAllByType(Text)
+      .find((node) => String(node.props.children ?? '') === 'Before you begin')!;
+    expect(eyebrow).toBeDefined();
+    const style = [eyebrow.props.style].flat(4).filter(Boolean) as { color?: string; fontSize?: number }[];
+    expect(style.map((entry) => entry?.color)).toContain(palette.peptide);
+    /* An eyebrow, and staying one. */
+    expect(Math.max(...style.map((entry) => Number(entry?.fontSize ?? 0)))).toBeLessThanOrEqual(13);
+
+    for (const node of tree.root.findAllByType(Text)) {
+      const colours = [node.props.style].flat(4).filter(Boolean) as { color?: string }[];
+      for (const colour of colours) expect(colour?.color).not.toBe(palette.fat);
+    }
+    for (const icon of tree.root.findAllByType(Ionicons)) {
+      expect(String(icon.props.name)).not.toMatch(/warning|alert|error/);
+      expect(icon.props.color).not.toBe(palette.fat);
+    }
+  });
+
+  it('speaks the note, and hides the decorative glyph beside it', async () => {
+    /*
+     * §32. The sentence must be read aloud; the information glyph must not,
+     * because the eyebrow beside it already says the same thing in words.
+     * And the empty state is not collapsed into one huge element — the
+     * title, the copy, the action and the note are each reachable.
+     */
+    const tree = await mount(repositoryWith([]).repository);
+
+    const glyphs = tree.root
+      .findAllByType(Ionicons)
+      .filter((icon) => String(icon.props.name).startsWith('information-circle'));
+    expect(glyphs).toHaveLength(1);
+    expect(glyphs[0].props.accessibilityElementsHidden).toBe(true);
+
+    const spoken = texts(tree);
+    expect(spoken).toContain('No routines yet');
+    expect(spoken.some((line) => line.startsWith('VITA is for tracking.'))).toBe(true);
+    /* Nothing wraps the whole block into a single announcement. */
+    const lumped = tree.root.findAll(
+      (node) => node.props?.accessible === true && node.findAllByType(Text).length > 3,
+    );
+    expect(lumped).toHaveLength(0);
+  });
+
+  it('drops the note the moment a routine exists', async () => {
+    /*
+     * §25 again, and the half that matters most. A first-use note that
+     * reappears above every routine and every dose log is furniture within a
+     * week, and furniture is not read. It is bound to the same condition that
+     * draws the empty state, so it cannot leak.
+     */
+    const populated = await mount(repositoryWith([setupFixture()]).repository);
+    const rendered = screen(populated);
+
+    expect(rendered).not.toContain('Before you begin');
+    expect(rendered).not.toContain('VITA is for tracking.');
+    expect(rendered).not.toContain('No routines yet');
+  });
+
+  it('holds its composition at an accessibility text size', async () => {
+    /*
+     * §31. No fixed heights anywhere in this block, so the mark cannot
+     * collide with the title, the copy and the note wrap instead of
+     * clipping, and the outlined action grows with its label. Asserted
+     * structurally — nothing in the empty state pins a height, and nothing
+     * caps a line count.
+     */
+    mockFontScale = 2;
+    const tree = await mount(repositoryWith([]).repository);
+
+    expect(screen(tree)).toContain('No routines yet');
+    expect(screen(tree)).toContain('Consult a qualified healthcare professional');
+
+    /*
+     * Scoped to the four lines this block owns.
+     *
+     * `ScreenHeader` caps its own title at one line, which is the shared
+     * truncation issue the sprint deferred by name — not this correction's to
+     * repair, and asserting over the whole screen would only re-report it.
+     * Icon glyphs are also `Text`, with the library's own
+     * `allowFontScaling={false}` and `fontFamily: 'ionicons'`.
+     */
+    const block = [
+      'No routines yet',
+      'Add a routine to start tracking your schedule and activity.',
+      'Before you begin',
+      'Add to Routine',
+    ];
+    const lines = tree.root
+      .findAllByType(Text)
+      .filter((node) => {
+        const reading = String(node.props.children ?? '');
+        return block.includes(reading) || reading.startsWith('VITA is for tracking.');
+      });
+    expect(lines).toHaveLength(block.length + 1);
+
+    for (const node of lines) {
+      expect(node.props.numberOfLines).toBeUndefined();
+      expect(node.props.adjustsFontSizeToFit).toBeFalsy();
+      expect(node.props.allowFontScaling).not.toBe(false);
+    }
   });
 
   it('invents no routine, no schedule and no dose to fill the space', async () => {

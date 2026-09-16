@@ -26,8 +26,28 @@ type Props = {
    * Home's `Add food` since 5.6B; it lives here from 5.6D so the screens that
    * commit a food stop each re-implementing it. `'filled'` stays the default,
    * so no existing caller changes.
+   *
+   * `'outline'` is **the same action, one step quieter** — a hairline border
+   * in the theme's own `border`, the card colour inside it, the label in
+   * `surfaces.text`, and `color` spent on the glyph alone.
+   *
+   * It is not a new style. It is the treatment already drawn by hand at
+   * roughly eight call sites — Fuel Home's `Add food`, Home's `Log` and `Add`
+   * pills, Fuel's `Set up Fuel`, Water's `Set goal`, a routine's `Taken` and
+   * `Skipped` — and the only one of VITA's action languages that had no
+   * shared component. It arrives here because of the 2026-09-15 founder
+   * ruling on the Peptides first-use screen: `'neutral'` is a solid
+   * high-contrast block, and on an otherwise-empty page it became the
+   * brightest object on the screen rather than an invitation (§24, which asks
+   * for an outlined neutral action from an *existing* VITA treatment).
+   *
+   * **When to reach for which.** `'neutral'` for the commit at the end of a
+   * flow — *Add to Dinner*, *Save food*, *Save changes* — where the action is
+   * the reason the screen exists. `'outline'` for an invitation the user has
+   * not decided on yet, and for anywhere the button would otherwise be the
+   * loudest thing in view.
    */
-  variant?: 'filled' | 'soft' | 'neutral';
+  variant?: 'filled' | 'soft' | 'neutral' | 'outline';
   /** Dims the button and ignores presses — for forms that aren't valid yet. */
   disabled?: boolean;
   /**
@@ -50,18 +70,35 @@ export function Button({
   const { surfaces } = useTheme();
   const neutral = variant === 'neutral';
   const filled = variant === 'filled';
+  const outline = variant === 'outline';
 
-  const background = neutral ? surfaces.text : filled ? color : `${color}1A`;
-  const foreground = neutral ? surfaces.background : filled ? palette.textOnColor : color;
+  const background = outline ? surfaces.card : neutral ? surfaces.text : filled ? color : `${color}1A`;
+  const foreground = outline
+    ? surfaces.text
+    : neutral
+      ? surfaces.background
+      : filled
+        ? palette.textOnColor
+        : color;
 
   return (
     <PressableScale
       onPress={onPress}
       disabled={disabled}
       accessibilityLabel={accessibilityLabel ?? label}
-      style={[styles.button, { backgroundColor: background }, disabled && styles.disabled]}
+      style={[
+        styles.button,
+        { backgroundColor: background },
+        /* The border is the variant. Applied inline because it resolves
+           through the theme, and only here so no other variant gains one. */
+        outline && { borderWidth: 1, borderColor: surfaces.border },
+        disabled && styles.disabled,
+      ]}
     >
-      {icon ? <Ionicons name={icon} size={18} color={foreground} /> : null}
+      {/* Outlined keeps the feature colour on the glyph, which is the rule
+          the whole sprint rests on: colour marks the objects and states, not
+          the rectangle. */}
+      {icon ? <Ionicons name={icon} size={18} color={outline ? color : foreground} /> : null}
       <Text style={[styles.label, { color: foreground }]}>{label}</Text>
     </PressableScale>
   );

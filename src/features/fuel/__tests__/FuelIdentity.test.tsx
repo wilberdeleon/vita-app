@@ -31,7 +31,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Dashboard from '../../../app/(vita)/(tabs)/dashboard';
 import Fuel from '../../../app/(vita)/(tabs)/fuel';
-import { ToastProvider } from '../../../components/ui';
+import { AccentRail, ProgressBar, RAIL_HEIGHT, ToastProvider } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
 import { NutritionProvider, createEntry, type MealSlot, type VitaFood } from '../../../lib/nutrition';
 import { PeptideProvider } from '../../../lib/peptides';
@@ -127,6 +127,30 @@ function texts(tree: ReactTestRenderer): string[] {
         .join('');
     })
     .filter(Boolean);
+}
+
+/**
+ * What a `Text` actually **reads**, nested spans included.
+ *
+ * `texts` keeps only each node's direct string children, which was enough
+ * while every figure was its own node. Home's calorie line is now one `Text`
+ * in three weights — `616` + `/ 1,500` + `cal` — so its direct children are a
+ * string and two elements, and `texts` reports the pieces with a space
+ * between each. This walks in, so the phrase a reader sees is assertable.
+ */
+function readingOf(node: { props: { children?: unknown } }): string {
+  const walk = (child: unknown): string => {
+    if (typeof child === 'string' || typeof child === 'number') return String(child);
+    if (Array.isArray(child)) return child.map(walk).join('');
+    const element = child as { props?: { children?: unknown } } | null;
+    return element && element.props ? walk(element.props.children) : '';
+  };
+  return walk(node.props.children);
+}
+
+/** Every line on the screen, as read. */
+function readings(tree: ReactTestRenderer): string[] {
+  return tree.root.findAllByType(Text).map(readingOf).filter(Boolean);
 }
 
 const screen = (tree: ReactTestRenderer) => texts(tree).join(' ');
@@ -234,27 +258,34 @@ describe('Home and Fuel', () => {
     await seed({ calories: 616, goals: { calories: 1500 } });
 
     const home = await mount(<Dashboard />);
-    const homeText = screen(home);
     /*
-     * Home carries all three facts as statistics — updated 2026-09-13.
+     * Home carries the same three facts, in its own hierarchy — revised twice.
      *
-     * This test used to assert Home did **not** show the goal, on the
+     * Originally this asserted Home did **not** show the goal, on the
      * reasoning that a fourth figure stops a compact widget being compact.
-     * The founder's device review overturned that: the widget is taller now,
-     * and consumed / remaining / goal are three statistics in descending
-     * weight rather than one sentence. What still differs between the screens
-     * is the *treatment*, not the facts.
+     * The 2026-09-13 device review overturned that and made consumed,
+     * remaining and goal three separate statistics. The 2026-09-15 review
+     * overturned *that*: two large figures gave consumed and remaining equal
+     * weight, and the goal was stranded on a third line.
+     *
+     * The facts have not moved through any of it. What differs between the
+     * screens is the treatment: Home composes `616 / 1,500 cal` into one
+     * line, Fuel Home sets `616` over `Calories consumed` over
+     * `884 left · 1,500 goal`. Same derivation, same numbers, two shapes.
      */
-    expect(homeText).toContain('616 cal consumed');
-    expect(homeText).toContain('884 left');
-    expect(homeText).toContain('1,500 goal');
-    /* And never as a run-on sentence — the shape that truncated on device. */
-    expect(homeText).not.toMatch(/616 cal consumed · 884 left/);
+    expect(readings(home)).toContain('616 / 1,500 cal');
+    expect(readings(home)).toContain('884 left');
+    /* `cal consumed` is the no-goal form; with a goal the relationship says
+       it. And never as a run-on sentence — the shape that truncated. */
+    expect(screen(home)).not.toContain('cal consumed');
+    expect(screen(home)).not.toMatch(/616 cal consumed · 884 left/);
     await act(async () => home.unmount());
     mounted = null;
 
     const fuel = await mount(<Fuel />);
     expect(screen(fuel)).toContain('884 left · 1,500 goal');
+    /* Both screens lead with consumed, and neither leads with the remainder. */
+    expect(readings(fuel)).toContain('616');
   });
 
   it('sets Home’s three facts as statistics, never as a sentence', async () => {
@@ -292,7 +323,7 @@ describe('Home and Fuel', () => {
 
     const figures = home.root
       .findAllByType(Text)
-      .filter((node) => /^[\d,]+$/.test(String(node.props.children ?? '')));
+      .filter((node) => /[\d,]{3,}/.test(readingOf(node)));
     expect(figures.length).toBeGreaterThan(0);
 
     for (const node of figures) {
@@ -313,12 +344,65 @@ describe('Home and Fuel', () => {
     expect(screen(home)).not.toMatch(/\b0 left\b/);
   });
 
+  it('draws one rail, defined once, on both screens', async () => {
+    /*
+     * §13 — the founder asked for the rail to be refined and said plainly:
+     * *audit the Fuel Home calorie rail... do not create Dashboard-only
+     * progress styling.*
+     *
+     * The two screens had been drawing it separately — the same
+     * `ProgressBar` call, the same height, the same amber, written out twice
+     * in two files. Identical by hand rather than by construction, which is
+     * how two surfaces drift. They now render the same `AccentRail`, so the
+     * refinement could not land on one and not the other, and a future
+     * adjustment cannot either.
+     *
+     * Asserted as the same component fed the same fraction, not as a pair of
+     * matching style objects: matching styles are what this replaced.
+     */
+    /* Read while each tree is still mounted — a `ReactTestInstance` reaches
+       into a live fiber, so its props are gone once the tree is not. */
+    const railOf = (tree: ReactTestRenderer) => {
+      const rails = tree.root.findAllByType(AccentRail);
+      expect(rails).toHaveLength(1);
+      const bar = rails[0].findByType(ProgressBar);
+      return {
+        progress: Number(rails[0].props.progress),
+        color: String(rails[0].props.color),
+        height: Number(bar.props.height),
+        track: String(bar.props.track),
+      };
+    };
+
+    await seed({ calories: 616, goals: { calories: 1500 } });
+    const home = await mount(<Dashboard />);
+    const onHome = railOf(home);
+    await act(async () => home.unmount());
+    mounted = null;
+
+    const fuel = await mount(<Fuel />);
+    const onFuel = railOf(fuel);
+
+    /* One fraction, from one derivation — 616 of 1,500. */
+    expect(onHome.progress).toBeCloseTo(616 / 1500);
+    expect(onFuel).toEqual(onHome);
+    expect(onHome.color).toBe(palette.primary);
+
+    /* Thin, and thin by the same amount. The track is a tint of the fill
+       rather than the neutral grey the founder called dead-looking. */
+    expect(onHome.height).toBe(RAIL_HEIGHT);
+    expect(RAIL_HEIGHT).toBeLessThanOrEqual(6);
+    expect(onHome.track).toBe(`${palette.primary}24`);
+  });
+
   it('make no claim about a target on Home when none is set', async () => {
     await seed({ calories: 616 });
     const home = await mount(<Dashboard />);
 
-    expect(screen(home)).toContain('616 cal consumed');
+    expect(readings(home)).toContain('616 cal consumed');
     expect(screen(home)).not.toContain('cal left');
+    /* No denominator, invented or dashed — §6. */
+    for (const line of readings(home)) expect(line).not.toMatch(/\/\s*—|616 \//);
     expect(homeFuelLabel(home)).toContain('No calorie goal set');
   });
 });
