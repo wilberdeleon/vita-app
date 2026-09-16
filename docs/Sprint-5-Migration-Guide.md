@@ -348,7 +348,9 @@ Needed and not yet present: a range selector over site history — something lik
 
 **Not a slice, and not product work.** Recorded here because this is where the SDK 54 → 57 migration is documented, and because a future session reading the dependency story should find both in one place.
 
-**Branch:** `maintenance/expo-sdk-57-patches`, cut from the Fuel closeout (`6d5c240`). **Not merged.**
+**Branch:** `maintenance/expo-sdk-57-patches`, cut from the Fuel closeout (`6d5c240`). **Founder-approved on a real iPhone and merged into `sprint-5-identity-interaction` at `ade8b86` on 2026-09-15**, with the camera gate passed — live camera, one real barcode, a single lookup, Food Detail, Dinner context preserved. The branch is kept as merged history rather than deleted.
+
+**One patch deliberately not applied.** `expo@57.0.23` was published after the artifact the founder tested, so Doctor reads 20/21 on the merged Sprint. Bumping it at closeout would change the dependency set the real-device approval is tied to, and re-verifying the camera needs another physical pass. Carried to the next maintenance window. `expo-camera@~57.0.5` — the package the gate was actually about — is unaffected.
 
 **The drift was upstream, not ours.** `package.json` and the lockfile had been byte-identical since `cf53a01`; Expo published these patches in the days after 5.6D. It was recorded at two packages in 5.6D, nine in 5.6E, and escalated to its own branch once it began to include `expo-camera`.
 

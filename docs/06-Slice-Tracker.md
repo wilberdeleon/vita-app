@@ -2371,9 +2371,9 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
-### Founder correction pass — 2026-09-15 🟡
+### Founder correction pass — 2026-09-15 ✅ APPROVED / LOCKED
 
-**The second correction, and it corrects the first.** Founder-directed, narrow, and awaiting device review. **5.6 stays closed** and no feature's architecture reopens.
+**The second correction, and it corrects the first.** Founder-directed and narrow. **Approved on a physical iPhone 2026-09-15** — the compact Dashboard Fuel widget and the Peptides zero-routine first-use state are both locked, and the 128.3pt widget height was accepted as it stands. **5.6 stays closed** and no feature's architecture reopened.
 
 The 2026-09-13 pass was asked to fix two things and overshot both. The founder reviewed it on a real iPhone and returned two rulings.
 
@@ -2473,7 +2473,9 @@ The test helpers in `DashboardRoute` and `FuelIdentity` also gained a **recursiv
 
 **Locks respected.** Populated Peptides, Water, Add/Search, the scanner, Food Detail, Manual Entry, Edit Entry, Quick Tools, Today's Schedule, the Dashboard header, the quote, the date chip and the dock are untouched. Fuel Home changed by one line — the rail component — under §13's explicit instruction.
 
-**Still to verify — founder, on a real device:** whether 128.3pt now reads as compact rather than oversized (and whether the 40pt header row may shrink to go lower), whether the tinted rail looks polished on a real screen in both themes, whether the outlined Peptides CTA is clear enough without being loud, whether the guidance note adds context without feeling alarming, and **the Fuel square variant**, which needs a tap in Customize Home that simulator automation cannot perform.
+**Verified by the founder on a real device, 2026-09-15 — all approved.** The compact widget, the consumed/goal hierarchy, the secondary remainder, the tinted rail, the outlined Peptides CTA and the first-use guidance note all stand.
+
+**Both open questions were closed with no code change.** The 40pt header row must *not* shrink merely to chase a target card height — the approved on-device composition outranks the ~88–100pt estimate. Fuel Home's protein macro rail keeps its neutral track; a broader progress-track vocabulary may be revisited later, and `AccentRail` is there if it is.
 
 ### Slice 5.6 — Fuel Identity Refresh — CLOSED ✅
 
