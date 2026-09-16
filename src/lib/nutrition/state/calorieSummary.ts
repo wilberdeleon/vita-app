@@ -35,26 +35,27 @@ export type CalorieSummaryView = {
   compactDetail: string | null;
 
   /**
-   * The second stat, **split** so a surface can set the figure and its label
-   * in different type — `884` over `left`, `120` over `over`.
+   * The goal on its own — `1,500` — for the surface that sets it *beside* the
+   * consumed figure rather than under it: `180 / 1,500 cal`.
    *
-   * Added 2026-09-13 for Home's Fuel widget. It had been rendering
-   * `compactDetail` inside the same `Text` as `compact`, which produced
-   * `180 cal consumed · 1,320 left · 1 of 4 meals` on one capped line and an
-   * ellipsis on a real device — the founder's rejection. Splitting it here
-   * rather than in the widget keeps the rule that **every calorie string in
-   * VITA comes out of this file**, so Fuel Home and Home still cannot
-   * disagree about a day.
+   * ## Why it is the bare number
    *
-   * Both are `null` when there is no goal, and when the goal is exactly met —
-   * `Goal reached` is a sentence, not a statistic, and `compactDetail`
-   * already carries it.
+   * The field this replaces was `goalLabel`, `1,500 goal`, written for the
+   * three-statistic widget the 2026-09-13 correction built and the founder
+   * then rejected as oversized: consumed and remaining as two equal figures
+   * with the goal on a quiet third line. The 2026-09-15 ruling is that the
+   * primary relationship is **consumed out of goal**, one line, with what is
+   * left demoted beneath it — so the goal needs to compose into a phrase, and
+   * a trailing word it does not own would read as `180 / 1,500 goal cal`.
+   *
+   * The word `goal` has not been lost: `goalLine` still carries it for Fuel
+   * Home, and `spoken` still says *1,500 calorie goal* on both screens.
+   *
+   * `null` with no goal, so a surface cannot compose `180 / —`. There is no
+   * denominator to show, and inventing one is the thing this file exists to
+   * make impossible.
    */
-  statFigure: string | null;
-  /** `left` or `over`. Lower case: it sits under a figure, not over one. */
-  statLabel: string | null;
-  /** `1,500 goal`, or `null` with no goal. Quiet, and never the subject. */
-  goalLabel: string | null;
+  goalFigure: string | null;
 
   /** The facts, spoken. Identical on both screens. */
   spoken: string;
@@ -116,9 +117,7 @@ export function calorieSummary(
       goalLine: null,
       compact: '—',
       compactDetail: null,
-      statFigure: null,
-      statLabel: null,
-      goalLabel: null,
+      goalFigure: null,
       spoken: 'Fuel. Loading.',
     };
   }
@@ -139,11 +138,9 @@ export function calorieSummary(
       goalLine: null,
       compact: `${figure} cal consumed`,
       compactDetail: null,
-      /* Nothing to be a fraction of, so no second stat and no goal label —
-         never an empty stat column holding a dash. */
-      statFigure: null,
-      statLabel: null,
-      goalLabel: null,
+      /* Nothing to be a fraction of, so no denominator — `180 / —` is the one
+         thing §6 rules out, and a field that is `null` cannot be composed. */
+      goalFigure: null,
       spoken: `${figure} calories consumed. No calorie goal set.`,
     };
   }
@@ -176,11 +173,7 @@ export function calorieSummary(
     goalLine: `${context} · ${goalLabel} goal`,
     compact: `${figure} cal consumed`,
     compactDetail: context,
-    /* A statistic only where there is a number. `Goal reached` stays a
-       sentence and reaches a surface through `compactDetail`. */
-    statFigure: state === 'over' ? formatCalories(over) : state === 'under' ? formatCalories(remaining) : null,
-    statLabel: state === 'over' ? 'over' : state === 'under' ? 'left' : null,
-    goalLabel: `${goalLabel} goal`,
+    goalFigure: goalLabel,
     spoken: `${figure} calories consumed. ${goalLabel} calorie goal. ${
       state === 'over'
         ? `${formatCalories(over)} calories over.`

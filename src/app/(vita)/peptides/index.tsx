@@ -186,35 +186,92 @@ export default function Peptides() {
           </View>
 
           {/*
-            * The shared neutral primary, at its own width.
+            * The shared action, one step quieter — and the third treatment
+            * this button has worn.
             *
-            * This was a full-width saturated violet pill — the largest colour
-            * block in the app, on the emptiest screen in it, which is the
-            * founder's §10 rejection. It is now `Button variant="neutral"`:
-            * the treatment 5.6D extracted and Food Detail's `Add to Dinner`
-            * uses, so the first action a new user meets speaks the same
-            * language as every other primary in VITA.
+            * It began as a full-width saturated violet pill: the largest
+            * colour block in the app, on the emptiest screen in it. The
+            * 2026-09-13 correction made it `variant="neutral"`, the shared
+            * primary that Food Detail's `Add to Dinner` uses. That fixed the
+            * violet and traded it for the opposite fault, which the founder
+            * named on device: a solid high-contrast fill is the right weight
+            * at the end of a flow and far too loud as the only object on a
+            * near-black page. A white slab for a violet one.
+            *
+            * `variant="outline"` is the ruling (§24) — a hairline border, the
+            * card colour inside it, the label at full contrast and the violet
+            * spent on the plus glyph alone. The same treatment Fuel Home's
+            * `Add food` has used since 5.6B, promoted to the shared `Button`
+            * so this screen reuses it rather than redrawing it.
             *
             * The wrapper holds `alignSelf`, so the button sizes to its label
             * instead of spanning a screen that has nothing else on it.
-            *
-            * The local `PressableScale` it replaced carried a comment saying
-            * the shared `Button` could not be used because it took no
-            * `accessibilityLabel`. **That stopped being true in 5.6D**, when
-            * `Button` gained both the label and the neutral variant — the
-            * reason for the one-off had quietly expired.
             */}
           <View style={styles.ctaCell}>
             <Button
               label="Add to Routine"
               icon="add"
-              variant="neutral"
+              variant="outline"
+              color={palette.peptide}
               onPress={() => {
                 vitaHaptic('selection');
                 router.push('/peptides/catalog');
               }}
               accessibilityLabel="Add to Routine"
             />
+          </View>
+
+          {/*
+            * **Before you begin** — the one thing this screen can usefully
+            * say that is not a fabricated routine.
+            *
+            * ## Why it is here and nowhere else
+            *
+            * Founder direction, §25: on the zero-routine state only. It is
+            * first-use context, not a disclaimer to repeat — a note that
+            * reappeared above every routine and every dose log would be
+            * furniture within a week, and furniture is not read. The
+            * condition is `peptides.isEmpty`, the same one that draws this
+            * whole block, so it cannot leak into the populated screen.
+            *
+            * ## What it says, and what it refuses to
+            *
+            * The copy is the founder's, unchanged. It states two things: VITA
+            * is a tracking tool, and a professional should be consulted
+            * before starting or changing a routine.
+            *
+            * It does **not** say *VITA recommends*, does not ask the reader to
+            * find out what dose to take, and does not imply that any clinical
+            * supervision is built into this app — all three named in §25, and
+            * all three would be the app quietly positioning itself as a
+            * source of medical advice. VITA records what the user decided
+            * with someone qualified. That is the whole claim.
+            *
+            * ## Why it is not a warning
+            *
+            * Violet and a hairline, not red and a card. Red is the colour
+            * this app uses for genuine errors and nothing else, and a banner
+            * would read as *danger* where the intent is *context* (§26). The
+            * rule above it groups the note without boxing it.
+            */}
+          <View style={[styles.note, { borderTopColor: surfaces.border }]}>
+            <View style={styles.noteHead}>
+              {/* Decorative: the eyebrow beside it says the same thing in
+                  words, and an icon announced as "information circle" adds
+                  nothing a screen reader needs. */}
+              <Ionicons
+                name="information-circle-outline"
+                size={15}
+                color={palette.peptide}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
+              <Text style={[styles.noteEyebrow, { color: palette.peptide }]}>Before you begin</Text>
+            </View>
+            <Text style={[styles.noteBody, { color: surfaces.textTertiary }]}>
+              VITA is for tracking. Consult a qualified healthcare professional before starting or
+              changing a routine.
+            </Text>
           </View>
         </View>
       ) : null}
@@ -321,7 +378,17 @@ const styles = StyleSheet.create({
      */
     gap: spacing.xl,
     alignItems: 'flex-start',
-    paddingTop: spacing.xxxl * 2,
+    /*
+     * 24pt, down from 64.
+     *
+     * The doubled `xxxl` was there to push a three-element block off the
+     * header when there was nothing under it; with the first-use note the
+     * composition now reaches down the page on its own, and §23 asks for
+     * deliberate rhythm rather than a splash that begins halfway down. The
+     * gaps between the pieces are unchanged — mark, moderate, title, small,
+     * copy, moderate, action, moderate, note.
+     */
+    paddingTop: spacing.xxl,
   },
   mark: {
     /*
@@ -350,6 +417,35 @@ const styles = StyleSheet.create({
   ctaCell: {
     // The button sizes to its label rather than to the empty screen.
     alignSelf: 'flex-start',
+  },
+  note: {
+    /*
+     * A rule and some space, not a card.
+     *
+     * §26 rules out a giant bounded block, and the hairline is what VITA
+     * already uses everywhere it groups without enclosing — the macro row on
+     * Fuel Home, a section's top edge. Full width because the copy is a
+     * sentence and a sentence should not be narrower than the screen it is
+     * on.
+     */
+    alignSelf: 'stretch',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: spacing.l,
+    gap: spacing.xs,
+  },
+  noteHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  noteEyebrow: {
+    ...typography.micro,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  noteBody: {
+    ...typography.caption,
+    fontSize: 14.5,
   },
   error: {
     ...typography.caption,

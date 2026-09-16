@@ -17,9 +17,25 @@ type Props = {
    * passing it is what keeps progress from being visual-only.
    */
   accessibilityLabel?: string;
+  /**
+   * The unfilled portion, when the theme's neutral `track` is not what the
+   * bar wants.
+   *
+   * Optional, and every caller that existed before 2026-09-15 leaves it
+   * unset — so `StatBar`, `DailyProgressCard` and Fuel's protein rail are
+   * byte-identical to before. `AccentRail` passes a tint of its own fill; the
+   * reasoning is recorded there.
+   */
+  track?: string;
 };
 
-export function ProgressBar({ progress, color = palette.primary, height = 8, accessibilityLabel }: Props) {
+export function ProgressBar({
+  progress,
+  color = palette.primary,
+  height = 8,
+  accessibilityLabel,
+  track,
+}: Props) {
   const clamped = Math.max(0, Math.min(1, progress));
   const anim = useRef(new Animated.Value(0)).current;
   const { surfaces } = useTheme();
@@ -49,7 +65,7 @@ export function ProgressBar({ progress, color = palette.primary, height = 8, acc
       accessibilityValue={
         accessibilityLabel === undefined ? undefined : { min: 0, max: 100, now: Math.round(clamped * 100) }
       }
-      style={[styles.track, { height, borderRadius: height / 2, backgroundColor: surfaces.track }]}
+      style={[styles.track, { height, borderRadius: height / 2, backgroundColor: track ?? surfaces.track }]}
     >
       <Animated.View
         style={[

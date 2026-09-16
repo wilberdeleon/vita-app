@@ -39,10 +39,12 @@ describe('no goal', () => {
     expect(view.goal).toBeNull();
   });
 
-  it('never invents a remainder, an over, or a rail', () => {
+  it('never invents a remainder, an over, a denominator or a rail', () => {
     const view = summary(616);
     expect(view.remaining).toBeNull();
     expect(view.over).toBeNull();
+    /* `null`, so Home cannot compose `616 / —` (§6, 2026-09-15). */
+    expect(view.goalFigure).toBeNull();
     /* `null`, not `0`. A track at zero is the "empty reads as complete" bug. */
     expect(view.progress).toBeNull();
     expect(view.compactDetail).toBeNull();
@@ -187,6 +189,19 @@ describe('the two screens', () => {
 
       // The figure both screens lead with is the same number.
       expect(view.compact.startsWith(view.figure)).toBe(true);
+      /*
+       * And the goal Home composes into `180 / 1,500 cal` is the same goal
+       * Fuel Home names in `884 left · 1,500 goal` — the bare number, so a
+       * surface can set it beside the consumed figure without a trailing word
+       * it does not own. Absent exactly where there is no goal, which is what
+       * makes `180 / —` impossible to compose rather than merely discouraged.
+       */
+      if (goal === null) expect(view.goalFigure).toBeNull();
+      else {
+        expect(view.goalFigure).toBe(String(goal).replace(/\B(?=(\d{3})+$)/g, ','));
+        expect(view.goalLine).toContain(`${view.goalFigure} goal`);
+        expect(view.spoken).toContain(`${view.goalFigure} calorie goal`);
+      }
       // Fuel's supporting line opens with exactly Home's detail.
       if (view.goalLine) expect(view.goalLine.startsWith(view.compactDetail!)).toBe(true);
       else expect(view.compactDetail).toBeNull();

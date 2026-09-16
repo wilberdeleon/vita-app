@@ -2371,6 +2371,110 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Founder correction pass — 2026-09-15 🟡
+
+**The second correction, and it corrects the first.** Founder-directed, narrow, and awaiting device review. **5.6 stays closed** and no feature's architecture reopens.
+
+The 2026-09-13 pass was asked to fix two things and overshot both. The founder reviewed it on a real iPhone and returned two rulings.
+
+---
+
+#### Home's Fuel widget — too large, and two co-equal figures
+
+The previous pass turned a truncated prose line into **two 26pt statistics side by side** — consumed beside remaining, with `1,500 goal` stranded on a quiet third line. That fixed the truncation and introduced two faults in its place.
+
+**It read as a hero card.** Measured on a simulator at the default text size, the wide widget was **159.7pt** — tall enough that Home no longer read as one prominent module above a pair, but as a headline with some widgets underneath it.
+
+**And consumed and remaining carried equal weight.** Two large numbers in the same type, leaving the reader to work out which one the day actually is. The founder's ruling: the hierarchy is **consumed, goal, remaining** — not consumed, remaining, goal.
+
+It is now **one primary relationship and one quiet remainder**:
+
+```
+ (flame) Fuel                        + Log
+ 180 / 1,500 cal
+ 1,320 left
+ ####------------------------------------
+```
+
+`180 / 1,500 cal` is **one `Text` in three weights** — the consumed figure at 26pt/700, the goal it is measured against at `TYPE.wideValue`/600 and one colour token quieter, the unit at `TYPE.support` and quieter still. Nested spans rather than three `Text` nodes in a row, so they share a baseline and a line box and the phrase wraps as one piece of text. A reader no longer combines two numbers: the sentence is already formed.
+
+**Measured 128.3pt, a 19.7% reduction**, on the same simulator at the same text size.
+
+**`minHeight: 116` was deleted rather than lowered.** It was inert — the content measured nearer 160, so the floor never bound anything and read as a decision that had no effect. The card is now as tall as the things in it. §11 asked for content-driven sizing and forbade hardcoding a number if content could solve it; both are satisfied by removing the number.
+
+**128.3pt is above the founder's ~88-100pt estimate, and that estimate is unreachable under the brief's other constraints.** The arithmetic: 24pt of module padding + a 40pt header row (§12 preserves it, and its height is set by the `Log` pill's shared `minHeight: 40`) + 4 + a 31pt calorie line + 2 + an 18pt secondary + 4 + a 4pt rail = **127pt**, and the device agrees to within a point. The only lever left is the header row, which is 31% of the card and which §12 protects. Reported rather than reached by shrinking a protected row, or by re-hardcoding a floor below the content — which is the defect just removed.
+
+**A defect this pass created, measured and fixed.** The first version set the calorie line's `lineHeight` as a ratio of `fontScale` — the pattern Fuel Home's headline genuinely needs, because there a *fixed* 37pt line box had become a ceiling that dropped a 51pt figure onto the caption beneath it. On a line made of three runs of different sizes it did the opposite: at accessibility-extra-large the simulator measured **95pt of empty space above the figure and 84pt below it**, and the card reached **359pt** for one line of type and two short ones. Found by measuring ink bands in a screenshot, not by eye. Removing the override took the same content at the same text size to **232pt**, with proportionate leading between all three elements. It is safe to leave to the platform here in a way it is not on Fuel Home: the line sits alone in its own gapped column, so there is no sibling for an overflowing line box to land on.
+
+**The mid-number break stays fixed.** `1,320` is whole at accessibility-extra-large, and now structurally so: the figures live in one full-width `Text` rather than in two competing flex columns, and the only break points in `180 / 1,500 cal` are the spaces around the slash. A test asserts no rendered line ends mid-group.
+
+**The shared derivation stayed shared.** `calorieSummary` traded `statFigure`, `statLabel` and `goalLabel` — presentation fields written for the two-statistic layout — for a single bare `goalFigure`. The goal needed to compose into a phrase, and a trailing word it does not own would read as `180 / 1,500 goal cal`. **No calorie arithmetic changed**, `goalLine` still carries the word *goal* for Fuel Home, and `spoken` is byte-identical on both screens. `goalFigure` is `null` with no goal, so `180 / —` cannot be composed — the absence lives in the derivation, not in a condition a screen could forget.
+
+**The meal count stays gone** (§15). **The top row is untouched** (§12) — same badge, same icon sizes, same `Log` pill.
+
+#### The rail — refined, and shared
+
+Founder: the rail's grey track looked *dead*. §13 also said plainly not to create Dashboard-only progress styling, and to audit Fuel Home's rail.
+
+The audit found the two screens drawing it **separately** — the same `ProgressBar` call, the same 3pt height, the same amber, written out twice in two files. Identical by hand rather than by construction, which is how two surfaces drift.
+
+They now render **one shared `AccentRail`** in `components/ui/`. The track is a low-opacity **tint of the fill** rather than neutral grey — the treatment VITA already uses for the flame's orb and the Peptides mark — so the rail reads as one orange object at two intensities and the seam where fill meets track disappears. 3pt to **4pt**, because a 1.5pt radius on a 3pt bar anti-aliases into a hairline and §13 asked for a cleaner rounded capsule. No glow, no gradient, no shadow. `ProgressBar` gained an optional `track` colour, **unset at every pre-existing caller**, so `StatBar`, `DailyProgressCard` and Fuel's protein rail are byte-identical.
+
+**This changed Fuel Home, a locked screen** — deliberately and minimally, because §13 forbids the alternative. One component swap, same fraction, same amber, same decorative status. Verified on device in both themes.
+
+**Fuel Home's protein macro rail still has the grey track.** A different object at a different scale; sweeping it in would extend an authorised calorie-rail refinement into a broader change to a locked screen. Flagged, not changed.
+
+---
+
+#### Peptides, zero routines — the two open questions, answered
+
+The 2026-09-13 pass closed with two founder questions. Both are now ruled on, and both flags were correct.
+
+**The CTA was too dominant.** `Button variant="neutral"` is the right weight for the commit at the end of a flow and far too loud as the only object on a near-black page — a white slab in place of a violet one. §24's ruling is an **outlined** neutral action, from an existing VITA treatment rather than a new style.
+
+The audit found that treatment already drawn by hand at roughly **eight call sites** — Fuel Home's `Add food`, Home's `Log` and `Add` pills, Fuel's `Set up Fuel`, Water's `Set goal`, a routine's `Taken` and `Skipped` — and that it was the only one of VITA's action languages with no shared component. It is now `Button variant="outline"`: a hairline border in `surfaces.border`, `surfaces.card` inside it, the label at full contrast, and `color` spent on the glyph alone — violet here. **The two feature-home primaries now render identically.** The other eight hand-drawn instances are left alone; migrating them belongs to 5.7.
+
+**The empty space had no content worth it.** The prior pass declined to fill it because every candidate required fabricating routine data, and said so. §25's answer is that the useful content is not product data at all.
+
+```
+ (violet mark)
+
+ No routines yet
+ Add a routine to start tracking your schedule and activity.
+
+ [ + Add to Routine ]
+ ----------------------------------------
+ (i) BEFORE YOU BEGIN
+ VITA is for tracking. Consult a qualified healthcare
+ professional before starting or changing a routine.
+```
+
+The copy is the founder's, verbatim. It states two things and refuses three: it does **not** say *VITA recommends*, does not send the reader to ask what dose to take, and does not imply any clinical supervision lives inside this app. All three are asserted by tests, because the difference between *consult a professional* and *ask your doctor what dose to take* is the difference between a tracking tool and a clinical one, and VITA is the first.
+
+Muted violet and a hairline, **not red and not a card** (§26): red is the colour this app uses for genuine errors and nothing else, and a banner would read as *danger* where the intent is *context*. Bound to `peptides.isEmpty`, the same condition that draws the whole block, so it cannot reach the populated screen — a test mounts a populated Peptides and asserts the note is absent.
+
+**The top gap dropped from 64pt to 24pt.** The doubled `spacing.xxxl` was pushing a three-element block off the header when there was nothing under it; the composition now reaches down the page on its own. The gaps between the pieces are unchanged — mark, moderate, title, small, copy, moderate, action, moderate, note.
+
+**Space below the note is left deliberately.** §27 rules whitespace acceptable and says density is not the objective. **No fake weekly timeline** — the 2026-09-13 refusal is upheld by §28.
+
+---
+
+#### A test that had been passing vacuously
+
+`no longer floods the screen with a saturated violet slab` read `cta.props.style` on the node `control()` returns — which carries the handlers and the spoken name, not the fill. `PressableScale` applies its `style` to an inner `Animated.View` (the flex trap already recorded in the Migration Guide), so `[cta.props.style].flat(4)` returned an **empty array**, and `expect([]).not.toContain(palette.peptide)` passed on nothing. Rewritten to walk into the pressable for the painted style, with a non-empty guard so it cannot go quiet again, and extended to assert the border and the violet glyph.
+
+The test helpers in `DashboardRoute` and `FuelIdentity` also gained a **recursive `readingOf`**. The existing `texts()` keeps only each node's direct string children, which was enough while every figure was its own node; with the calorie line's nested spans it would have reported `180`, `/ 1,500` and `cal` as three separate lines and let the phrase break without any test noticing.
+
+---
+
+**Validation.** 84 suites / **2,249 tests** (2,232 to 2,249, +17) · `tsc` and strict-unused clean · iOS Expo export clean · **no dependency change** and **no persistence key touched**.
+
+**Verified on an iPhone 17 Pro simulator** in Dark and Light, at the default text size and at accessibility-extra-large: all four calorie states through `dashboard-preview`, Fuel Home's rail through `fuel-preview`, and the Peptides empty state. Widget heights measured from screenshots rather than estimated.
+
+**Locks respected.** Populated Peptides, Water, Add/Search, the scanner, Food Detail, Manual Entry, Edit Entry, Quick Tools, Today's Schedule, the Dashboard header, the quote, the date chip and the dock are untouched. Fuel Home changed by one line — the rail component — under §13's explicit instruction.
+
+**Still to verify — founder, on a real device:** whether 128.3pt now reads as compact rather than oversized (and whether the 40pt header row may shrink to go lower), whether the tinted rail looks polished on a real screen in both themes, whether the outlined Peptides CTA is clear enough without being loud, whether the guidance note adds context without feeling alarming, and **the Fuel square variant**, which needs a tap in Customize Home that simulator automation cannot perform.
+
 ### Slice 5.6 — Fuel Identity Refresh — CLOSED ✅
 
 **The whole Fuel experience is founder-approved on a physical iPhone and locked, 2026-09-13.** This is the formal Fuel closeout.

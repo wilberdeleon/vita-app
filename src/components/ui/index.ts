@@ -1,3 +1,4 @@
+export { AccentRail, RAIL_HEIGHT } from './AccentRail';
 export { Button } from './Button';
 export { Card } from './Card';
 export { Chip } from './Chip';

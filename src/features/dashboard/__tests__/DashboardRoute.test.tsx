@@ -54,15 +54,16 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Dashboard from '../../../app/(vita)/(tabs)/dashboard';
 import { EditableWidget } from '../components/EditableWidget';
 import type { DashboardModuleId } from '../modules';
-import { ToastProvider, WaterVessel } from '../../../components/ui';
+import { AccentRail, ToastProvider, WaterVessel } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
-import { NutritionProvider } from '../../../lib/nutrition';
+import { NutritionProvider, createEntry, type VitaFood } from '../../../lib/nutrition';
 import { PeptideProvider } from '../../../lib/peptides';
 import type { WaterRepository } from '../../../lib/water/data/WaterRepository';
 import { createWaterEntry } from '../../../lib/water/model/entries';
 import { createWaterGoal } from '../../../lib/water/model/goals';
 import type { WaterEntry, WaterGoal, WaterPreferences } from '../../../lib/water/model/types';
 import { WaterProvider } from '../../../lib/water/state/WaterProvider';
+import { palette } from '../../../theme/tokens';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { greetingForHour } from '../greeting';
 import {
@@ -257,6 +258,57 @@ function texts(tree: ReactTestRenderer): string[] {
 
 const screen = (tree: ReactTestRenderer) => texts(tree).join(' ');
 
+/**
+ * What a `Text` actually **reads**, nested spans included.
+ *
+ * `texts` above keeps only each node's own direct string children, which was
+ * enough while every figure was its own node. The Fuel widget's calorie line
+ * is now one `Text` in three weights — `180` + `/ 1,500` + `cal` — so its
+ * direct children are a string and two elements, and `texts` would report the
+ * pieces separately with a space between each. That would make
+ * `180 / 1,500 cal` unassertable and, worse, would let the phrase break
+ * without any test noticing.
+ *
+ * This walks into the spans, so what comes back is the sentence a reader sees.
+ */
+function readingOf(node: { props: { children?: unknown } }): string {
+  const walk = (child: unknown): string => {
+    if (typeof child === 'string' || typeof child === 'number') return String(child);
+    if (Array.isArray(child)) return child.map(walk).join('');
+    const element = child as { props?: { children?: unknown } } | null;
+    return element && element.props ? walk(element.props.children) : '';
+  };
+  return walk(node.props.children);
+}
+
+/** Every line on the screen, as read. Nested spans count as one line. */
+function readings(tree: ReactTestRenderer): string[] {
+  return tree.root.findAllByType(Text).map(readingOf).filter(Boolean);
+}
+
+/** One food carrying exactly the calories a case needs. */
+const calorieFood = (calories: number): VitaFood => ({
+  vitaId: `test:${calories}`,
+  source: 'usda',
+  sourceId: String(calories),
+  name: 'Oats',
+  servings: [
+    { label: '1 cup', quantity: 1, unit: 'cup', nutrition: { calories, protein: 20, carbs: 40, fat: 10 } },
+  ],
+  defaultServingIndex: 0,
+  isCustom: false,
+  fetchedAt: '2026-09-01T00:00:00.000Z',
+});
+
+/** A day with real calories, and the goal — if any — the user set for it. */
+async function seedCalories(calories: number, goal: number | null) {
+  if (goal !== null) await AsyncStorage.setItem('vita:v1:targets', JSON.stringify({ calories: goal }));
+  await AsyncStorage.setItem(
+    `vita:v1:foodlog:${TODAY}`,
+    JSON.stringify([createEntry({ food: calorieFood(calories), quantity: 1, meal: 'Lunch', logDate: TODAY })]),
+  );
+}
+
 /** A pressable by the name a screen reader announces. */
 function control(tree: ReactTestRenderer, label: string | RegExp) {
   const matches = (value: string) => (typeof label === 'string' ? value === label : label.test(value));
@@ -417,12 +469,15 @@ describe('the Fuel strip', () => {
      * truncated on device, and Fuel Home already lists every meal — §26's
      * default was to omit it rather than find it a quieter corner.
      */
-    expect(screen(tree)).toContain('0 cal consumed');
+    expect(readings(tree)).toContain('0 cal consumed');
     expect(screen(tree)).not.toMatch(/of 4 meals|No meals/);
-    /* No goal, so no second statistic and no goal label — never an empty stat
-       column, and never a fabricated denominator. */
+    /*
+     * No goal, so no denominator, no remainder and no goal label — never a
+     * fabricated target, and never the `0 / —` §6 rules out by name.
+     */
     expect(screen(tree)).not.toMatch(/\d+ left/);
     expect(screen(tree)).not.toMatch(/\d+ goal/);
+    expect(readings(tree).some((line) => line.includes('/'))).toBe(false);
     expect(control(tree, /^Fuel\. .*No calorie goal set/)).toBeDefined();
     expect(control(tree, 'Log food')).toBeDefined();
   });
@@ -443,6 +498,228 @@ describe('the Fuel strip', () => {
     for (const word of ['score', 'grade', 'rating', 'nutri']) {
       expect(rendered).not.toContain(word);
     }
+  });
+});
+
+/* ── the calorie hierarchy (2026-09-15 founder correction) ──────────────── */
+
+describe('the Fuel calorie hierarchy', () => {
+  /**
+   * The founder's second correction, and the one the widget now reads by.
+   *
+   * The first correction turned a truncated prose line into two equal 26pt
+   * statistics — consumed beside remaining, with the goal on a quiet third
+   * line. On device that was rejected twice over: the widget grew to roughly
+   * 160pt and read as a hero card, and **two figures of equal weight left the
+   * reader to work out which one the day was.**
+   *
+   * The ruling: one primary relationship, `180 / 1,500 cal`, with what is
+   * left demoted to a quiet line beneath it. Hierarchy is *consumed, goal,
+   * remaining* — not consumed, remaining, goal.
+   *
+   * These pin the presentation in all four states, and the weights that make
+   * it a hierarchy rather than three numbers in a column.
+   */
+
+  /** The widget's primary calorie line, whatever state it is in. */
+  function calorieLine(tree: ReactTestRenderer): string {
+    const line = readings(tree).find((text) => /^[\d,—]+( \/ [\d,]+)? cal/.test(text));
+    expect(line).toBeDefined();
+    return line!;
+  }
+
+  /** The `Text` node carrying it, for its type. */
+  function calorieNode(tree: ReactTestRenderer) {
+    return tree.root
+      .findAllByType(Text)
+      .find((node) => /^[\d,—]+( \/ [\d,]+)? cal/.test(readingOf(node)))!;
+  }
+
+  it('reads consumed out of goal, under the goal', async () => {
+    await seedCalories(180, 1500);
+    const tree = await mount(fakeWater());
+
+    expect(calorieLine(tree)).toBe('180 / 1,500 cal');
+    /* And what is left, on its own quiet line — not beside it as an equal. */
+    expect(readings(tree)).toContain('1,320 left');
+  });
+
+  it('reads the goal reached without congratulating anyone', async () => {
+    await seedCalories(1500, 1500);
+    const tree = await mount(fakeWater());
+
+    expect(calorieLine(tree)).toBe('1,500 / 1,500 cal');
+    expect(readings(tree)).toContain('Goal reached');
+    /* `0 left` is arithmetic, not a sentence. §7 also rules out a success
+       treatment: nothing on this widget turns green. */
+    expect(screen(tree)).not.toMatch(/\b0 left\b/);
+    const colours = readings(tree).length;
+    expect(colours).toBeGreaterThan(0);
+    for (const node of tree.root.findAllByType(Text)) {
+      const styles = [node.props.style].flat(4).filter(Boolean) as { color?: string }[];
+      for (const style of styles) expect(style?.color).not.toBe(palette.success);
+    }
+  });
+
+  it('states going over in amber, on the consumed figure alone', async () => {
+    /*
+     * §8. Restrained amber, never red, no icon and no judgement — the same
+     * treatment Fuel Home's own headline takes in this state, so the two
+     * screens agree about what passing a goal looks like as well as what it
+     * says.
+     *
+     * The amber is on the consumed figure. The goal it is measured against
+     * and the unit stay in their own quiet roles: colouring the whole line
+     * would make the *target* look like the thing that went wrong.
+     */
+    await seedCalories(1620, 1500);
+    const tree = await mount(fakeWater());
+
+    expect(calorieLine(tree)).toBe('1,620 / 1,500 cal');
+    expect(readings(tree)).toContain('120 over');
+
+    const style = styleOf(calorieNode(tree));
+    expect(style.color).toBe(palette.carbs);
+    expect(style.color).not.toBe(palette.fat);
+    expect(screen(tree).toLowerCase()).not.toMatch(/exceed|limit|too much|warning/);
+  });
+
+  it('never fabricates a denominator when there is no goal', async () => {
+    /* §6 by name: `180 / —` is the one thing this state must not compose. */
+    await seedCalories(180, null);
+    const tree = await mount(fakeWater());
+
+    expect(calorieLine(tree)).toBe('180 cal consumed');
+    for (const line of readings(tree)) expect(line).not.toMatch(/\/\s*—|—\s*\//);
+    expect(screen(tree)).not.toMatch(/\d+ left|\d+ goal/);
+  });
+
+  it('sets consumed above the goal, and the goal above what is left', async () => {
+    /*
+     * The hierarchy, as type rather than as order.
+     *
+     * Three roles in one line plus one beneath it, and the whole point of the
+     * correction is that they are **not** the same size. Asserted as
+     * inequalities rather than exact numbers so the sizes can still be tuned
+     * against a real device without rewriting the test — what must hold is
+     * the ranking.
+     */
+    await seedCalories(180, 1500);
+    const tree = await mount(fakeWater());
+
+    const node = calorieNode(tree);
+    const consumed = Number(styleOf(node).fontSize);
+
+    const spans = node.props.children as unknown[];
+    const sizes = tree.root
+      .findAllByType(Text)
+      .filter((child) => child !== node && /^ \/ [\d,]+$| cal$/.test(readingOf(child)))
+      .map((child) => Number(styleOf(child).fontSize));
+    expect(spans.length).toBeGreaterThan(1);
+    expect(sizes.length).toBe(2);
+
+    const [goal, unit] = sizes;
+    expect(consumed).toBeGreaterThan(goal);
+    expect(goal).toBeGreaterThan(unit);
+
+    const remaining = tree.root
+      .findAllByType(Text)
+      .find((child) => readingOf(child) === '1,320 left')!;
+    expect(Number(styleOf(remaining).fontSize)).toBeLessThan(consumed);
+    /*
+     * The muted token, per §5 — not a colour of its own, and specifically not
+     * green. `ThemeProvider` resolves to light under jest, where the host
+     * reports no system preference, so this is `lightSurfaces.textTertiary`.
+     */
+    expect(styleOf(remaining).color).toBe(palette.textTertiary);
+    expect(styleOf(remaining).color).not.toBe(palette.protein);
+  });
+
+  it('carries no prose sentence and nothing to truncate', async () => {
+    /*
+     * The shape that failed the first review, asserted as an absence.
+     *
+     * `180 cal consumed · 1,320 left · 1 of 4 meals` inside one capped `Text`
+     * is what produced the ellipsis on device. There is no interpunct joining
+     * calorie facts anywhere on the widget now, and nothing on it is capped
+     * to a line count.
+     */
+    await seedCalories(180, 1500);
+    const tree = await mount(fakeWater());
+
+    for (const line of readings(tree)) {
+      expect(line).not.toMatch(/cal consumed ·|left ·|· \d+ left/);
+      expect(line).not.toContain('…');
+    }
+    expect(screen(tree)).not.toMatch(/\d+ of \d+ meals/);
+
+    /* No line carrying a calorie fact is capped or shrunk. */
+    for (const node of tree.root.findAllByType(Text)) {
+      if (!/cal|left|over|Goal reached/.test(readingOf(node))) continue;
+      expect(node.props.numberOfLines).toBeUndefined();
+      expect(node.props.adjustsFontSizeToFit).toBeFalsy();
+    }
+  });
+
+  it('gives the square the same semantics as the wide strip', async () => {
+    /*
+     * §17. The square is a different geometry, not a different reading of the
+     * day: the same relationship, the same remainder, the same derivation.
+     * The previous two-statistic treatment does not survive here either.
+     */
+    await seedCalories(180, 1500);
+    const tree = await mount(fakeWater());
+
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Fuel, Square')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    expect(calorieLine(tree)).toBe('180 / 1,500 cal');
+    expect(readings(tree)).toContain('1,320 left');
+    expect(screen(tree)).not.toMatch(/cal consumed/);
+    expect(control(tree, 'Log food')).toBeDefined();
+  });
+
+  it('draws the rail against the real fraction, and only with a goal', async () => {
+    /*
+     * §15 — the progress semantics are unchanged by the correction. The rail
+     * is the fraction `calorieSummary` computed, it is decorative because the
+     * line above states the same thing in words, and with no goal there is
+     * nothing to be a fraction of so it is absent rather than empty.
+     */
+    await seedCalories(750, 1500);
+    const withGoal = await mount(fakeWater());
+    const rail = withGoal.root.findAllByType(AccentRail);
+    expect(rail).toHaveLength(1);
+    expect(rail[0].props.progress).toBe(0.5);
+    expect(rail[0].props.color).toBe(palette.primary);
+
+    await act(async () => withGoal.unmount());
+    mounted = null;
+    await AsyncStorage.clear();
+
+    await seedCalories(750, null);
+    const noGoal = await mount(fakeWater());
+    expect(noGoal.root.findAllByType(AccentRail)).toHaveLength(0);
+  });
+
+  it('is shorter than the two-statistic version it replaces', async () => {
+    /*
+     * §10 and §11 — the widget had to get smaller, and the previous
+     * `minHeight: 116` is gone rather than replaced with another number.
+     *
+     * It was **inert**: the content measured nearer 160pt, so the floor never
+     * bound anything and read as a decision that had no effect. The card is
+     * now as tall as the things in it, which is what a content-driven layout
+     * means. Asserted as the absence of a floor, because a height assertion
+     * here would only be measuring jest's own text stub.
+     */
+    await seedCalories(180, 1500);
+    const tree = await mount(fakeWater());
+
+    const card = styleOf(control(tree, /^Fuel[.,]/)!);
+    expect(card.minHeight).toBeUndefined();
+    expect(card.height).toBeUndefined();
   });
 });
 
@@ -1355,30 +1632,59 @@ describe('the system text size', () => {
   it('never truncates or shrinks a Fuel figure, at any text size', async () => {
     /*
      * 5.3D found `2,000 c…` on the wide Fuel strip and the fix then was to let
-     * the line wrap. The 2026-09-13 founder correction went further: a figure
-     * and its label are **separate** `Text` nodes now, so there is no combined
-     * string left to cap.
+     * the line wrap. The 2026-09-13 correction went further and split the
+     * figure from its label, and the 2026-09-15 one recombined them into a
+     * single line in three weights — `180 / 1,500 cal`.
      *
-     * This asserts the stronger property — no capped line count on any Fuel
-     * figure, and no `adjustsFontSizeToFit`, which used to shrink the square's
-     * value silently rather than letting the layout adapt (§34).
+     * Through all three the invariant held: **no capped line count on
+     * anything carrying a number, and no `adjustsFontSizeToFit` anywhere.**
+     * That last one used to shrink the square's value silently rather than
+     * letting the layout adapt, which is what §18 forbids.
      *
-     * The goal is authored here because since 5.6A there is no invented one:
-     * the remainder is a statement about a target, and the strip only makes it
-     * when the user has actually set one.
+     * Read through `readingOf`, so the nested spans are found as one line
+     * rather than missed for having element children.
      */
     mockFontScale = 1.6;
-    await AsyncStorage.setItem('vita:v1:targets', JSON.stringify({ calories: 2000 }));
+    await seedCalories(1240, 2000);
     const tree = await mount(fakeWater());
 
     const figures = tree.root
       .findAllByType(Text)
-      .filter((node) => /^[\d,]+$/.test(String(node.props.children ?? '')));
+      .filter((node) => /[\d,]{3,}/.test(readingOf(node)));
     expect(figures.length).toBeGreaterThan(0);
 
     for (const node of figures) {
       expect(node.props.numberOfLines).toBeUndefined();
       expect(node.props.adjustsFontSizeToFit).toBeFalsy();
+    }
+  });
+
+  it('keeps every calorie number whole at an accessibility text size', async () => {
+    /*
+     * The defect the previous correction shipped, pinned so it cannot return.
+     *
+     * `1,320` rendered as `1,32` over `0` on a real iPhone at
+     * accessibility-extra-large: the two statistics sat in flex columns with a
+     * fixed basis, so the row never wrapped, each figure got half a 390pt
+     * card, and the *word* had to break. A number broken in half does not read
+     * as truncation — it reads as a different number.
+     *
+     * Two properties make it impossible now. The figures live in one `Text`
+     * that spans the card rather than in two competing columns, and the only
+     * break points in `1,320 / 1,500 cal` are the spaces around the slash.
+     * This asserts the second directly: every rendered line that contains a
+     * grouped number contains it whole.
+     */
+    mockFontScale = 2;
+    await seedCalories(1320, 1500);
+    const tree = await mount(fakeWater());
+
+    const lines = readings(tree);
+    expect(lines.some((line) => line.includes('1,320'))).toBe(true);
+    for (const line of lines) {
+      /* No line ends mid-group, and none begins with an orphaned one. */
+      expect(line).not.toMatch(/\d,\d{1,2}$/);
+      expect(line).not.toMatch(/^\d{1,2}\b(?![\d,])\s*$/);
     }
   });
 

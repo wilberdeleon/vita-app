@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { PressableScale, ProgressBar } from '../../../components/ui';
+import { AccentRail, PressableScale, ProgressBar } from '../../../components/ui';
 import {
   calorieSummary,
   formatAmount,
@@ -254,15 +254,24 @@ function NutritionFigures({
         ) : null}
       </View>
 
-      {/* A rail only where there is a real target to fill it. */}
+      {/*
+        * A rail only where there is a real target to fill it.
+        *
+        * `AccentRail` since the 2026-09-15 correction — the same component
+        * Home's Fuel widget draws, so the founder's rail refinement (§13:
+        * *audit the Fuel Home calorie rail... do not create Dashboard-only
+        * progress styling*) landed on both screens at once and neither can
+        * be tuned without the other. The reasoning for the tinted track and
+        * the 4pt capsule is recorded on the component.
+        *
+        * This screen's rail is otherwise unchanged: same fraction from
+        * `calorieSummary`, same amber past the goal, same decorative status.
+        */}
       {calories.progress === null ? null : (
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <ProgressBar
-            progress={calories.progress}
-            height={3}
-            color={calories.state === 'over' ? OVER_ACCENT : palette.primary}
-          />
-        </View>
+        <AccentRail
+          progress={calories.progress}
+          color={calories.state === 'over' ? OVER_ACCENT : palette.primary}
+        />
       )}
 
       <View style={[styles.macros, { borderTopColor: surfaces.border }]}>

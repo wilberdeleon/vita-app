@@ -1,11 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { PressableScale, ProgressBar } from '../../../components/ui';
+import { AccentRail, PressableScale } from '../../../components/ui';
 import { calorieSummary, type DailyNutrition } from '../../../lib/nutrition';
 import { palette, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { ModuleSize } from '../modules';
 import { SQUARE_RADIUS, TYPE, WIDE_RADIUS, isCompactSquare, squareHeight } from '../widget';
+
+/**
+ * Amber, not red, when a calorie goal is passed — the same constant name and
+ * the same hex Fuel Home's own section uses, for the same reason: passing a
+ * target is worth noticing and not worth being scolded for.
+ */
+const OVER_ACCENT = palette.carbs;
 
 type Props = {
   today: DailyNutrition;
@@ -23,27 +30,61 @@ type Props = {
 };
 
 /**
- * Fuel on Home — a bar in both shapes, and wide by default.
+ * Fuel on Home — consumed out of goal, in both shapes, and wide by default.
  *
- * The bar is Fuel's identity here because calories are one number travelling
- * along one axis; Water owns the ring and Peptides the count. Wide is the
+ * The rail is Fuel's identity here because calories are one number travelling
+ * along one axis; Water owns the vessel and Peptides the count. Wide is the
  * shipped default at the founders' direction, so Home opens with one
  * prominent module above a pair.
  *
- * **The two layouts are designed, not stretched.** Wide runs the bar the full
- * width beneath a single row; square stacks the figure over the meal count
- * with a shorter bar. Neither is the other squeezed.
- *
  * **Every figure is real** and comes from `useDailyNutrition()` — the engine
- * Fuel itself reads — and since 5.6B.4 every calorie *sentence* comes from
- * `calorieSummary`, the one derivation Fuel's own section also uses. An empty
- * day says so rather than showing a plausible number, and **no score of any
- * kind** is computed here: not a VITA Score, not a grade, not a rating. None
- * is authorised and none is invented.
+ * Fuel itself reads — and every calorie *string* comes from `calorieSummary`,
+ * the one derivation Fuel Home is also built from. An empty day says so
+ * rather than showing a plausible number, and **no score of any kind** is
+ * computed here: not a VITA Score, not a grade, not a rating.
  *
- * **Shape, size, icon and button are untouched** by that change: 5.6B.4
- * authorised the calorie copy and its semantics on this locked surface, and
- * nothing else.
+ * ## The hierarchy, and the two corrections that arrived at it
+ *
+ * `180 / 1,500 cal` with `1,320 left` beneath it. One primary relationship,
+ * one quiet remainder — consumed, then goal, then what is left.
+ *
+ * It took two founder reviews to get here, and both rejections are worth
+ * keeping written down because each fixed the other's overcorrection.
+ *
+ * **First it was one prose line.** `calories.compact` and `compactDetail`
+ * were joined with the meal count inside a single `Text` under
+ * `numberOfLines={1}`, which rendered `180 cal consumed · 1,320 left · 1 of 4
+ * meals` and then an ellipsis on a real device. Three facts of descending
+ * importance, flattened into one sentence and then truncated.
+ *
+ * **Then it was two large statistics.** The 2026-09-13 correction split them
+ * into `180` / `cal consumed` beside `1,320` / `left`, with `1,500 goal` on a
+ * third line. That fixed the truncation and introduced two new faults the
+ * founder named on device: the widget grew to roughly 160pt and read as a
+ * hero card rather than one module among several, and **consumed and
+ * remaining carried equal visual weight** — two 26pt figures side by side,
+ * leaving the reader to work out which one the day actually is.
+ *
+ * **Now the relationship is the subject.** `180 / 1,500 cal` is one line in
+ * three weights: the consumed figure large and high-contrast, the goal it is
+ * measured against smaller and quieter, the unit smaller still and attached.
+ * A reader does not combine two numbers; the sentence is already formed. What
+ * is left drops to a single quiet line under it, which is where a derived
+ * figure belongs.
+ *
+ * ## The meal count stays gone
+ *
+ * It was the third clause in the sentence that broke, it competed with the
+ * figures the widget exists for, and Fuel Home already lists every meal.
+ * Founder direction in both corrections (§26, then §15).
+ *
+ * ## Nothing is capped, shrunk or concatenated
+ *
+ * No `numberOfLines` on any figure, no `adjustsFontSizeToFit` anywhere in
+ * this file, and no prose sentence to truncate. The calorie line is one
+ * `Text` with nested spans, so it breaks at the spaces around the slash if it
+ * ever has to and **never inside a number** — the defect the previous
+ * correction shipped and this one must not reintroduce.
  */
 export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
   const { surfaces } = useTheme();
@@ -61,65 +102,100 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
    *
    * Now every calorie string here comes out of `calorieSummary`. The two
    * screens still render differently, because a widget this size cannot carry
-   * three lines; they cannot **disagree**, because there is one derivation.
+   * Fuel's three lines; they cannot **disagree**, because there is one
+   * derivation and this file does no calorie arithmetic at all.
    */
   const calories = calorieSummary(today, today.isLoading);
-
-  /*
-   * **Statistics, not a sentence.**
-   *
-   * This used to be `[calories.compactDetail, meals].join(' · ')` rendered
-   * inside the same `Text` as `calories.compact`, which produced
-   * `180 cal consumed · 1,320 left · 1 of 4 meals` under `numberOfLines={1}`
-   * and an ellipsis on a real device. The founder's ruling was that the data
-   * was right and the hierarchy was wrong: consumed, remaining and the goal
-   * are three facts of descending importance, and prose flattens them into
-   * one.
-   *
-   * So each is read separately and set separately. Nothing here is
-   * concatenated, nothing is capped to a line count, and there is no
-   * `adjustsFontSizeToFit` anywhere in this file any more.
-   *
-   * **The meal count is gone.** It was the third clause in the sentence that
-   * broke, it competed with the figures the widget exists for, and Fuel Home
-   * already lists every meal. The founder's §26 default was to omit it.
-   */
   const spoken = `Fuel. ${calories.spoken}`;
 
-  /* Decorative — the module states the same figures in words. Rendered only
-     against a real target: a bar with nothing to fill is the "empty track
-     reads as complete" problem in miniature. */
-  const bar =
-    calories.progress === null ? null : (
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {/*
-          * Amber once the goal is passed, matching Fuel's own rail. Never
-          * red: passing a target is not an error.
-          */}
-        <ProgressBar
-          progress={calories.progress}
-          color={calories.state === 'over' ? palette.carbs : palette.primary}
-          height={3}
-        />
-      </View>
-    );
+  /* Amber past the goal, on the consumed figure and the rail — the treatment
+     Fuel Home already uses for the same state. Never red. */
+  const accent = calories.state === 'over' ? OVER_ACCENT : palette.primary;
 
   /**
-   * One statistic — the figure, then what it counts.
+   * `180 / 1,500 cal`, or `180 cal consumed` with no goal.
    *
-   * The figure is the subject and stays neutral and high-contrast; the label
-   * under it is quiet. No value on this widget is coloured: green would read
-   * as approval of a number VITA has no opinion about, and red as an error.
-   * Fuel's orange lives on the flame and the rail.
+   * One `Text` in three weights rather than three `Text` nodes in a row:
+   * nested spans share a baseline and a line box, so the unit sits on the
+   * figure's baseline without any alignment arithmetic, and the whole phrase
+   * wraps as one piece of text at accessibility sizes.
+   *
+   * **With no goal there is no slash and no denominator.** `180 / —` is what
+   * §6 rules out by name, and it cannot be composed here because
+   * `goalFigure` is `null` in that state — the absence is in the derivation,
+   * not in a condition this file could forget.
+   *
+   * ## No explicit line height
+   *
+   * Deliberate, and measured. The first attempt set one as a ratio of
+   * `fontScale` — the pattern Fuel Home's headline needs, because there a
+   * *fixed* 37pt line box became a ceiling that dropped a 51pt figure onto
+   * the caption beneath it.
+   *
+   * On device that turned out to be the wrong tool for a line made of three
+   * runs of different sizes. At accessibility-extra-large the simulator
+   * measured **95pt of empty space above the figure and 84pt below it** —
+   * the card reached 359pt for one line of text and two short ones. Removing
+   * the override took it to 232pt with the same type at the same size, and
+   * the leading between the three elements became proportionate.
+   *
+   * It is safe to leave to the platform here in a way it is not on Fuel
+   * Home: this line is alone in its own gapped column, so there is no
+   * sibling for an overflowing line box to land on, and natural leading
+   * scales with the type by definition.
    */
-  const stat = (figure: string, label: string, wide: boolean) => (
-    <View style={wide ? styles.stat : styles.statSquare}>
-      <Text style={[wide ? styles.statFigure : styles.statFigureSquare, { color: surfaces.text }]}>
-        {figure}
-      </Text>
-      <Text style={[styles.statLabel, { color: surfaces.textTertiary }]}>{label}</Text>
-    </View>
+  const calorieLine = (scale: { figure: number; goal: number; unit: number }, center: boolean) => (
+    <Text
+      style={[
+        styles.line,
+        center && styles.centered,
+        {
+          fontSize: scale.figure,
+          /* Only the consumed figure takes the amber — the goal and the unit
+             stay in their own quiet roles, exactly as on Fuel Home. */
+          color: calories.state === 'over' ? OVER_ACCENT : surfaces.text,
+        },
+      ]}
+    >
+      {calories.figure}
+      {calories.goalFigure === null ? (
+        <Text style={[styles.unit, { fontSize: scale.unit, color: surfaces.textTertiary }]}> cal consumed</Text>
+      ) : (
+        <>
+          <Text style={[styles.goal, { fontSize: scale.goal, color: surfaces.textSecondary }]}>
+            {' / '}
+            {calories.goalFigure}
+          </Text>
+          <Text style={[styles.unit, { fontSize: scale.unit, color: surfaces.textTertiary }]}> cal</Text>
+        </>
+      )}
+    </Text>
   );
+
+  /**
+   * `1,320 left`, `120 over`, `Goal reached` — or nothing.
+   *
+   * Smaller, lighter and tertiary, per §5. Not a second statistic and never
+   * coloured: green would read as approval of a number VITA has no opinion
+   * about, and red as an error. Fuel's orange lives on the flame and the rail.
+   *
+   * `compactDetail` is the string Home has shown for this since 5.6B.4 — the
+   * same field, demoted from a 26pt figure back to a supporting line.
+   */
+  const secondary = (center: boolean) =>
+    calories.compactDetail === null ? null : (
+      <Text style={[styles.secondary, center && styles.centered, { color: surfaces.textTertiary }]}>
+        {calories.compactDetail}
+      </Text>
+    );
+
+  /* Decorative — the module states the same fraction in words. Rendered only
+     against a real target: a bar with nothing to fill is the "empty track
+     reads as complete" problem in miniature.
+
+     `AccentRail` is the shared rail Fuel Home draws too, so the founder's
+     §13 refinement could not land on one screen and not the other. */
+  const bar = calories.progress === null ? null : <AccentRail progress={calories.progress} color={accent} />;
 
   const logAction = (
     <PressableScale
@@ -153,24 +229,19 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
         </View>
 
         {/*
-          * The same hierarchy as wide, stacked for the narrower footprint —
-          * consumed, then what is left, then the goal. Not the wide layout
-          * squeezed: the two statistics sit over each other rather than
-          * beside, because 164pt cannot hold two figures side by side.
+          * The same semantics as wide at the square's type scale — §17. Not
+          * the wide layout squeezed and not a different reading of the day:
+          * the same `180 / 1,500 cal` over the same `1,320 left`, centred,
+          * with the room a 170pt cell actually has.
           *
-          * `adjustsFontSizeToFit` is gone. It silently shrank the figure
-          * instead of letting the layout adapt, which is what §34 forbids and
-          * what made the square quietly illegible at large text.
+          * At the default text size the phrase fits one line. Past that it
+          * wraps at the spaces around the slash — `180 / 1,500` over `cal` —
+          * which is the composition §17 sketches and the only break the text
+          * can take, because neither number contains one.
           */}
         <View style={styles.squareBody}>
-          {stat(calories.figure, 'cal consumed', false)}
-          {calories.statFigure && calories.statLabel ? (
-            <Text style={[styles.squareDetail, { color: surfaces.textTertiary }]}>
-              {calories.statFigure} {calories.statLabel}
-            </Text>
-          ) : calories.state === 'met' ? (
-            <Text style={[styles.squareDetail, { color: surfaces.textTertiary }]}>Goal reached</Text>
-          ) : null}
+          {calorieLine(SQUARE_SCALE, true)}
+          {secondary(true)}
         </View>
 
         {/* Decorative, and the first thing to give way to larger text. */}
@@ -181,13 +252,15 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
   }
 
   /*
-   * Wide — the shipped default, and the shape the founder reviewed.
+   * Wide — the shipped default, and the shape both founder reviews were of.
    *
-   * Identity and the action on the top row; the statistics beneath them, with
-   * room to be read. It is taller than the 64pt bar it replaces, which the
-   * founder authorised explicitly: the old height was the reason three facts
-   * had to be squeezed onto one line. Quick Tools and Today's Schedule simply
-   * sit lower now, and neither was changed to make that happen.
+   * Identity and the action on the top row, untouched by this correction
+   * (§12); the calorie relationship, its remainder and the rail beneath. Four
+   * elements in a deliberate rhythm rather than the five-line stack that came
+   * before, and **no `minHeight`**: the previous 116 was inert — the content
+   * measured nearer 160 — and a number that cannot bind is worse than no
+   * number, because it reads as a decision. The card is now as tall as the
+   * things in it, which is what §11 asks for.
    */
   return (
     <PressableScale
@@ -207,34 +280,31 @@ export function FuelStrip({ today, size, onOpen, onLog, onLongPress }: Props) {
         {logAction}
       </View>
 
-      {/*
-        * Two statistics side by side, and they **wrap** rather than shrink:
-        * at accessibility text sizes the second drops beneath the first
-        * instead of either being compressed. That is the §34 requirement, and
-        * the reason `flexBasis` is set rather than a fixed width.
-        */}
-      <View style={styles.statsRow}>
-        {stat(calories.figure, 'cal consumed', true)}
-        {calories.statFigure && calories.statLabel
-          ? stat(calories.statFigure, calories.statLabel, true)
-          : null}
+      {/* The calorie block — the two lines belong together, so they sit
+          closer to each other than to anything else on the card (§14). */}
+      <View style={styles.figures}>
+        {calorieLine(WIDE_SCALE, false)}
+        {secondary(false)}
       </View>
-
-      {/*
-        * The quiet third line. `1,500 goal` where one exists; `Goal reached`
-        * on a day that landed exactly on it — a sentence rather than a
-        * statistic, in the same restrained treatment and never in green.
-        */}
-      {calories.goalLabel || calories.state === 'met' ? (
-        <Text style={[styles.goal, { color: surfaces.textTertiary }]}>
-          {calories.state === 'met' ? `Goal reached · ${calories.goalLabel}` : calories.goalLabel}
-        </Text>
-      ) : null}
 
       {bar}
     </PressableScale>
   );
 }
+
+/**
+ * The wide calorie line, in three sizes.
+ *
+ * `figure` dominates and `goal` is exactly `TYPE.wideValue`, the size Water
+ * and Peptides set their own wide value at — so Fuel leads Home without the
+ * goal half of its headline outgrowing the modules beside it (§35). 26 was
+ * the previous single figure size and is kept, because the founder's
+ * objection was to *two* of them, not to this one.
+ */
+const WIDE_SCALE = { figure: 26, goal: TYPE.wideValue, unit: TYPE.support } as const;
+
+/** The same three roles at the square's scale — see `TYPE.squareValue`. */
+const SQUARE_SCALE = { figure: TYPE.squareValue, goal: TYPE.support, unit: 12.5 } as const;
 
 const styles = StyleSheet.create({
   square: {
@@ -252,22 +322,24 @@ const styles = StyleSheet.create({
      * the main axis, which would win over a plain height and collapse the
      * cell. Clamping the range pins the footprint whatever the flex maths
      * decides, in either direction.
+     *
+     * The value is applied inline — it depends on the system text scale.
      */
-    /* The value is applied inline — it depends on the system text scale. */
   },
   wide: {
     borderWidth: 1,
     borderRadius: WIDE_RADIUS,
     padding: spacing.m,
-    gap: spacing.s,
     /*
-     * Taller than the 64pt bar this replaces, by founder authorisation.
+     * Tight, and the same on every boundary the card owns: head row to
+     * calorie block, calorie block to rail.
      *
-     * A `minHeight` rather than a height: the content decides, and at
-     * accessibility text sizes the statistics wrap and the module grows past
-     * this. 64pt was the constraint that forced three facts onto one line.
+     * `spacing.s` before, which with the extra line the old layout carried
+     * left more vertical breathing room than the information justified —
+     * §14. 4pt also does the other half of §13's ask: the rail sits against
+     * the figures it describes rather than floating at the bottom edge.
      */
-    minHeight: 116,
+    gap: spacing.xs,
   },
   wideHead: {
     flexDirection: 'row',
@@ -277,58 +349,30 @@ const styles = StyleSheet.create({
   spacer: {
     flex: 1,
   },
-  statsRow: {
-    flexDirection: 'row',
-    // Wraps at accessibility sizes instead of compressing either figure.
-    flexWrap: 'wrap',
-    gap: spacing.m,
-    rowGap: spacing.s,
+  figures: {
+    /* Closer to each other than to the rest of the card — one block. */
+    gap: 2,
   },
-  stat: {
-    gap: 1,
-    /*
-     * **Content decides when the row breaks.**
-     *
-     * `flexShrink: 0` with an automatic basis means a statistic is never
-     * compressed below the width of the figure inside it, so once the two no
-     * longer fit side by side `flexWrap` puts the second on its own line.
-     *
-     * The first attempt set a fixed `flexBasis`, and the row therefore never
-     * wrapped: at accessibility-extra-large both statistics still "fitted"
-     * two across, each got half a 390pt card, and `1,320` **broke mid-number**
-     * into `1,32` / `0` — worse than truncating, because it reads as two
-     * figures. Scaling that basis by `fontScale` was the second attempt and
-     * missed for the same underlying reason: the wrap has to follow the text
-     * that is actually rendered, not a number multiplied by a guess.
-     */
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 'auto',
-  },
-  statSquare: {
-    gap: 1,
-    alignItems: 'center',
-    alignSelf: 'stretch',
-  },
-  statFigure: {
+  line: {
     ...typography.heading,
-    fontSize: 26,
     fontWeight: '700',
     letterSpacing: -0.4,
   },
-  statFigureSquare: {
-    ...typography.heading,
-    fontSize: TYPE.squareValue,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  statLabel: {
-    ...typography.caption,
-    fontSize: TYPE.support,
-  },
   goal: {
+    fontWeight: '600',
+    letterSpacing: 0,
+  },
+  unit: {
+    ...typography.captionMedium,
+    fontWeight: '600',
+    letterSpacing: 0,
+  },
+  secondary: {
     ...typography.caption,
     fontSize: TYPE.support,
+  },
+  centered: {
+    textAlign: 'center',
   },
   head: {
     flexDirection: 'row',
@@ -347,11 +391,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     alignSelf: 'stretch',
-  },
-  squareDetail: {
-    ...typography.caption,
-    fontSize: TYPE.support,
-    textAlign: 'center',
   },
   badge: {
     width: 40,
