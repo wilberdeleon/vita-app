@@ -509,7 +509,7 @@ A second blocker sits under the intended architecture: FatSecret binds OAuth 2.0
 
 ### Barcode scanning (slice 2.8)
 
-`expo-camera@~17.0.10` (SDK 54-compatible; **no SDK upgrade**). Works in Expo Go — no development build, no Xcode. `app.json` carries the `expo-camera` plugin with a permission string for future dev builds; Expo Go supplies its own.
+`expo-camera@~57.0.5` — SDK 57-compatible. *(Was `~17.0.10` under SDK 54; the package was renumbered to track the SDK in the 2026-09-05 upgrade, and aligned to the expected patch in the 2026-09-13 maintenance pass.)* Works in Expo Go — no development build, no Xcode. `app.json` carries the `expo-camera` plugin with a permission string for future dev builds; Expo Go supplies its own.
 
 **Flow:** camera → `onBarcodeScanned` → `normalizeGtin()` → sequential lookup → Food Detail. Scan types are limited to `upc_a`, `upc_e`, `ean13`, `ean8`.
 

@@ -344,6 +344,45 @@ Needed and not yet present: a range selector over site history — something lik
 
 ---
 
+# Maintenance — Expo SDK 57 patch alignment (2026-09-13)
+
+**Not a slice, and not product work.** Recorded here because this is where the SDK 54 → 57 migration is documented, and because a future session reading the dependency story should find both in one place.
+
+**Branch:** `maintenance/expo-sdk-57-patches`, cut from the Fuel closeout (`6d5c240`). **Not merged.**
+
+**The drift was upstream, not ours.** `package.json` and the lockfile had been byte-identical since `cf53a01`; Expo published these patches in the days after 5.6D. It was recorded at two packages in 5.6D, nine in 5.6E, and escalated to its own branch once it began to include `expo-camera`.
+
+| Package | Before | After |
+|---|---|---|
+| `expo` | 57.0.20 | **57.0.22** |
+| `expo-blur` | 57.0.2 | **57.0.3** |
+| **`expo-camera`** | 57.0.4 | **57.0.5** |
+| `expo-constants` | 57.0.17 | **57.0.18** |
+| `expo-font` | 57.0.3 | **57.0.4** |
+| `expo-haptics` | 57.0.2 | **57.0.3** |
+| `expo-linking` | 57.0.9 | **57.0.10** |
+| `expo-router` | 57.0.19 | **57.0.21** |
+| `expo-splash-screen` | 57.0.8 | **57.0.9** |
+
+All nine are direct dependencies. **`expo-constants` and `expo-font` needed no re-pin** — their existing `~` ranges already reached the expected patch, so only the installed version was stale, which is why `expo install --fix` reported six native modules rather than nine.
+
+**Method:** `npx expo install --fix`, after reading `expo install --check`'s proposal and confirming it was nine patch bumps with no SDK migration, no removals, no unrelated packages and no native-config change. **Expo's own resolver picked every version; none was guessed.**
+
+**What did not change.** No SDK migration — still **Expo SDK 57**. **React 19.2.3 and React Native 0.86.3 untouched**, as are TypeScript, Supabase and AsyncStorage. No `npm update`, no `npm audit fix`. **Two files changed: `package.json` and `package-lock.json`** — zero source, `app.json`, Expo-config or `tsconfig` changes, and **no persistence key touched or migration added**.
+
+**Lockfile churn, audited.** Expo-family transitives only: `@expo/cli`, `@expo/fingerprint`, `@expo/metro-file-map`, `@expo/prebuild-config`, `@expo/ui`, `@expo/xcpretty`, `@expo-google-fonts/material-symbols`, `babel-preset-expo`, `expo-asset`, `expo-file-system`, `expo-glass-effect`, `expo-keep-awake`, `expo-modules-autolinking`, `expo-modules-core`, `expo-symbols`, `compression`. Three nested `hermes-*` duplicates at 0.36.1 were **deduped, not removed** — the top-level copies remain at 0.36.0. One transitive took a **minor** rather than a patch bump, `expo-modules-jsi` 57.0.8 → **57.1.0**, resolved by Expo's compatibility set rather than chosen here.
+
+**Validation.** 84 suites / 2,224 tests **unchanged** · `tsc` and strict-unused clean · `expo install --check` **clean** · Expo Doctor **21/21**, up from 20/21 and a full pass for the first time in the sprint · iOS export clean · `expo start -c` booted with no error and **Metro bundled the whole app from an empty cache** (HTTP 200, 5.9 MB).
+
+**Simulator smoke test on the updated build.** Dashboard · **the scanner on the new `expo-camera`** — mounts, the Dinner meal context survives the deep link, frame and controls intact, feed black because a simulator has no camera · Water · Peptides · Settings · `/sign-in`.
+
+**One pre-existing warning surfaced and was proved pre-existing.** `[Layout children]: No route named "(auth)" exists in nested children`. Because `expo-router` was one of the bumped packages this had to be attributed, so both tarballs were unpacked and diffed: the emitting `console.warn` is **byte-identical in 57.0.19 and 57.0.21**. Pre-existing, dev-only, and `/sign-in` resolves correctly. Carried in the Audit Log; fixing it is product work, not maintenance.
+
+**Founder physical-iPhone QA is still required** — the real camera is the one thing this environment cannot verify.
+
+
+---
+
 # Slice 5.6 — Fuel Identity Refresh
 
 **New section, added 2026-09-04.** Fuel was never part of Sprint 5's original plan — Sprint 2 built its functionality and its presentation predates the current identity. This slice brings the existing Fuel screens into the same product family.
