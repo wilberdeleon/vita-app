@@ -1312,6 +1312,36 @@ describe('Tools — Injection Sites', () => {
     expect(screen(tree)).toContain('Nothing recorded yet');
   });
 
+  /**
+   * 5.7E, found on a device in Light mode on a fresh install.
+   *
+   * The hint under the map and the section below it both read `No injection
+   * sites logged this week.` — the same sentence twice, four lines apart, on
+   * the very first screen a new user sees. The section owns that fact; the
+   * hint explains the map. The week note survives **only** where it still
+   * adds something: when the week is empty but the zones hold older history.
+   */
+  it('says the week is empty once, not twice', async () => {
+    const { repository } = repositoryWith([setupFixture()]);
+    const tree = await mount(<InjectionSites />, repository);
+
+    const said = texts(tree).filter((line) => line.includes('No injection sites logged this week'));
+    expect(said).toHaveLength(1);
+    // And the map still explains itself.
+    expect(screen(tree)).toContain('Tap a location to see its history.');
+  });
+
+  it('still flags an empty week when older history exists', async () => {
+    const { repository } = repositoryWith(
+      [setupFixture()],
+      [siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('thigh-right'))],
+    );
+    const tree = await mount(<InjectionSites />, repository);
+    // The zones are not empty, so "nothing this week" is worth saying here.
+    expect(screen(tree)).toContain('No sites logged this week.');
+    expect(screen(tree)).toContain('Tap a location to see its history.');
+  });
+
   it('aggregates sites across different peptides, newest first', async () => {
     const { repository } = repositoryWith(
       [setupFixture(), setupFixture({ id: 'setup-2', definitionId: 'catalog:mots-c' })],

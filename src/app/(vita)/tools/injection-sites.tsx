@@ -181,15 +181,19 @@ export default function InjectionSites() {
           {selected === undefined ? (
             <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
               {/*
-                * An empty week is worth saying, but it is not the end of the
-                * sentence: the zones still hold history, and a screen that
-                * stopped at "nothing this week" would hide it.
+                * An empty week is worth saying **only when the zones still
+                * hold something** — a screen that stopped at "nothing this
+                * week" would hide older history.
+                *
+                * With nothing recorded anywhere, this said `No injection
+                * sites logged this week.` while the section four lines below
+                * said `No injection sites logged this week. Sites you add
+                * when logging a peptide appear here.` — the same sentence
+                * twice, on the screen a new user sees first. The section
+                * owns that fact; this line explains the map.
                 */}
-              {total === 0 && allTime.length > 0
-                ? 'No sites logged this week. Tap a location to see its history.'
-                : total === 0
-                  ? 'No injection sites logged this week.'
-                  : 'Tap a location to see its history.'}
+              {total === 0 && allTime.length > 0 ? 'No sites logged this week. ' : ''}
+              Tap a location to see its history.
             </Text>
           ) : (
             <>
