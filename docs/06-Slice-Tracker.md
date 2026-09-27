@@ -2371,6 +2371,90 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Slice 5.7C — Tools Hub Identity 🟡
+
+**Implemented, awaiting founder device review.** The Tools landing screen only. **No route, no tool, no behaviour and no persistence moved** — the calculator's arithmetic and the injection-site taxonomy are 5.7D's, and this slice only links to them.
+
+#### Tools Hub — before
+
+```
+[‹]  Tools & Reference
+TOOLS
+ ╭──────────────────────────────────────────╮   <- card: radii.card, border, shadow
+ │ (●) Peptide Calculator                 › │   <- 36pt filled violet orb
+ │     Vial and reconstitution to U-100 …   │
+ ╰──────────────────────────────────────────╯
+            ← 20pt trench ←
+ ╭──────────────────────────────────────────╮
+ │ (●) Injection Sites                    › │
+ │     Body map, site reference, and your h…│   <- truncated at the DEFAULT text size
+ ╰──────────────────────────────────────────╯
+```
+
+#### Tools Hub — after
+
+```
+[‹]  Tools & Reference
+TOOLS
+ ╭──────────────────────────────────────────╮   <- ONE Card panel, paddingVertical: 0
+ │  ▤  Peptide Calculator                 › │   <- bare 19pt violet glyph
+ │     Calculate U-100 syringe units from   │
+ │     vial and reconstitution values       │
+ │     ─────────────────────────────────    │   <- hairline, inset by the panel's padding
+ │  ⚕  Injection Sites                    › │
+ │     Body map, site reference, and your   │
+ │     recorded history                     │
+ ╰──────────────────────────────────────────╯
+```
+
+#### What was wrong, and what it cost
+
+| Finding | Why it mattered |
+|---|---|
+| **Two `ListRow variant="card"` rows** — rounded, bordered, shadowed, 20pt apart | A screen holding two things rendered as two isolated objects, with nothing else on it to dilute them. The clearest remaining case of card soup in the app |
+| **Two 36pt filled violet orbs** | `IconBadge` is the treatment 5.7B removed from Settings for being the loudest thing in a row. At this size, on two rows, it was the screen |
+| **`Body map, site reference, and your hist…`** | `variant="card"` caps title *and* subtitle at **one line**. A real descriptor was already truncated **at the default text size** — visible in the before capture, not a Dynamic Type edge case |
+| **`Screen`'s default `contentGap`** | `spacing.l` plus `SectionHeader`'s own `marginTop: spacing.s` left a trench under the title, on a screen with only two rows to fill it |
+| **The `TOOLS` header duplicates the screen title** | Recorded and **deliberately not acted on** — see below |
+
+#### Reuse, not invention
+
+`Screen` · `ScreenHeader` · `SectionHeader` · the `Card` surface (asserted identical to a plain `Card`, not eyeballed) · `ListRow variant="flat"`, the row locked Peptides and Fuel already draw · `PressableScale` press language · Peptides' violet, at the weight Dashboard's locked Quick Tools tiles already use. **No new row component, no new button, no second feature colour, no new animation.**
+
+**Two small opt-ins on the flat row**, both off by default so Settings renders byte-identically: `rule={false}` suppresses the leading hairline for the first row in a panel that already has a top edge, and `wrap` lets text take the lines it needs. A regression test asserts Settings takes neither.
+
+#### A defect this slice's own device pass found
+
+The DEV preview's long-descriptor probe showed the panel clipping a descriptor, and the real screen then did the same at accessibility-extra-large: **`Calculate U-100 syringe units fro…`**, cut mid-word. `ListRow variant="flat"` caps at two lines — invisible on Settings' short strings, and a fixed-height row by another name on these. Fixed with `wrap`, which also aligns the glyph and chevron to the first line instead of floating them at the centre of a four-line row. Re-verified on device: the descriptor renders in full.
+
+#### Why Tools does not simply look like Settings
+
+Settings' rows sit direct on the background because that screen *is* the list. Tools is a destination holding a small set of utilities, so its rows sit in one panel — same tokens, same typography, same glyph size, same chevron; different container. Related, not duplicated.
+
+#### What was considered and deliberately not done
+
+**The `TOOLS` header stays**, though it repeats the screen title in the way 5.7B removed from Settings. The Migration Guide freezes *the hub's two-section structure*; the 4.2 rationale is explicit that carrying this header now is what makes REFERENCE one header and one row to add in 4.5; and §7 authorizes restyling the landing screen, not rewriting its information architecture. **No one-line screen descriptor was added** — §11 makes it optional and §19 forbids filler, and two well-described rows do not need a caption. **No safety note was added** (§18): Peptides' empty state carries one because a routine begins there; a directory of two utilities is not that screen, and a second warning would be clutter.
+
+#### Tool count
+
+**Two, because two exist.** No BMI, no Research Library, no scanner, no Coming Soon, no disabled cards, no invented categories. The lower part of the screen is empty and that is the honest outcome of the no-filler rule — it is a founder judgement, not a defect to pad.
+
+#### DEV preview
+
+`tools-preview` — two stages. `hub` renders the **real screen**, not a copy. `wrapping` is deliberately *not* the screen: it is the shared `ListRow` primitive in the same panel with fixture copy no tool says, labelled as such, because a second hand-written copy of the screen would drift and quietly stop proving anything. Nothing is written anywhere — Tools Hub has no data behind it. Light and Dark are not stages: there is nothing to fake and nothing to protect, so both are reviewed by switching the app's appearance. The generalized preview-route guard covers `/tools-preview` without being extended.
+
+#### Validation
+
+84 suites / **2,268 tests** (2,257 → 2,268, +11) · `tsc` and strict-unused clean · iOS Expo export clean · **no dependency change, no persistence key, no schema, no route change**.
+
+**Verified on an iPhone 17 Pro simulator** in Dark, Light and at accessibility-extra-large, with both destinations opened to confirm they still render untouched. In Light the panel reads as a soft surface on cream, the divider is visible but quiet, and the violet glyphs stay clear — no gray-on-gray.
+
+#### Scope held
+
+No Peptide Calculator redesign · no Injection Sites redesign · no calculator arithmetic · no site taxonomy · no Settings redesign · no Dashboard Quick Tools redesign · no BMI · no Research Library · no scanner scoring · no new persistence · no dependency change · no 5.7D · no 5.8. The `ScreenHeader` truncation visible at accessibility sizes (`Tools & R…`) is the **deferred** shared issue, unchanged here.
+
+**Still to verify — founder, on a real device:** whether Tools reads as current VITA and as a destination rather than a second Settings page; whether one panel for two utilities is the right amount of containment; and whether the empty lower screen reads as honest or as unfinished.
+
 ### Slice 5.7B — Settings Identity Integration ✅ LOCKED
 
 **Founder-approved on a physical iPhone and locked (2026-09-26).** Approved implementation: `36e4b5c — feat(sprint-5): integrate settings identity`. Presentation only: **no destination, no preference, no stored value and no persistence key moved.** The screen was already honest — 4.1 saw to that — and it looked like the old app, which is the whole of what 5.7 was opened for.

@@ -59,6 +59,33 @@ type Props = {
    * group's opening rule, exactly as it does on Peptides.
    */
   variant?: 'card' | 'flat';
+  /**
+   * Whether a `'flat'` row draws its leading hairline. `true` everywhere by
+   * default, which is the Settings/Peptides/Fuel behaviour unchanged.
+   *
+   * Pass `false` for the **first row inside a surface that already has an
+   * edge** — Tools Hub's grouped panel, where the card's own top border is
+   * the opening rule and a hairline 12pt under it would be the same line
+   * drawn twice. Ignored by `'card'`, which has no rule to suppress.
+   */
+  rule?: boolean;
+  /**
+   * For a `'flat'` row **whose text may genuinely run long**: the title and
+   * descriptor take as many lines as they need, and the leading glyph and
+   * trailing disclosure align to the first line rather than floating at the
+   * centre of a tall row.
+   *
+   * Off by default, so Settings keeps the two-line cap the founder approved
+   * on device in 5.7B and renders byte-identically.
+   *
+   * **Found on a device, not in review.** Tools Hub's descriptors are single
+   * lines at the default text size and fit the cap comfortably. At
+   * accessibility-extra-large `Calculate U-100 syringe units from vial and
+   * reconstitution values` reaches the second line three words in and is cut
+   * mid-word — `syringe units fro…` — which is the fixed-height row §25
+   * forbids, wearing a two-line cap instead of a one-line one.
+   */
+  wrap?: boolean;
 };
 
 /** A row — a meal, a log entry, a setting. Card by default, flat in a list. */
@@ -74,9 +101,14 @@ export function ListRow({
   trailing,
   leading,
   variant = 'card',
+  rule = true,
+  wrap = false,
 }: Props) {
   const { surfaces } = useTheme();
   const flat = variant === 'flat';
+  /* A card has no room to grow into and no rule to suppress; both opt-ins
+     are flat-row concepts, so neither can reach the 23 card call sites. */
+  const grow = flat && wrap;
   const glyph = iconColor ?? (flat ? surfaces.textSecondary : palette.primary);
 
   return (
@@ -86,7 +118,11 @@ export function ListRow({
       accessibilityHint={accessibilityHint}
       style={
         flat
-          ? [styles.flatRow, { borderTopColor: surfaces.border }]
+          ? [
+              styles.flatRow,
+              grow && styles.grownRow,
+              rule && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: surfaces.border },
+            ]
           : [styles.row, { backgroundColor: surfaces.card, borderColor: surfaces.border }]
       }
       pressedScale={flat ? 0.99 : 0.98}
@@ -106,11 +142,17 @@ export function ListRow({
           * and §32 forbids clipping a value to protect a layout. Two lines is
           * what the locked Peptides row allows, for the same reason.
           */}
-        <Text style={[styles.title, { color: surfaces.text }]} numberOfLines={flat ? 2 : 1}>
+        <Text
+          style={[styles.title, { color: surfaces.text }]}
+          numberOfLines={grow ? undefined : flat ? 2 : 1}
+        >
           {title}
         </Text>
         {subtitle ? (
-          <Text style={[styles.subtitle, { color: surfaces.textTertiary }]} numberOfLines={flat ? 2 : 1}>
+          <Text
+            style={[styles.subtitle, { color: surfaces.textTertiary }]}
+            numberOfLines={grow ? undefined : flat ? 2 : 1}
+          >
             {subtitle}
           </Text>
         ) : null}
@@ -144,7 +186,11 @@ const styles = StyleSheet.create({
     /* The same 56pt floor the locked Peptides and Fuel rows keep, so a
        one-line row and a two-line row still scan as one list. */
     minHeight: 56,
-    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  /* The glyph belongs beside the name. Centred in a row four lines tall it
+     floats between the name and the descriptor instead. */
+  grownRow: {
+    alignItems: 'flex-start',
   },
   textBlock: {
     flex: 1,

@@ -71,7 +71,7 @@ Home is founder-approved and stable. Changing a shared primitive in a way that v
 - **Type scale:** display 32 · title 24 · heading 17 · body 15 · caption 13 · micro 11 (system font)
 - **Spacing:** 4-based scale (4–32); floating dock clearance 120
 
-Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, GlassSurface, Section, SectionHeader, ProgressBar, AccentRail, ProgressRing, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow (`card` / `flat`), IconBadge, Button (`filled` / `soft` / `neutral` / `outline`), TextField, NumericField, Stepper, PressableScale, EmptyState, Toast, VitaSheet. *(`PressableCard` was removed in slice 5.1 — zero call sites.)*
+Existing primitives (in `src/components/ui/`): Screen, ScreenHeader, Card, GlassSurface, Section, SectionHeader, ProgressBar, AccentRail, ProgressRing, StatBar, DailyProgressCard, SegmentedTabs, Chip, ListRow (`card` / `flat`, with `rule` and `wrap` for a grouped panel), IconBadge, Button (`filled` / `soft` / `neutral` / `outline`), TextField, NumericField, Stepper, PressableScale, EmptyState, Toast, VitaSheet. *(`PressableCard` was removed in slice 5.1 — zero call sites.)*
 
 `EmptyState` (added Sprint 2, slice 2.1) is the shared empty-state treatment: outline glyph, secondary title, optional tertiary body, centered. Deliberately quiet — no illustration and no shouting call to action. Logging nothing yet is a normal moment in a normal day, not a failure to correct, which is the same reasoning behind the no-guilt-mechanics rule.
 
@@ -217,6 +217,8 @@ It is not a new style. It is the treatment already drawn by hand at roughly **ei
 **Which weight to reach for.** `neutral` for the commit that is the reason a screen exists. `outline` for an invitation the user has not decided on yet, and anywhere the button would otherwise be the brightest object in view.
 
 **A list of rows is flat; a row you act on alone is a card.** Established 2026-09-15 in slice 5.7B. `ListRow` has always been a `radii.card` surface with a border and `shadows.card`, which is right for a meal, a logged food or a search result — something you might act on in isolation — and wrong for a *list* of them: six of them in a column is six floating objects, which is the card soup this sprint exists to remove. `ListRow variant="flat"` draws the same row direct on the background, separated by a hairline, with a 56pt floor and a bare glyph instead of a 36pt tinted orb. It is not a new geometry — it is the row locked Peptides Home's *Your routines* region and Fuel Home's meals already draw, promoted so the two are one definition. `'card'` remains the default; the 23 existing call sites migrate in the slices that next touch their screens, never in bulk.
+
+**A destination groups its rows; a settings screen does not.** Established 2026-09-26 in slice 5.7C. Settings draws its rows direct on the background because the screen *is* the list. Tools Hub is a place you navigate to, holding a small number of utilities, and its rows sit inside **one `Card` panel** with a hairline between them — the same surface token, radius and border every other grouped module uses, with `paddingVertical: 0` so the rows' own padding is the panel's rhythm. Two options on the flat row make this work without a second row component: **`rule={false}`** suppresses the leading hairline on the first row, because the panel's own top border is already the group's opening rule, and **`wrap`** lets a title and descriptor take as many lines as they need while the glyph and chevron align to the first line. Both are off by default, so Settings is unchanged. **`wrap` exists because of a device finding, not a preference:** the flat row's two-line cap is invisible on Settings' short strings, and at accessibility-extra-large it cut a Tools descriptor mid-word — a two-line cap is the fixed-height row Dynamic Type forbids, wearing a larger number.
 
 **Settings spends no feature colour on a setting that belongs to no feature.** Founder ruling, §44 of the 5.7 authorization. `ListRow`'s icon badge defaults to Fuel orange, so Settings had been drawing five 36pt orange discs on a screen that owns no Fuel — orange is a feature identity in VITA, not decoration. Generic rows take a bare glyph in secondary text. Where a setting genuinely *is* a feature's — Units is Water's own preference, Nutrition Goals is Fuel's — that feature's colour marks **the glyph, never the row**. This is the same accent exception 5.1A established for the `+` on Add Water.
 
@@ -602,7 +604,7 @@ Fuel had a calorie ring — the one object every calorie counter already ships, 
 ## What this document still owes
 
 - `SectionHeader` variants (proposed in 5.1, built when a screen's slice needs them)
-- A flat in-panel `ListRow` variant — today each row carries its own border and shadow, so a list reads as a stack of cards (**5.7**, when Settings and the Tools hub need it)
+- ~~A flat in-panel `ListRow` variant — today each row carries its own border and shadow, so a list reads as a stack of cards~~ **Done**: `variant="flat"` in 5.7B (Settings), extended with `rule` and `wrap` in 5.7C (Tools Hub's grouped panel)
 - Iconography
 - The full component state matrix
 - App-shell and dock specification beyond current behaviour

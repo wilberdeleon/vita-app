@@ -252,6 +252,32 @@ describe('every visible row is real', () => {
     }
   });
 
+  /**
+   * 5.7C gave `ListRow` two flat-row opt-ins for Tools Hub's grouped panel —
+   * a suppressed leading rule and uncapped wrapping text. **Settings takes
+   * neither.** The founder approved this screen on a device with its leading
+   * hairlines and its two-line cap, and a shared primitive gaining an option
+   * is not a reason to change a locked screen. This fails if a later slice
+   * quietly makes either the default.
+   */
+  it('takes none of the flat row opt-ins a later slice added', async () => {
+    const { repository } = fakeWaterRepository();
+    const tree = await mount(<Settings />, repository);
+
+    expect(rows(tree).length).toBeGreaterThan(3);
+    for (const row of rows(tree)) {
+      expect(row.rule).toBeUndefined();
+      expect(row.wrap).toBeUndefined();
+    }
+
+    // And the cap is still actually applied, not merely un-opted-out of.
+    const capped = tree.root
+      .findAllByType(Text)
+      .map((node) => node.props.numberOfLines)
+      .filter((value) => value === 2);
+    expect(capped.length).toBeGreaterThan(0);
+  });
+
   it('spends no feature colour on a setting that belongs to no feature', async () => {
     /*
      * §44. `ListRow`'s icon badge defaults to `palette.primary`, so before

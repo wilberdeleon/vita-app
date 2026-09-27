@@ -29,13 +29,15 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-import { Text, TextInput } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import InjectionSites from '../../../app/(vita)/tools/injection-sites';
 import PeptideCalculator from '../../../app/(vita)/tools/peptide-calculator';
 import ToolsAndReference from '../../../app/(vita)/tools/index';
-import { ListRow, ToastProvider } from '../../../components/ui';
+import { Card, IconBadge, ListRow, PressableScale, ToastProvider } from '../../../components/ui';
+import { QUICK_TOOL_REGISTRY } from '../../dashboard/quickTools';
+import { palette } from '../../../theme/tokens';
 import { PeptideProvider } from '../../../lib/peptides';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
@@ -80,6 +82,17 @@ function texts(tree: ReactTestRenderer): string[] {
 
 const screen = (tree: ReactTestRenderer) => texts(tree).join(' ');
 const rows = (tree: ReactTestRenderer) => tree.root.findAllByType(ListRow).map((node) => node.props);
+
+/**
+ * The computed style of a `Card`'s own root view — the surface tokens, not
+ * the `style` prop handed in. Read while the tree is mounted: a
+ * `ReactTestInstance` reaches into a live fiber and is worthless afterwards.
+ */
+function cardSurface(tree: ReactTestRenderer): Record<string, unknown> {
+  const card = tree.root.findAllByType(Card)[0];
+  expect(card).toBeTruthy();
+  return { ...(StyleSheet.flatten(card.findAllByType(View)[0].props.style) as object) };
+}
 
 function control(tree: ReactTestRenderer, label: string | RegExp) {
   const matches = (value: unknown) =>
@@ -147,6 +160,32 @@ describe('Tools & Reference hub', () => {
     // No dosing, no "next site", no instruction — these are utilities and a
     // reference, and the copy has to read that way.
     expect(rendered).not.toMatch(/should|recommend|next site|rotate|dose your/i);
+    // The calculator does arithmetic and the sites screen shows what you
+    // recorded. Neither is a planner, and the hub may not imply one.
+    expect(rendered).not.toMatch(
+      /best site|safest site|suggested|typical dose|dose planner|treatment plan|protocol|titrat/i,
+    );
+  });
+
+  /**
+   * §18. Peptides' empty state carries a professional-guidance note because
+   * that screen is where a routine begins. A directory of two utilities is
+   * not, and repeating the warning here would be disclaimer clutter rather
+   * than safety.
+   */
+  it('adds no second medical warning of its own', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    expect(screen(tree)).not.toMatch(/consult|healthcare professional|before you begin|not medical/i);
+  });
+
+  it('states what each tool actually does', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    const subtitles = rows(tree).map((row) => row.subtitle);
+    // Repository truth: the calculator converts a vial and a reconstitution
+    // volume into U-100 units, and Injection Sites really does hold a body
+    // map, the site reference and recorded history.
+    expect(subtitles[0]).toBe('Calculate U-100 syringe units from vial and reconstitution values');
+    expect(subtitles[1]).toBe('Body map, site reference, and your recorded history');
   });
 
   it('gives every row an accessible name and a hint', async () => {
@@ -155,6 +194,135 @@ describe('Tools & Reference hub', () => {
       expect(row.title).toBeTruthy();
       expect(row.subtitle).toBeTruthy();
       expect(row.accessibilityHint).toBeTruthy();
+    }
+  });
+});
+
+/* ── 5.7C: the hub's identity ───────────────────────────────────────── */
+
+/**
+ * What 5.7C changed is presentation, and these pin the parts of it that a
+ * later slice could undo without noticing: the grouping, the surface it
+ * borrows, where the feature colour is allowed to land, and the agreement
+ * with the locked Quick Tools row about what these two tools are called.
+ */
+describe('Tools Hub identity', () => {
+  it('draws one group rather than a card per tool', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    expect(rows(tree).map((row) => row.variant)).toEqual(['flat', 'flat']);
+    // One panel holding both, not one surface each.
+    expect(tree.root.findAllByType(Card)).toHaveLength(1);
+  });
+
+  /** The panel is the shared card surface, not a hand-rolled lookalike. */
+  it("borrows the app's card surface rather than restyling one", async () => {
+    const tree = await mount(<ToolsAndReference />);
+    const panel = cardSurface(tree);
+
+    const reference = await mount(<Card />);
+    const plain = cardSurface(reference);
+
+    for (const key of ['backgroundColor', 'borderRadius', 'borderWidth', 'borderColor']) {
+      expect(panel[key]).toBeDefined();
+      expect(panel[key]).toEqual(plain[key]);
+    }
+    // The one deliberate override: the rows' own padding is the rhythm.
+    expect(panel.paddingVertical).toBe(0);
+  });
+
+  /**
+   * The panel already has a top edge. A hairline 12pt under it would be the
+   * same line drawn twice, which is why the first row suppresses its rule
+   * and every row after it keeps one.
+   */
+  it("opens the group on the panel's edge, not on a second rule", async () => {
+    const tree = await mount(<ToolsAndReference />);
+    const [first, ...rest] = rows(tree);
+    expect(first.rule).toBe(false);
+    for (const row of rest) expect(row.rule).not.toBe(false);
+  });
+
+  /**
+   * §14/§15. Violet marks the glyph. It may not fill a row — the orb that
+   * 5.7B removed from Settings is the same defect at a smaller size, and a
+   * tinted row is that defect at a larger one.
+   */
+  it('spends the feature colour on the glyph and nowhere else', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    for (const row of rows(tree)) expect(row.iconColor).toBe(palette.peptide);
+
+    // Read the pressable's own style: `ListRow` hands it there, so this is
+    // the node that would carry a violet fill if one had been added.
+    const pressables = tree.root.findAllByType(PressableScale);
+    expect(pressables.length).toBeGreaterThan(0);
+    for (const node of pressables) {
+      const style = StyleSheet.flatten(node.props.style) as Record<string, unknown> | undefined;
+      expect(style).toBeTruthy();
+      expect(style?.backgroundColor).toBeUndefined();
+    }
+
+    expect(tree.root.findAllByType(IconBadge)).toHaveLength(0);
+  });
+
+  /**
+   * §14. Identity is shared with Dashboard's locked Quick Tools even though
+   * the geometry deliberately is not — a full-screen directory is not a row
+   * of tiles. Agreement is asserted rather than achieved by import: features
+   * do not import each other, so only a test can hold the two together.
+   */
+  it.each([
+    ['calculator', 'Peptide Calculator'],
+    ['sites', 'Injection Sites'],
+  ] as const)('calls %s what Quick Tools calls it', async (id, title) => {
+    const tree = await mount(<ToolsAndReference />);
+    const row = rows(tree).find((item) => item.title === title);
+    const canonical = QUICK_TOOL_REGISTRY[id];
+
+    expect(row).toBeTruthy();
+    expect(row!.title).toBe(canonical.name);
+    expect(row!.icon).toBe(canonical.icon);
+    expect(row!.iconColor).toBe(canonical.color);
+    expect(row!.accessibilityHint).toBe(canonical.hint);
+  });
+
+  /**
+   * §25. A row grows with its content. Nothing inside the panel may cap a
+   * name or a descriptor at one line — `ScreenHeader`'s own `numberOfLines`
+   * is the deferred truncation issue and is outside the panel, so this is
+   * scoped to the group rather than to the screen.
+   */
+  /**
+   * §25, and a defect this slice's own device pass found rather than a
+   * review. `ListRow variant="flat"` caps its title and descriptor at two
+   * lines, which Settings' short strings never reach. Tools' do: at
+   * accessibility-extra-large `Calculate U-100 syringe units from vial and
+   * reconstitution values` was cut mid-word at `syringe units fro…`. A
+   * two-line cap is still the fixed-height row §25 forbids, so these rows
+   * opt out of it — and Settings, which the founder approved with the cap,
+   * does not.
+   */
+  it('lets names and descriptors wrap instead of clipping them', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    for (const row of rows(tree)) expect(row.wrap).toBe(true);
+
+    const panel = tree.root.findAllByType(Card)[0];
+    const lines = panel.findAllByType(Text).map((node) => node.props.numberOfLines);
+    expect(lines.length).toBeGreaterThan(0);
+    // Not "two or more" — any cap at all is a line this copy can reach.
+    for (const value of lines) expect(value).toBeUndefined();
+  });
+
+  /**
+   * The glyph belongs beside the name. Centred in a row that is four lines
+   * tall at accessibility sizes it floats between the name and the
+   * descriptor, which is what the device showed before `wrap`.
+   */
+  it('aligns the glyph and the disclosure to the first line', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    for (const node of tree.root.findAllByType(PressableScale)) {
+      const style = StyleSheet.flatten(node.props.style) as Record<string, unknown> | undefined;
+      expect(style).toBeTruthy();
+      expect(style?.alignItems).toBe('flex-start');
     }
   });
 });

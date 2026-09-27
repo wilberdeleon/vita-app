@@ -430,7 +430,7 @@ Fuel is not restyled into Water's or Dashboard's layout. **Where a feature appea
 
 | Now | Becomes |
 |---|---|
-| Hub: 3 rows' worth of chrome for 2 items | Utility rows, lighter |
+| ~~Hub: 3 rows' worth of chrome for 2 items~~ **Done 2026-09-26 in 5.7C** | One `Card` panel holding two hairline-separated flat rows — not two floating shadowed cards, and not Settings' bare rows either: a destination groups what it holds |
 | Injection Sites: 4 stacked `Card`s | Panels + the body map as the feature object |
 | Calculator | Presentation only |
 | Settings: `ListRow` stacks that each carry their own border and shadow, so a list reads as a stack of cards | A flat in-panel row variant — the `ListRow` finding already recorded for the motion slice |
