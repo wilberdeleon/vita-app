@@ -2371,9 +2371,9 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
-### Slice 5.7B — Settings Identity Integration 🟡
+### Slice 5.7B — Settings Identity Integration ✅ LOCKED
 
-**Implemented, awaiting founder device review.** Presentation only: **no destination, no preference, no stored value and no persistence key moved.** The screen was already honest — 4.1 saw to that — and it looked like the old app, which is the whole of what 5.7 was opened for.
+**Founder-approved on a physical iPhone and locked (2026-09-26).** Approved implementation: `36e4b5c — feat(sprint-5): integrate settings identity`. Presentation only: **no destination, no preference, no stored value and no persistence key moved.** The screen was already honest — 4.1 saw to that — and it looked like the old app, which is the whole of what 5.7 was opened for.
 
 #### Settings Home — before
 
@@ -2449,7 +2449,13 @@ Neither was visible to Jest, which has no layout. Both were found by screenshott
 
 **Tools Hub's runtime is untouched** (§39) — audited in 5.7A, redesigned in 5.7C. No BMI, no Research Library, no scanner scoring, no new settings functionality, no Journey, no Photos, no Atlas, no 5.8 motion work. The `ScreenHeader` truncation and `FloatingDock` crop remain deferred; §31 says not to turn this slice into a global rewrite, and neither makes a touched screen unusable.
 
-**Still to verify — founder, on a real device:** whether Settings now reads as the same app as Dashboard, Fuel, Water and Peptides; whether four section headers over five rows is the right amount of grouping or one too many; whether the single-row groups want their leading hairline at all; and whether `SegmentedTabs` crowds `System` at accessibility sizes enough to matter (it is the shared control, used on locked Water and Peptides setup, so changing it is not this slice's call).
+#### Founder ruling on the open questions
+
+**The founder approved Settings as shown, and that supersedes the speculative polish this engineer raised.** Four section headers over five rows, the leading hairline on single-row groups, and `SegmentedTabs` spacing at accessibility sizes are **all accepted as they stand**. None was an observed failure — each was a question about taste, asked by the engineer rather than reported from the device. **5.7B is not reopened for any of them.** They return only if a real regression or bug is found.
+
+#### What is locked
+
+Settings Home in its current VITA language: flat rows direct on the background, restrained hairlines, no card soup, feature colour only where a setting belongs to a feature (Water blue on Units, Fuel orange on Nutrition Goals), Appearance integrated as a label over its own control, Units reading and writing **Water's own** preference with no duplicate unit state, Nutrition Goals on the current Fuel target model (calories optional, protein optional, carbs and fat totals only, no recommendations, no TDEE, no BMR, no synthetic defaults), a real and functional Tools entry, a version read from the Expo config, and DEV-only rows that stay DEV-only. Appearance still offers Light, Dark and System with **behaviour unchanged**. **No persistence migration and no new settings functionality.**
 
 ### Slice 5.7A — Tools + Settings Characterization ✅
 
