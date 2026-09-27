@@ -132,6 +132,15 @@ export default function InjectionSites() {
     [allTime, selected],
   );
 
+  /**
+   * Whether the zone's newest record is one of the week lines already shown
+   * above it. Compared by id rather than by date: two logs on the same day
+   * are two records, and only the one actually listed is "already said".
+   */
+  const latestIsListed =
+    selectedAllTime.length > 0 &&
+    selectedEntries.some((entry) => entry.id === selectedAllTime[0].id);
+
   /** Every site used this week, in day order — the accessible equivalent. */
   const listed = useMemo(
     () =>
@@ -214,6 +223,22 @@ export default function InjectionSites() {
               {selectedAllTime.length === 0 ? (
                 <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
                   No history recorded here.
+                </Text>
+              ) : latestIsListed ? (
+                /*
+                  * The zone's most recent record is already one of the lines
+                  * directly above, so naming its date again is the same
+                  * sentence twice — on device, a single log read
+                  * `Wednesday, September 23 · 2:00 AM · Retatrutide · 1 mg`
+                  * and then `Last recorded Wednesday, September 23 · 1 log`.
+                  *
+                  * The **count** still says something the week cannot: how
+                  * much this zone holds in total. So the count stays and the
+                  * repeated date goes.
+                  */
+                <Text style={[styles.hint, { color: surfaces.textTertiary }]}>
+                  {selectedAllTime.length} {selectedAllTime.length === 1 ? 'log' : 'logs'} recorded
+                  here
                 </Text>
               ) : (
                 <Text style={[styles.hint, { color: surfaces.textTertiary }]}>

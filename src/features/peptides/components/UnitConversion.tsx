@@ -393,12 +393,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.m,
   },
+  /**
+   * Both columns must be allowed to give way.
+   *
+   * The row is `space-between` with no constraint on either side, so at
+   * accessibility text sizes `REFERENCE CONVERSIONS` and `SYRINGE UNITS`
+   * kept their intrinsic widths and **pushed the second column off the
+   * right of the screen** — measured at accessibility-extra-large, where
+   * `SYRINGE UNITS` rendered outside the card entirely. The ladder's own
+   * cells could do the same with a wide enough figure.
+   *
+   * `flexShrink` only acts once content exceeds the container, so at every
+   * ordinary text size these render exactly as before — which is what keeps
+   * Routine Setup, where this same component is locked, unchanged.
+   */
   heading: {
     ...typography.micro,
     letterSpacing: 0.6,
+    flexShrink: 1,
   },
   cell: {
     ...typography.body,
+    flexShrink: 1,
   },
   right: {
     textAlign: 'right',

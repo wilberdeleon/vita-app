@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card, ListRow, PressableScale, Screen, ScreenHeader, SectionHeader } from '../../components/ui';
 import { palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import PeptideCalculator from './tools/peptide-calculator';
 import ToolsAndReference from './tools/index';
 
 /**
@@ -34,6 +35,20 @@ import ToolsAndReference from './tools/index';
  * matters: a second hand-written copy of the screen would drift from the
  * real one and quietly stop proving anything about it.
  *
+ * **`calc-empty` / `calc-result` / `calc-invalid`** render the **real
+ * standalone calculator**, seeded through the two optional props that screen
+ * exposes for exactly this. Expo Router passes no props, so the shipped
+ * screen is unaffected; the preview simply starts it with values already
+ * typed. `calc-result` uses `10 mg / 2 mL`, one of the canonical examples,
+ * so a wrong answer is visible rather than merely plausible. The calculator
+ * persists nothing, so nothing here needs a fake repository either.
+ *
+ * **Injection Sites is deliberately not here.** `peptides-preview` already
+ * drives the real screen over in-memory peptide data across `sites`,
+ * `sites-tue-thu`, `overlap`, `history` and the empty `none` scenario —
+ * `?state=sites&screen=sites&id=a`. A second harness would duplicate that
+ * seeding and drift from it.
+ *
  * **Light and Dark are not stages.** There is no theme to fake here and
  * nothing stored to avoid, so both themes are reviewed the honest way —
  * switch the app's appearance in Settings, or the simulator's, and reopen.
@@ -47,6 +62,9 @@ type Scenario = { key: string; label: string };
 const SCENARIOS: Scenario[] = [
   { key: 'hub', label: 'Tools Hub' },
   { key: 'wrapping', label: 'Long descriptors' },
+  { key: 'calc-empty', label: 'Calculator · empty' },
+  { key: 'calc-result', label: 'Calculator · 10mg / 2mL' },
+  { key: 'calc-invalid', label: 'Calculator · invalid' },
 ];
 
 /** Fixture copy — no tool says this. Long enough to wrap at any text size. */
@@ -136,7 +154,20 @@ export default function ToolsPreview() {
       </View>
 
       <View style={styles.stage}>
-        {active.key === 'wrapping' ? <WrappingProbe /> : <ToolsAndReference />}
+        {active.key === 'wrapping' ? (
+          <WrappingProbe />
+        ) : active.key === 'calc-empty' ? (
+          <PeptideCalculator />
+        ) : active.key === 'calc-result' ? (
+          /* 10 mg in 2 mL — the canonical example: 1 mg = 20 units. */
+          <PeptideCalculator initialVialAmount="10" initialReconstitution="2" />
+        ) : active.key === 'calc-invalid' ? (
+          /* A half-typed vial and a zero volume: both inline errors at once,
+             which is the state no screenshot of the real screen can reach. */
+          <PeptideCalculator initialVialAmount="1." initialReconstitution="0" />
+        ) : (
+          <ToolsAndReference />
+        )}
       </View>
     </View>
   );

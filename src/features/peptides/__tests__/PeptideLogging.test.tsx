@@ -41,6 +41,7 @@ import {
   type PeptideSetup,
   type RoutineDayStatus,
 } from '../../../lib/peptides';
+import { todayLogDate } from '../../../lib/daily';
 import { hitAreaFor, visibleZoneFor } from '../components/BodyMap';
 import { ToastProvider } from '../../../components/ui';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
@@ -1373,6 +1374,59 @@ describe('Tools — Injection Sites', () => {
     await pressByLabel(tree, 'Right Thigh');
     expect(screen(tree)).toContain('1 log');
     expect(screen(tree)).not.toContain('2 logs');
+  });
+
+  /**
+   * 5.7D, found on a device.
+   *
+   * A zone whose only record is in the week already being listed printed its
+   * date twice, two lines apart: `Wednesday, September 23 · 2:00 AM ·
+   * Retatrutide · 1 mg`, then `Last recorded Wednesday, September 23 · 1
+   * log`. The **count** is still worth saying — it is an all-time total the
+   * week cannot show — so the count stays and the repeated date goes.
+   */
+  it('does not repeat a date it has just listed', async () => {
+    const today = todayLogDate();
+    const { repository } = repositoryWith(
+      [setupFixture()],
+      [
+        {
+          ...siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('thigh-right')),
+          logDate: today,
+          loggedAt: new Date(`${today}T14:00:00.000Z`).toISOString(),
+        },
+      ],
+    );
+    const tree = await mount(<InjectionSites />, repository);
+    /* A zone holding a marker announces the whole record, not just its name
+       — `Right Thigh. Sunday, …` — so this matches the prefix. */
+    const zone = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        String(node.props?.accessibilityLabel ?? '').startsWith('Right Thigh'),
+    )[0];
+    expect(zone).toBeTruthy();
+    await act(async () => zone.props.onPress());
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('1 log recorded here');
+    expect(rendered).not.toContain('Last recorded');
+    expect(rendered).not.toContain('Nothing this week');
+  });
+
+  /** And the summary comes back the moment it has something to add. */
+  it('still names the last record when it is older than the week shown', async () => {
+    const { repository } = repositoryWith(
+      [setupFixture()],
+      [siteLog('a', 'setup-1', 'catalog:retatrutide', 25, 20, createSiteSnapshot('thigh-right'))],
+    );
+    const tree = await mount(<InjectionSites />, repository);
+    await pressByLabel(tree, 'Right Thigh');
+
+    const rendered = screen(tree);
+    expect(rendered).toContain('Last recorded');
+    expect(rendered).toContain('1 log');
+    expect(rendered).toContain('Nothing this week');
   });
 
   it('says plainly when a zone has no history', async () => {

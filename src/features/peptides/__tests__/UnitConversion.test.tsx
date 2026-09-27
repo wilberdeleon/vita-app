@@ -20,7 +20,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 
-import { InputAccessoryView, Text, TextInput } from 'react-native';
+import { InputAccessoryView, StyleSheet, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import StandalonePeptideCalculator from '../../../app/(vita)/tools/peptide-calculator';
@@ -903,6 +903,41 @@ describe.each(SURFACES)('%s — the canonical conversions', (_name, render) => {
     const tree = await render();
     await enterVial(tree, '10', '1');
     expect(screen(tree)).toContain('Using U-100 · 100 units/mL');
+  });
+
+  /**
+   * §26, found on a device at accessibility-extra-large in slice 5.7D.
+   *
+   * The table's row is `space-between` with no constraint on either side, so
+   * at large text sizes the two column headings kept their intrinsic widths
+   * and pushed the right-hand column **off the screen** — `SYRINGE UNITS`
+   * rendered outside the card entirely, and the ladder's own cells could do
+   * the same. `flexShrink` acts only when content exceeds its container, so
+   * this changes nothing at ordinary text sizes, which is what leaves
+   * Routine Setup — where this component is locked — untouched.
+   */
+  it('lets both columns give way instead of running off the screen', async () => {
+    const tree = await render();
+    await enterVial(tree, '10', '2');
+
+    /* The table's own two columns: the pair of headings, and every cell of
+       the ladder below them. Selected by what they render, so this cannot
+       drift onto some other text that happens to share a style. */
+    const inTable = (text: string) =>
+      text === 'REFERENCE CONVERSIONS' ||
+      text === 'SYRINGE UNITS' ||
+      /^\d+(\.\d+)? (mg|mcg)$/.test(text) ||
+      /^\d+(\.\d+)? units$/.test(text);
+
+    const columns = tree.root
+      .findAllByType(Text)
+      .filter((node) => typeof node.props.children === 'string' && inTable(node.props.children))
+      .map((node) => StyleSheet.flatten(node.props.style) as Record<string, unknown> | undefined);
+
+    // Two headings plus a ladder — if this ever collapses to nothing the
+    // assertion below would pass on an empty list.
+    expect(columns.length).toBeGreaterThan(6);
+    for (const style of columns) expect(style?.flexShrink).toBe(1);
   });
 
   it('never renders the same amount twice in the reference table', async () => {

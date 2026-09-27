@@ -2371,6 +2371,64 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Slice 5.7D — Peptide Calculator + Injection Sites Identity 🟡
+
+**Implemented, awaiting founder device review.** The two Tools destinations. **No formula, no unit, no interaction model, no site, no taxonomy and no persistence key moved** — this slice changed what the screens look like and what they say twice.
+
+#### What the audit actually found
+
+Both screens were read in full and driven on device with real taps before anything was edited, and **most of what the authorization anticipated was already true**: the calculator's boundaries are intact, Injection Sites is historical and reference only, the site taxonomy is canonical, and the `NumericField` Done bar (§24) has been part of the primitive since 5.5. Three things were **deliberately not changed**, and the reasons are recorded below rather than acted on.
+
+**Two near-misses, avoided by measuring instead of assuming:**
+
+- `palette.fat` looked like Fuel's macro colour leaking into a Peptides form. `tokens.ts` documents it as **the app-wide error colour**, used by Water, Fuel, Peptides and Journey alike. Left alone.
+- The body map looked murky in Dark beside its Light rendering. Sampling the rendered pixels gave **Dark: background 0 → body 26 → zone 58** against **Light: 246 → 216 → 169** — three separated levels in both, and the component carries a comment recording the founder QA pass that set them. Left alone.
+
+#### Peptide Calculator — what changed
+
+| Before | After |
+|---|---|
+| Opened with *"Enter your vial amount and reconstitution volume to view the U-100 unit conversion. Nothing here is saved…"* — and `UnitConversion`'s own empty state repeated the first half four lines below. **Seven lines of paragraph before the first field at accessibility-extra-large.** | One line: *"Nothing here is saved, and no peptide needs to be tracked."* The instruction is given once, where it is needed. **Three lines at the same text size**, and the whole screen — fields, conversion and boundary note — now fits one viewport where the note used to sit below the fold. |
+| Five loose children of `Screen`, so its 20pt section gap separated a field from **its own helper**; the helper carried `marginTop: -spacing.s` to claw its way back. | One group with `gap: spacing.s`, `Screen contentGap={spacing.m}`. The negative margin is gone. Same arrangement as Settings and Tools Hub. |
+
+**A real Dynamic Type bug, found on device at accessibility-extra-large.** The conversion table's row is `space-between` with no constraint on either column, so both headings kept their intrinsic widths and **pushed `SYRINGE UNITS` off the right of the screen**. `flexShrink: 1` on the headings and cells lets them wrap instead. `flexShrink` acts only when content exceeds its container, so **nothing changes at ordinary text sizes** — proved rather than asserted: Routine Setup's expanded conversion was captured before and after and is **pixel-identical below the status bar** (`ImageChops.difference` bbox `None`).
+
+#### Injection Sites — what changed
+
+**One thing.** A zone whose only record falls in the week already listed printed its date twice, two lines apart: `Wednesday, September 23 · 2:00 AM · Retatrutide · 1 mg`, then `Last recorded Wednesday, September 23 · 1 log`. The **count** is an all-time total the week cannot show, so the count stays and the repeated date goes — `1 log recorded here`. When the newest record is older than the week on screen, the full `Last recorded …` line returns unchanged.
+
+Everything else was audited and kept: the body map, the front/back toggle, selection behaviour, the week stepper, `This week`, `All recorded sites`, `Site reference`, the `Other` custom site, and the one quiet footer. **The rows were deliberately not migrated to `ListRow variant="flat"`** — their geometry is already identical to it, but their type sizes (16 / 13.5) match locked Peptides Home's `RoutineList`. Swapping would make Injection Sites diverge from Peptides Home in order to match Settings, which is the wrong direction.
+
+#### Recorded, deliberately not changed — for 5.7E
+
+1. **`Vial Amount (MG)` / `Reconstitution Volume (ML)` casing.** §14 prefers softer labels, but the 3.10 audit deliberately aligned these two fields with **locked Routine Setup**, which uses the identical strings. Changing one re-creates the drift that audit closed; changing both redesigns a locked screen (§46). First flagged in 5.7A as "a 5.7D question, not a defect" — it is now a **cross-screen question**, which is what 5.7E is for.
+2. **The reconstitution error renders below its helper**, not directly under its field. Same pattern in locked `SetupForm`; same reasoning.
+3. **`CONVERSIONS` breaks mid-word** in the left heading at accessibility-extra-large now that it wraps. Legible, and strictly better than being off-screen.
+
+#### Medical boundaries — unchanged and re-pinned
+
+No recommended, typical, common, safe or maximum dose · no frequency or schedule · no treatment planning · no recommended, best, next or safest site · no rotation engine · no adherence or compliance scoring · no colour used as a verdict. The calculator performs arithmetic on numbers the user typed; Injection Sites shows what the user recorded. Both notes kept **verbatim** — §23 says refine visually, not semantically.
+
+#### Canonical math — unchanged, and already pinned
+
+All four examples are covered at both the model and the component level and pass: `10mg / 1mL → 1mg = 10u` · `10mg / 2mL → 1mg = 20u` · `20mg / 2mL → 1mg = 10u` · `5mg / 2mL + 500mcg → 20u`. **No formula was touched.** `10 / 2 → 1 mg = 20 units` was also confirmed on device through the real screen, and live recalculation confirmed by typing into it.
+
+#### DEV previews
+
+`tools-preview` gains `calc-empty`, `calc-result` (`10 mg / 2 mL`, a canonical example, so a wrong answer would be visible) and `calc-invalid` (`1.` and `0` — a half-typed vial and a zero volume). They render the **real screen**, seeded through two optional props that default to empty; Expo Router passes no props, so the shipped screen is untouched, and a test asserts it still opens empty. **Injection Sites deliberately gets no new harness** — `peptides-preview` already drives the real screen over in-memory data across `sites`, `sites-tue-thu`, `overlap`, `history` and the empty `none` scenario, and a second one would duplicate that seeding and drift from it.
+
+#### Validation
+
+84 suites / **2,276 tests** (2,268 → 2,276, +8) · `tsc` and strict-unused clean · iOS Expo export clean · **no dependency change, no persistence key, no schema, no route change**.
+
+**Verified on an iPhone 17 Pro simulator** in Dark, Light and accessibility-extra-large — and this time with real input, because the Simulator control tool started working once the Xcode licence was accepted: zones tapped, lists scrolled, values typed, and the Done bar confirmed to dismiss the pad without altering what was typed.
+
+#### Scope held
+
+No calculator formula · no site taxonomy · no dose or site recommendation · no new tool · no Settings, Tools Hub, Dashboard or Peptides Home redesign · no new persistence · no dependency change · no 5.7E · no 5.8.
+
+**Still to verify — founder, on a real device:** whether the calculator now reads as VITA rather than as a form, and still clearly as arithmetic rather than a dose recommender; whether Injection Sites reads as reference and history throughout; and the three recorded items above, which are 5.7E's to rule on.
+
 ### Slice 5.7C — Tools Hub Identity ✅ LOCKED
 
 **Founder-approved on a physical iPhone and locked (2026-09-27).** Approved implementation: `6f981dd — feat(sprint-5): integrate tools hub identity`. The Tools landing screen only. **No route, no tool, no behaviour and no persistence moved** — the calculator's arithmetic and the injection-site taxonomy are 5.7D's, and this slice only links to them.

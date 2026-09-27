@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import {
   NumericField,
   Screen,
@@ -31,11 +31,29 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * screen owns that the inline surface does not is the vial fields themselves,
  * because there is no setup to read them from.
  */
-export default function StandalonePeptideCalculator() {
+type Props = {
+  /**
+   * Starting field values, for the `__DEV__` preview only — **not a
+   * feature.** Expo Router passes no props, so every real visit gets the
+   * empty defaults and this screen behaves exactly as it always has.
+   *
+   * The seam exists because the two states worth reviewing are the ones a
+   * screenshot cannot reach — a result, and a malformed entry — and both
+   * need typing. A preview without it could only ever show the empty screen.
+   * Nothing is persisted either way; see the note above.
+   */
+  initialVialAmount?: string;
+  initialReconstitution?: string;
+};
+
+export default function StandalonePeptideCalculator({
+  initialVialAmount = '',
+  initialReconstitution = '',
+}: Props = {}) {
   const { surfaces } = useTheme();
 
-  const [vialAmount, setVialAmount] = useState('');
-  const [reconstitution, setReconstitution] = useState('');
+  const [vialAmount, setVialAmount] = useState(initialVialAmount);
+  const [reconstitution, setReconstitution] = useState(initialReconstitution);
 
   const vialParsed = parseAmount(vialAmount);
   const reconParsed = parseAmount(reconstitution);
@@ -46,12 +64,24 @@ export default function StandalonePeptideCalculator() {
   const reconInvalid = reconstitution.trim().length > 0 && reconParsed === null;
 
   return (
-    <Screen keyboardAware>
+    <Screen keyboardAware contentGap={spacing.m}>
       <ScreenHeader title="Peptide Calculator" back />
 
+      {/*
+        * What this screen is, minus what it said twice.
+        *
+        * It used to open with *"Enter your vial amount and reconstitution
+        * volume to view the U-100 unit conversion"* — the same instruction
+        * `UnitConversion` gives in its own empty state four lines below, in
+        * the place where it is actually needed. Measured at
+        * accessibility-extra-large, that paragraph ran to **seven lines
+        * before the first field the user can type into**.
+        *
+        * What is left is the part nothing else says: this tool keeps
+        * nothing and demands nothing.
+        */}
       <Text style={[styles.intro, { color: surfaces.textTertiary }]}>
-        Enter your vial amount and reconstitution volume to view the U-100 unit conversion. Nothing
-        here is saved, and no peptide needs to be tracked.
+        Nothing here is saved, and no peptide needs to be tracked.
       </Text>
 
       {/*
@@ -70,42 +100,57 @@ export default function StandalonePeptideCalculator() {
         * and micrograms are a perfectly ordinary way to say it.
         */}
       <SectionHeader title="Vial" />
-      <NumericField
-        label="Vial Amount (MG)"
-        placeholder="e.g. 20"
-        value={vialAmount}
-        onChangeText={setVialAmount}
-        accessibilityLabel="Vial amount in milligrams"
-      />
-      {vialInvalid ? (
-        <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
-      ) : null}
 
       {/*
-        * The same label and helper as Routine Setup (3.10 audit).
+        * The two fields, their helper and their errors are **one group**.
         *
-        * "Bacteriostatic Water / Reconstitution (mL)" named one number twice
-        * in a single line and made the screen read as technical. That was
-        * rewritten on the setup form in slice 3.9A and never reached here, so
-        * the two surfaces asked for the same measurement under two different
-        * names — and in two different casings. The label names the
-        * measurement; the helper says what it is. The model keeps the generic
-        * `reconstitutionMl`, which does not assume bacteriostatic water is the
-        * only possible diluent.
+        * They were five separate children of `Screen`, so its section gap
+        * put the same 20pt between a field and its own helper as between
+        * the group and the section header — which is why the helper carried
+        * a `marginTop: -spacing.s` to claw its way back under the field it
+        * describes. A negative margin correcting a container's spacing is
+        * the container being wrong. The group owns its internal rhythm now
+        * and `Screen` spaces sections, the arrangement Settings and Tools
+        * Hub already use.
         */}
-      <NumericField
-        label="Reconstitution Volume (ML)"
-        placeholder="e.g. 2"
-        value={reconstitution}
-        onChangeText={setReconstitution}
-        accessibilityLabel="Reconstitution volume in millilitres"
-      />
-      <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
-        Bacteriostatic water added to the vial.
-      </Text>
-      {reconInvalid ? (
-        <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
-      ) : null}
+      <View style={styles.group}>
+        <NumericField
+          label="Vial Amount (MG)"
+          placeholder="e.g. 20"
+          value={vialAmount}
+          onChangeText={setVialAmount}
+          accessibilityLabel="Vial amount in milligrams"
+        />
+        {vialInvalid ? (
+          <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
+        ) : null}
+
+        {/*
+          * The same label and helper as Routine Setup (3.10 audit).
+          *
+          * "Bacteriostatic Water / Reconstitution (mL)" named one number twice
+          * in a single line and made the screen read as technical. That was
+          * rewritten on the setup form in slice 3.9A and never reached here, so
+          * the two surfaces asked for the same measurement under two different
+          * names — and in two different casings. The label names the
+          * measurement; the helper says what it is. The model keeps the generic
+          * `reconstitutionMl`, which does not assume bacteriostatic water is the
+          * only possible diluent.
+          */}
+        <NumericField
+          label="Reconstitution Volume (ML)"
+          placeholder="e.g. 2"
+          value={reconstitution}
+          onChangeText={setReconstitution}
+          accessibilityLabel="Reconstitution volume in millilitres"
+        />
+        <Text style={[styles.helper, { color: surfaces.textTertiary }]}>
+          Bacteriostatic water added to the vial.
+        </Text>
+        {reconInvalid ? (
+          <Text style={[styles.error, { color: palette.fat }]}>Enter a number greater than zero.</Text>
+        ) : null}
+      </View>
 
       <UnitConversion
         vialAmountMcg={vialParsed !== null ? toMcg(vialParsed, 'mg') : undefined}
@@ -128,9 +173,13 @@ const styles = StyleSheet.create({
   intro: {
     ...typography.caption,
   },
+  /* A field, its helper and its error belong together; `Screen` separates
+     this group from the section header above and the conversion below. */
+  group: {
+    gap: spacing.s,
+  },
   helper: {
     ...typography.caption,
-    marginTop: -spacing.s,
   },
   error: {
     ...typography.caption,

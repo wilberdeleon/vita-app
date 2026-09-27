@@ -395,6 +395,58 @@ describe('Peptide Calculator after migration', () => {
     expect(mockBack).toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
   });
+
+  /* ── 5.7D ──────────────────────────────────────────────────────────── */
+
+  /**
+   * The screen used to open by telling the user to enter the two values,
+   * and then `UnitConversion`'s own empty state told them again four lines
+   * below — in the place where the instruction is actually needed. At
+   * accessibility-extra-large that paragraph measured **seven lines before
+   * the first field**. The intro now carries only the fact nothing else
+   * states.
+   */
+  it('says the instruction once, where it is needed', async () => {
+    const tree = await mount(<PeptideCalculator />);
+    const rendered = screen(tree);
+
+    expect(rendered).toContain('Nothing here is saved, and no peptide needs to be tracked.');
+    // The empty conversion still instructs; the header no longer pre-empts it.
+    expect(rendered).toContain('Enter vial amount and reconstitution volume to see the unit');
+    expect(rendered).not.toContain('Enter your vial amount and reconstitution volume');
+  });
+
+  /**
+   * The preview seam is a default, not a feature: a real visit renders the
+   * screen empty, exactly as before. If this ever fails, the tool has begun
+   * pre-filling numbers VITA chose — which is the §29 trap the whole
+   * calculator is built to avoid.
+   */
+  it('opens empty when nothing is passed to it', async () => {
+    const tree = await mount(<PeptideCalculator />);
+    const values = tree.root.findAllByType(TextInput).map((node) => node.props.value);
+    expect(values.length).toBeGreaterThan(0);
+    for (const value of values) expect(value).toBe('');
+    // And therefore no result of any kind is on screen.
+    expect(screen(tree)).not.toMatch(/\d+\s*units/);
+  });
+
+  /** §8: arithmetic and nothing else. Neither screen may imply a dose. */
+  it('recommends no amount, schedule or verdict', async () => {
+    const tree = await mount(<PeptideCalculator initialVialAmount="10" initialReconstitution="2" />);
+    const rendered = screen(tree);
+
+    // The canonical example, rendered by the real screen.
+    expect(rendered).toContain('1 mg = 20 units');
+    expect(rendered).not.toMatch(
+      /common dose|typical dose|safe dose|maximum dose|recommended|suggested|how much (you|to)|dose planner|titrat|protocol|frequency/i,
+    );
+  });
+
+  it('keeps its factual boundary note', async () => {
+    const tree = await mount(<PeptideCalculator />);
+    expect(screen(tree)).toContain('VITA does not recommend peptides, dosing, or treatment.');
+  });
 });
 
 describe('Injection Sites after migration', () => {
