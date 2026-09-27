@@ -2371,9 +2371,9 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
-### Slice 5.7C — Tools Hub Identity 🟡
+### Slice 5.7C — Tools Hub Identity ✅ LOCKED
 
-**Implemented, awaiting founder device review.** The Tools landing screen only. **No route, no tool, no behaviour and no persistence moved** — the calculator's arithmetic and the injection-site taxonomy are 5.7D's, and this slice only links to them.
+**Founder-approved on a physical iPhone and locked (2026-09-27).** Approved implementation: `6f981dd — feat(sprint-5): integrate tools hub identity`. The Tools landing screen only. **No route, no tool, no behaviour and no persistence moved** — the calculator's arithmetic and the injection-site taxonomy are 5.7D's, and this slice only links to them.
 
 #### Tools Hub — before
 
@@ -2453,7 +2453,13 @@ Settings' rows sit direct on the background because that screen *is* the list. T
 
 No Peptide Calculator redesign · no Injection Sites redesign · no calculator arithmetic · no site taxonomy · no Settings redesign · no Dashboard Quick Tools redesign · no BMI · no Research Library · no scanner scoring · no new persistence · no dependency change · no 5.7D · no 5.8. The `ScreenHeader` truncation visible at accessibility sizes (`Tools & R…`) is the **deferred** shared issue, unchanged here.
 
-**Still to verify — founder, on a real device:** whether Tools reads as current VITA and as a destination rather than a second Settings page; whether one panel for two utilities is the right amount of containment; and whether the empty lower screen reads as honest or as unfinished.
+#### Founder ruling on the open questions
+
+**Approved as shown.** The `TOOLS` eyebrow repeating the screen title, the intentional lower-screen whitespace, the two-real-tools-only structure and the current compact grouped presentation are **all accepted**. **Do not reopen any of them for theoretical polish** — only a real bug or regression reopens this slice. The question this engineer recorded and deliberately left alone in the implementation is now closed by ruling rather than by deferral.
+
+#### What is locked
+
+Tools Hub in current VITA language: the standard `ScreenHeader`, the retained `TOOLS` eyebrow, **one restrained grouped surface** holding Peptide Calculator and Injection Sites with **one inset hairline** between them, violet confined to tool glyph identity, no floating card soup, no 36pt orbs, descriptors that wrap in full, accessibility-extra-large supported, and **no fake or future tools** — no Coming Soon, no BMI, no Research Library, no scanner placeholder. The intentional whitespace below the panel is accepted as the honest result of having two real tools. Routing preserved throughout: Settings → Tools, Tools → Peptide Calculator, Tools → Injection Sites, and the Dashboard Quick Tools routes. **No persistence and no dependency change.**
 
 ### Slice 5.7B — Settings Identity Integration ✅ LOCKED
 
