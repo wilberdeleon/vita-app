@@ -2371,9 +2371,53 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
-### Slice 5.7D — Peptide Calculator + Injection Sites Identity 🟡
+### Slice 5.7E — Final Tools + Settings Identity Audit ✅
 
-**Implemented, awaiting founder device review.** The two Tools destinations. **No formula, no unit, no interaction model, no site, no taxonomy and no persistence key moved** — this slice changed what the screens look like and what they say twice.
+**The closeout pass, and deliberately almost empty.** 5.7E is not a redesign: it is a cross-screen consistency audit, a bug-only cleanup, and the documentation close of 5.7. The seven founder-approved surfaces — Settings Home, Appearance, Units, Nutrition Goals, Tools Hub, Peptide Calculator, Injection Sites — were driven on device against locked Dashboard, Fuel, Water and Peptides.
+
+#### Cross-screen audit — no drift found
+
+Settings, Tools Hub, the calculator and Injection Sites share the locked system's headers, uppercase section eyebrows, typography weights, 56pt row floor, hairline separation, neutral action language, field language, violet-as-identity rule and spacing rhythm. Set beside locked Peptides Home, Injection Sites is visibly the same feature — same violet, same weights, same direct-on-background philosophy, same chevron. **Nothing reads as a leftover old-VITA surface, so nothing was changed for consistency's sake.**
+
+#### One real bug, found and fixed
+
+**An empty injection week was stated twice.** On a fresh install — the first thing a new user sees on that screen — the hint under the body map read `No injection sites logged this week.` and the section four lines below read `No injection sites logged this week. Sites you add when logging a peptide appear here.` The same sentence, neither half adding to the other: the defect class the founder approved fixing in 5.7D, where a selected zone repeated a date it had just listed.
+
+The section owns the fact; the hint explains the map. **The week note survives where it still adds something** — an empty week over zones that hold older history — and that branch is untouched. Copy only: no behaviour, route, persistence key or taxonomy moved. Commit `3422721`. The test counts the sentence rather than asserting its presence, so a reintroduced duplicate fails it; verified by reverting the fix.
+
+#### The two deferred 5.7D questions — both retained, and one nearly got changed
+
+**`(MG)` / `(ML)` casing — intentionally retained.** The grep evidence looked damning: every unit VITA renders as a *value* is lowercase (`mg`, `mcg`, `mL`, `cal`, `g`, `fl oz`, `units/mL`), Fuel's goal editors label their fields `(cal)` and `(g)`, and `ML` is not a valid symbol for millilitre. On that reading the calculator contradicts itself, and §5's exception would apply.
+
+**It does not, and the tests are why.** `UnitConversion.test.tsx` carries a `describe` block named *"units are cased by role, not by accident"* that pins an explicit convention: **a configuration field label caps its unit — `(MG)`, `(ML)` — and every displayed value stays lowercase.** A prior audit established it deliberately, fixing SetupForm where `Vial Amount (MG)` sat four lines above `Amount (mg)`, and pinned it with `expect(rendered).not.toContain('Amount (mg)')`. So `Vial Amount (MG)` beside `10 mg/mL` is the convention working, not a contradiction — and lowercase is **not** the established VITA standard for configuration labels. §5's default holds. What is genuinely inconsistent is that **Fuel's two goal labels do not follow the convention**; that is a Fuel question, not a Tools one, and it is recorded rather than acted on here.
+
+**Helper / error order — retained.** The calculator and locked `SetupForm` render field → helper → error identically. Consistent, inline, readable, and no accessibility failure: the field carries its own `accessibilityLabel` and the error is announced in document order. §6's default holds, and reordering one surface alone would re-create the drift the 3.10 audit closed.
+
+**`CONVERSIONS` breaking mid-word** at accessibility-extra-large is cosmetic and strictly better than the off-screen clipping it replaced. Retained.
+
+#### Regression audit
+
+| Surface | Result |
+|---|---|
+| Settings | Appearance switched live on device and **persisted across a cold relaunch**; Units still reads Water's store; Nutrition Goals still on the current target model; Settings → Tools works; the DEV row is present in a dev build and `__DEV__`-gated; no fake rows, no card soup |
+| Tools Hub | Exactly the two real tools, descriptors wrapping in full, violet on the glyph only, both routes working by tap, no placeholders, no recommendations |
+| Peptide Calculator | All four canonical examples pass at model and component level; empty state shows no numbers; invalid shows the inline error; live recalculation and the keyboard `Done` (dismiss-only) both re-confirmed by typing on device |
+| Injection Sites | Body map, Front/Back, canonical taxonomy, selection, history, `Other`, empty history — all unchanged apart from the one duplicated sentence |
+| `UnitConversion` | Re-verified on both surfaces at ordinary and accessibility-extra-large size. The 5.7D `flexShrink` fix still wraps both columns inside the card, and locked Routine Setup remains pixel-identical at ordinary size |
+
+#### Validation
+
+84 suites / **2,278 tests** (2,276 → 2,278, +2) · `tsc` and strict-unused clean · iOS Expo export clean · **no dependency change, no persistence key, no schema, no route change** — `git diff` over `src` contains no `vita:v1:` literal and `package.json` / `package-lock.json` are untouched.
+
+**Expo: `expo@57.0.22` against an expected `~57.0.25`, plus `expo-constants`, `expo-linking` and `expo-router` — Doctor 20/21, one check failed.** All of it published after the founder-approved artifact; **recorded, not patched** (§14).
+
+#### 5.7 — Tools + Settings Identity Integration ✅ COMPLETE / LOCKED
+
+5.7A ✅ · 5.7B ✅ LOCKED · 5.7C ✅ LOCKED · 5.7D ✅ LOCKED · 5.7E ✅. Next is **5.8 — Motion + Microinteraction Unification**, **not started**.
+
+### Slice 5.7D — Peptide Calculator + Injection Sites Identity ✅ LOCKED
+
+**Founder-approved on a physical iPhone and locked (2026-09-27).** Approved implementation: `2cd81b3 — feat(sprint-5): polish calculator and injection sites`. The two Tools destinations. **No formula, no unit, no interaction model, no site, no taxonomy and no persistence key moved** — this slice changed what the screens look like and what they say twice.
 
 #### What the audit actually found
 
@@ -2427,7 +2471,7 @@ All four examples are covered at both the model and the component level and pass
 
 No calculator formula · no site taxonomy · no dose or site recommendation · no new tool · no Settings, Tools Hub, Dashboard or Peptides Home redesign · no new persistence · no dependency change · no 5.7E · no 5.8.
 
-**Still to verify — founder, on a real device:** whether the calculator now reads as VITA rather than as a form, and still clearly as arithmetic rather than a dose recommender; whether Injection Sites reads as reference and history throughout; and the three recorded items above, which are 5.7E's to rule on.
+**Founder ruling:** approved as shown. The three recorded items were carried into 5.7E and ruled on there — see the 5.7E section above.
 
 ### Slice 5.7C — Tools Hub Identity ✅ LOCKED
 

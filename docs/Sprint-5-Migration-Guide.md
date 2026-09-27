@@ -422,7 +422,9 @@ Fuel is not restyled into Water's or Dashboard's layout. **Where a feature appea
 
 ---
 
-# Slice 5.7 — Tools + Settings
+# Slice 5.7 — Tools + Settings ✅ COMPLETE / LOCKED
+
+**Closed 2026-09-27**, across 5.7A (characterization), 5.7B (Settings), 5.7C (Tools Hub), 5.7D (Calculator + Injection Sites) and 5.7E (final audit) — each founder-approved on a physical iPhone. The final cross-screen audit found **no visual drift** against locked Dashboard, Fuel, Water and Peptides, and one real bug (a duplicated empty-week sentence, `3422721`). Every migration this section planned is done; the rows below record what each became.
 
 **Broadened 2026-09-04** from *Tools* to *Tools + Settings* — Settings is a built product surface reached the same way, and it was only implied before.
 
