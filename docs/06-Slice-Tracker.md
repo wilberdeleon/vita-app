@@ -2371,9 +2371,9 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
-### Slice 5.8B — Shared Motion Foundation + Core Interactions 🟡
+### Slice 5.8B — Shared Motion Foundation + Core Interactions ✅ LOCKED
 
-**Implemented, awaiting founder device review.** Small on purpose: 5.8A found the foundation already built, so 5.8B closed the two gaps it left rather than building it again.
+**Founder-approved on a physical iPhone and locked (2026-09-27).** Approved implementation: `a3716d2 — feat(sprint-5): establish motion interaction foundation`. Small on purpose: 5.8A found the foundation already built, so 5.8B closed the two gaps it left rather than building it again.
 
 #### What 5.8A found — most of the foundation already exists
 
@@ -2423,7 +2423,15 @@ The flex moved onto a wrapper, because `PressableScale` applies its style to an 
 
 **Verified on an iPhone 17 Pro simulator with real input.** Segments tapped and the track still divides evenly; the sheet opened and dismissed. **Reduce Motion was genuinely enabled on the device** (`simctl spawn … defaults write com.apple.Accessibility ReduceMotionEnabled`) and the app read it live — the preview reported *"On — movement removed"*, the sheet opened without a slide, and nothing broke. **Haptic feel cannot be proved on a simulator** (§33): the tests prove *which* calls fire and that none fires on a no-op press; only the founder's iPhone can judge how they feel.
 
-**Still to verify — founder, on a real device:** whether the press response is almost invisible until compared with none; whether the segmented-control haptic is welcome or too frequent; and whether anything calls attention to itself.
+#### What is locked
+
+The motion tokens, `useReducedMotion`, `PressableScale` and `Button`'s delegation to it, `VitaSheet` on React Native's own `Modal`, the `Toast` reduced-motion fix, and `SegmentedTabs` — subtle `PressableScale` feedback, a `selection` haptic **only when the value actually changes**, and silence when the current segment is re-pressed. **No default `Button` haptic, no navigation haptics, no route-transition customization, no Reanimated and no new animation dependency.**
+
+The philosophy the founder approved, in one line: **subtle enough to disappear into the product.**
+
+#### A transient incident, recorded and not acted on
+
+Expo Go reported `Cannot find native module ExpoAsset` during the device pass. It cleared on a clean restart — Metro stopped, `.expo` removed, `npx expo start -c`, Expo Go reopened — with **no dependency or source change**. `expo-asset` was **not installed** and must not be: the error was tooling state, not a missing package.
 
 ### Slice 5.8A — Motion + Microinteraction Characterization ✅
 
