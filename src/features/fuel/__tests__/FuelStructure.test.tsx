@@ -15,6 +15,11 @@
  * — persisting all of it.
  */
 
+const mockHaptic = jest.fn();
+jest.mock('../../../lib/haptics', () => ({
+  vitaHaptic: (...args: unknown[]) => mockHaptic(...args),
+}));
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
@@ -34,7 +39,7 @@ jest.mock('expo-router', () => ({
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AccessibilityInfo, Text, TextInput } from 'react-native';
+import { AccessibilityInfo, Animated, StyleSheet, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import Fuel from '../../../app/(vita)/(tabs)/fuel';
@@ -910,5 +915,98 @@ describe('with Reduce Motion on', () => {
 
     await act(async () => control(tree, 'Reset Fuel layout to default')!.props.onPress());
     expect(await storedLayout()).toEqual(DEFAULT_FUEL_LAYOUT);
+  });
+});
+
+/* ── 5.8C: the meal reveal ─────────────────────────────────────────────── */
+
+/**
+ * The one reveal in VITA that animates.
+ *
+ * 5.8A recorded that every disclosure in the app is instant, and that this
+ * was **consistent rather than broken**. 5.8C authorized exactly one
+ * representative reveal — a Fuel meal — so these pin what it does and,
+ * just as importantly, what it still does not.
+ */
+describe('a meal opening', () => {
+  /*
+   * Stated rather than assumed. An earlier describe in this file turns
+   * Reduce Motion on, and a suite that relies on ambient state passes or
+   * fails by file order — which is how this block first failed while
+   * passing in isolation.
+   */
+  beforeEach(() => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  /** The animated layer the reveal renders; absent while collapsed. */
+  const revealLayer = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAllByType(Animated.View)
+      .map((node) => StyleSheet.flatten(node.props.style) as Record<string, unknown>)
+      .find((style) => style.paddingBottom !== undefined && style.opacity !== undefined);
+
+  it('mounts its foods behind an opacity and a small translate', async () => {
+    await seed({ meals: ['Breakfast'] });
+    const tree = await mount(<Fuel />);
+    expect(revealLayer(tree)).toBeUndefined();
+
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
+
+    const style = revealLayer(tree);
+    expect(style).toBeTruthy();
+    // Opacity and one transform — never a height, which is what would make
+    // a meal's variable content jump.
+    expect(style!.opacity).toBeTruthy();
+    expect(style!.transform).toHaveLength(1);
+    expect(style!.height).toBeUndefined();
+  });
+
+  it('collapses with nothing left behind to tap', async () => {
+    await seed({ meals: ['Breakfast'] });
+    const tree = await mount(<Fuel />);
+
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
+    expect(screen(tree)).toContain('Oats');
+
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
+    // Unmounted immediately rather than faded out: a row that is still
+    // mounted is a row that still receives touches.
+    expect(revealLayer(tree)).toBeUndefined();
+    expect(screen(tree)).not.toContain('Oats');
+    expect(control(tree, /^Breakfast\. /)!.props.accessibilityState.expanded).toBe(false);
+  });
+
+  /** §13: a disclosure is not a confirmation. Nothing was recorded. */
+  it('never buzzes for a reveal', async () => {
+    await seed({ meals: ['Breakfast'] });
+    const tree = await mount(<Fuel />);
+
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
+    expect(mockHaptic).not.toHaveBeenCalled();
+  });
+});
+
+describe('a meal opening with Reduce Motion on', () => {
+  beforeEach(() => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('arrives with no travel at all, and the foods are there', async () => {
+    await seed({ meals: ['Breakfast'] });
+    const tree = await mount(<Fuel />);
+    await act(async () => control(tree, /^Breakfast\. /)!.props.onPress());
+
+    const style = tree.root
+      .findAllByType(Animated.View)
+      .map((node) => StyleSheet.flatten(node.props.style) as Record<string, unknown>)
+      .find((item) => item.paddingBottom !== undefined && item.opacity !== undefined);
+
+    expect(style).toBeTruthy();
+    expect(style!.transform).toHaveLength(0);
+    expect(screen(tree)).toContain('Oats');
   });
 });

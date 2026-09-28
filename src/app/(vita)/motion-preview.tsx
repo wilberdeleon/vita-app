@@ -10,7 +10,13 @@ import {
   SegmentedTabs,
   VitaSheet,
 } from '../../components/ui';
+import { FavoriteButton } from '../../features/fuel/components/FavoriteButton';
 import { Disclosure } from '../../features/peptides/components/Disclosure';
+import {
+  NutritionProvider,
+  type NutritionRepository,
+  type VitaFood,
+} from '../../lib/nutrition';
 import { palette, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useReducedMotion } from '../../theme/useReducedMotion';
@@ -44,6 +50,53 @@ import { useReducedMotion } from '../../theme/useReducedMotion';
  *
  * Temporary, and removed with the other Sprint 5 scaffolding in 5.9.
  */
+/** A food that exists only here. Nothing about it is written anywhere. */
+const SAMPLE_FOOD: VitaFood = {
+  vitaId: 'preview:1',
+  source: 'vita-custom',
+  sourceId: '1',
+  name: 'Sample food',
+  servings: [
+    {
+      label: '1 serving',
+      quantity: 1,
+      unit: 'serving',
+      nutrition: { calories: 100, protein: 10, carbs: 10, fat: 2 },
+    },
+  ],
+  defaultServingIndex: 0,
+  isCustom: true,
+  fetchedAt: '2026-09-27T00:00:00.000Z',
+};
+
+/** Favorites live in this closure and die with the route. */
+const forgetfulRepository: NutritionRepository = (() => {
+  let favorites: unknown[] = [];
+  return {
+    async getEntries() {
+      return [];
+    },
+    async saveEntries() {},
+    async getTargets() {
+      return null;
+    },
+    async saveTargets() {},
+    async getCustomFoods() {
+      return [];
+    },
+    async saveCustomFoods() {},
+    async getRecentEntries() {
+      return [];
+    },
+    async getFavorites() {
+      return [...favorites] as never;
+    },
+    async saveFavorites(next: unknown[]) {
+      favorites = [...next];
+    },
+  } as NutritionRepository;
+})();
+
 export default function MotionPreview() {
   const { surfaces } = useTheme();
   const reducedMotion = useReducedMotion();
@@ -51,7 +104,6 @@ export default function MotionPreview() {
   const [appearance, setAppearance] = useState(0);
   const [unit, setUnit] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [favorite, setFavorite] = useState(false);
 
   if (!__DEV__) {
     return (
@@ -120,22 +172,28 @@ export default function MotionPreview() {
           activeColor={palette.peptide}
           groupLabel="Unit sample"
         />
-        <ListRow
-          variant="flat"
-          icon={favorite ? 'heart' : 'heart-outline'}
-          iconColor={favorite ? palette.fat : undefined}
-          title="State toggle"
-          subtitle={favorite ? 'On' : 'Off'}
-          accessibilityHint="Toggles a sample state"
-          onPress={() => setFavorite((on) => !on)}
-        />
+        {/*
+          * The **real** `FavoriteButton`, over a repository that forgets
+          * everything — not a lookalike. It is the component 5.8C gave a
+          * single quick pulse to, and the only way to judge that pulse is
+          * against the one that ships.
+          */}
+        <View style={styles.favoriteRow}>
+          <Text style={[styles.caption, { color: surfaces.textTertiary }]}>
+            Favorite — one pulse on change, no haptic
+          </Text>
+          <NutritionProvider repository={forgetfulRepository}>
+            <FavoriteButton food={SAMPLE_FOOD} withSurface />
+          </NutritionProvider>
+        </View>
       </View>
 
       {/* ── Reveal ────────────────────────────────────────────────────── */}
       <SectionHeader title="Reveal" />
       <Text style={[styles.caption, { color: surfaces.textTertiary }]}>
-        Deliberately instant, everywhere in VITA. 5.8A recorded this as consistent rather than
-        broken; animating it is a 5.8C decision, not a foundation fix.
+        Still instant here, and everywhere except one place: 5.8C animated Fuel Home&apos;s meal
+        expand and nothing else, so the one reveal that earns motion has it and the rest stay
+        immediate. Open a meal on Fuel Home to compare with the disclosure below.
       </Text>
       <Disclosure title="Sample section" summary="Closed">
         <Text style={[styles.caption, { color: surfaces.textTertiary }]}>
@@ -147,8 +205,8 @@ export default function MotionPreview() {
       {/* ── Sheet ─────────────────────────────────────────────────────── */}
       <SectionHeader title="Sheet" />
       <Text style={[styles.caption, { color: surfaces.textTertiary }]}>
-        React Native&apos;s own `Modal`, which is what every VITA sheet is built on. Reduced
-        Motion swaps the platform slide for no animation at all.
+        React Native&apos;s own Modal, which is what every VITA sheet is built on. Reduced Motion
+        swaps the platform slide for no animation at all.
       </Text>
       <Button label="Open sheet" variant="outline" onPress={() => setSheetOpen(true)} />
       <VitaSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} title="Sample sheet">
@@ -188,5 +246,12 @@ const styles = StyleSheet.create({
   },
   caption: {
     ...typography.caption,
+    flex: 1,
+  },
+  favoriteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.m,
+    paddingVertical: spacing.s,
   },
 });

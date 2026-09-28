@@ -23,6 +23,8 @@ jest.mock('../../../lib/haptics', () => ({
 
 import { AccessibilityInfo, Animated, StyleSheet, Text } from 'react-native';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import { FavoriteButton } from '../../../features/fuel/components/FavoriteButton';
+import { NutritionProvider, type NutritionRepository, type VitaFood } from '../../../lib/nutrition';
 import { SegmentedTabs } from '../SegmentedTabs';
 import { ToastProvider, useToast } from '../Toast';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
@@ -190,5 +192,119 @@ describe('Toast under Reduced Motion', () => {
       await act(async () => tree.unmount());
       mounted = null;
     }
+  });
+});
+
+/* ── Favorite: a state toggle that used to switch with no acknowledgement ── */
+
+const FOOD: VitaFood = {
+  vitaId: 'usda:1',
+  source: 'usda',
+  sourceId: '1',
+  name: 'Greek yogurt',
+  servings: [
+    { label: '1 serving', quantity: 1, unit: 'serving', nutrition: { calories: 140, protein: 18, carbs: 6, fat: 4 } },
+  ],
+  defaultServingIndex: 0,
+  isCustom: false,
+  fetchedAt: '2026-09-27T00:00:00.000Z',
+};
+
+/** Everything in a closure; nothing reaches storage. */
+function memoryRepository(): NutritionRepository {
+  let favorites: { food: VitaFood; savedAt: string }[] = [];
+  return {
+    async getEntries() {
+      return [];
+    },
+    async saveEntries() {},
+    async getTargets() {
+      return null;
+    },
+    async saveTargets() {},
+    async getCustomFoods() {
+      return [];
+    },
+    async saveCustomFoods() {},
+    async getRecentEntries() {
+      return [];
+    },
+    async getFavorites() {
+      return [...favorites] as never;
+    },
+    async saveFavorites(next) {
+      favorites = [...next] as never;
+    },
+  } as NutritionRepository;
+}
+
+describe('the favorite heart', () => {
+  async function mountHeart(reduced: boolean) {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(reduced);
+    const tree = await mount(
+      <NutritionProvider repository={memoryRepository()}>
+        <FavoriteButton food={FOOD} />
+      </NutritionProvider>,
+    );
+    return tree;
+  }
+
+  const heartName = (tree: ReactTestRenderer) =>
+    tree.root
+      .findAll((node) => typeof node.props?.name === 'string' && /^heart/.test(node.props.name))
+      .map((node) => node.props.name)[0];
+
+  /** The glyph's own layer — the pulse wraps nothing else. */
+  const restScale = (tree: ReactTestRenderer) => {
+    const style = StyleSheet.flatten(
+      tree.root.findAllByType(Animated.View)[0].props.style,
+    ) as { transform?: { scale?: { __getValue?: () => number } }[] };
+    const scale = style.transform?.[0]?.scale;
+    return typeof scale === 'number' ? scale : scale?.__getValue?.();
+  };
+
+  async function toggle(tree: ReactTestRenderer) {
+    const button = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onPress === 'function' &&
+        /favorites$/.test(String(node.props?.accessibilityLabel ?? '')),
+    )[0];
+    await act(async () => (button.props.onPress as () => void)());
+  }
+
+  it('fills and empties the heart, and rests at its own size either way', async () => {
+    const tree = await mountHeart(false);
+    expect(heartName(tree)).toBe('heart-outline');
+    expect(restScale(tree)).toBe(1);
+
+    await toggle(tree);
+    expect(heartName(tree)).toBe('heart');
+
+    await toggle(tree);
+    expect(heartName(tree)).toBe('heart-outline');
+    // A pulse that left the glyph enlarged would be a static redesign.
+    expect(restScale(tree)).toBe(1);
+  });
+
+  /**
+   * §17: the visual change is already unmistakable — a filled heart on a
+   * tinted surface — and a list of foods is somewhere a finger wanders. The
+   * authorization prefers no new haptic where there is doubt.
+   */
+  it('adds no haptic of its own', async () => {
+    const tree = await mountHeart(false);
+    await toggle(tree);
+    await toggle(tree);
+    expect(mockHaptic).not.toHaveBeenCalled();
+  });
+
+  it('changes state immediately when motion is reduced', async () => {
+    const tree = await mountHeart(true);
+    expect(heartName(tree)).toBe('heart-outline');
+
+    await toggle(tree);
+    // The state is the information; the pulse never was.
+    expect(heartName(tree)).toBe('heart');
+    expect(restScale(tree)).toBe(1);
   });
 });

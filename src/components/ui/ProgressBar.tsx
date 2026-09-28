@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import { palette, radii } from '../../theme/tokens';
+import { motion, palette, radii } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useReducedMotion } from '../../theme/useReducedMotion';
 
@@ -51,7 +51,21 @@ export function ProgressBar({
     }
     Animated.timing(anim, {
       toValue: clamped,
-      duration: 650,
+      /*
+       * The same token the water vessel fills with (5.8C).
+       *
+       * Both are a progress indicator interpolating a dimension from its
+       * previous value to a new one, with the same `Easing.out(cubic)`, the
+       * same JS driver because both animate layout, and the same
+       * reduced-motion contract. The only thing that differed was a literal
+       * 650 with nothing recorded to justify it, against a token that exists
+       * for exactly this. Two progress surfaces should not move at two
+       * speeds.
+       *
+       * Mount behaviour is deliberately unchanged: a rail still sweeps from
+       * zero on first render, as it always has.
+       */
+      duration: motion.duration.progress,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false, // animates width
     }).start();

@@ -2371,6 +2371,73 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Slice 5.8C — Targeted Feature Motion Rollout 🟡
+
+**Implemented, awaiting founder device review.** Four targets were authorized. **Two were implemented, one was normalized, and one was deliberately left alone** — with evidence for each.
+
+| Target | Outcome |
+|---|---|
+| **A. Fuel meal expand/collapse** | **Implemented.** The one reveal in VITA that animates. |
+| **B. Food favorite toggle** | **Implemented.** One quick pulse, and **no haptic**. |
+| **C. Water vessel** | **Intentionally unchanged.** The condition for touching it is not met. |
+| **D. Progress consistency** | **Normalized**, on evidence rather than numerical neatness. |
+
+#### A. The meal reveal
+
+**Before:** `{expanded ? <View>…</View> : null}` — a conditional mount. The foods simply appeared.
+
+**After:** they arrive behind an opacity and a **4pt translate**, over `motion.duration.state`, both on the **native driver**. Opening is where motion earns its place: content the user asked for settles into position under the heading it belongs to, which says *these foods are this meal's* better than an instant swap does.
+
+**Deliberately not a height animation.** A meal holds real variable content — zero foods or six, short names or wrapped ones, at any text size — and animating to a measured or guessed height is how that content starts jumping. Opacity and a small translate say the same thing and cannot destabilise a layout.
+
+**Collapse is immediate.** The authorization asks for a close at least as fast as the open; unmounting at once is the fastest possible and, more importantly, removes any chance of a row still receiving touches after it has visually gone. A test asserts the layer is gone and the foods are unreachable.
+
+**No haptic.** A disclosure is not a confirmation. A test asserts none fires on expand or collapse.
+
+**Reduced motion:** the transform is removed entirely and the content is simply there. Proven on device — the expanded meal under Reduce Motion is **pixel-identical** to the expanded meal without it.
+
+#### B. The favorite heart
+
+**Before:** a plain `Pressable` and an instant glyph swap — no press feedback, no acknowledgement.
+
+**After:** a single **1 → 1.08 → 1** pulse, twice `motion.duration.press`, on the native driver, wrapping **the glyph only** so the pressable, its hit area, its surface and its responder behaviour are untouched — the last of which matters, because this button is nested inside a row's own `Pressable` and wins the touch by React Native's responder rules.
+
+**Driven by the stored state, not by the press.** `toggleFavorite` is async and can fail; a pulse fired on tap would celebrate a favourite that was never saved. It also **skips the first render**, or opening a list of saved foods would set every heart beating at once.
+
+**No haptic added.** §17 prefers none where there is doubt, and there is: the state change is already unmistakable — a filled heart on a tinted surface — and a food list is somewhere a finger wanders. A test asserts none fires.
+
+**Reduced motion:** no pulse; the state changes immediately.
+
+#### C. Water — intentionally unchanged
+
+§21 authorizes Water **only if the current fill change is visibly abrupt.** It is not. `WaterVessel` already interpolates from the previous level to the new one over `motion.duration.progress` with `Easing.out(cubic)`, adds a settle on a rise and moves plainly on a correction, and lands directly on the value under Reduced Motion. It is already what §22 describes. **Touching it could only make it worse**, and the authorization names leaving it alone as a valid outcome.
+
+#### D. Progress consistency — normalized on evidence
+
+§28 asks whether `ProgressBar` represents the same semantic motion as Water. **It does**: both interpolate a dimension representing a fraction of a goal, with the *same* `Easing.out(Easing.cubic)`, the same JS driver because both animate layout, and the same reduced-motion contract. The only difference was a literal `650` with nothing recorded to justify it against a token that exists for exactly this. It now uses `motion.duration.progress`.
+
+**Mount behaviour is deliberately unchanged** — a rail still sweeps from zero on first render, as it always has (§29). **The app now contains exactly one hardcoded duration**: `Toast`'s 220ms entry, documented in 5.8B as a deliberate asymmetry.
+
+#### Static regression proof
+
+Fuel Home was captured **before and after**, in both the collapsed and expanded resting states, and pixel-diffed: **identical below the status bar in both.** That covers the reveal and the `ProgressBar` change, since the calorie rail is on the same screen. The favourite's resting scale is asserted to be exactly 1 in both motion modes, so an interrupted pulse cannot leave the glyph enlarged.
+
+#### Haptic budget
+
+**Zero new haptic call sites.** `git diff` over the runtime files contains no `vitaHaptic` or `haptic=` addition.
+
+#### Untouched
+
+Route transitions · Dashboard edit-mode drag, jiggle and long-press · Peptides Taken/Skipped · injection-site selection · calculator timing · text input · Settings and Tools navigation · the scanner · search. No confetti, no particles, no slosh, no parallax, no hero transitions. `PressableScale`'s flex trap remains deferred.
+
+#### Validation
+
+85 suites / **2,293 tests** (2,286 → 2,293, +7) · `tsc` and strict-unused clean · iOS Expo export clean · **no dependency, persistence, schema, route or domain change**. `expo-asset` was **not** installed.
+
+**Verified on an iPhone 17 Pro simulator with real input**: meals expanded and collapsed, the favourite toggled through the real component over an in-memory repository, and the whole pass repeated with **Reduce Motion genuinely enabled on the device**.
+
+**Still to verify — founder, on a real device:** whether the meal reveal reads as smoother without reading as animated; whether the favourite pulse is subtle enough to almost miss; and whether the app feels more polished without feeling busier.
+
 ### Slice 5.8B — Shared Motion Foundation + Core Interactions ✅ LOCKED
 
 **Founder-approved on a physical iPhone and locked (2026-09-27).** Approved implementation: `a3716d2 — feat(sprint-5): establish motion interaction foundation`. Small on purpose: 5.8A found the foundation already built, so 5.8B closed the two gaps it left rather than building it again.

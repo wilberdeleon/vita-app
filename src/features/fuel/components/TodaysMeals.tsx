@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   formatCalories,
   formatPortion,
   type FoodEntry,
   type MealSlot,
 } from '../../../lib/nutrition';
-import { palette, spacing, typography } from '../../../theme/tokens';
+import { motion, palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
+import { useReducedMotion } from '../../../theme/useReducedMotion';
 import { mealGroups } from '../dayStrip';
 import { mealAccent } from '../mealAccent';
 import { FoodAvatar } from './FoodAvatar';
@@ -44,6 +45,68 @@ type Props = {
  * is session-local, because which meal a person had folded open is not a
  * preference worth carrying across launches.
  */
+/**
+ * A meal's foods, arriving rather than appearing (slice 5.8C).
+ *
+ * ## What this is, and what it deliberately is not
+ *
+ * **It animates the open and not the close.** Opening is where motion earns
+ * its place: content the user asked for slides a few points into position
+ * under the heading it belongs to, which answers *these foods are this
+ * meal's* better than an instant swap does. Closing is **immediate** — the
+ * authorization asks for a collapse at least as fast as the open, and a
+ * delayed unmount is how rows keep receiving taps after they have visually
+ * gone. Nothing lingers here: `expanded` goes false and this unmounts.
+ *
+ * **No height animation.** A meal holds real, variable content — zero foods
+ * or six, short names or wrapped ones, at any text size — and animating to a
+ * measured or guessed height is how that content starts jumping. Opacity and
+ * a 4pt translate say the same thing and cannot destabilise a layout.
+ *
+ * **No haptic.** This is a disclosure, not a confirmation. Nothing was
+ * recorded, so nothing buzzes.
+ *
+ * Both animated properties run on the native driver, and the animation is
+ * stopped on unmount so a half-finished reveal cannot outlive its row.
+ */
+function RevealedEntries({ children }: PropsWithChildren) {
+  const reducedMotion = useReducedMotion();
+  // Starts hidden only when it is going to animate; under reduced motion it
+  // is simply already there, which is the app-wide rule.
+  const reveal = useRef(new Animated.Value(reducedMotion ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (reducedMotion) {
+      reveal.setValue(1);
+      return;
+    }
+    const animation = Animated.timing(reveal, {
+      toValue: 1,
+      duration: motion.duration.state,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [reveal, reducedMotion]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.entries,
+        {
+          opacity: reveal,
+          // The spatial half, and the half Reduced Motion removes entirely.
+          transform: reducedMotion
+            ? []
+            : [{ translateY: reveal.interpolate({ inputRange: [0, 1], outputRange: [-4, 0] }) }],
+        },
+      ]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
+
 export function TodaysMeals({ entries, onOpenEntry, onAddToMeal }: Props) {
   const { surfaces, scheme } = useTheme();
   const [open, setOpen] = useState<Partial<Record<MealSlot, boolean>>>({});
@@ -137,7 +200,7 @@ export function TodaysMeals({ entries, onOpenEntry, onAddToMeal }: Props) {
             </Pressable>
 
             {expanded ? (
-              <View style={styles.entries}>
+              <RevealedEntries>
                 {meal.entries.map((entry) => (
                   <Pressable
                     key={entry.id}
@@ -188,7 +251,7 @@ export function TodaysMeals({ entries, onOpenEntry, onAddToMeal }: Props) {
                   <Ionicons name="add" size={15} color={palette.primary} />
                   <Text style={[styles.addLabel, { color: palette.primary }]}>Add food</Text>
                 </Pressable>
-              </View>
+              </RevealedEntries>
             ) : null}
           </View>
         );
