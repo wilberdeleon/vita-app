@@ -35,12 +35,14 @@ jest.mock('expo-constants', () => ({
 }));
 
 const mockBack = jest.fn();
+const mockDismissTo = jest.fn();
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   router: {
     back: (...args: unknown[]) => mockBack(...args),
     push: (...args: unknown[]) => mockPush(...args),
     navigate: jest.fn(),
+    dismissTo: (...args: unknown[]) => mockDismissTo(...args),
     dismissAll: jest.fn(),
     canDismiss: () => false,
   },

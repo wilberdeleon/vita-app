@@ -98,18 +98,26 @@ export default function PeptideDetail() {
             return;
           }
           /**
-           * Adding is not configuring, and it ends on Peptides — by name.
+           * Adding is not configuring, and it ends on Peptides — by name,
+           * with the browsing stack collapsed behind it.
            *
            * `back()` returned to the catalog list, and `dismissAll()` was
            * worse: it pops to the root of whatever navigator it finds, which
            * outside the Peptides stack meant landing on Fuel. Naming the
            * destination makes it deterministic however the catalog was
-           * reached — the user ends on the screen that now contains the thing
-           * they just added, every time.
+           * reached.
+           *
+           * `navigate` named it but did not clear it — with Peptides Home
+           * already below, it pushed a second copy on top and left the
+           * catalog pages underneath, so Back walked straight back into the
+           * flow the user had just finished (founder QA, 2026-09-27).
+           * `dismissTo` returns to the existing Home and drops what is above
+           * it, falling back to a replace when the user deep-linked in and
+           * there is no Home below.
            */
           await addToRoutine(definition.id);
           showToast({ message: `${definition.name} added to your routine.` });
-          router.navigate('/peptides');
+          router.dismissTo('/peptides');
         }}
       />
 

@@ -47,6 +47,7 @@ jest.mock('../../../lib/nutrition/providers/registry', () => ({
 
 let mockParams: Record<string, string> = {};
 const mockPush = jest.fn();
+const mockDismissTo = jest.fn();
 const mockReplace = jest.fn();
 
 jest.mock('expo-router', () => ({
@@ -55,6 +56,7 @@ jest.mock('expo-router', () => ({
     replace: (...args: unknown[]) => mockReplace(...args),
     back: jest.fn(),
     navigate: jest.fn(),
+    dismissTo: (...args: unknown[]) => mockDismissTo(...args),
     dismissAll: jest.fn(),
     canDismiss: () => false,
   },

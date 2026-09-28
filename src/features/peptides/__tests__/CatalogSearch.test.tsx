@@ -13,11 +13,13 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 const mockPush = jest.fn();
+const mockDismissTo = jest.fn();
 let mockRouteId = '';
 jest.mock('expo-router', () => ({
   router: {
     push: (...args: unknown[]) => mockPush(...args),
     back: jest.fn(),
+    dismissTo: (...args: unknown[]) => mockDismissTo(...args),
     dismissAll: jest.fn(),
     navigate: jest.fn(),
   },

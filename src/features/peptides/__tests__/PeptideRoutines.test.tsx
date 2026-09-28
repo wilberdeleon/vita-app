@@ -15,6 +15,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 let mockRouteId = '';
 const mockPush = jest.fn();
+const mockDismissTo = jest.fn();
 const mockBack = jest.fn();
 const mockNavigate = jest.fn();
 jest.mock('expo-router', () => ({
@@ -22,6 +23,7 @@ jest.mock('expo-router', () => ({
     push: (...args: unknown[]) => mockPush(...args),
     back: (...args: unknown[]) => mockBack(...args),
     navigate: (...args: unknown[]) => mockNavigate(...args),
+    dismissTo: (...args: unknown[]) => mockDismissTo(...args),
     dismissAll: jest.fn(),
   },
   useLocalSearchParams: () => ({ id: mockRouteId }),
@@ -34,6 +36,7 @@ import Peptides from '../../../app/(vita)/peptides/index';
 import RoutineDetail from '../../../app/(vita)/peptides/routine/[id]';
 import EditPeptideSetup from '../../../app/(vita)/peptides/setup/[id]';
 import PeptideDetail from '../../../app/(vita)/peptides/catalog/[id]';
+import CustomPeptide from '../../../app/(vita)/peptides/custom';
 import InjectionSites from '../../../app/(vita)/tools/injection-sites';
 import type { PeptideRepository } from '../../../lib/peptides/data/PeptideRepository';
 import {
@@ -300,8 +303,14 @@ describe('routine state', () => {
      * meant Fuel. And no form either: deciding to track something must not
      * cost an interrogation.
      */
-    expect(mockNavigate).toHaveBeenCalledWith('/peptides');
+    expect(mockDismissTo).toHaveBeenCalledWith('/peptides');
     expect(mockPush).not.toHaveBeenCalled();
+    /*
+     * And it collapses rather than stacks (founder QA, 2026-09-27).
+     * `navigate` pushed a second Home over the catalog pages, so Back walked
+     * straight back into the flow the user had just finished.
+     */
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('shows the new routine under Needs setup on that screen', async () => {
@@ -1080,7 +1089,7 @@ describe('a compound added by the catalog expansion', () => {
     // The state-aware CTA is present near the top, as on every other page.
     expect(control(detail, 'Add to Routine')).toBeDefined();
     await press(detail, 'Add to Routine');
-    expect(mockNavigate).toHaveBeenCalledWith('/peptides');
+    expect(mockDismissTo).toHaveBeenCalledWith('/peptides');
     await act(async () => detail.unmount());
     mounted = null;
 
@@ -1691,5 +1700,67 @@ describe('Today and Active never show the same routine twice', () => {
     expect(screen(tree)).toContain('Inactive · 1');
     expect(screen(tree)).toContain('Nothing scheduled today');
     expect(screen(tree)).not.toContain('Scheduled today');
+  });
+});
+
+/* ── the creation stack, after the founder's back-back-back report ─────── */
+
+/**
+ * **Every path that finishes creating a routine must collapse what it came
+ * through** (founder QA, 2026-09-27).
+ *
+ * The defect was not the destination — all three paths already named
+ * Peptides Home. It was the operation: `router.navigate` pushes a second
+ * copy of Home when one is already below, leaving the catalog pages and the
+ * setup wizard stacked underneath it. Finishing a routine and pressing Back
+ * once put you back inside the setup screen you had just completed.
+ *
+ * These assert the **operation**, not the href, because asserting the href
+ * alone passed for the entire life of the bug.
+ */
+describe('finishing a routine leaves nothing behind', () => {
+  it('collapses the catalog stack when a listed peptide is added', async () => {
+    mockRouteId = encodeURIComponent('catalog:bpc-157');
+    const fake = repositoryWith([]);
+    const tree = await mount(<PeptideDetail />, fake.repository);
+
+    await press(tree, 'Add to Routine');
+
+    expect(fake.setups()).toHaveLength(1);
+    expect(mockDismissTo).toHaveBeenCalledWith('/peptides');
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('collapses it for a custom peptide too', async () => {
+    const fake = repositoryWith([]);
+    const tree = await mount(<CustomPeptide />, fake.repository);
+
+    const field = tree.root.findAll(
+      (node) =>
+        typeof node.props?.onChangeText === 'function' &&
+        /custom peptide name/i.test(String(node.props?.accessibilityLabel ?? '')),
+    )[0];
+    await act(async () => field.props.onChangeText('My compound'));
+    await press(tree, 'Continue');
+
+    // A custom peptide joins the routine the same way a catalog one does, so
+    // it must leave the same empty stack behind it.
+    expect(fake.setups()).toHaveLength(1);
+    expect(mockDismissTo).toHaveBeenCalledWith('/peptides');
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('goes nowhere at all when there is nothing to save', async () => {
+    const fake = repositoryWith([]);
+    const tree = await mount(<CustomPeptide />, fake.repository);
+
+    // The name is empty, so the guard should refuse before anything happens.
+    await press(tree, 'Continue');
+
+    expect(fake.setups()).toHaveLength(0);
+    expect(mockDismissTo).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockBack).not.toHaveBeenCalled();
   });
 });

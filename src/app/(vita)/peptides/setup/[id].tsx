@@ -94,16 +94,27 @@ export default function EditPeptideSetup() {
       await completeSetup(setup.id, value);
       showToast({ message: `${definition.name} is ready` });
       /*
-       * Ends on Peptides, by name (founder direction, 5.5C §57).
+       * Ends on Peptides, by name (founder direction, 5.5C §57) — and
+       * **collapses the creation flow on the way** (founder QA, 2026-09-27).
        *
        * `back()` returns to whatever opened this screen — the catalog detail
        * page for something just added, or the needs-setup notice on Home —
        * so finishing a setup could leave you on a research page for a routine
        * you had already finished configuring. Naming the destination puts
-       * everyone on the screen that now contains the running routine, which
-       * is the same rule the catalog's own Add already follows.
+       * everyone on the screen that now contains the running routine.
+       *
+       * But `navigate` only *names* the destination; when Peptides Home is
+       * already below in the stack it pushes a **second** copy on top rather
+       * than returning to the first. Founder QA found the result: after
+       * finishing a routine, one Back landed straight back in the setup
+       * screen that had just been completed, and reaching Home properly took
+       * four. `dismissTo` pops the stack until it reaches the existing
+       * `/peptides` instead, so the finished wizard is gone rather than
+       * hidden — and when there is no Home below (a deep link straight into
+       * setup) it replaces the current screen with it, which is still the
+       * right landing and still leaves nothing behind.
        */
-      router.navigate('/peptides');
+      router.dismissTo('/peptides');
       return;
     }
 

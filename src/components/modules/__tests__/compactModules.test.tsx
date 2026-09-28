@@ -19,12 +19,15 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => ({ width: 390, height: 844, scale: 3, fontScale: mockFontScale }),
 }));
 
+const mockDismissTo = jest.fn();
+
 jest.mock('expo-router', () => ({
   router: {
     back: jest.fn(),
     push: jest.fn(),
     replace: jest.fn(),
     navigate: jest.fn(),
+    dismissTo: (...args: unknown[]) => mockDismissTo(...args),
     dismissAll: jest.fn(),
     canDismiss: () => false,
   },

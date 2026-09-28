@@ -41,8 +41,13 @@ export default function CustomPeptide() {
      */
     await addToRoutine(definition.id);
     showToast({ message: `${definition.name} added to your routine.` });
-    // Named destination, for the same reason the catalog page uses one.
-    router.navigate('/peptides');
+    /*
+     * Named destination, and the flow collapsed behind it — for the same
+     * reasons the catalog page does it, and against the same defect: this is
+     * a creation flow too, so `navigate` left the catalog and this form
+     * sitting under a second copy of Home (founder QA, 2026-09-27).
+     */
+    router.dismissTo('/peptides');
   };
 
   return (

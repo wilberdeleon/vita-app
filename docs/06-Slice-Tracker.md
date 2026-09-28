@@ -2371,6 +2371,49 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Founder QA fix — peptide creation navigation (2026-09-27)
+
+**A narrow navigation regression, found by the founder during 5.8C QA.** Not a reopening of 5.7, which stays ✅ COMPLETE / LOCKED, and not a change to 5.8C, which stays 🟡 awaiting approval.
+
+#### The report
+
+Finishing a routine left the user deep in the creation stack: **four Backs to reach Peptides Home**, and one Back after saving landed straight back in the setup screen that had just been completed.
+
+#### Root cause — the destination was right, the operation was wrong
+
+All three creation paths already *named* Peptides Home, which is why this survived earlier review:
+
+```
+/peptides  →  /peptides/catalog  →  /peptides/catalog/{id}  →  /peptides/setup/{id}
+                                                                        │ save
+                                                                        ▼
+                                             router.navigate('/peptides')   ← pushes a SECOND Home
+```
+
+`router.navigate` pushes a new instance when the target is already below in the stack rather than returning to it. So the finished wizard and the catalog pages stayed underneath the Home the user landed on. **Reproduced on device before any code changed**: after saving, a single back-swipe returned to Routine Setup, by then showing *Save Changes*.
+
+#### The fix
+
+`router.dismissTo('/peptides')` at all three completion sites — catalog add, custom-peptide add, setup completion. It pops the stack until it reaches the existing Home, and **replaces the current screen when there is none below**, which is exactly what a deep link straight into setup needs.
+
+The alternatives were considered and rejected on repository evidence: `replace` swaps only the top screen and leaves the rest of the wizard beneath; `dismissAll` pops to the navigator root, which outside the Peptides stack meant landing on **Fuel** — the reason an earlier slice had already rejected it, recorded in the code.
+
+**The entire runtime change is three one-line navigation calls.** Everything else in the diff is comments and tests.
+
+#### Deliberately unchanged
+
+**Editing.** The same screen saves both a new routine and an edit; only the creation branch changed. A saved edit still returns with `back()`, because someone who opened a running routine to change an amount expects to land where they were rather than be thrown out to Home. **Cancel and Back during creation** are untouched.
+
+#### Tests
+
+85 suites / **2,297 tests** (2,293 → 2,297, +4). The new coverage pins **the operation, not the href** — asserting `'/peptides'` alone passed for the entire life of the bug. It covers all three creation paths collapsing, a refused save navigating nowhere at all, and an edit still using `back()` and never `dismissTo`.
+
+**A limitation, stated plainly:** unit tests cannot simulate a real navigation stack, so they assert the routing contract. The stack behaviour itself was proven on device — before and after.
+
+#### Verification
+
+On an iPhone 17 Pro simulator, the founder's exact path: Peptides → Add to Routine → pick a peptide → finish setup → save. **Before:** one back-swipe returned into the completed setup screen. **After:** one back-swipe stays on Peptides Home, with the new routine listed. No visual, domain, persistence or dependency change; `tsc` clean, iOS export clean.
+
 ### Slice 5.8C — Targeted Feature Motion Rollout 🟡
 
 **Implemented, awaiting founder device review.** Four targets were authorized. **Two were implemented, one was normalized, and one was deliberately left alone** — with evidence for each.

@@ -25,12 +25,14 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 
 let mockRouteId = 'setup-1';
 const mockNavigate = jest.fn();
+const mockDismissTo = jest.fn();
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
   router: {
     push: jest.fn(),
     back: (...args: unknown[]) => mockBack(...args),
     navigate: (...args: unknown[]) => mockNavigate(...args),
+    dismissTo: (...args: unknown[]) => mockDismissTo(...args),
     dismissAll: jest.fn(),
     canDismiss: () => false,
   },
@@ -262,12 +264,42 @@ describe('a routine being set up for the first time', () => {
     expect(screen(tree)).not.toContain('Save Setup');
   });
 
-  it('ends on Peptides rather than wherever it was opened from', async () => {
+  /**
+   * The destination, and the stack behind it (founder QA, 2026-09-27).
+   *
+   * `navigate` named Peptides Home but did not clear the way to it: with
+   * Home already below in the stack it **pushed a second copy**, so one Back
+   * after finishing a routine landed straight back in the setup screen that
+   * had just been completed, and reaching Home properly took four. Asserting
+   * only the href would have passed throughout that bug, which is why this
+   * pins the operation.
+   *
+   * `dismissTo` pops until it reaches the existing `/peptides`, and replaces
+   * the current screen when there is none below — so a deep link straight
+   * into setup still lands on Home with nothing left behind it.
+   */
+  it('returns to Peptides by collapsing the creation flow, not stacking on it', async () => {
     const fake = repositoryWith([setupFixture()]);
     const tree = await mount(<EditPeptideSetup />, fake.repository);
 
     await press(tree, 'Add to Routine');
-    expect(mockNavigate).toHaveBeenCalledWith('/peptides');
+
+    expect(mockDismissTo).toHaveBeenCalledWith('/peptides');
+    expect(mockDismissTo).toHaveBeenCalledTimes(1);
+    // A push or a plain navigate would leave the finished wizard underneath.
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockBack).not.toHaveBeenCalled();
+  });
+
+  /** The routine is written before anything navigates anywhere. */
+  it('persists the routine before it leaves the screen', async () => {
+    const fake = repositoryWith([setupFixture()]);
+    const tree = await mount(<EditPeptideSetup />, fake.repository);
+
+    await press(tree, 'Add to Routine');
+
+    expect(fake.setups()[0].routineState).toBe('active');
+    expect(mockDismissTo).toHaveBeenCalledWith('/peptides');
   });
 });
 
@@ -596,6 +628,13 @@ describe('editing a routine that already runs', () => {
     expect(fake.setups()[0].routineAmount?.authored.amount).toBe(3);
     expect(mockBack).toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
+    /*
+     * Editing is **not** creating, and the 2026-09-27 creation-stack fix must
+     * not leak into it. Someone who opened a running routine to change an
+     * amount expects to land back where they were, not to be thrown out to
+     * Peptides Home with their place in the app collapsed.
+     */
+    expect(mockDismissTo).not.toHaveBeenCalled();
   });
 });
 
