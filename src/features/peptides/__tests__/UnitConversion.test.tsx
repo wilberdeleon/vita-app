@@ -580,15 +580,28 @@ describe.each(SURFACES)('%s — the vial is milligrams, and only milligrams', (_
   it('keeps mg and mcg on the Custom Amount, which is not the vial', async () => {
     const tree = await render();
     await enterVial(tree, '10', '1');
-    const options = tree.root.findAll(
-      (node) =>
-        typeof node.props?.onPress === 'function' &&
-        /^Custom amount unit,/.test(String(node.props?.accessibilityLabel ?? '')),
-    );
-    expect(options.map((node) => node.props.accessibilityLabel).sort()).toEqual([
-      'Custom amount unit, mcg',
-      'Custom amount unit, mg',
-    ]);
+    /*
+     * Deduped by label.
+     *
+     * 5.8B moved `SegmentedTabs` onto `PressableScale`, so one segment is now
+     * two composite instances carrying the same props — `PressableScale`
+     * around RN's own `Pressable`. The platform still exposes a single
+     * accessibility element per segment; only the test tree sees two. What
+     * this test is named for is **which units the toggle offers**, so it
+     * asserts the set: a third unit or a missing one still fails it.
+     */
+    const options = [
+      ...new Set(
+        tree.root
+          .findAll(
+            (node) =>
+              typeof node.props?.onPress === 'function' &&
+              /^Custom amount unit,/.test(String(node.props?.accessibilityLabel ?? '')),
+          )
+          .map((node) => String(node.props.accessibilityLabel)),
+      ),
+    ].sort();
+    expect(options).toEqual(['Custom amount unit, mcg', 'Custom amount unit, mg']);
   });
 });
 

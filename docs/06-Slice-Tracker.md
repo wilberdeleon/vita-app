@@ -2371,6 +2371,93 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
+### Slice 5.8B — Shared Motion Foundation + Core Interactions 🟡
+
+**Implemented, awaiting founder device review.** Small on purpose: 5.8A found the foundation already built, so 5.8B closed the two gaps it left rather than building it again.
+
+#### What 5.8A found — most of the foundation already exists
+
+Slice 5.1 established the whole vocabulary and it is still in place:
+
+| Piece | State |
+|---|---|
+| `motion` tokens | **Already right.** Four durations (`press` 90, `state` 180, `sheet` 260, `progress` 700), one press spring, two press scales. §13 asked for 2–4 values; this is that, and no token was added. |
+| `useReducedMotion` | **Exists**, subscribes to changes, and states the rule: *land on the final state directly, never play a shorter version.* |
+| `PressableScale` | **Already normalized** — tokens not literals, a fade instead of a spring under reduced motion, opt-in `haptic`, and the caller's own opacity multiplied rather than overwritten. |
+| `Button` | **Already** routes through `PressableScale`, with no haptic by default and a disabled state that cannot fake feedback. |
+| `VitaSheet` | **Already** RN `Modal` with `animationType={reducedMotion ? 'none' : 'slide'}`. Platform motion, reduced-motion aware, nothing to unify. |
+| `vitaHaptic` | **Already** the four-event vocabulary — `selection`, `confirm`, `complete`, `warn` — with ~20 call sites and an explicit rule against buzzing on navigation. §18's helper did not need writing. |
+
+**So `PressableScale`, `Button`, `VitaSheet`, the tokens and the haptic helper needed no changes at all.** Saying so is the finding.
+
+#### The two real gaps, and what closed them
+
+**1. `Toast` ignored Reduced Motion — the only animated surface in the app that did.** It translates 16pt upward as it appears, which is exactly the non-essential spatial movement the setting asks to remove, and it had no branch for it while every other animated component did. It now lands on its final state directly, with the translate removed and the opacity kept: a confirmation still arrives, it just no longer travels. Its `180` exit also adopted `motion.duration.state` — the same value, now named.
+
+**2. `SegmentedTabs` was the only shared control that answered a press with nothing.** A bare `Pressable`: no scale, no fade, no reduced-motion branch, no haptic — while `Button`, `ListRow`, `Chip` and every tile go through `PressableScale`. It uses the same primitive now, so a segment press feels like every other press **by construction rather than by coincidence**.
+
+It also fires `selection` — **the vocabulary catching up with itself.** `src/lib/haptics` has named *"a segmented tab"* as a `selection` example since 5.1 and never called it, while twenty other call sites did. It fires **only when the press changes the selection**; re-tapping the segment you are already on has changed nothing, and a buzz for nothing is the noise §9 warns about.
+
+The flex moved onto a wrapper, because `PressableScale` applies its style to an inner view — the known trap, worked around the way every other caller does rather than repaired here (§14).
+
+#### One duplicated magic number removed
+
+`CustomizeHomeSheet`'s literal `180` became `motion.duration.state`. **Identical value, zero behaviour change** — the token existed and one file had not adopted it.
+
+#### Recorded, deliberately not changed
+
+- **`ProgressBar` animates at `650` while `WaterVessel` uses `motion.duration.progress` (700)** for the same job. A real inconsistency — but §22 defers progress-rail motion until the founder has reviewed the motion language, and changing it would retune every rail on every locked screen. **5.8C.**
+- **Reveals are instant everywhere** — Fuel's meals, `Disclosure`, Injection Sites' reference. No `LayoutAnimation` anywhere in the app. That is **consistent, not broken** (§19B's condition is not met), and animating it means new machinery across many screens. **5.8C.**
+- **Dashboard edit mode** — jiggle, long-press, drag, removal: **audit only** (§20). Already honours reduced motion.
+- **Water vessel** — **audit only** (§21). Already uses `motion.duration.progress` and honours reduced motion. No sloshing, no waves.
+- **Route transitions** — untouched (§24). Native Expo Router behaviour.
+- `Toast`'s `220` entry stays a literal: a toast arrives a little more gently than it leaves, and one value used once is not a vocabulary.
+
+#### DEV preview
+
+`motion-preview` — the vocabulary on one screen, in 5.8A's order: **Press**, **Select**, **Reveal**, **Sheet**, with the **live Reduced Motion state at the top**, because the commonest way to misjudge motion work is to review it without knowing which branch you are in. Every control is the real shared component; nothing is persisted.
+
+#### Validation
+
+85 suites / **2,286 tests** (2,278 → 2,286, +8) · `tsc` and strict-unused clean · iOS Expo export clean · **no dependency, persistence, schema, route or domain change**.
+
+**Verified on an iPhone 17 Pro simulator with real input.** Segments tapped and the track still divides evenly; the sheet opened and dismissed. **Reduce Motion was genuinely enabled on the device** (`simctl spawn … defaults write com.apple.Accessibility ReduceMotionEnabled`) and the app read it live — the preview reported *"On — movement removed"*, the sheet opened without a slide, and nothing broke. **Haptic feel cannot be proved on a simulator** (§33): the tests prove *which* calls fire and that none fires on a no-op press; only the founder's iPhone can judge how they feel.
+
+**Still to verify — founder, on a real device:** whether the press response is almost invisible until compared with none; whether the segmented-control haptic is welcome or too frequent; and whether anything calls attention to itself.
+
+### Slice 5.8A — Motion + Microinteraction Characterization ✅
+
+**An audit before an edit.** Every animated surface, every haptic call site and every reduced-motion branch in the app, read before anything changed.
+
+#### Motion inventory
+
+| Area | Current behaviour | Reduced motion | Verdict |
+|---|---|---|---|
+| `PressableScale` | Spring to `motion.pressScale` (0.97 control / 0.98 surface), native driver | **Fade to 0.6 instead** | Shared, correct |
+| `Button` | Delegates entirely to `PressableScale`; no default haptic | Inherited | Shared, correct |
+| `VitaSheet` | RN `Modal`, platform slide + backdrop | `animationType: 'none'` | Shared, correct |
+| `ProgressBar` | `Animated.timing` 650ms, `Easing.out(cubic)`, JS driver (animates width) | Sets value directly | Inconsistent duration — 5.8C |
+| `WaterVessel` | `motion.duration.progress` / `state` | Honoured | Correct |
+| `Toast` | `translateY` 16→0 + opacity, 220 in / 180 out, native driver | **None** | **Gap — fixed in 5.8B** |
+| `SegmentedTabs` | Bare `Pressable`; fill jumps | N/A — nothing animated | **Gap — fixed in 5.8B** |
+| Dashboard edit mode (`EditableWidget`, `dashboard.tsx`) | Jiggle, drag, long-press | Honoured | Audit only (§20) |
+| `SwipeableWeek` | `PanResponder` + `motion` tokens, native driver | Honoured | Correct |
+| `ArrangeableSection`, `CustomizeFuelSheet`, `CustomizeHomeSheet` | Reorder + drag | Honoured | Correct; one literal normalized |
+| Reveals (Fuel meals, `Disclosure`) | Instant, conditional render | N/A | Consistent — 5.8C |
+| Route transitions | Expo Router defaults | Platform | Unchanged (§24) |
+
+#### Haptic inventory
+
+`vitaHaptic` has four events and roughly twenty call sites. **Every one was retained.** Audited against §9's lists: they fire on explicit logs (`confirm`), goal completion (`complete`), destructive or failed actions (`warn`) and discrete choices (`selection`) — quick-add amounts, units, body-map zones, reorder handles. **None fires on scroll, navigation, render, search typing or passive progress.** One was *added*: `SegmentedTabs`, the example the module documented and never called.
+
+#### The reduced-motion rule
+
+Stated once, in `useReducedMotion`, and now honoured everywhere: **remove spatial movement, keep the state change immediate, never play a shortened version of the same animation.** Feedback is not removed — a press answers with a fade rather than nothing, because "reduce motion" is a request about movement, not a request to make controls feel dead.
+
+#### What is deliberately not animated
+
+Screen headers · static metric text · navigation rows · text input · calorie and calculator arithmetic · accessibility labels · reveals. Motion exists to clarify an interaction, not to decorate information, and **no information in VITA depends on an animation**.
+
 ### Slice 5.7E — Final Tools + Settings Identity Audit ✅
 
 **The closeout pass, and deliberately almost empty.** 5.7E is not a redesign: it is a cross-screen consistency audit, a bug-only cleanup, and the documentation close of 5.7. The seven founder-approved surfaces — Settings Home, Appearance, Units, Nutrition Goals, Tools Hub, Peptide Calculator, Injection Sites — were driven on device against locked Dashboard, Fuel, Water and Peptides.

@@ -9,8 +9,9 @@ import {
   type PropsWithChildren,
 } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
-import { DOCK_CLEARANCE, glassShadow, palette, radii, spacing, typography } from '../../theme/tokens';
+import { DOCK_CLEARANCE, glassShadow, motion, palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useReducedMotion } from '../../theme/useReducedMotion';
 
 export type ToastOptions = {
   message: string;
@@ -51,6 +52,15 @@ export function ToastProvider({ children }: PropsWithChildren) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const anim = useRef(new Animated.Value(0)).current;
   const { surfaces, scheme } = useTheme();
+  /**
+   * The toast was the **one animated surface in the app that ignored Reduced
+   * Motion** (found in the 5.8A audit). It slides 16pt upward as it appears,
+   * which is precisely the non-essential spatial movement the setting asks
+   * to remove — and unlike every other animation here it had no branch for
+   * it. A confirmation that someone asked for must still arrive; it just
+   * must not travel to get there.
+   */
+  const reducedMotion = useReducedMotion();
 
   const clearTimer = useCallback(() => {
     if (timer.current) {
@@ -61,30 +71,49 @@ export function ToastProvider({ children }: PropsWithChildren) {
 
   const hideToast = useCallback(() => {
     clearTimer();
+    // Reduced motion lands on the final state directly rather than playing a
+    // shorter version of the same animation — the rule `useReducedMotion`
+    // states, and the reason the toast is simply gone rather than fading.
+    if (reducedMotion) {
+      anim.setValue(0);
+      setToast(null);
+      return;
+    }
     Animated.timing(anim, {
       toValue: 0,
-      duration: 180,
+      duration: motion.duration.state,
       easing: Easing.in(Easing.quad),
       useNativeDriver: true,
     }).start(({ finished }) => {
       if (finished) setToast(null);
     });
-  }, [anim, clearTimer]);
+  }, [anim, clearTimer, reducedMotion]);
 
   const showToast = useCallback(
     (options: ToastOptions) => {
       clearTimer();
       setToast(options);
-      anim.setValue(0);
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 220,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
+      if (reducedMotion) {
+        anim.setValue(1);
+      } else {
+        anim.setValue(0);
+        Animated.timing(anim, {
+          toValue: 1,
+          /*
+           * Deliberately not `motion.duration.state`: a toast arrives a
+           * little more gently than it leaves, and 220/180 is that
+           * asymmetry. One value used once in one component is not a
+           * vocabulary, so it stays a literal rather than growing the token
+           * set (5.8A §13).
+           */
+          duration: 220,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start();
+      }
       timer.current = setTimeout(hideToast, options.actionLabel ? ACTION_DURATION : PLAIN_DURATION);
     },
-    [anim, clearTimer, hideToast],
+    [anim, clearTimer, hideToast, reducedMotion],
   );
 
   useEffect(() => clearTimer, [clearTimer]);
@@ -107,7 +136,11 @@ export function ToastProvider({ children }: PropsWithChildren) {
             {
               bottom: DOCK_CLEARANCE,
               opacity: anim,
-              transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+              // The spatial half of the animation, and the half Reduced
+              // Motion removes. Opacity is not movement and stays.
+              transform: reducedMotion
+                ? []
+                : [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
             },
           ]}
           pointerEvents="box-none"

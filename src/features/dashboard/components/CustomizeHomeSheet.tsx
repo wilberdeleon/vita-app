@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale, VitaSheet } from '../../../components/ui';
 import { vitaHaptic } from '../../../lib/haptics';
-import { radii, spacing, typography } from '../../../theme/tokens';
+import { motion, radii, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { useReducedMotion } from '../../../theme/useReducedMotion';
 import {
@@ -156,7 +156,7 @@ export function CustomizeHomeSheet({
               drag.setValue(0);
               return;
             }
-            Animated.timing(drag, { toValue: 0, duration: 180, useNativeDriver: true }).start();
+            Animated.timing(drag, { toValue: 0, duration: motion.duration.state, useNativeDriver: true }).start();
           },
           onPanResponderTerminate: () => {
             setDragging(null);
