@@ -2060,8 +2060,12 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.6C | **Fuel Food Discovery** | Add Food opens on search; one food-row family across Search, Recents and Favorites; Fuel Home's meal identity carried through | ✅ Approved — founder device review, 2026-09-09. **Add / Search / Recent / Favorites locked.** |
 | 5.6D | **Fuel Logging Flow** | The screens *after* a food is chosen brought into the same Fuel language — one food identity, one macro identity, one meal identity | ✅ Approved — founder device review, 2026-09-13. **Scanner / Food Detail / Manual / Edit locked.** |
 | 5.6E | **Fuel End-to-End Audit** | The final Fuel quality gate — the whole feature audited as one connected experience; two defects fixed, nothing redesigned | ✅ Approved — founder device review, 2026-09-13. **Closes 5.6.** |
-| 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ⬜ Planned |
-| 5.8 | Motion + Microinteraction Unification | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ⬜ Planned |
+| 5.7 | **Tools + Settings Identity Integration** | Sprint 4's existing working Tools **and Settings** under the new language — behaviour, routes and persistence frozen | ✅ **COMPLETE / LOCKED** — founder-approved across 5.7A–5.7E, 2026-09-27 |
+| 5.8 | **Motion + Microinteraction Unification** | Unify the vocabulary once real features use it; close remaining reduce-motion gaps and the carried findings | ✅ **COMPLETE / LOCKED** — founder-approved across 5.8A–5.8D. **The interaction language is locked.** |
+| 5.8A | Motion + Microinteraction Characterization | Every animated surface, haptic call site and reduced-motion branch catalogued before anything moved | ✅ Accepted foundation of 5.8B |
+| 5.8B | Shared Motion Foundation + Core Interactions | The two real gaps closed: `Toast` ignoring Reduced Motion, `SegmentedTabs` answering a press with nothing | ✅ Approved — founder device review, 2026-09-27. **Locked.** |
+| 5.8C | Targeted Feature Motion Rollout | The language rolled out to the two feature interactions that earn it; Water deliberately left alone | ✅ Approved — founder device review. **Locked.** |
+| 5.8D | Final Motion Audit + Closeout | The whole motion surface re-audited against the contract; **zero runtime changes** | ✅ **Closes 5.8.** |
 | 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
 | 5.10 | Founder Identity Audit | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | ⬜ Planned |
 
@@ -2371,9 +2375,79 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
 
-### Founder QA fix — peptide creation navigation (2026-09-27)
+### Slice 5.8 — Motion + Microinteraction Unification — CLOSED ✅
 
-**A narrow navigation regression, found by the founder during 5.8C QA.** Not a reopening of 5.7, which stays ✅ COMPLETE / LOCKED, and not a change to 5.8C, which stays 🟡 awaiting approval.
+**Complete and locked across 5.8A, 5.8B, 5.8C and 5.8D.** The interaction language is settled.
+
+**The final contract.** Motion in VITA is restrained and it confirms rather than decorates. State clarity beats spectacle. It is built on React Native's own `Animated` — **no Reanimated, no Moti, no Lottie, and none are to be added**. `transform` and `opacity` on the native driver are preferred; the exceptions are the four surfaces that animate a layout dimension and cannot use it. Reduced Motion is first-class and removes spatial travel while keeping the state change immediate — **never a shortened version of the same animation**. Haptics are sparse, semantic, and separate from Reduced Motion. There is **no custom route choreography**: Expo Router's defaults stand.
+
+### Slice 5.8D — Final Motion Audit + Closeout ✅
+
+**The preferred outcome, achieved: zero runtime changes.** 5.8D re-audited the whole motion surface against the contract and found no defect worth fixing. The commit is documentation only.
+
+**The strongest single piece of evidence** is that the iOS bundle exported after the audit is byte-identical to the one exported before it — the same `entry-088b7155db9854ba8d817557ca4795a2.hbc`. Nothing in the runtime moved.
+
+#### Reduced Motion — no violations
+
+All fourteen animation-bearing surfaces consult `useReducedMotion`, and each lands on the final state rather than playing a shortened one: `PressableScale` (swaps the spring for a fade, so a control never feels dead), `ProgressBar`, `Toast`, `VitaSheet` (`animationType: 'none'`), `WaterVessel`, `SegmentedTabs`, the Fuel reveal, `FavoriteButton`, `SwipeableWeek`, `EditableWidget`, both Customize sheets and Dashboard's drag.
+
+**Measured on device, with real system Reduce Motion enabled** (`ReduceMotionEnabled` written to the simulator's accessibility defaults, not simulated in code). For the Water vessel, the Fuel reveal and the favourite heart, a frame captured immediately after the interaction is **pixel-identical to one captured two seconds later** — proof that each landed on its final value in the first frame and that no animation played at all.
+
+#### Haptics — clean
+
+Exactly one direct `expo-haptics` import, in the `vitaHaptic` helper; everything else goes through it or through `PressableScale`'s `haptic` prop. **No duplicates on a single interaction**: Water's quick-add buttons deliberately carry no `haptic` prop because `log()` already fires `confirm`, `complete` or `warn`, and `haptic="selection"` sits only on the controls that open a sheet or switch a mode. The favourite has none. The Fuel reveal has none. Re-selecting the active segment was confirmed on device to be a **true no-op** — the screen is pixel-identical across the re-tap.
+
+**Haptic *feel* cannot be verified in a simulator**, and is not claimed here.
+
+#### Static rest states — unchanged
+
+Measured, not asserted. A full favourite off→on→off→on cycle leaves the app **pixel-identical below the status bar**. Expanding and collapsing a Fuel meal returns to a **pixel-identical** collapsed state. The only diff either test found was the status-bar clock.
+
+#### Fuel reveal — verified across its real cases
+
+Empty meals cannot expand at all (they offer *add*, not *expand*), one-food and two-food meals reveal cleanly, and a long name — *Clif Bar Cool Mint Chocolate* — fits without truncation. **Collapse genuinely removes interactivity**: with Breakfast collapsed, a tap at the coordinate its food row had occupied landed on Lunch, so nothing hidden is still receiving touches. At `accessibility-extra-large` the reveal reflows without clipping or overlap.
+
+#### Cleanup, performance, magic numbers
+
+The only infinite animation in the app is Dashboard's edit-mode jiggle loop, and it is stopped on unmount. Every `Animated.Value` is created in a `useRef` — none per render. The finite animations that do not stop on unmount are bounded and pre-existing; not defects.
+
+Everything 5.8 introduced runs on the native driver. The four `useNativeDriver: false` sites all animate a width, height or `ValueXY` layout offset and cannot do otherwise; `ProgressBar`'s is pre-existing, documented, and performs correctly — **not rewritten merely for being JS-driven**.
+
+Two literals were examined and **deliberately left**: `Toast`'s 220ms entry, documented in 5.8B as an intentional asymmetry, and the named local constants `JIGGLE_MS`, `SETTLE_MS`, `SETTLE_OUT` and `SETTLE_OVERSHOOT`.
+
+**Recorded, not changed: `motion.duration.sheet` (260) has no call sites.** `VitaSheet` presents through React Native's `Modal`, whose slide duration the platform owns and which cannot take a token. The value dates from slice 5.1, sits inside locked 5.8B, and removing it would be churn against a locked artifact for no behavioural gain. It is documentation of an intent, waiting for a sheet that is ever drawn by hand.
+
+#### `SwipeableWeek` — no defect established, deliberately untouched
+
+The week-strip swipe **could not be exercised through synthetic input**: injected drags collapse into taps before `PanResponder`'s move-capture threshold is crossed. Two early runs produced an unexplained screen pop that could not be reproduced with deterministic input, and the control experiment — the identical drag on a screen with no swipe handler — did not pop. The app sets no full-screen pop gesture.
+
+**So no defect is claimed, and none is denied.** The gesture's arithmetic is covered by `weekSwipe.test.ts`, it is pre-existing and founder-approved, and 5.8 did not touch it. It is left exactly as it is.
+
+#### Light / Dark, Dynamic Type, accessibility
+
+Both themes checked across the motion-bearing surfaces with no artifacts: in Dark the favourite's orange heart, the Fuel meal rows and dividers, the Water vessel's deep fill and lighter waterline, and `SegmentedTabs`' white active pill with its inverted label all read correctly. At `accessibility-extra-large` the Fuel meal content, the reveal and `SegmentedTabs` are all legible and unclipped.
+
+**Two pre-existing issues were seen again at accessibility sizes and are not motion defects**: `FloatingDock` crops its labels — the deferred item carried since 5.3D — and Fuel's `PROTEIN` macro label truncates in the header. Neither was introduced by 5.8 and neither is in 5.8D's remit.
+
+No state is conveyed by motion alone, selected states are programmatic, and decorative animation stays out of the accessibility tree.
+
+#### Persistence and dependencies — both zero
+
+No motion preference key, no schema change, no feature persistence change; the platform's Reduce Motion setting is the only source. `package.json` and `package-lock.json` are untouched, and **no `expo-asset` was installed**.
+
+`npx expo install --check` and `expo-doctor` both ran this pass: **Doctor 20/21**, failing only the patch-version check — `expo`, `expo-camera`, `expo-constants`, `expo-linking` and `expo-router` are each a few patches behind SDK 57's expected set. That is the known, founder-approved upstream drift. **Not patched.**
+
+#### Validation
+
+85 suites / **2,297 tests** — unchanged, as expected of a docs-only pass · `tsc --noEmit` clean · `--noUnusedLocals --noUnusedParameters` clean · iOS export clean and **byte-identical to the pre-audit bundle**.
+
+### Founder QA fix — peptide creation navigation (2026-09-27) ✅ APPROVED
+
+**Founder-approved.** Approved fix: `a37d8f1 — fix(peptides): close the routine creation navigation stack`. The founder confirmed on device that successful creation returns directly to Peptides Home, that the new routine is visible, that one Back does not reopen the completed setup wizard, and that the custom-peptide path is fixed too.
+
+**The rule this settles:** successful routine creation returns directly to Peptides Home and clears the completed creation flow behind it.
+
+**A narrow navigation regression, found by the founder during 5.8C QA.** Not a reopening of 5.7, which stays ✅ COMPLETE / LOCKED.
 
 #### The report
 
@@ -2414,9 +2488,11 @@ The alternatives were considered and rejected on repository evidence: `replace` 
 
 On an iPhone 17 Pro simulator, the founder's exact path: Peptides → Add to Routine → pick a peptide → finish setup → save. **Before:** one back-swipe returned into the completed setup screen. **After:** one back-swipe stays on Peptides Home, with the new routine listed. No visual, domain, persistence or dependency change; `tsc` clean, iOS export clean.
 
-### Slice 5.8C — Targeted Feature Motion Rollout 🟡
+### Slice 5.8C — Targeted Feature Motion Rollout ✅ LOCKED
 
-**Implemented, awaiting founder device review.** Four targets were authorized. **Two were implemented, one was normalized, and one was deliberately left alone** — with evidence for each.
+**Founder-approved on a physical iPhone and locked.** Approved implementation: `caf5669 — feat(sprint-5): refine feature motion interactions`. The approval covers the Fuel meal reveal and collapse, the favourite heart microinteraction, **Water remaining unchanged**, the progress-timing normalization, the Reduced Motion behaviour, **no new haptic on the favourite**, and **no broad animation rollout**.
+
+Four targets were authorized. **Two were implemented, one was normalized, and one was deliberately left alone** — with evidence for each.
 
 | Target | Outcome |
 |---|---|
