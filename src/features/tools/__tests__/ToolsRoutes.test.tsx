@@ -37,6 +37,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import InjectionSites from '../../../app/(vita)/tools/injection-sites';
 import PeptideCalculator from '../../../app/(vita)/tools/peptide-calculator';
 import ToolsAndReference from '../../../app/(vita)/tools/index';
+import BmiCalculator, { BMI_GOLD } from '../../../app/(vita)/tools/bmi-calculator';
 import { Card, IconBadge, ListRow, PressableScale, ToastProvider } from '../../../components/ui';
 import { QUICK_TOOL_REGISTRY } from '../../dashboard/quickTools';
 import { palette } from '../../../theme/tokens';
@@ -123,7 +124,11 @@ describe('Tools & Reference hub', () => {
 
   it('lists exactly the tools that exist', async () => {
     const tree = await mount(<ToolsAndReference />);
-    expect(rows(tree).map((row) => row.title)).toEqual(['Peptide Calculator', 'Injection Sites']);
+    expect(rows(tree).map((row) => row.title)).toEqual([
+      'Peptide Calculator',
+      'Injection Sites',
+      'BMI Calculator',
+    ]);
   });
 
   /**
@@ -131,13 +136,26 @@ describe('Tools & Reference hub', () => {
    * nothing is listed before it works. A dead row is worse than a short list.
    */
   it.each([
-    ['BMI', /BMI/i],
-    ['a food or product scanner', /scan/i],
+    ['a food or product scanner', /scan(?!ner\b)[a-z]*\b/i],
     ['the Research Library', /research library/i],
     ['a Coming Soon placeholder', /coming soon|coming later/i],
   ])('advertises no %s', async (_label, pattern) => {
     const tree = await mount(<ToolsAndReference />);
     expect(screen(tree)).not.toMatch(pattern);
+  });
+
+  /**
+   * BMI was on the forbidden list above until slice 5.9 built it. It is
+   * listed now because it exists — and it still has to carry a real
+   * destination, which is what kept it off the hub for five slices.
+   */
+  it('lists BMI only because it is now a real tool with a real route', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    const row = rows(tree).find((item) => item.title === 'BMI Calculator');
+    expect(row).toBeTruthy();
+    expect(typeof row!.onPress).toBe('function');
+    row!.onPress();
+    expect(mockPush).toHaveBeenCalledWith('/tools/bmi-calculator');
   });
 
   /** No REFERENCE heading until slice 4.5 puts something real under it. */
@@ -188,6 +206,9 @@ describe('Tools & Reference hub', () => {
     // map, the site reference and recorded history.
     expect(subtitles[0]).toBe('Calculate U-100 syringe units from vial and reconstitution values');
     expect(subtitles[1]).toBe('Body map, site reference, and your recorded history');
+    // Adult reference, stated as a reference. Not advice, and not a claim
+    // that the tool says anything about what anyone should weigh.
+    expect(subtitles[2]).toBe('Adult BMI reference from height and weight');
   });
 
   it('gives every row an accessible name and a hint', async () => {
@@ -211,8 +232,9 @@ describe('Tools & Reference hub', () => {
 describe('Tools Hub identity', () => {
   it('draws one group rather than a card per tool', async () => {
     const tree = await mount(<ToolsAndReference />);
-    expect(rows(tree).map((row) => row.variant)).toEqual(['flat', 'flat']);
-    // One panel holding both, not one surface each.
+    expect(rows(tree).map((row) => row.variant)).toEqual(['flat', 'flat', 'flat']);
+    // One panel holding all of them, not one surface each — the invariant
+    // a third tool is most likely to break by arriving in its own card.
     expect(tree.root.findAllByType(Card)).toHaveLength(1);
   });
 
@@ -249,9 +271,15 @@ describe('Tools Hub identity', () => {
    * 5.7B removed from Settings is the same defect at a smaller size, and a
    * tinted row is that defect at a larger one.
    */
-  it('spends the feature colour on the glyph and nowhere else', async () => {
+  it('spends the accent on the glyph and nowhere else', async () => {
     const tree = await mount(<ToolsAndReference />);
-    for (const row of rows(tree)) expect(row.iconColor).toBe(palette.peptide);
+    // Each row carries its own accent — Peptides' violet for the two
+    // peptide tools, brand gold for the one that belongs to no feature.
+    // What is invariant is *where* the colour is allowed to land.
+    const byTitle = Object.fromEntries(rows(tree).map((row) => [row.title, row.iconColor]));
+    expect(byTitle['Peptide Calculator']).toBe(palette.peptide);
+    expect(byTitle['Injection Sites']).toBe(palette.peptide);
+    expect(byTitle['BMI Calculator']).toBe(BMI_GOLD.light);
 
     // Read the pressable's own style: `ListRow` hands it there, so this is
     // the node that would carry a violet fill if one had been added.
@@ -475,5 +503,394 @@ describe('Injection Sites after migration', () => {
     await act(async () => control(tree, 'Back')!.props.onPress());
     expect(mockBack).toHaveBeenCalled();
     expect(mockPush).not.toHaveBeenCalled();
+  });
+});
+
+/* ── 5.9: the BMI calculator ────────────────────────────────────────── */
+
+/**
+ * The tool, driven the way a person drives it: type, read, switch units,
+ * mistype, correct.
+ *
+ * The domain arithmetic is pinned in `src/lib/bmi/__tests__` — formula,
+ * rounding policy, thresholds and conversion all live there. **These are
+ * about the screen**: that it shows nothing it has not been told, that a
+ * category never contradicts the number beside it, that it keeps its
+ * boundaries, and that it saves nothing.
+ */
+
+/** Type into a field by its accessible name, the way the user reaches it. */
+async function type(tree: ReactTestRenderer, label: string, value: string) {
+  const field = tree.root
+    .findAllByType(TextInput)
+    .find((node) => node.props.accessibilityLabel === label);
+  expect(field).toBeTruthy();
+  await act(async () => field!.props.onChangeText(value));
+}
+
+async function enterUs(tree: ReactTestRenderer, feet: string, inches: string, pounds: string) {
+  await type(tree, 'Height, feet', feet);
+  await type(tree, 'Height, inches', inches);
+  await type(tree, 'Weight in pounds', pounds);
+}
+
+describe('BMI Calculator — the empty screen', () => {
+  it('invents no result before it has been given anything', async () => {
+    const tree = await mount(<BmiCalculator />);
+    const rendered = screen(tree);
+    expect(rendered).toContain('Enter height and weight to calculate BMI.');
+    // The fabricated-zero failure, named explicitly: a `0.0` is a number
+    // the user did not produce.
+    expect(rendered).not.toContain('0.0');
+    for (const category of ['Underweight', 'Healthy weight', 'Overweight', 'Obesity']) {
+      expect(rendered).not.toContain(category);
+    }
+  });
+
+  it('shows no error on a screen nobody has typed into yet', async () => {
+    const tree = await mount(<BmiCalculator />);
+    expect(screen(tree)).not.toMatch(/Enter a number greater than zero|Enter a value from 0/);
+  });
+
+  /** Live-derived. A Calculate button would only add a step. */
+  it('offers no Calculate button', async () => {
+    const tree = await mount(<BmiCalculator />);
+    expect(screen(tree)).not.toMatch(/calculate bmi$|^calculate$/i);
+    expect(control(tree, /^Calculate$/)).toBeUndefined();
+  });
+
+  it('names every field explicitly rather than leaning on placeholders', async () => {
+    const tree = await mount(<BmiCalculator />);
+    const rendered = screen(tree);
+    for (const label of ['Feet', 'Inches', 'Pounds', 'Height', 'Weight']) {
+      expect(rendered).toContain(label);
+    }
+  });
+});
+
+describe('BMI Calculator — results', () => {
+  it('calculates from US input as the founder will', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    const rendered = screen(tree);
+    expect(rendered).toContain('27.4');
+    expect(rendered).toContain('BMI category · Overweight');
+    expect(rendered).not.toContain('Enter height and weight');
+  });
+
+  it('calculates from metric input', async () => {
+    const tree = await mount(<BmiCalculator initialSystem="metric" />);
+    await type(tree, 'Height in centimetres', '180');
+    await type(tree, 'Weight in kilograms', '80');
+    expect(screen(tree)).toContain('24.7');
+    expect(screen(tree)).toContain('BMI category · Healthy weight');
+  });
+
+  /** Blank inches is a real height, not an unfinished one. */
+  it('reads an empty inches field as zero rather than refusing to answer', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '6', '', '180');
+    expect(screen(tree)).toContain('24.4');
+  });
+
+  /**
+   * The rounding policy, at the screen. 80.87 kg at 180 cm is a raw
+   * 24.9598…, shown as `25.0` — and the category beside it must be the one
+   * `25.0` implies, not the one the hidden raw value implies.
+   */
+  it('never pairs a displayed value with a category that contradicts it', async () => {
+    const tree = await mount(<BmiCalculator initialSystem="metric" />);
+    await type(tree, 'Height in centimetres', '180');
+    await type(tree, 'Weight in kilograms', '80.87');
+    const rendered = screen(tree);
+    expect(rendered).toContain('25.0');
+    expect(rendered).toContain('BMI category · Overweight');
+    expect(rendered).not.toContain('Healthy weight');
+  });
+
+  /** §36 — one node, one sentence, and the category is spoken. */
+  it('announces the value and its category together', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    const announced = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .map((node) => node.props.accessibilityLabel as string);
+    expect(announced).toContain('BMI 27.4, category Overweight');
+  });
+
+  /**
+   * Nothing on this screen may depend on seeing a colour: the category is
+   * always present as words next to the number.
+   */
+  it('states the category in words, not only in colour', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    expect(screen(tree)).toContain('Overweight');
+  });
+});
+
+describe('BMI Calculator — invalid input', () => {
+  it('rejects twelve inches and withdraws the result rather than leaving a stale one', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    expect(screen(tree)).toContain('27.4');
+
+    await type(tree, 'Height, inches', '12');
+    const rendered = screen(tree);
+    expect(rendered).toContain('Enter a value from 0 to under 12.');
+    // The old answer must not sit there looking as though it still applies.
+    expect(rendered).not.toContain('27.4');
+    expect(rendered).toContain('Enter height and weight to calculate BMI.');
+  });
+
+  it('keeps the sibling fields intact while one is invalid', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    await type(tree, 'Height, inches', '12');
+
+    const values = Object.fromEntries(
+      tree.root
+        .findAllByType(TextInput)
+        .map((node) => [node.props.accessibilityLabel, node.props.value]),
+    );
+    expect(values['Height, feet']).toBe('5');
+    expect(values['Weight in pounds']).toBe('180');
+    // And the bad value stays on screen to be corrected, not erased.
+    expect(values['Height, inches']).toBe('12');
+  });
+
+  it('recovers when the bad field is corrected', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    await type(tree, 'Height, inches', '12');
+    await type(tree, 'Height, inches', '8');
+    expect(screen(tree)).toContain('27.4');
+    expect(screen(tree)).not.toContain('Enter a value from 0 to under 12.');
+  });
+
+  it.each(['0', '-5', 'abc'])('refuses %p as a weight without inventing a BMI', async (bad) => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', bad);
+    const rendered = screen(tree);
+    expect(rendered).toContain('Enter a number greater than zero.');
+    expect(rendered).toContain('Enter height and weight to calculate BMI.');
+  });
+});
+
+describe('BMI Calculator — switching unit systems', () => {
+  /** The failure this behaviour exists to prevent: 180 lb becoming 180 kg. */
+  it('converts the body rather than relabelling the number', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    await act(async () => control(tree, 'Unit system, Metric')!.props.onPress());
+
+    const values = Object.fromEntries(
+      tree.root
+        .findAllByType(TextInput)
+        .map((node) => [node.props.accessibilityLabel, node.props.value]),
+    );
+    expect(values['Height in centimetres']).toBe('172.7');
+    expect(values['Weight in kilograms']).toBe('81.6');
+    expect(values['Weight in kilograms']).not.toBe('180');
+  });
+
+  it('keeps the same BMI across the switch', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    expect(screen(tree)).toContain('27.4');
+    await act(async () => control(tree, 'Unit system, Metric')!.props.onPress());
+    expect(screen(tree)).toContain('27.4');
+    expect(screen(tree)).toContain('BMI category · Overweight');
+  });
+
+  it('leaves an empty form empty instead of filling it with zeroes', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await act(async () => control(tree, 'Unit system, Metric')!.props.onPress());
+    const values = tree.root.findAllByType(TextInput).map((node) => node.props.value);
+    for (const value of values) expect(value).toBe('');
+    expect(screen(tree)).toContain('Enter height and weight to calculate BMI.');
+  });
+
+  it('is local to the screen and announces its selected state', async () => {
+    const tree = await mount(<BmiCalculator />);
+    const metric = control(tree, 'Unit system, Metric')!;
+    const us = control(tree, 'Unit system, US')!;
+    expect(us.props.accessibilityState).toEqual({ selected: true });
+    expect(metric.props.accessibilityState).toEqual({ selected: false });
+  });
+});
+
+describe('BMI Calculator — the product boundary', () => {
+  /**
+   * §3. The list of things this tool must never say. Each of these would
+   * turn a reference measure into a diet app, which is the single failure
+   * the founder named when authorizing the slice.
+   */
+  it.each([
+    ['an ideal or target weight', /ideal weight|target weight|goal weight|should weigh/i],
+    ['a weight to lose or gain', /lose \d|gain \d|lose about|you need to lose/i],
+    ['a target BMI', /target bmi|goal bmi|aim for/i],
+    ['calories, TDEE or BMR', /calorie|tdee|bmr|maintenance|deficit|macro/i],
+    ['a risk or disease claim', /disease|risk of|at risk|unhealthy/i],
+    ['advice', /you should|we recommend|recommended|try to|consider losing/i],
+    ['a verdict about the person', /you are (over|under)weight|you are obese/i],
+  ])('never offers %s', async (_label, pattern) => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '240');
+    expect(screen(tree)).not.toMatch(pattern);
+  });
+
+  /**
+   * The word *diagnose* appears exactly once and only to deny itself. This
+   * is separate from the sweep above because that sweep cannot tell a claim
+   * from its negation — and the negation is required copy.
+   */
+  it('mentions diagnosis only to say it does not do it', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '240');
+    const mentions = screen(tree).match(/[^.]*diagnos[^.]*/gi) ?? [];
+    expect(mentions).toHaveLength(1);
+    expect(mentions[0]).toMatch(/does not .*diagnose/i);
+  });
+
+  it('describes the number, never the person', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '240');
+    const rendered = screen(tree);
+    expect(rendered).toContain('BMI category · Obesity');
+    expect(rendered).not.toMatch(/you are|your body is/i);
+  });
+
+  it('says what BMI is, once, without becoming a disclaimer page', async () => {
+    const tree = await mount(<BmiCalculator />);
+    const rendered = screen(tree);
+    expect(rendered).toContain('ABOUT BMI');
+    expect(rendered).toContain(
+      'BMI is a screening measure for adults. It does not measure body fat directly and does not diagnose health.',
+    );
+    // One note, not a wall. The whole screen's prose stays short.
+    expect(rendered).not.toMatch(/consult|disclaimer|liability|medical advice before/i);
+  });
+
+  it('frames itself as adult reference', async () => {
+    const tree = await mount(<BmiCalculator />);
+    expect(screen(tree)).toMatch(/adult/i);
+    // No demographic screening crept in.
+    expect(screen(tree)).not.toMatch(/age|child|teen|pregnan|ethnic|athlete/i);
+  });
+});
+
+describe('BMI Calculator — what it does not touch', () => {
+  /**
+   * §17 / §41. The calculator is a scratch pad. Sprint 6 owns stored height
+   * and weight, and the single most likely way this slice could go wrong is
+   * by quietly becoming that.
+   */
+  it('writes nothing to storage, however much it is used', async () => {
+    const storage = require('@react-native-async-storage/async-storage');
+    const AsyncStorage = storage.default ?? storage;
+    AsyncStorage.setItem.mockClear();
+
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    await act(async () => control(tree, 'Unit system, Metric')!.props.onPress());
+    await type(tree, 'Weight in kilograms', '90');
+
+    expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+    expect(AsyncStorage.mergeItem).not.toHaveBeenCalled();
+  });
+
+  it('keeps no history of what was calculated', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    // The word "saved" does appear — in "Nothing here is saved", which is
+    // the promise rather than a breach of it. What must not appear is an
+    // affordance that keeps anything.
+    const rendered = screen(tree);
+    expect(rendered).toContain('Nothing here is saved.');
+    expect(rendered).not.toMatch(/history|recent calculation|saved result|log this|save result/i);
+  });
+
+  /**
+   * §24 / §46. BMI is deliberately **not** in Dashboard's Quick Tools
+   * registry, and that is a decision rather than an oversight.
+   *
+   * `normalizeQuickTools` appends any registry id missing from a stored
+   * order so that a newly shipped tool appears — and appends it *visible*,
+   * because `hidden` only ever contains what was stored. Adding `bmi` there
+   * would therefore insert a fourth tile into the founder's existing Home
+   * on next launch, which §46 forbids outright. The roadmap agrees: "no
+   * Dashboard affordance is authorized here."
+   *
+   * This test fails the moment someone adds it, so the decision has to be
+   * taken again deliberately rather than by accident.
+   */
+  it('has not been inserted into the Dashboard Quick Tools registry', async () => {
+    expect(Object.keys(QUICK_TOOL_REGISTRY)).toEqual(['calculator', 'sites', 'scanner']);
+    const routes = Object.values(QUICK_TOOL_REGISTRY).map((tool) => tool.route);
+    expect(routes).not.toContain('/tools/bmi-calculator');
+  });
+});
+
+describe('BMI Calculator — Dynamic Type', () => {
+  /**
+   * The reference rail is ornament, and past `COMPACT_FONT_SCALE` ornament
+   * yields to the words — the rule Dashboard's squares already follow.
+   *
+   * This is not a preference. At accessibility-extra-large on device the
+   * `18.5` label wrapped onto a second line and spilled out of the result
+   * card into the note below it. Nothing is lost by dropping the rail: it
+   * is hidden from assistive technology precisely because the number and
+   * its category already state everything it encodes.
+   */
+  /**
+   * Both cases state their own text scale rather than inheriting the
+   * preset's — which is not 1, and silently decided the answer the first
+   * time this was written.
+   */
+  it('keeps the rail at ordinary text sizes', async () => {
+    const rn = require('react-native');
+    const spy = jest
+      .spyOn(rn, 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 844, scale: 3, fontScale: 1 });
+
+    try {
+      const tree = await mount(
+        <BmiCalculator initialUs={{ feet: '5', inches: '8', pounds: '180' }} />,
+      );
+      const rendered = screen(tree);
+      expect(rendered).toContain('27.4');
+      // The thresholds, drawn.
+      expect(rendered).toContain('18.5');
+      expect(rendered).toContain('30');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('drops the rail — and nothing else — once the text is large', async () => {
+    const rn = require('react-native');
+    const spy = jest
+      .spyOn(rn, 'useWindowDimensions')
+      .mockReturnValue({ width: 390, height: 844, scale: 3, fontScale: 1.6 });
+
+    try {
+      const tree = await mount(
+        <BmiCalculator initialUs={{ feet: '5', inches: '8', pounds: '180' }} />,
+      );
+      const rendered = screen(tree);
+      // The answer and its category survive at every text size.
+      expect(rendered).toContain('27.4');
+      expect(rendered).toContain('BMI category · Overweight');
+      // The decorative scale does not.
+      expect(rendered).not.toContain('18.5');
+      // And the spoken result is unchanged, because the rail never spoke.
+      const announced = tree.root
+        .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+        .map((node) => node.props.accessibilityLabel as string);
+      expect(announced).toContain('BMI 27.4, category Overweight');
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

@@ -187,7 +187,19 @@ export default function Settings() {
             variant="flat"
             icon="construct-outline"
             title="Tools & Reference"
-            subtitle="Peptide calculator and injection sites"
+            /*
+             * Widened in 5.9, when a third tool arrived.
+             *
+             * It read "Peptide calculator and injection sites", which was a
+             * complete list until it was not — a descriptor that names the
+             * contents is wrong the moment the contents grow. It names the
+             * kinds of thing behind the row instead.
+             *
+             * It deliberately does **not** say "reference": there is still
+             * no REFERENCE section, and the hub's founding rule is that
+             * nothing is advertised before it exists.
+             */
+            subtitle="Calculators and injection sites"
             chevron
             accessibilityHint="Opens tools and reference"
             onPress={() => router.push('/tools')}

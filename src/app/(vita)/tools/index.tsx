@@ -2,6 +2,8 @@ import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { Card, ListRow, Screen, ScreenHeader, SectionHeader } from '../../../components/ui';
 import { palette, spacing } from '../../../theme/tokens';
+import { useTheme } from '../../../theme/ThemeProvider';
+import { BMI_GOLD } from './bmi-calculator';
 
 /**
  * Tools & Reference — a destination of its own, not a Settings subfolder.
@@ -27,13 +29,15 @@ import { palette, spacing } from '../../../theme/tokens';
  * want visible is Tools versus Reference, so that is the split the headers
  * carry.
  *
- * **Nothing is listed before it works.** No BMI row, no scanner row, no
- * Research Library row, and no disabled "Coming Soon" cards — a dead button
- * is worse than a short list. There is deliberately **no REFERENCE section
- * yet**: the title names the destination the founders approved, and the
- * section appears in slice 4.5 when there is something real inside it.
- * Adding it then is one header and one row, which is the whole point of
- * carrying the TOOLS header now.
+ * **Nothing is listed before it works.** No scanner row, no Research
+ * Library row, and no disabled "Coming Soon" cards — a dead button is worse
+ * than a short list. BMI was on that list until slice 5.9 built it; it is
+ * here now because it exists, which is the rule working rather than being
+ * relaxed. There is deliberately **no REFERENCE section yet**: the title
+ * names the destination the founders approved, and the section appears in
+ * slice 4.5 when there is something real inside it. Adding it then is one
+ * header and one row, which is the whole point of carrying the TOOLS header
+ * now.
  *
  * ## What 5.7C changed: the presentation, and only that
  *
@@ -47,7 +51,9 @@ import { palette, spacing } from '../../../theme/tokens';
  * filled violet orb — so a screen holding two things rendered as two
  * isolated objects with a 20pt trench between them, on a screen with
  * nothing else to dilute them. They are now hairline-separated rows inside
- * **one restrained panel**, which is what a directory of two utilities is.
+ * **one restrained panel**, which is what a directory of utilities is. A
+ * third row (5.9) joins the group rather than adding a fourth object, which
+ * is the arrangement earning its keep.
  *
  * **Why a panel and not Settings' bare rows.** Settings draws its rows
  * direct on the background, and Tools copying that exactly would make a
@@ -57,12 +63,18 @@ import { palette, spacing } from '../../../theme/tokens';
  * radius, same hairline — so the vocabulary is shared while the geometry
  * says *this is a place*, not *this is a settings group*.
  *
- * **The violet is the glyph and nothing else.** Both tools belong to
- * Peptides, so both carry Peptides' accent exactly as Dashboard's Quick
+ * **The accent is the glyph and nothing else.** The first two tools belong
+ * to Peptides, so both carry Peptides' accent exactly as Dashboard's Quick
  * Tools tiles already draw them — bare glyph, no orb, no tinted row, no
  * second invented feature colour. The rows are told apart by their glyph
  * and their descriptor, which is how the locked Quick Tools row tells the
  * same two tools apart.
+ *
+ * **A tool that belongs to no feature takes brand gold** (5.9). BMI is not
+ * a peptide tool and must not wear Peptides' violet; it is not Fuel either,
+ * and green beside a BMI category would read as a grade. Gold is the accent
+ * that says *this belongs to VITA* rather than to a domain. Still only the
+ * glyph — the rule is unchanged, it simply now has two values to apply.
  *
  * **The `TOOLS` header stays.** It is redundant against the screen title in
  * the way 5.7B removed from Settings, and it was still kept: the Migration
@@ -77,6 +89,8 @@ import { palette, spacing } from '../../../theme/tokens';
  * trench under the title on a screen with only two rows to fill it.
  */
 export default function ToolsAndReference() {
+  const { scheme } = useTheme();
+
   return (
     <Screen contentGap={spacing.m}>
       <ScreenHeader title="Tools & Reference" back />
@@ -117,6 +131,29 @@ export default function ToolsAndReference() {
           chevron
           accessibilityHint="Opens your injection site history"
           onPress={() => router.push('/tools/injection-sites')}
+        />
+        {/*
+         * The third real tool (5.9), and the first here that is **not** a
+         * peptide tool — which is exactly the case the 4.2 note above
+         * predicted when it refused to head this group `Peptides`. It
+         * carries brand gold rather than Peptides' violet, because filing a
+         * body-measurement tool under the peptide accent would say it
+         * belongs to a feature it has nothing to do with.
+         *
+         * The descriptor states the measure and its scope and stops there:
+         * it is an adult reference, not advice, and nothing in the row may
+         * suggest the tool tells anyone what to weigh.
+         */}
+        <ListRow
+          variant="flat"
+          wrap
+          icon="scale-outline"
+          iconColor={scheme === 'dark' ? BMI_GOLD.dark : BMI_GOLD.light}
+          title="BMI Calculator"
+          subtitle="Adult BMI reference from height and weight"
+          chevron
+          accessibilityHint="Opens the BMI calculator"
+          onPress={() => router.push('/tools/bmi-calculator')}
         />
       </Card>
     </Screen>

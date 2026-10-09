@@ -2066,7 +2066,9 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.8B | Shared Motion Foundation + Core Interactions | The two real gaps closed: `Toast` ignoring Reduced Motion, `SegmentedTabs` answering a press with nothing | ✅ Approved — founder device review, 2026-09-27. **Locked.** |
 | 5.8C | Targeted Feature Motion Rollout | The language rolled out to the two feature interactions that earn it; Water deliberately left alone | ✅ Approved — founder device review. **Locked.** |
 | 5.8D | Final Motion Audit + Closeout | The whole motion surface re-audited against the contract; **zero runtime changes** | ✅ **Closes 5.8.** |
-| 5.9 | BMI Calculator | Built from scratch in the new system | ⬜ Planned |
+| 5.9 | **BMI Calculator** | Built from scratch in the new system | 🟡 **5.9A ✅ · 5.9B implemented, awaiting founder device review** |
+| 5.9A | BMI Characterization + Domain Contract | Adult reference only; formula, rounding policy, thresholds, unit handling and the integration plan settled before any screen was drawn | ✅ Characterized |
+| 5.9B | BMI Implementation + Tools Integration | The tool, and a third real row in the hub | 🟡 Awaiting founder device review |
 | 5.10 | Founder Identity Audit | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | ⬜ Planned |
 
 **Journey does not begin without explicit founder approval after 5.10.**
@@ -2374,6 +2376,64 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 **Locks respected.** Populated Peptides, Water, Fuel Home, Add/Search, the scanner, Food Detail, Manual, Edit, Quick Tools, Today's Schedule and the dock are all untouched. The only locked-surface change is the Fuel widget the founder authorised.
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
+
+### Slice 5.9A — BMI Characterization + Domain Contract ✅
+
+**The contract, settled before a screen existed.**
+
+**One question, and the refusal to answer any other.** Given a height and a weight, what is the adult BMI and its reference category? There is **no ideal weight, no target BMI, no weight to lose or gain, no calories, TDEE, BMR or macros, no risk score and no diagnosis** — and none of it is a gap waiting to be filled. The founder named the failure precisely: BMI goes in, calculates, looks premium, and stops.
+
+**Adult reference only.** No pediatric percentiles, no pregnancy, ethnicity or athlete adjustments, no obesity classes. No age input, because the tool does not screen demographics.
+
+**One calculation path.** Every input is normalized to kilograms and metres and then `BMI = kg / m²`. **There is deliberately no second US formula** — the `703 × lb / in²` shorthand approximates this same equation, and keeping both is exactly how two unit systems start disagreeing in the third decimal. US input converts with the exact definitions (1 lb = 0.45359237 kg, 1 in = 0.0254 m) and takes the identical path.
+
+**The rounding policy, chosen and pinned.** Compute raw → round to one decimal → **classify the rounded value**. A raw 24.9598 displays as `25.0`, and classifying the raw number would pair `25.0` with *Healthy weight* — indefensible on a screen whose whole job is a number beside its category.
+
+**Thresholds:** `< 18.5` Underweight · `18.5–24.9` Healthy weight · `25–29.9` Overweight · `≥ 30` Obesity.
+
+**Nothing persists, and nothing is pulled in.** No key, no history, no favourites, no Journey or Weight write; and no profile height, logged weight or Health data read. Sprint 6 owns stored body measurements and this slice must not quietly become it.
+
+**Integration, decided on repository evidence.** The Tools Hub hardcodes its rows; Dashboard's `quickTools.ts` registry is Dashboard's own and the two are held together by a test rather than by an import. **There is no shared registry to join**, so none was invented.
+
+### Slice 5.9B — BMI Calculator + Tools Integration 🟡
+
+**Implemented, awaiting founder device review.**
+
+**The screen.** Unit selector, a grouped measurement surface, a live result, and one note. No Calculate button — the answer is a function of the fields, and a button would only put a step between typing and knowing, exactly as on the Peptide Calculator beside it. The whole tool fits one viewport at the default text size.
+
+**Categories describe the number, never the person.** The result reads *BMI category · Overweight*, never *you are overweight*.
+
+**No colour grading, and this is the design decision the slice turns on.** No green for healthy, no red for obesity, no traffic light, no celebration and no warning. One restrained accent marks the **BMI value** — the thing the user came for — and the category sits in ordinary type beneath it. Every meaning on the screen survives being read in greyscale, which is both the accessibility rule and the product one.
+
+**Brand gold, because BMI belongs to no feature.** The two tools beside it in the hub wear Peptides' violet; borrowing it would file a body-measurement tool under peptides. Fuel's orange would say nutrition. **Green is specifically wrong** — green next to a BMI category reads as a grade whatever the copy says. Two values, light and dark, because `palette.gold` sits near 1.7:1 on the cream background: the same measurement Dashboard made for its quotation, solved the same way.
+
+**Unit switching converts the body rather than relabelling the number.** `5 ft 8 in / 180 lb` becomes `172.7 cm / 81.6 kg`, and the BMI is unchanged. The failure being prevented is `180 lb` silently becoming `180 kg`. Anything invalid stays exactly as typed with its error, because a unit toggle must not destroy input. Display rounding settles after one trip and does not erode: a test toggles ten times and asserts the values never move again.
+
+**An empty inches field means zero.** `5 ft` is a height, and making someone type a `0` to be understood is friction with no safety value.
+
+**Validation is mathematical, not medical.** Measurements must be greater than zero and inches must be under twelve. **No invented "healthy" bounds** — the calculator validates arithmetic, not whether a body is typical.
+
+#### Three defects the device pass found
+
+**The reference rail's labels pointed at the wrong places.** Laid out `space-between`, `30` sat hard against the right edge while its tick was at 60% of the track. Each label is now a fixed box centred on its own threshold. On paper the row looked fine; only the device showed it.
+
+**The rail overflowed the card at accessibility-extra-large** — `18.5` wrapped onto a second line and spilled into the note below. Past `COMPACT_FONT_SCALE` the rail now steps aside entirely, which is the rule Dashboard's squares already follow: ornament yields to words. Nothing is lost, because the rail is hidden from assistive technology precisely *because* the number and category already state everything it encodes. **The existing threshold was reused rather than a second one invented.**
+
+**The preview harness was quietly lying.** Every stage renders the same component type, so React kept the mounted instance and its initial state from whichever stage opened first — switching chips moved the selection and left the fields alone. One `key` fixes it, and it had been affecting the calculator stages the same way since 5.7C.
+
+#### Deliberately not done
+
+**Dashboard is untouched, and that is a decision with evidence.** `normalizeQuickTools` appends any registry id missing from a stored order so a newly shipped tool appears — and appends it **visible**, because `hidden` only ever holds what was stored. Adding `bmi` there would have inserted a fourth tile into the founder's existing Home on next launch, which the authorization forbids outright and the roadmap agrees with ("no Dashboard affordance is authorized here"). A test now fails if anyone adds it, so the decision has to be retaken deliberately rather than by accident.
+
+**One locked surface was touched, for accuracy only.** Settings' Tools row read *"Peptide calculator and injection sites"* — a complete list until it was not. It now reads *"Calculators and injection sites"*. It deliberately does **not** say "reference", because there is still no REFERENCE section and the hub's founding rule is that nothing is advertised before it exists.
+
+**Two 5.9-scheduled removals were left alone**: the `__DEV__` Identity Prototype row and the Sprint 5 preview harnesses are both marked "removed in 5.9" in the code, and neither is in this authorization's scope. They belong to the 5.9 closeout.
+
+#### Validation
+
+86 suites / **2,378 tests** (2,297 → 2,378, +81) · `tsc` and strict-unused clean · iOS export clean · **zero persistence keys, zero dependency changes** · Doctor 20/21 on the known drift, not patched. The formula, the conversion constants and the inches bound were **mutation-tested**: reverting each one fails the suite.
+
+Verified on an iPhone 17 Pro simulator with real typing: the US vector reads 27.4 Overweight, metric reads 24.7 Healthy weight, the rounding-policy case shows `25.0` beside *Overweight* with the marker on the 25 tick, twelve inches raises its error and withdraws the stale result while leaving its siblings intact, and Dashboard's Quick Tools still shows exactly three tiles.
 
 ### Slice 5.8 — Motion + Microinteraction Unification — CLOSED ✅
 

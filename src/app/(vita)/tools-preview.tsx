@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card, ListRow, PressableScale, Screen, ScreenHeader, SectionHeader } from '../../components/ui';
 import { palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
+import BmiCalculator from './tools/bmi-calculator';
 import PeptideCalculator from './tools/peptide-calculator';
 import ToolsAndReference from './tools/index';
 
@@ -53,6 +54,11 @@ import ToolsAndReference from './tools/index';
  * nothing stored to avoid, so both themes are reviewed the honest way —
  * switch the app's appearance in Settings, or the simulator's, and reopen.
  *
+ * **`bmi-*`** render the **real BMI calculator** through the same kind of
+ * seam. Two of them are states typing alone will not readily produce: the
+ * value that rounds up onto `25.0` and so must read *Overweight*, and a
+ * twelve-inch entry showing its error beside a withdrawn result.
+ *
  * Reachable at `/tools-preview`, or `/tools-preview?state=wrapping`.
  * Temporary, and removed with the other Sprint 5 scaffolding in 5.9.
  */
@@ -65,6 +71,11 @@ const SCENARIOS: Scenario[] = [
   { key: 'calc-empty', label: 'Calculator · empty' },
   { key: 'calc-result', label: 'Calculator · 10mg / 2mL' },
   { key: 'calc-invalid', label: 'Calculator · invalid' },
+  { key: 'bmi-empty', label: 'BMI · empty' },
+  { key: 'bmi-us', label: 'BMI · 5ft 8in / 180lb' },
+  { key: 'bmi-metric', label: 'BMI · 180cm / 80kg' },
+  { key: 'bmi-boundary', label: 'BMI · rounds onto 25.0' },
+  { key: 'bmi-invalid', label: 'BMI · invalid inches' },
 ];
 
 /** Fixture copy — no tool says this. Long enough to wrap at any text size. */
@@ -153,7 +164,17 @@ export default function ToolsPreview() {
         </ScrollView>
       </View>
 
-      <View style={styles.stage}>
+      {/*
+        * Keyed on the scenario so a stage change **remounts** the screen.
+        *
+        * Without it the harness quietly lied: every stage renders the same
+        * component type, so React kept the mounted instance and its
+        * `useState` initial values from whichever stage opened first —
+        * switching chips moved the selection and left the fields alone.
+        * Found while reviewing the BMI stages on device; it affected the
+        * calculator stages the same way.
+        */}
+      <View key={active.key} style={styles.stage}>
         {active.key === 'wrapping' ? (
           <WrappingProbe />
         ) : active.key === 'calc-empty' ? (
@@ -165,6 +186,28 @@ export default function ToolsPreview() {
           /* A half-typed vial and a zero volume: both inline errors at once,
              which is the state no screenshot of the real screen can reach. */
           <PeptideCalculator initialVialAmount="1." initialReconstitution="0" />
+        ) : active.key === 'bmi-empty' ? (
+          <BmiCalculator />
+        ) : active.key === 'bmi-us' ? (
+          /* The founder's QA vector: 27.4, Overweight. */
+          <BmiCalculator initialUs={{ feet: '5', inches: '8', pounds: '180' }} />
+        ) : active.key === 'bmi-metric' ? (
+          <BmiCalculator
+            initialSystem="metric"
+            initialMetric={{ centimetres: '180', kilograms: '80' }}
+          />
+        ) : active.key === 'bmi-boundary' ? (
+          /* Raw 24.9598…, shown as 25.0. The category beside it must read
+             Overweight — the rounding policy, visible rather than asserted,
+             and a state nobody would stumble into by typing. */
+          <BmiCalculator
+            initialSystem="metric"
+            initialMetric={{ centimetres: '180', kilograms: '80.87' }}
+          />
+        ) : active.key === 'bmi-invalid' ? (
+          /* Twelve inches with a good weight: the inline error and the
+             withdrawn result at the same time. */
+          <BmiCalculator initialUs={{ feet: '5', inches: '12', pounds: '180' }} />
         ) : (
           <ToolsAndReference />
         )}
