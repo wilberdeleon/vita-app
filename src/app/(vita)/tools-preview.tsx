@@ -60,7 +60,11 @@ import ToolsAndReference from './tools/index';
  * twelve-inch entry showing its error beside a withdrawn result.
  *
  * Reachable at `/tools-preview`, or `/tools-preview?state=wrapping`.
- * Temporary, and removed with the other Sprint 5 scaffolding in 5.9.
+ * **`__DEV__`-only visual QA tooling, and retained as such** (slice 5.10).
+ * It claimed it would be removed in 5.9 and was not; the identity audit kept
+ * it deliberately, because these harnesses reach states a device cannot
+ * easily be put into and they were used again during that very audit. It
+ * ships in no release build.
  */
 
 type Scenario = { key: string; label: string };

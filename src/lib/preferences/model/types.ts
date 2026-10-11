@@ -58,11 +58,18 @@ export function isThemeMode(value: unknown): value is ThemeMode {
  * startup and are individually tiny; a key each would mean a storage round
  * trip per preference for no gain.
  *
- * ## Extension point — Slice 5.8 (BMI)
+ * ## Extension point — body weight and height
  *
- * BMI needs a body-weight unit (lb/kg) and a height unit (ft-in/cm), and
- * Journey / Weight in Sprint 6 will read the same weight unit — which is
- * exactly what makes them app-level rather than tool-level. Adding them is:
+ * **BMI did not take it.** The plan, written when BMI was slice 5.8, was
+ * that the calculator would need an app-level body-weight unit (lb/kg) and
+ * height unit (ft-in/cm). BMI shipped in **5.9** with a **unit selector
+ * local to the calculator** and deliberately touched nothing here: it saves
+ * no measurement, so an app-wide preference would have been a setting with
+ * nothing behind it.
+ *
+ * The extension point still stands for **Sprint 6 — Journey / Weight**,
+ * which does store weight and is the first feature that would make such a
+ * preference observable. Adding them is:
  *
  *   1. a field here, with its own `DEFAULT_*` and type guard;
  *   2. a line in `parseAppPreferences`, which already falls back per field;

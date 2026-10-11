@@ -31,10 +31,31 @@ import { useTheme } from '../../theme/ThemeProvider';
  *
  * **`__DEV__`-gated.** In a release build this route renders a plain notice
  * and nothing else. It is reachable in development from Settings → Identity
- * Prototype (also `__DEV__`-only) or by deep link to `/identity`. Both the
- * route and the Settings row are **temporary and are removed in slice 5.9** —
- * the standing rule that Home is not a launcher applies just as much to a
- * developer playground.
+ * Prototype (also `__DEV__`-only) or by deep link to `/identity`. The
+ * standing rule that Home is not a launcher applies just as much to a
+ * developer playground, which is why it lives behind Settings and behind
+ * `__DEV__`.
+ *
+ * ## Why it is still here (slice 5.10)
+ *
+ * It said for several slices that it would be **removed in 5.9**, and it was
+ * not. The 5.10 identity audit settled the question rather than letting the
+ * claim rot any further: it stays, for one concrete reason and one soft one.
+ *
+ * The concrete reason is that **it is a live test harness**.
+ * `WaterVessel.test.tsx` drives this screen to prove the vessel rises as
+ * amounts are logged and that the haptic vocabulary fires once per log with
+ * `complete` only at the goal — behaviour that needs a host with local,
+ * disposable state, which is exactly what this is. Deleting it means moving
+ * those tests onto the real Water screen, which is a rewrite with real
+ * regression risk and no product gain.
+ *
+ * The soft one is that it remains the frozen statement of what 5.1 promised,
+ * which is useful to hold a finished app against.
+ *
+ * **It is not product, it ships in no release build, and it is not load
+ * bearing.** Removing it is a clean, self-contained job whenever the founder
+ * wants it — it just needs the two `WaterVessel` tests rehomed first.
  *
  * **Data safety.** Every value on this screen is local `useState`. It does not
  * read `useWater()`, does not write an entry, does not touch a goal, and

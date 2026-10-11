@@ -218,13 +218,19 @@ export default function Settings() {
       </View>
 
       {/*
-        * TEMPORARY — Sprint 5 slice 5.1. Remove in slice 5.9.
+        * `__DEV__` only — the way the founders reach the identity prototype
+        * on a real iPhone in Expo Go.
         *
-        * The only way the founders can reach the identity prototype on a real
-        * iPhone in Expo Go. `__DEV__` means it cannot exist in a release
-        * build, so this is not a permanent "Design Playground" row — the
-        * standing rule that VITA does not grow launcher entries still holds,
-        * and the row is deleted with the prototype at the end of the sprint.
+        * It said "remove in 5.9" for several slices and was not removed; the
+        * 5.10 identity audit settled that rather than leaving the claim to
+        * rot. The prototype stays because `WaterVessel.test.tsx` drives it as
+        * a test harness — see the note on that screen — so the row that
+        * reaches it stays too.
+        *
+        * `__DEV__` means it cannot exist in a release build, so this is still
+        * not a permanent "Design Playground" row: the standing rule that VITA
+        * does not grow launcher entries holds, and both go whenever the
+        * prototype's two tests are rehomed.
         */}
       {__DEV__ ? (
         <View style={styles.group}>
@@ -235,7 +241,7 @@ export default function Settings() {
               icon="color-palette-outline"
               iconColor={palette.gold}
               title="Identity Prototype"
-              subtitle="Slice 5.1 — temporary, removed in 5.9"
+              subtitle="Slice 5.1 reference — development builds only"
               chevron
               accessibilityHint="Opens the Sprint 5 identity prototype"
               onPress={() => router.push('/identity')}

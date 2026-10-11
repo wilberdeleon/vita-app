@@ -188,8 +188,9 @@ describe('every visible row is real', () => {
 
     /**
      * The shipping inventory. `Identity Prototype` is deliberately absent:
-     * it is `__DEV__`-only (Sprint 5 slice 5.1, removed in 5.9), so these
-     * are the rows a real user can ever see.
+     * it is `__DEV__`-only (the slice 5.1 reference, retained by the 5.10
+     * audit as a test harness), so these are the rows a real user can ever
+     * see.
      *
      * `Nutrition Goals` joined them in 5.6A. It is the authoring path for
      * goals VITA had previously invented and offered no way to set — the

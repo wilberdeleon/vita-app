@@ -48,7 +48,11 @@ import { useReducedMotion } from '../../theme/useReducedMotion';
  * **The target is that motion is almost invisible until you take it away.**
  * If anything on this screen calls attention to itself, it is too much.
  *
- * Temporary, and removed with the other Sprint 5 scaffolding in 5.9.
+ * **`__DEV__`-only visual QA tooling, and retained as such** (slice 5.10).
+ * It claimed it would be removed in 5.9 and was not; the identity audit kept
+ * it deliberately, because these harnesses reach states a device cannot
+ * easily be put into and they were used again during that very audit. It
+ * ships in no release build.
  */
 /** A food that exists only here. Nothing about it is written anywhere. */
 const SAMPLE_FOOD: VitaFood = {

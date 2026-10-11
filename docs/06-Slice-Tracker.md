@@ -2071,7 +2071,9 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.9B | BMI Implementation + Tools Integration | The tool, and a third real row in the hub | ✅ **LOCKED** — founder-approved on device |
 | 5.9B.1 | Founder corrections | Semantic category colour, and Quick Tools as a real user-controlled selection | ✅ **LOCKED** — founder-approved on device |
 | 5.9C | Final BMI Audit + Closeout | The whole tool and the Quick Tools contract re-audited; **zero runtime changes** | ✅ **Closes 5.9.** |
-| 5.10 | Founder Identity Audit | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | ⬜ Planned |
+| 5.10 | **Founder Identity Audit** | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | 🟡 **5.10A ✅ · 5.10B implemented, awaiting founder review** |
+| 5.10A | Full Founder Identity Characterization | Every Sprint 5 surface audited for coherence, drift and scaffolding | ✅ Characterized |
+| 5.10B | Narrow Identity Corrections + Scaffolding Cleanup | **Zero product visual changes**; stale milestone claims corrected | 🟡 Awaiting founder review |
 
 **Journey does not begin without explicit founder approval after 5.10.**
 
@@ -2378,6 +2380,52 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 **Locks respected.** Populated Peptides, Water, Fuel Home, Add/Search, the scanner, Food Detail, Manual, Edit, Quick Tools, Today's Schedule and the dock are all untouched. The only locked-surface change is the Fuel widget the founder authorised.
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
+
+### Slice 5.10A — Founder Identity Characterization ✅
+
+**The finding: VITA reads as one product, and almost nothing needed changing.**
+
+**What makes it cohere, audited rather than assumed.** `ScreenHeader` is on all 37 routes that are screens — the eight without it are four preview harnesses, two layouts, and the two tab roots that carry their own feature headers, which is correct. **There is no `TouchableOpacity` anywhere**: every pressable in the app goes through `PressableScale`. `GlassSurface` has exactly three call sites — the shared `Card`, the dock, and the 5.1 prototype — so there is no glass soup, and the direct-on-background default holds.
+
+**Feature colour is disciplined, measured by counting every use per feature.** Water references only `palette.water`. Peptides references only `palette.peptide`, across 102 uses. Fuel is overwhelmingly `palette.primary`, and each of its handful of other references is explicable: the Water and Peptides modules it embeds, and the macro colours. Dashboard carries all four because it is the one screen that speaks for every feature. **Nothing leaked.**
+
+**Two cross-feature references were chased down and both are benign.** `palette.water` appears in the Tools directory only *inside a comment* in the BMI calculator explaining why it was rejected — zero actual use. `palette.journey` appears in Fuel's `foodVisual.ts` as the green for food illustrations (apple, bowl, salad); the hex is identical to `palette.protein` and it sits inside a documented decorative map. Renaming it would be architecture aesthetics, which this slice does not do. **Recorded, not changed.**
+
+**Feature distinctiveness survives the coherence.** Water still opens on its vessel, Peptides on a list of real routines, Fuel on its meals, Tools on a grouped panel where Settings uses bare rows. They share a language, not a layout — which is the thing the sprint set out to achieve.
+
+#### A founder-critical invariant, proved on device rather than inferred
+
+The simulator showed BMI as a fourth Quick Tool at the start of the audit. Reading the stored record settled what that was: `{"order":[…,"bmi"],"hidden":[]}` — BMI genuinely **selected**, left behind by the 5.9B.1 device session, not produced by any code path.
+
+Rather than reason from residue, the upgrade path was seeded directly: a true pre-BMI record, `{"order":["calculator","sites","scanner"],"hidden":[]}`, then a cold relaunch. **Home showed exactly three tiles.** Better still, the stored record was **not rewritten** — normalization runs in memory on read and only persists when the user changes something, so shipping BMI does not touch anyone's saved data at all.
+
+### Slice 5.10B — Narrow Corrections + Scaffolding Cleanup 🟡
+
+**Zero product visual changes.** Every correction is a comment or a `__DEV__`-only string. No founder-approved screen moved a pixel.
+
+**The stale claims are finally resolved** — this is the item 5.9C carried forward. Five source files promised a removal in 5.9 that never happened, and two described a BMI plan that was abandoned.
+
+| File | Was | Now |
+|---|---|---|
+| `identity.tsx` | *"temporary and are removed in slice 5.9"* | Why it is retained, and what would be needed to remove it |
+| `settings/index.tsx` | *"Remove in slice 5.9"* + visible *"temporary, removed in 5.9"* | The resolved decision; the row now reads **"Slice 5.1 reference — development builds only"** |
+| `tools-preview` · `motion-preview` · `peptides-preview` | *"removed with the other Sprint 5 scaffolding in 5.9"* | Named as retained `__DEV__` visual QA tooling |
+| `lib/preferences/model/types.ts` | *"Extension point — Slice 5.8 (BMI)"* | BMI shipped in 5.9 with a **local** selector and did not take it; the point now belongs to Sprint 6 |
+| `settings/units.tsx` | body weight/height *"belong to the BMI calculator in slice 5.8"* | 5.9 **confirmed** the rule instead — the calculator stores nothing, so an app-level unit would govern nothing |
+
+**The Identity Prototype stays, and the reason is concrete rather than sentimental.** `WaterVessel.test.tsx` drives it to prove the vessel rises as amounts are logged and that the haptic vocabulary fires once per log with `complete` only at the goal — behaviour that needs a host with local, disposable state. Deleting it means rehoming those tests onto the real Water screen: a rewrite with real regression risk and no product gain. It ships in no release build, and both it and its Settings row remain a clean, self-contained removal whenever the founder wants it.
+
+**All seven preview harnesses carry a `__DEV__` guard**, verified individually. They were retained for the same reason, and one of them was used during this very audit to review all four BMI bands.
+
+**No new tests were added, deliberately.** The DEV row's gating is already pinned in both directions by `SettingsRoutes.test.tsx`, and the corrections are comments. Padding the suite to look thorough is not a regression guard.
+
+#### Carried forward, not hidden
+
+Three known Dynamic Type issues remain open and none was introduced here: **`FloatingDock` crops its labels** at accessibility sizes (carried since 5.3D), **`ScreenHeader` truncates** at accessibility-extra-large, and **Fuel's `PROTEIN` macro label truncates** in the header. The authorization did not promote any of them into this slice, and each needs a shared-component decision rather than a local patch.
+
+#### Validation
+
+86 suites / **2,400 tests** — unchanged · `tsc` and strict-unused clean · iOS export clean · Doctor **20/21** on known drift, not patched · **zero dependency, persistence, schema and product-visual changes**.
 
 ### Slice 5.9 — BMI Calculator — CLOSED ✅
 

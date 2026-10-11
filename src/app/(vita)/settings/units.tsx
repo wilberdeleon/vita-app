@@ -20,11 +20,16 @@ import { useTheme } from '../../../theme/ThemeProvider';
  * creating a second one that can disagree with it. Nothing about Water's
  * storage was rewritten to give Settings a tidier shape to talk to.
  *
- * **Only preferences that already change something appear here.** Body
- * weight and height belong to the BMI calculator in slice 5.8 and are not
- * listed in advance — a preference the user can set and never observe is
- * the same dishonesty as a row that navigates nowhere. The extension point
- * is documented in `src/lib/preferences/model/types.ts`.
+ * **Only preferences that already change something appear here.** A
+ * preference the user can set and never observe is the same dishonesty as a
+ * row that navigates nowhere.
+ *
+ * Body weight and height are still absent, and 5.9 confirmed the rule
+ * rather than testing it: **the BMI calculator shipped with its own local
+ * US/Metric selector** and stores nothing, so an app-level unit would have
+ * had nothing to govern. Sprint 6 — Journey / Weight is the first feature
+ * that would make one observable; the extension point is documented in
+ * `src/lib/preferences/model/types.ts`.
  */
 export default function Units() {
   const { preferences, setUnit } = useWater();
