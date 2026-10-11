@@ -241,7 +241,7 @@ export default function Settings() {
               icon="color-palette-outline"
               iconColor={palette.gold}
               title="Identity Prototype"
-              subtitle="Slice 5.1 reference — development builds only"
+              subtitle="Internal visual reference — development builds only"
               chevron
               accessibilityHint="Opens the Sprint 5 identity prototype"
               onPress={() => router.push('/identity')}

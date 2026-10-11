@@ -2022,7 +2022,7 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 
 ---
 
-## Sprint 5 — VITA Identity & Interaction — 🟡 IN PROGRESS (opened 2026-09-02)
+## Sprint 5 — VITA Identity & Interaction — ✅ COMPLETE / LOCKED (2026-09-02 → 2026-10-12)
 
 **Opened 2026-09-02.** Branch `sprint-5-identity-interaction`, cut from `main` at merge commit `8dce19c` (Sprint 4 merged the same day). Founder-authorized against the **Sprint 5 Planning & Architecture Audit** (`docs/Sprint-5-Planning-Audit.md`, `7743443`), which the founders reviewed and approved, ruling on eleven decisions recorded in its §W.
 
@@ -2071,9 +2071,9 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.9B | BMI Implementation + Tools Integration | The tool, and a third real row in the hub | ✅ **LOCKED** — founder-approved on device |
 | 5.9B.1 | Founder corrections | Semantic category colour, and Quick Tools as a real user-controlled selection | ✅ **LOCKED** — founder-approved on device |
 | 5.9C | Final BMI Audit + Closeout | The whole tool and the Quick Tools contract re-audited; **zero runtime changes** | ✅ **Closes 5.9.** |
-| 5.10 | **Founder Identity Audit** | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | 🟡 **5.10A ✅ · 5.10B implemented, awaiting founder review** |
+| 5.10 | **Founder Identity Audit** | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | ✅ **COMPLETE / LOCKED** — founder-approved 2026-10-12 |
 | 5.10A | Full Founder Identity Characterization | Every Sprint 5 surface audited for coherence, drift and scaffolding | ✅ Characterized |
-| 5.10B | Narrow Identity Corrections + Scaffolding Cleanup | **Zero product visual changes**; stale milestone claims corrected | 🟡 Awaiting founder review |
+| 5.10B | Narrow Identity Corrections + Scaffolding Cleanup | **Zero product visual changes**; stale milestone claims corrected | ✅ **LOCKED** — founder-approved on device |
 
 **Journey does not begin without explicit founder approval after 5.10.**
 
@@ -2380,6 +2380,24 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 **Locks respected.** Populated Peptides, Water, Fuel Home, Add/Search, the scanner, Food Detail, Manual, Edit, Quick Tools, Today's Schedule and the dock are all untouched. The only locked-surface change is the Fuel widget the founder authorised.
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
+
+### Sprint 5 — CLOSED ✅
+
+**Founder-approved and locked 2026-10-12.** Ten slices, every one reviewed on a physical iPhone.
+
+**5.1 ✅ VITA Design Language + Identity Prototype** (with 5.1A) · **5.2 ✅ Interactive Water Experience** (with 5.2A) · **5.3 ✅ Dashboard Identity Redesign** (5.3A–5.3D) · **5.4 ✅ Peptides Home Redesign** · **5.5 ✅ Routine + Injection Site Experience** (5.5A–5.5D) · **5.6 ✅ Fuel Identity Refresh** (5.6A–5.6E) · **Expo SDK 57 maintenance ✅ APPROVED** · **5.7 ✅ Tools + Settings Identity Integration** (5.7A–5.7E) · **5.8 ✅ Motion + Microinteraction Unification** (5.8A–5.8D) · **5.9 ✅ BMI Calculator** (5.9A–5.9C) · **5.10 ✅ Founder Identity Audit** (5.10A–5.10B). All **COMPLETE / LOCKED**.
+
+The founder's closing verdict on the product as a whole, after walking Dashboard, Fuel, Water, Peptides, Tools, Settings, BMI and Quick Tools customization: *"Everything looks great."*
+
+**The branch is deliberately not merged.** `sprint-5-identity-interaction` stays unmerged and `main` untouched at `8dce19c`; the merge is a separate founder authorization.
+
+#### Final closeout — one `__DEV__` string
+
+The last change in the sprint is the smallest: the Identity Prototype row's subtitle, from *"Slice 5.1 reference — development builds only"* to **"Internal visual reference — development builds only"**.
+
+**The point is that it no longer carries a sprint number.** That copy went stale twice — it promised removal "in 5.9" through four slices, then named a milestone that will keep receding. A row that outlives its milestone should say what it *is*. A test now pins both the exact string and the absence of any `N.N` in it, so it cannot rot a third time.
+
+Nothing else moved: **no product screen, no motion, no navigation, no persistence, no dependency.**
 
 ### Slice 5.10A — Founder Identity Characterization ✅
 

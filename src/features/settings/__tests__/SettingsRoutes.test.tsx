@@ -320,6 +320,14 @@ describe('every visible row is real', () => {
     if (__DEV__) {
       expect(row).toBeDefined();
       expect(typeof row!.onPress).toBe('function');
+      /*
+       * The copy carries no sprint number. It said "removed in 5.9" until
+       * the 5.10 audit, then "Slice 5.1 reference" until founder closeout —
+       * and milestone numbering in a row that outlives the milestone is how
+       * it went stale twice. This says what the thing is instead.
+       */
+      expect(row!.subtitle).toBe('Internal visual reference — development builds only');
+      expect(row!.subtitle).not.toMatch(/\d\.\d/);
     } else {
       expect(row).toBeUndefined();
     }
