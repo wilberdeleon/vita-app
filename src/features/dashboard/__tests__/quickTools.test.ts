@@ -54,9 +54,17 @@ describe('the registry', () => {
 });
 
 describe('the shipped default', () => {
-  it('shows all three, in registry order', () => {
-    expect(DEFAULT_QUICK_TOOLS.hidden).toEqual([]);
+  /**
+   * The catalog grew in 5.9B.1; the **default selection did not**. BMI is
+   * offered to a new install, not given to it.
+   */
+  it('selects the three the founder approved, and no more', () => {
     expect(visibleTools(DEFAULT_QUICK_TOOLS)).toEqual(['calculator', 'sites', 'scanner']);
+  });
+
+  it('still offers every tool in the catalog, including the unselected one', () => {
+    expect(DEFAULT_QUICK_TOOLS.order).toEqual(['calculator', 'sites', 'scanner', 'bmi']);
+    expect(isToolHidden(DEFAULT_QUICK_TOOLS, 'bmi')).toBe(true);
   });
 });
 
@@ -67,11 +75,24 @@ describe('normalizing an untrusted record', () => {
     }
   });
 
+  /**
+   * The distinction §18 turns on. A corrupt record and a deliberately empty
+   * one must not collapse into the same state: the first takes the default,
+   * the second stays empty. They are told apart by shape — an empty
+   * selection still *names* its tools, in `hidden`.
+   */
+  it('keeps a deliberately empty selection empty', () => {
+    const emptied = { order: ['calculator', 'sites', 'scanner', 'bmi'], hidden: ['calculator', 'sites', 'scanner', 'bmi'] };
+    expect(visibleTools(normalizeQuickTools(emptied))).toEqual([]);
+    // And it survives being written and read again.
+    expect(visibleTools(normalizeQuickTools(normalizeQuickTools(emptied)))).toEqual([]);
+  });
+
   it('drops ids it does not recognise', () => {
     // A tool removed in a later version, still sitting in a stored order.
-    const prefs = normalizeQuickTools({ order: ['sites', 'bmi', 'calculator'], hidden: ['macros'] });
-    expect(prefs.order).not.toContain('bmi');
-    expect(prefs.hidden).toEqual([]);
+    const prefs = normalizeQuickTools({ order: ['sites', 'tdee', 'calculator'], hidden: ['macros'] });
+    expect(prefs.order).not.toContain('tdee');
+    expect(prefs.hidden).not.toContain('macros');
   });
 
   it('collapses duplicates rather than rendering a tool twice', () => {
@@ -79,21 +100,48 @@ describe('normalizing an untrusted record', () => {
     expect(prefs.order.filter((id) => id === 'sites')).toHaveLength(1);
   });
 
-  it('appends a newly shipped tool instead of losing it', () => {
-    /*
-     * This is the case that matters for 5.3C: anyone who used Home before
-     * the Food Scanner existed has a stored order without it. It has to
-     * appear for them, with no migration step and no reset.
-     */
-    const prefs = normalizeQuickTools({ order: ['calculator', 'sites'], hidden: [] });
-    expect(prefs.order).toEqual(['calculator', 'sites', 'scanner']);
-    expect(isToolHidden(prefs, 'scanner')).toBe(false);
+  /**
+   * **The contract reversed in 5.9B.1, and the reason it was reversed.**
+   *
+   * 5.3C made normalization append a newly shipped tool *visible*, so the
+   * Food Scanner would reach existing users without a migration. Building
+   * BMI showed what that costs: every release silently adds its new tools
+   * to every existing Home. The founder ruled that growing someone's
+   * Dashboard is their decision.
+   *
+   * So a new tool is still **offered** — it joins `order`, so customization
+   * lists it — and it is **not selected**. Reverting either half of this
+   * fails here, and it is generic: no tool is named in the implementation.
+   */
+  it('offers a newly shipped tool without selecting it', () => {
+    const prefs = normalizeQuickTools({ order: ['calculator', 'sites', 'scanner'], hidden: [] });
+
+    // Offered: it is in the catalog the customization sheet renders.
+    expect(prefs.order).toContain('bmi');
+    // Not selected: the user's Home is exactly what it was.
+    expect(isToolHidden(prefs, 'bmi')).toBe(true);
+    expect(visibleTools(prefs)).toEqual(['calculator', 'sites', 'scanner']);
+  });
+
+  it('does not restore a tool the user removed', () => {
+    const prefs = normalizeQuickTools({
+      order: ['calculator', 'sites', 'scanner', 'bmi'],
+      hidden: ['scanner'],
+    });
+    expect(isToolHidden(prefs, 'scanner')).toBe(true);
+    expect(visibleTools(prefs)).toEqual(['calculator', 'sites', 'bmi']);
   });
 
   it('keeps a customised order the user actually chose', () => {
     const prefs = normalizeQuickTools({ order: ['scanner', 'sites', 'calculator'], hidden: ['sites'] });
-    expect(prefs.order).toEqual(['scanner', 'sites', 'calculator']);
+    // Their order first; the tool they have not met yet comes after it.
+    expect(prefs.order).toEqual(['scanner', 'sites', 'calculator', 'bmi']);
     expect(visibleTools(prefs)).toEqual(['scanner', 'calculator']);
+  });
+
+  it('never alphabetises a selection', () => {
+    const prefs = normalizeQuickTools({ order: ['bmi', 'scanner', 'calculator', 'sites'], hidden: [] });
+    expect(visibleTools(prefs)).toEqual(['bmi', 'scanner', 'calculator', 'sites']);
   });
 });
 

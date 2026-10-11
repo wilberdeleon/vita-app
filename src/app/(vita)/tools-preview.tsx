@@ -76,6 +76,8 @@ const SCENARIOS: Scenario[] = [
   { key: 'bmi-metric', label: 'BMI · 180cm / 80kg' },
   { key: 'bmi-boundary', label: 'BMI · rounds onto 25.0' },
   { key: 'bmi-invalid', label: 'BMI · invalid inches' },
+  { key: 'bmi-under', label: 'BMI · Underweight' },
+  { key: 'bmi-obese', label: 'BMI · Obesity' },
 ];
 
 /** Fixture copy — no tool says this. Long enough to wrap at any text size. */
@@ -203,6 +205,16 @@ export default function ToolsPreview() {
           <BmiCalculator
             initialSystem="metric"
             initialMetric={{ centimetres: '180', kilograms: '80.87' }}
+          />
+        ) : active.key === 'bmi-under' ? (
+          <BmiCalculator
+            initialSystem="metric"
+            initialMetric={{ centimetres: '180', kilograms: '55' }}
+          />
+        ) : active.key === 'bmi-obese' ? (
+          <BmiCalculator
+            initialSystem="metric"
+            initialMetric={{ centimetres: '180', kilograms: '100' }}
           />
         ) : active.key === 'bmi-invalid' ? (
           /* Twelve inches with a good weight: the inline error and the

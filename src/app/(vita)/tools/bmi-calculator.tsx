@@ -19,6 +19,7 @@ import {
   parseMeasurement,
   usToMetric,
   weightFromLb,
+  type BmiCategory,
   type MetricFields,
   type UnitSystem,
   type UsFields,
@@ -85,6 +86,55 @@ import { useTheme } from '../../../theme/ThemeProvider';
  */
 export const BMI_GOLD = { light: '#8A6A2C', dark: palette.gold } as const;
 
+/**
+ * The category colours (founder correction, slice 5.9B.1).
+ *
+ * ## What changed, and what did not
+ *
+ * 5.9 shipped the categories deliberately neutral, on the argument that
+ * colouring a body measurement turns a reference tool into a grade. **The
+ * founder reviewed it and ruled the other way**: the bands should be legible
+ * at a glance. That is their call to make, and it is made.
+ *
+ * What the reversal does *not* touch is the reason the rule existed. **Colour
+ * is supplemental and never load-bearing**: the number and the category are
+ * always written out, so the screen reads identically in greyscale, to a
+ * colour-blind eye, and to a screen reader — which hears one sentence that
+ * never mentions a colour. And the treatment stays small: a number and a
+ * word, not a green card, a red border or a warning banner. This is a
+ * reference tool that tells you which band you are in, not an alarm.
+ *
+ * ## Why not the existing palette tokens
+ *
+ * Measured, not assumed. `palette.success` green reaches only **3.41:1** on
+ * the light result card — fine for the large number, short of the 4.5:1 that
+ * 15pt category text needs — and `palette.carbs` amber is **2.03:1**, which
+ * is unreadable. The two that would otherwise fit carry the wrong meaning:
+ * `palette.fat` is documented as the app-wide *error* colour, and a BMI band
+ * is not an error; `palette.water` is Water's feature identity.
+ *
+ * So these are named for their role, the way `routineSkipped` was — the hues
+ * echo VITA's existing ones, deepened for light and softened for dark, the
+ * same split `BMI_GOLD` needed and for the same reason. **Every value clears
+ * 4.5:1 against both the card and the page in its own scheme**, so the number
+ * and the label are both safe to colour. The dark blue is deliberately lighter
+ * than `palette.water` so it does not read as a Water surface.
+ *
+ * Gold remains the *tool's* identity — the hub row, the Quick Tool tile —
+ * while these describe the *answer*. The launcher never wears a category
+ * colour, because it has no result to report.
+ */
+export const BMI_CATEGORY_COLORS: Record<BmiCategory, { light: string; dark: string }> = {
+  /* Cool and informational. Never red: both ends of the scale being alarming
+     would say that only the middle is acceptable. */
+  Underweight: { light: '#1F63C4', dark: '#7FB3F5' },
+  'Healthy weight': { light: '#1F7A43', dark: '#53C285' },
+  /* Amber, not yellow — neon yellow is illegible on cream. */
+  Overweight: { light: '#9A6508', dark: '#E0A33A' },
+  /* Restrained, and deliberately not the error red. */
+  Obesity: { light: '#B4323A', dark: '#E8767A' },
+};
+
 /** Where the reference rail starts and ends. Wide enough to hold real bodies. */
 const RAIL_MIN = 15;
 const RAIL_MAX = 40;
@@ -107,7 +157,7 @@ export default function BmiCalculator({
   initialMetric,
 }: Props = {}) {
   const { surfaces, scheme } = useTheme();
-  const accent = scheme === 'dark' ? BMI_GOLD.dark : BMI_GOLD.light;
+  const dark = scheme === 'dark';
 
   const [system, setSystem] = useState<UnitSystem>(initialSystem);
   const [us, setUs] = useState<UsFields>({
@@ -168,6 +218,18 @@ export default function BmiCalculator({
       : null;
 
   const result = metres !== null && kg !== null ? bmiResult(kg, metres) : null;
+
+  /**
+   * Derived from the canonical category, never from a second copy of the
+   * thresholds — the classification lives in `src/lib/bmi` and this reads it.
+   *
+   * Read **inside** the branch that has a result, so there is no colour in
+   * scope at all when there is none. An invalid entry cannot leave the last
+   * answer's band tinting an empty card, because the value never survives
+   * the result that produced it.
+   */
+  const categoryColorFor = (category: BmiCategory) =>
+    BMI_CATEGORY_COLORS[category][dark ? 'dark' : 'light'];
 
   return (
     <Screen keyboardAware contentGap={spacing.m}>
@@ -305,22 +367,25 @@ export default function BmiCalculator({
                spoken — so nothing here depends on seeing a colour. */
             accessibilityLabel={`BMI ${result.text}, category ${result.category}`}
           >
+            {/* The number and its band share one colour, because they are
+                one statement. `BMI category ·` stays in the colour too — it
+                is the label of the thing being coloured, not a second idea. */}
             <Text
-              style={[styles.value, { color: accent }]}
+              style={[styles.value, { color: categoryColorFor(result.category) }]}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             >
               {result.text}
             </Text>
             <Text
-              style={[styles.category, { color: surfaces.text }]}
+              style={[styles.category, { color: categoryColorFor(result.category) }]}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             >
               BMI category · {result.category}
             </Text>
 
-            <ReferenceRail bmi={result.rounded} accent={accent} />
+            <ReferenceRail bmi={result.rounded} accent={categoryColorFor(result.category)} />
           </View>
         )}
       </Card>

@@ -22,11 +22,24 @@ type Props = {
  *
  * **Every tile is the same size**, like the square widgets above, so the row
  * reads as a set. Which tools appear and in what order is the user's — see
- * `quickTools.ts` — and the section disappears entirely rather than showing a
- * heading over nothing if they hide all three.
+ * `quickTools.ts`.
  *
- * **No BMI, no Reference, no Coming Soon.** Slice 4.2 settled that a dead
- * entry is worse than a short list, and 5.8 owns BMI.
+ * ## Selecting none is a real answer (5.9B.1)
+ *
+ * It used to return `null` when every tool was deselected, which removed the
+ * heading and the *All tools* link along with the tiles. The founder's ruling
+ * is that an empty Quick Tools is a legitimate choice, so it now says so —
+ * one quiet line, and the link out stays — because the state has to be
+ * distinguishable from a bug and **must not strand anyone**: the way back to
+ * the full directory, and to the customization sheet in the header, both
+ * remain one tap away.
+ *
+ * Hiding the whole module is a different choice, made in Customize Home, and
+ * that still removes this section entirely.
+ *
+ * **No Coming Soon and no placeholder tiles.** Slice 4.2 settled that a dead
+ * entry is worse than a short list, and an empty row is not an invitation to
+ * invent filler.
  */
 export function QuickTools({ tools }: Props) {
   const { surfaces } = useTheme();
@@ -35,8 +48,6 @@ export function QuickTools({ tools }: Props) {
   const tileHeight = toolTileHeight(fontScale);
   /* A second line beats a clipped word — the tiles stay equal either way. */
   const labelLines = isCompactSquare(fontScale) ? 2 : 1;
-
-  if (shown.length === 0) return null;
 
   return (
     <View style={styles.section}>
@@ -57,6 +68,11 @@ export function QuickTools({ tools }: Props) {
         </PressableScale>
       </View>
 
+      {shown.length === 0 ? (
+        <Text style={[styles.empty, { color: surfaces.textTertiary }]}>
+          No quick tools selected.
+        </Text>
+      ) : (
       <View style={styles.row}>
         {shown.map((id) => {
           const tool = QUICK_TOOL_REGISTRY[id];
@@ -79,6 +95,7 @@ export function QuickTools({ tools }: Props) {
           );
         })}
       </View>
+      )}
     </View>
   );
 }
@@ -104,6 +121,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: spacing.s,
+  },
+  /* One line where the tiles were. Deliberately not a card, a button or a
+     call to action — the user chose this, and it only has to be legible. */
+  empty: {
+    ...typography.caption,
   },
   slot: {
     flex: 1,

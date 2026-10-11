@@ -1233,7 +1233,13 @@ describe('Quick Tools customization', () => {
     expect(control(tree, 'Food Scanner')).toBeDefined();
   });
 
-  it('drops the whole section rather than showing a heading over nothing', async () => {
+  /**
+   * **The behaviour reversed in 5.9B.1.** This used to drop the section
+   * entirely, which also took the heading and the *All tools* link with it.
+   * The founder's ruling is that selecting none is a legitimate choice, so
+   * it has to look like one — and, critically, it must not strand anyone.
+   */
+  it('accepts a selection of none, and says so', async () => {
     const tree = await mount(fakeWater());
     await act(async () => control(tree, 'Customize Home')!.props.onPress());
     for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner']) {
@@ -1241,8 +1247,80 @@ describe('Quick Tools customization', () => {
     }
     await act(async () => control(tree, 'Close')!.props.onPress());
 
-    expect(screen(tree)).not.toContain('QUICK TOOLS');
-    expect(control(tree, 'All tools')).toBeUndefined();
+    const rendered = screen(tree);
+    expect(rendered).toContain('No quick tools selected.');
+    // No tiles, and nothing invented to fill the gap.
+    for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner']) {
+      expect(control(tree, name)).toBeUndefined();
+    }
+    expect(rendered).not.toMatch(/coming soon|add a tool|get started/i);
+  });
+
+  /** The way back. An empty section that cannot be refilled is a trap. */
+  it('leaves a way out of an empty selection', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner']) {
+      await act(async () => control(tree, `Hide ${name}`)!.props.onPress());
+    }
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    // Both routes out survive: the directory, and customization itself.
+    expect(control(tree, 'All tools')).toBeDefined();
+    expect(control(tree, 'Customize Home')).toBeDefined();
+
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Show Peptide Calculator')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+    expect(control(tree, 'Peptide Calculator')).toBeDefined();
+    expect(screen(tree)).not.toContain('No quick tools selected.');
+  });
+
+  /* ── BMI as an optional Quick Tool (5.9B.1) ─────────────────────── */
+
+  /**
+   * The single most important assertion in this correction: shipping BMI
+   * must not change a Dashboard anybody already had.
+   */
+  it('does not put BMI on Home by itself', async () => {
+    const tree = await mount(fakeWater());
+    expect(control(tree, 'BMI Calculator')).toBeUndefined();
+    expect(screen(tree)).toContain('QUICK TOOLS');
+  });
+
+  it('offers BMI in customization, unchecked', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    // Labelled "Show …" because it is currently off — the same affordance
+    // every other deselected tool gets.
+    expect(control(tree, 'Show BMI Calculator')).toBeDefined();
+    expect(control(tree, 'Hide BMI Calculator')).toBeUndefined();
+  });
+
+  it('adds BMI when asked, and opens the calculator', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Show BMI Calculator')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    const tile = control(tree, 'BMI Calculator');
+    expect(tile).toBeDefined();
+    await act(async () => tile!.props.onPress());
+    expect(mockPush).toHaveBeenCalledWith('/tools/bmi-calculator');
+  });
+
+  it('keeps BMI removed once it is removed again', async () => {
+    const tree = await mount(fakeWater());
+    await act(async () => control(tree, 'Customize Home')!.props.onPress());
+    await act(async () => control(tree, 'Show BMI Calculator')!.props.onPress());
+    await act(async () => control(tree, 'Hide BMI Calculator')!.props.onPress());
+    await act(async () => control(tree, 'Close')!.props.onPress());
+
+    expect(control(tree, 'BMI Calculator')).toBeUndefined();
+    // And the three that were already there are untouched by the round trip.
+    for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner']) {
+      expect(control(tree, name)).toBeDefined();
+    }
   });
 
   it('reorders tools by tap, because three items do not need a drag', async () => {
@@ -1790,5 +1868,69 @@ describe('the system text size', () => {
     // Nothing scheduled today, so the section states that rather than
     // rendering a row — the honest empty state, at any text size.
     expect(screen(tree)).toContain('Nothing scheduled today');
+  });
+});
+
+/* ── Quick Tools selection survives a relaunch (5.9B.1) ─────────────── */
+
+/**
+ * The component tests above prove the selection model inside one mount.
+ * These prove the part a user actually feels: that what they chose is still
+ * what they get after the app is closed and reopened.
+ *
+ * They write the stored record directly and mount fresh, which is what a
+ * relaunch is — `usePersistedPrefs` reads the key once on mount.
+ */
+describe('Quick Tools across a relaunch', () => {
+  const KEY = 'vita:v1:dashboard:tools';
+  const ALL = ['calculator', 'sites', 'scanner', 'bmi'];
+
+  it('brings back an empty selection as empty, not as the defaults', async () => {
+    await AsyncStorage.setItem(KEY, JSON.stringify({ order: ALL, hidden: ALL }));
+
+    const tree = await mount(fakeWater());
+    expect(screen(tree)).toContain('No quick tools selected.');
+    for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner', 'BMI Calculator']) {
+      expect(control(tree, name)).toBeUndefined();
+    }
+  });
+
+  /** Never customised is a different state, and still gets the default three. */
+  it('gives a first run the approved default, with BMI offered but off', async () => {
+    const tree = await mount(fakeWater());
+    for (const name of ['Peptide Calculator', 'Injection Sites', 'Food Scanner']) {
+      expect(control(tree, name)).toBeDefined();
+    }
+    expect(control(tree, 'BMI Calculator')).toBeUndefined();
+  });
+
+  /**
+   * The pre-BMI record an existing user actually has. BMI must not arrive
+   * with the update.
+   */
+  it('leaves a selection saved before BMI existed exactly as it was', async () => {
+    await AsyncStorage.setItem(
+      KEY,
+      JSON.stringify({ order: ['scanner', 'calculator', 'sites'], hidden: ['sites'] }),
+    );
+
+    const tree = await mount(fakeWater());
+    expect(control(tree, 'Food Scanner')).toBeDefined();
+    expect(control(tree, 'Peptide Calculator')).toBeDefined();
+    expect(control(tree, 'Injection Sites')).toBeUndefined();
+    expect(control(tree, 'BMI Calculator')).toBeUndefined();
+  });
+
+  it('brings back a chosen BMI, in the position it was chosen in', async () => {
+    await AsyncStorage.setItem(
+      KEY,
+      JSON.stringify({ order: ['bmi', 'calculator', 'sites', 'scanner'], hidden: ['sites'] }),
+    );
+
+    const tree = await mount(fakeWater());
+    expect(control(tree, 'BMI Calculator')).toBeDefined();
+    // Order preserved, not alphabetised: BMI leads because the user put it there.
+    const rendered = screen(tree);
+    expect(rendered.indexOf('BMI')).toBeLessThan(rendered.indexOf('Calculator'));
   });
 });

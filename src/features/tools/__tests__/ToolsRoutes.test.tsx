@@ -37,9 +37,13 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import InjectionSites from '../../../app/(vita)/tools/injection-sites';
 import PeptideCalculator from '../../../app/(vita)/tools/peptide-calculator';
 import ToolsAndReference from '../../../app/(vita)/tools/index';
-import BmiCalculator, { BMI_GOLD } from '../../../app/(vita)/tools/bmi-calculator';
+import BmiCalculator, { BMI_CATEGORY_COLORS, BMI_GOLD } from '../../../app/(vita)/tools/bmi-calculator';
 import { Card, IconBadge, ListRow, PressableScale, ToastProvider } from '../../../components/ui';
-import { QUICK_TOOL_REGISTRY } from '../../dashboard/quickTools';
+import {
+  DEFAULT_QUICK_TOOLS,
+  QUICK_TOOL_REGISTRY,
+  isToolHidden,
+} from '../../dashboard/quickTools';
 import { palette } from '../../../theme/tokens';
 import { PeptideProvider } from '../../../lib/peptides';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
@@ -812,23 +816,40 @@ describe('BMI Calculator — what it does not touch', () => {
   });
 
   /**
-   * §24 / §46. BMI is deliberately **not** in Dashboard's Quick Tools
-   * registry, and that is a decision rather than an oversight.
+   * **The decision reversed in 5.9B.1.**
    *
-   * `normalizeQuickTools` appends any registry id missing from a stored
-   * order so that a newly shipped tool appears — and appends it *visible*,
-   * because `hidden` only ever contains what was stored. Adding `bmi` there
-   * would therefore insert a fourth tile into the founder's existing Home
-   * on next launch, which §46 forbids outright. The roadmap agrees: "no
-   * Dashboard affordance is authorized here."
+   * 5.9B kept BMI out of the Quick Tools catalog entirely, because adding it
+   * would have put a fourth tile on the founder's Home without being asked —
+   * `normalizeQuickTools` appended a new tool *visible*. The founder wants
+   * BMI offered on Home, so the fix was to the normalization contract rather
+   * than to the catalog: BMI is now **available and unselected**.
    *
-   * This test fails the moment someone adds it, so the decision has to be
-   * taken again deliberately rather than by accident.
+   * What still must never happen is the thing the old test was protecting:
+   * BMI appearing on a Dashboard nobody asked to change. That is pinned in
+   * `quickTools.test.ts` against the selection, which is where it belongs.
    */
-  it('has not been inserted into the Dashboard Quick Tools registry', async () => {
-    expect(Object.keys(QUICK_TOOL_REGISTRY)).toEqual(['calculator', 'sites', 'scanner']);
-    const routes = Object.values(QUICK_TOOL_REGISTRY).map((tool) => tool.route);
-    expect(routes).not.toContain('/tools/bmi-calculator');
+  it('is offered as a Quick Tool without being selected', () => {
+    expect(QUICK_TOOL_REGISTRY.bmi).toBeTruthy();
+    expect(isToolHidden(DEFAULT_QUICK_TOOLS, 'bmi')).toBe(true);
+  });
+
+  /**
+   * One tool, one identity. Features do not import routes, so only a test
+   * can hold the hub row and the Quick Tool together — the same guarantee
+   * the other three already have.
+   */
+  it('wears the same name, glyph and route in both places', async () => {
+    const tree = await mount(<ToolsAndReference />);
+    const row = rows(tree).find((item) => item.title === 'BMI Calculator');
+    const canonical = QUICK_TOOL_REGISTRY.bmi;
+
+    expect(row).toBeTruthy();
+    expect(row!.title).toBe(canonical.name);
+    expect(row!.icon).toBe(canonical.icon);
+    expect(row!.accessibilityHint).toBe(canonical.hint);
+    expect(canonical.route).toBe('/tools/bmi-calculator');
+    // Gold in both places — the tool's identity, not a category colour.
+    expect(canonical.color).toBe(palette.gold);
   });
 });
 
@@ -892,5 +913,98 @@ describe('BMI Calculator — Dynamic Type', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+/* ── 5.9B.1: BMI category colour ────────────────────────────────────── */
+
+/**
+ * The founder reversed 5.9's neutral-category rule: the bands should read at
+ * a glance. These pin the two things that reversal must not cost.
+ *
+ * **Colour follows the canonical category** — the thresholds live in
+ * `src/lib/bmi` and the screen reads them, so there is no second copy of the
+ * classification in presentation code to drift. And **colour never carries
+ * meaning alone**: the number and the band are always written out.
+ */
+
+/** The colour the result's number is actually rendered in. */
+function resultColor(tree: ReactTestRenderer, text: string): string | undefined {
+  const node = tree.root
+    .findAllByType(Text)
+    .find((candidate) => candidate.props.children === text);
+  const style = StyleSheet.flatten(node?.props.style) as Record<string, unknown> | undefined;
+  return style?.color as string | undefined;
+}
+
+describe('BMI category colour', () => {
+  it.each([
+    ['Underweight', { centimetres: '180', kilograms: '55' }, '17.0'],
+    ['Healthy weight', { centimetres: '180', kilograms: '70' }, '21.6'],
+    ['Overweight', { centimetres: '180', kilograms: '85' }, '26.2'],
+    ['Obesity', { centimetres: '180', kilograms: '100' }, '30.9'],
+  ] as const)('draws %s in its own semantic colour', async (category, metric, value) => {
+    const tree = await mount(<BmiCalculator initialSystem="metric" initialMetric={metric} />);
+
+    expect(screen(tree)).toContain(value);
+    expect(screen(tree)).toContain(`BMI category · ${category}`);
+    expect(resultColor(tree, value)).toBe(BMI_CATEGORY_COLORS[category].light);
+  });
+
+  /** Four bands, four distinguishable colours — not one accent reused. */
+  it('gives each band a colour of its own', () => {
+    const light = Object.values(BMI_CATEGORY_COLORS).map((pair) => pair.light);
+    const dark = Object.values(BMI_CATEGORY_COLORS).map((pair) => pair.dark);
+    expect(new Set(light).size).toBe(4);
+    expect(new Set(dark).size).toBe(4);
+    // Every band is defined in both themes.
+    for (const pair of Object.values(BMI_CATEGORY_COLORS)) {
+      expect(pair.light).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      expect(pair.dark).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
+  });
+
+  /**
+   * §10. The failure this prevents: a valid Overweight result, then an
+   * invalid entry, leaving amber on an empty card as though it still meant
+   * something.
+   */
+  it('withdraws the colour with the result when input goes invalid', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+    expect(resultColor(tree, '27.4')).toBe(BMI_CATEGORY_COLORS.Overweight.light);
+
+    await type(tree, 'Height, inches', '12');
+    const rendered = screen(tree);
+    expect(rendered).toContain('Enter height and weight to calculate BMI.');
+    // No value left to carry a colour, and no band named anywhere.
+    expect(resultColor(tree, '27.4')).toBeUndefined();
+    for (const band of ['Underweight', 'Healthy weight', 'Overweight', 'Obesity']) {
+      expect(rendered).not.toContain(band);
+    }
+  });
+
+  it('shows no category colour before anything has been entered', async () => {
+    const tree = await mount(<BmiCalculator />);
+    const colors = Object.values(BMI_CATEGORY_COLORS).flatMap((pair) => [pair.light, pair.dark]);
+    const used = tree.root
+      .findAllByType(Text)
+      .map((node) => (StyleSheet.flatten(node.props.style) as Record<string, unknown>)?.color);
+    for (const color of colors) expect(used).not.toContain(color);
+  });
+
+  /**
+   * The accessibility guarantee the colour change must not erode: the
+   * sentence a screen reader hears is unchanged, and names no colour.
+   */
+  it('still says the band in words, and never names a colour', async () => {
+    const tree = await mount(<BmiCalculator />);
+    await enterUs(tree, '5', '8', '180');
+
+    const announced = tree.root
+      .findAll((node) => typeof node.props?.accessibilityLabel === 'string')
+      .map((node) => node.props.accessibilityLabel as string);
+    expect(announced).toContain('BMI 27.4, category Overweight');
+    expect(screen(tree)).not.toMatch(/amber|yellow|green|red|blue/i);
   });
 });

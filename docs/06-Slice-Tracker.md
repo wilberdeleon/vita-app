@@ -2068,7 +2068,8 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.8D | Final Motion Audit + Closeout | The whole motion surface re-audited against the contract; **zero runtime changes** | ✅ **Closes 5.8.** |
 | 5.9 | **BMI Calculator** | Built from scratch in the new system | 🟡 **5.9A ✅ · 5.9B implemented, awaiting founder device review** |
 | 5.9A | BMI Characterization + Domain Contract | Adult reference only; formula, rounding policy, thresholds, unit handling and the integration plan settled before any screen was drawn | ✅ Characterized |
-| 5.9B | BMI Implementation + Tools Integration | The tool, and a third real row in the hub | 🟡 Awaiting founder device review |
+| 5.9B | BMI Implementation + Tools Integration | The tool, and a third real row in the hub | ✅ Founder-approved on device, with two corrections |
+| 5.9B.1 | Founder corrections | Semantic category colour, and Quick Tools as a real user-controlled selection | 🟡 Awaiting final founder review |
 | 5.10 | Founder Identity Audit | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | ⬜ Planned |
 
 **Journey does not begin without explicit founder approval after 5.10.**
@@ -2434,6 +2435,53 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 86 suites / **2,378 tests** (2,297 → 2,378, +81) · `tsc` and strict-unused clean · iOS export clean · **zero persistence keys, zero dependency changes** · Doctor 20/21 on the known drift, not patched. The formula, the conversion constants and the inches bound were **mutation-tested**: reverting each one fails the suite.
 
 Verified on an iPhone 17 Pro simulator with real typing: the US vector reads 27.4 Overweight, metric reads 24.7 Healthy weight, the rounding-policy case shows `25.0` beside *Overweight* with the marker on the 25 tick, twelve inches raises its error and withdraws the stale result while leaving its siblings intact, and Dashboard's Quick Tools still shows exactly three tiles.
+
+### Slice 5.9B.1 — Founder corrections: category colour + optional Quick Tool 🟡
+
+**The founder reviewed 5.9B on a physical iPhone and approved it**, with two corrections. Approved implementation of 5.9B: `a241e88`.
+
+#### Correction 1 — the categories get colour
+
+**5.9 shipped the bands deliberately neutral; the founder ruled the other way.** That reverses a rule this slice's own characterization wrote, and it is their call: the bands should be legible at a glance.
+
+**What the reversal does not touch is the reason the rule existed.** Colour is supplemental and never load-bearing — the number and the band are always written out, so the screen reads identically in greyscale, to a colour-blind eye, and to a screen reader, which hears *"BMI 27.4, category Overweight"* and no colour at all. And the treatment stays small: a number and a word. **No green card, no red border, no banner, no icon, no "good"/"bad" language, and no celebration for Healthy.**
+
+| Band | Light | Dark |
+|---|---|---|
+| Underweight | `#1F63C4` cool blue | `#7FB3F5` |
+| Healthy weight | `#1F7A43` green | `#53C285` |
+| Overweight | `#9A6508` amber | `#E0A33A` |
+| Obesity | `#B4323A` restrained red | `#E8767A` |
+
+**Why not the existing palette tokens — measured, not assumed.** `palette.success` green reaches only **3.41:1** on the light result card, short of the 4.5:1 that 15pt category text needs, and `palette.carbs` amber is **2.03:1**, which is unreadable. The two that would otherwise fit carry the wrong meaning: `palette.fat` is documented as the app-wide *error* colour and a BMI band is not an error; `palette.water` is Water's feature identity. So these are named for their role the way `routineSkipped` was — VITA's hues, deepened for light and softened for dark, the same split `BMI_GOLD` already needed. **Every value clears 4.5:1 against both the card and the page in its own scheme.** The dark blue is deliberately lighter than `palette.water` so it does not read as a Water surface.
+
+**What takes the colour:** the BMI number, the `BMI category · …` line, and the rail's current marker. **The rail stays neutral otherwise** — no tinted bands, which is the traffic light this tool is not. Thresholds are unchanged, and the rail still works in greyscale because position carries it.
+
+**Gold is still the tool's identity** — the hub row and the Quick Tool tile — while the category colour describes the *answer*. The launcher never wears one, because it has no result to report.
+
+**Nothing stale.** The colour is read inside the branch that has a result, so there is no colour value in scope when there is none: an invalid entry withdraws the band with the number rather than leaving amber on an empty card.
+
+#### Correction 2 — Quick Tools becomes a real selection
+
+**The contract that was wrong.** `normalizeQuickTools` appended a newly shipped tool to the stored order **visible**, which is why 5.9B kept BMI out of the catalog entirely — shipping it would have put a fourth tile on a Home nobody asked to change. The founder wants BMI offered on Home, so the fix went to the contract rather than the catalog, **generically, with no tool special-cased**.
+
+**Available is not selected.** `order` is the catalog in the user's order — what customization lists. `hidden` is what they have deselected. The selection is `order` minus `hidden`. A tool a stored record predates now joins `order` *and* `hidden`: offered, not imposed.
+
+**Defaults are a first-run concern and were already separable.** `usePersistedPrefs` calls `normalize` **only when something was actually stored** — a missing key never reaches it. So *never customised* takes the default three, while *deliberately emptied* stays empty. **No migration was needed, and none was written.**
+
+**A corrupt record is still not an empty one.** Nothing recognisable in either list falls back to the default rather than leaving someone with a Home they never emptied. A deliberate empty is a different shape — it names its tools in `hidden` — so it is recognisable and survives.
+
+**Selecting none is now a visible answer.** The section used to return `null`, which took the heading and the *All tools* link with it. It now says *No quick tools selected.* and keeps both ways out, because an empty widget that cannot be refilled is a trap. Hiding the whole module is still a separate choice and still removes the section.
+
+#### Device verification
+
+On a simulator carrying a **real stored preference from earlier sessions**: BMI did not auto-add — Quick Tools still showed exactly Calculator, Sites and Scan. It appeared in customization last, unchecked and greyed. Adding it produced a fourth tile with the gold scale glyph and opened `/tools/bmi-calculator`. Removing every tool gave the quiet empty line with both exits intact, and **the empty selection survived a full relaunch with no defaults returning**. The fixture was then restored to the original three.
+
+Underweight blue, Overweight amber and Obesity red were each confirmed on device, with the marker tracking the band; **Healthy green is covered by test rather than by a screenshot**, and is produced by the same code path as the other three.
+
+#### Validation
+
+86 suites / **2,400 tests** (2,378 → 2,400, +22) · `tsc` and strict-unused clean · iOS export clean · **zero dependency changes, zero new persistence keys**, and no change to the BMI formula, thresholds, rounding, conversion, note or medical semantics. Three mutations were checked: appending a new tool visible again, giving two bands the same colour, and removing the empty state each fail the suite.
 
 ### Slice 5.8 — Motion + Microinteraction Unification — CLOSED ✅
 
