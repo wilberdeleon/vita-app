@@ -2066,10 +2066,11 @@ Scope verified by inspection: **no BMI source exists** (every `BMI` occurrence i
 | 5.8B | Shared Motion Foundation + Core Interactions | The two real gaps closed: `Toast` ignoring Reduced Motion, `SegmentedTabs` answering a press with nothing | ✅ Approved — founder device review, 2026-09-27. **Locked.** |
 | 5.8C | Targeted Feature Motion Rollout | The language rolled out to the two feature interactions that earn it; Water deliberately left alone | ✅ Approved — founder device review. **Locked.** |
 | 5.8D | Final Motion Audit + Closeout | The whole motion surface re-audited against the contract; **zero runtime changes** | ✅ **Closes 5.8.** |
-| 5.9 | **BMI Calculator** | Built from scratch in the new system | 🟡 **5.9A ✅ · 5.9B implemented, awaiting founder device review** |
+| 5.9 | **BMI Calculator** | Built from scratch in the new system | ✅ **COMPLETE / LOCKED** — founder-approved across 5.9A, 5.9B, 5.9B.1 and 5.9C |
 | 5.9A | BMI Characterization + Domain Contract | Adult reference only; formula, rounding policy, thresholds, unit handling and the integration plan settled before any screen was drawn | ✅ Characterized |
-| 5.9B | BMI Implementation + Tools Integration | The tool, and a third real row in the hub | ✅ Founder-approved on device, with two corrections |
-| 5.9B.1 | Founder corrections | Semantic category colour, and Quick Tools as a real user-controlled selection | 🟡 Awaiting final founder review |
+| 5.9B | BMI Implementation + Tools Integration | The tool, and a third real row in the hub | ✅ **LOCKED** — founder-approved on device |
+| 5.9B.1 | Founder corrections | Semantic category colour, and Quick Tools as a real user-controlled selection | ✅ **LOCKED** — founder-approved on device |
+| 5.9C | Final BMI Audit + Closeout | The whole tool and the Quick Tools contract re-audited; **zero runtime changes** | ✅ **Closes 5.9.** |
 | 5.10 | Founder Identity Audit | Terminal real-device review across every migrated surface, both themes, VoiceOver, Dynamic Type, reduce-motion | ⬜ Planned |
 
 **Journey does not begin without explicit founder approval after 5.10.**
@@ -2377,6 +2378,48 @@ It is now statistics. Identity and `+ Log` on the top row; `180` over `cal consu
 **Locks respected.** Populated Peptides, Water, Fuel Home, Add/Search, the scanner, Food Detail, Manual, Edit, Quick Tools, Today's Schedule and the dock are all untouched. The only locked-surface change is the Fuel widget the founder authorised.
 
 **Still to verify — founder, on a real device:** whether the Peptides empty state now reads as intentional rather than empty; whether the white neutral CTA is right there or should be outlined like Fuel Home's; and the Fuel widget against a real day.
+
+### Slice 5.9 — BMI Calculator — CLOSED ✅
+
+**Complete and locked across 5.9A, 5.9B, 5.9B.1 and 5.9C.** The founder reviewed the finished tool on a physical iPhone: *"Everything looks great and everything works great."*
+
+Approved implementations: `a241e88 — feat(sprint-5): add adult bmi reference tool` and `a6e3632 — feat(sprint-5): add bmi quick tool and category colours`.
+
+#### The locked contract
+
+**An adult BMI reference, and nothing else.** One calculation path — every input normalizes to kilograms and metres, then `kg / m²`, with US converted by the exact definitions and **deliberately no second `703 × lb / in²` formula**. One decimal displayed, and **the displayed value is what gets classified**, so a number and its band can never contradict each other. Thresholds `<18.5` · `18.5–24.9` · `25–29.9` · `≥30`.
+
+**No sex or gender input, and none is coming.** Standard adult BMI and its category thresholds do not change with it, so a selector would ask for something the arithmetic never uses.
+
+**No ideal weight, no target BMI, no weight to lose or gain, no calories, TDEE, BMR or macros, no risk prediction, no diagnosis, no history, no Journey or Weight write.** Categories describe the number, never the person.
+
+**Colour is supplemental and text is authoritative.** The bands carry semantic colour — blue, green, amber, red — on founder direction, while the number and the band are always written out, the spoken result names no colour, and an invalid entry withdraws the colour with the result.
+
+**The calculator is stateless.** The only persistence anywhere near it is Dashboard's own Quick Tools record.
+
+**Quick Tools is a user-controlled list.** Available and selected are distinct; a newly shipped tool is offered, never imposed; BMI is available and off by default; an explicit empty selection is valid and survives a relaunch; first-run defaults remain the approved three.
+
+### Slice 5.9C — Final BMI Audit + Closeout ✅
+
+**The preferred outcome, achieved: zero runtime changes.** The iOS bundle exported after the audit is **byte-identical** to the one exported from 5.9B.1 — `entry-597a1ad130c8ff6a5530bb7ee11b183a.hbc`.
+
+**Domain, re-read rather than remembered.** No occurrence of sex, gender, male or female anywhere in `src/lib/bmi` or the screen. No storage call of any kind in either — the calculator is stateless by absence, not by discipline. Every forbidden-term match in the source is a negation in documentation; the single user-facing one is the approved *"does not diagnose health"*.
+
+**No duplicated threshold logic.** `BMI_THRESHOLDS` is defined once in `src/lib/bmi` and the rail reads it; the only `18.5`, `25` and `30` literals in the screen are inside comments. Colour derives from the canonical category, so the palette cannot drift from the classification.
+
+**The palette matches the approved set exactly**, and was left alone — no contrast, theme, token or accessibility defect was found to justify touching it.
+
+**Dependencies: 5.9 touched neither `package.json` nor `package-lock.json`**, proven by diffing the whole slice against its starting commit. Doctor remains **20/21** on the known upstream patch drift. Not patched.
+
+#### The one thing deliberately not done
+
+**The `__DEV__` Identity Prototype row and the Sprint 5 preview harnesses carry comments saying "removed in 5.9", and they are staying.** The rule for acting on that required the authoritative roadmap to demand it *and* the artifacts to be unused — and neither holds. **The roadmap says nothing about removing them**, `SettingsRoutes.test.tsx` covers the prototype row, and the preview harnesses are live QA tooling that this slice itself used to review all four BMI bands. Removing working development tooling on the strength of a stale comment is churn.
+
+So the comments are now the thing that is wrong, not the code. **Recorded for 5.10 — Founder Identity Audit**, which is where feature work stops for a terminal real-device review and is the natural home for scaffolding removal. The DEV-only Settings subtitle still reads *"Slice 5.1 — temporary, removed in 5.9"*; it never appears in a release build, and correcting five files of comments during a zero-runtime-change closeout is exactly the churn the authorization warns against.
+
+#### Validation
+
+86 suites / **2,400 tests** — unchanged, as expected of a docs-only pass · `tsc` and strict-unused clean · iOS export clean and byte-identical · **zero runtime changes, zero persistence changes, zero dependency changes**.
 
 ### Slice 5.9A — BMI Characterization + Domain Contract ✅
 
