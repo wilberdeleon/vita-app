@@ -15,6 +15,11 @@ import { createWeightEntry } from '../model/entries';
 import type { WeightEntry } from '../model/types';
 import { toKg } from '../model/units';
 
+/** Code only — prose that names a key is documentation, not a second owner. */
+function withoutComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+}
+
 beforeEach(async () => {
   await AsyncStorage.clear();
 });
@@ -53,7 +58,7 @@ describe('keys', () => {
         const full = join(dir, entry.name);
         if (entry.isDirectory()) {
           if (entry.name !== '__tests__') walk(full);
-        } else if (/\.tsx?$/.test(entry.name) && /JOURNEY_DOMAIN|vita:v1:journey/.test(readFileSync(full, 'utf8'))) {
+        } else if (/\.tsx?$/.test(entry.name) && /JOURNEY_DOMAIN|vita:v1:journey/.test(withoutComments(readFileSync(full, 'utf8')))) {
           hits.push(full.slice(full.indexOf('src/')));
         }
       }
