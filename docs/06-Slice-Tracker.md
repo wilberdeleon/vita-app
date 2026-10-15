@@ -4135,3 +4135,33 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 **No runtime change accompanied this approval.** The approved build is `f4ead5a` on `sprint-5-identity-interaction`; the branch is **not merged**, by standing instruction.
 
+---
+
+## Sprint 6 — Journey / Weight — 🟡 In progress (opened 2026-10-15)
+
+Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization `9f68201` — see `docs/Sprint-6-Planning-Audit.md`. Founder rulings recorded in `docs/04-Master-Roadmap.md` → Sprint 6.
+
+| Slice | Objective | Status |
+|---|---|---|
+| Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
+| **6.1 — Journey truth + identity** | Remove fabricated Journey runtime; gold identity; neutral direction | ✅ Implemented — awaiting founder device review |
+| 6.2 — Weight domain + persistence | Canonical kg store, Journey-owned unit, CRUD, no UI | ⬜ |
+| 6.3 — Weight logging UI | | ⬜ NOT STARTED |
+| 6.4 – 6.7 | Home + history · trend · edit/delete UI · closeout | ⬜ |
+
+### Slice 6.1 — Journey truth + identity foundation
+
+**The problem.** `getJourney()` returned `JOURNEY_FIXTURE` unconditionally, so every user saw a story about themselves they never told: **185.2 lb**, a green *"−2.4 lbs in the last 4 weeks"*, a descending chart Apr 15 → May 13 with a grey "Last 4 Weeks" comparison, *"Momentum — Discipline starts replacing motivation — Week 4 of 24"*, three "Weekly Milestones" (*Log weight 5x this week 5/5 ✓*, *Hit your protein goal 6/7 days ✓*, *Complete 3 workouts 2/3*), Average 186.2 / Lowest 185.2 (green ↓) / Highest 191.8 (red ↑) / **Goal 175.0**, a `−2.4 lb` badge, *"You dropped 2.4 lbs. Keep the momentum."*, and a Photos tab of four fake "Week 3–6" timeline cards under *"Stay consistent. The results will follow."* with an Add Progress Photo card wired to nothing.
+
+**Fixture dependency map.** Every consumer was class **A — release-visible fabricated state**: `api.ts` → `OverviewTab`, `WeightTab`, `PhotosTab` → `journey.tsx`. There was **no** test, DEV preview or harness consumer, so there was no legitimate fixture to preserve. **Deleted:** `api.ts`, `mock.ts`, `OverviewTab.tsx`, `WeightTab.tsx`, `PhotosTab.tsx`, and every type in `types.ts` except `WeightPoint`. **Kept dormant, unrendered:** `LineChart.tsx` and `WeightBars.tsx` for real-data reuse in 6.5, and `src/lib/journeyStages.ts` (founder-approved definitions, now with no consumer — a stage must not reappear until recorded data, not a calendar, puts someone in it).
+
+**What Journey shows now.** `ScreenHeader` *My Journey* with the Settings gear, then the shared `EmptyState` direct on the background: a footsteps glyph, **"No weight entries yet"**, *"Weight you record will appear here, over time."* Nothing else. **The Overview / Weight / Photos switcher is gone** — three tabs over the same nothing is not structure, Photos is Sprint 7, and its only content was fixture and a slogan. **No Log Weight action**: logging is 6.3 and a button into an unbuilt flow would be its own small lie.
+
+**Identity.** `palette.journey` was `#2E9E5B`, the same hex as `success` and `protein`. It is now **brand gold** — `gold` and `journey` both read one `BRAND_GOLD` constant — and `journeySoft` (green pastel, zero consumers) is removed. `journeyAccent` names the established scheme pair (`#8A6A2C` light, brand gold dark), the same deepened gold `QUOTE_GOLD`, `BMI_GOLD` and Fuel's breakfast accent already use. **Call sites:** the dock's Journey tint (now `journeyAccent`, resolved per scheme — brand gold alone is ~1.7:1 on the light glass, so the selected tab would have been the faintest) · `WeightBars` (dormant) · and **three Fuel food-art categories** — fruit, bowl, salad — that had borrowed `palette.journey` as "green". Those now read a local `PRODUCE_GREEN = palette.success`, **same hex, pixel-identical**, so locked Fuel does not change because Journey's identity did. Home, Fuel and Atlas dock tints unchanged (tested).
+
+**Gold is identity, never verdict.** Nothing in Journey colours a direction of weight change; a test sweeps Journey source for `success`, `fat`, `protein`, `journeySoft` and the old green hex.
+
+**Device verification (iPhone 17 Pro simulator).** Before: the fixture as listed above, dock tint green. After, Light and Dark: the empty state only — no 185.2, no −2.4, no chart, no Week 4 of 24, no milestones, no workouts, no praise. Dock Journey tint **measured** at `#8A6A2C` in Light and `#D4B27A` in Dark. At `accessibility-extra-large` the empty state reflows cleanly; the header truncation and the dock's `Journ/ey` wrap are the pre-existing Sprint 5 debt (Planning Audit §16), not new.
+
+**Tests.** `JourneyTruth.test.tsx`, 14 tests: empty state renders; no invented weight/delta/trend/goal; no `Week N of M` or stage; no milestones/workouts/streaks/rewards; no praise or judgment vocabulary; no `Svg`; the only control is the Settings gear; the fixture files do not exist and `JOURNEY_FIXTURE` appears in no source; `palette.journey === palette.gold` and is not green/red; dock tints Journey gold per scheme and leaves Home/Fuel/Atlas unchanged. Mutation: restoring the green token fails 2 identity tests. Suite **86 / 2400 → 87 / 2414**.
+

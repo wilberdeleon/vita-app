@@ -15,6 +15,12 @@ export type JourneyStage = {
  * rather than either feature (features never import from each other).
  * Progress is defined by consistency, not perfection.
  *
+ * **Dormant since slice 6.1.** No screen renders a stage: Home dropped its
+ * Journey card in 5.3, and the Journey tab's "Momentum — Week 4 of 24" came
+ * from the fixture, not from anything the user did. The definitions are kept
+ * because they are founder-approved and harmless; a stage must not be shown
+ * again until real recorded data — not a calendar — puts someone in it.
+ *
  * Icons are the closest available Ionicons match for each stage's custom
  * reference glyph — Ionicons has no literal "stacked building blocks"
  * (Foundation), "3-ring target" (Focus), "sprout with ground line"

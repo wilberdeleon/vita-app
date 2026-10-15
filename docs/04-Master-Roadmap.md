@@ -73,8 +73,8 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | 2 — Fuel | Build the smartest nutrition experience possible | ✅ Complete |
 | **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ✅ Complete |
 | **4 — Settings + Tools Foundation** | Settings architecture and a top-level Tools destination — the foundation later Tools are built into | ✅ Complete |
-| **5 — VITA Identity & Interaction** | **Establish the VITA visual and interaction language and apply it across every already-built product area — the language Journey is built in** | 🟡 **In progress** — 5.1, 5.2, 5.3 approved |
-| 6 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture — **gated on slice 5.10** | ⬜ Planned |
+| **5 — VITA Identity & Interaction** | **Establish the VITA visual and interaction language and apply it across every already-built product area — the language Journey is built in** | ✅ **Complete / locked** — merged to `main` at `6c657fb` |
+| 6 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture | 🟡 **In progress** — characterization, 6.1 ✅ |
 | 7 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
 | 8 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |
 | 9 — Final Polish / Motion / Launch Experience | App-wide finishing motion, consistency, edge cases, and the launch experience | ⬜ Planned |
@@ -640,7 +640,11 @@ The eight slices written for Journey under the earlier structure (Journey Overvi
 
 **Four decisions need the founder** before implementation: a user-authored goal weight (recommended yes, never calculated) · multiple weigh-ins per day with edit and delete (recommended yes) · where the body-weight unit lives (recommended Journey-local) · a Dashboard widget (recommended defer).
 
-Status: 🟡 **Characterization complete — awaiting founder approval to begin implementation**
+**Founder rulings on the characterization (2026-10-15):** goal weight **deferred** — and if ever authorized, entirely user-authored, never calculated · **multiple weigh-ins per day allowed**, each its own record · **edit and delete authorized** at the domain level, UI later · **Journey owns the body-weight display unit** (lb/kg), canonical storage in **kilograms** · Dashboard widget **deferred** · BMI integration **deferred**, the calculator stays stateless · **Journey identity is gold, weight direction is neutral** — no colour may moralise a gain or a loss · Sprint 5's fast-forward merge approved as-is; future closeouts prefer an explicit `--no-ff` merge marker.
+
+**6.1 — Journey truth ✅ implemented.** The fabricated Journey is gone from release runtime: `api.ts`, `mock.ts` and the fixture-driven Overview / Weight / Photos tabs are deleted, and Journey shows a passive empty state — *"No weight entries yet"* — with no chart, stage, milestone, workout count, praise or dead action. `palette.journey` is brand gold, with a deepened light-mode pair for the dock. See `docs/06-Slice-Tracker.md`.
+
+Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ · 6.2 ⬜ · 6.3 ⬜ NOT STARTED**
 
 ---
 

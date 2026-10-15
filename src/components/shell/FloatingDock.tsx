@@ -4,7 +4,7 @@ import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassSurface } from '../ui/GlassSurface';
-import { palette, radii, spacing, typography } from '../../theme/tokens';
+import { journeyAccent, palette, radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 
 type DockItem = {
@@ -12,13 +12,22 @@ type DockItem = {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   activeIcon: keyof typeof Ionicons.glyphMap;
-  /** Active tint, or `null` to follow the theme's primary text. */
-  color: string | null;
+  /**
+   * Active tint: one fixed colour, a per-scheme pair, or `null` to follow
+   * the theme's primary text.
+   */
+  color: string | { light: string; dark: string } | null;
 };
 
 /**
  * Active tints follow the permanent domain hierarchy: Home is navigation,
- * Fuel orange, Journey green, Atlas purple.
+ * Fuel orange, Journey gold, Atlas purple.
+ *
+ * **Journey is a per-scheme pair** (slice 6.1). It was `palette.journey`
+ * green — the success hex — and is now Journey gold. Brand gold alone would
+ * repeat the very defect described below for Home: on the light glass it is
+ * about 1.7:1, so the selected tab would be the faintest one. Light takes the
+ * deepened gold; Dark takes brand gold.
  *
  * **Home's tint is resolved per theme rather than fixed** (slice 5.3A). It
  * was `palette.ink` (`#1C1F1A`), which is the right neutral in Light and
@@ -34,7 +43,7 @@ type DockItem = {
 const DOCK_ITEMS: DockItem[] = [
   { route: 'dashboard', label: 'Home', icon: 'home-outline', activeIcon: 'home', color: null },
   { route: 'fuel', label: 'Fuel', icon: 'flame-outline', activeIcon: 'flame', color: palette.primary },
-  { route: 'journey', label: 'Journey', icon: 'trending-up-outline', activeIcon: 'trending-up', color: palette.journey },
+  { route: 'journey', label: 'Journey', icon: 'trending-up-outline', activeIcon: 'trending-up', color: journeyAccent },
   { route: 'atlas', label: 'Atlas', icon: 'planet-outline', activeIcon: 'planet', color: palette.peptide },
 ];
 
@@ -71,7 +80,8 @@ export function FloatingDock({ state, navigation }: FloatingDockProps) {
   const items = DOCK_ITEMS.map((item) => {
     const routeIndex = state.routes.findIndex((route) => route.name === item.route);
     const active = state.index === routeIndex;
-    const activeColor = item.color ?? surfaces.text;
+    const activeColor =
+      item.color === null ? surfaces.text : typeof item.color === 'string' ? item.color : item.color[scheme];
     return (
       <Pressable
         key={item.route}

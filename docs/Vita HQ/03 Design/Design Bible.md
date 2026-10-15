@@ -40,7 +40,7 @@ First application: the **Fuel Visual Refinement** slice late in Sprint 2 ([[Road
 
 - **Both themes shipped:** light background `#F8F6F2` with white cards; dark background `#000000` with `#1A1B1D` cards. Cards radius 20 with a hairline border in both themes plus a soft light-mode shadow. Exact token pairs in [[Color System]].
 - **Brand palette** (branding surfaces only): ink `#1C1F1A` · sage `#7C846B` · cream `#E6DFD2` · paper `#F7F5F1` · gold `#D4B27A` — [[Brand Identity & Icons]]
-- **Permanent domain color hierarchy** (survives any retheme — founder decision, Sprint 0.1): orange = Fuel · blue = Water · purple = Atlas/peptides · green = Journey · neutrals = structure — [[Color System]]
+- **Permanent domain color hierarchy** (survives any retheme — founder decision, Sprint 0.1): orange = Fuel · blue = Water · purple = Atlas/peptides · gold = Journey (was green until slice 6.1, 2026-10-15 — gold is identity, weight direction stays neutral) · neutrals = structure — [[Color System]]
 - Type scale, spacing, radii — [[Typography]], [[Spacing & Layout]]
 - Motion baseline — [[Motion & Animation]]
 - 15 UI primitives — [[Component Library]]

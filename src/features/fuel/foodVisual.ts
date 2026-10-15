@@ -80,14 +80,23 @@ export type CategoryVisual = { art: ArtKey; color: string };
  * the category resolves to `utensils` rather than borrowing a picture of a
  * different food.
  */
+/**
+ * Leaf green for produce drawings. These three categories used to borrow
+ * `palette.journey`, back when Journey was green; slice 6.1 made Journey
+ * gold, and Fuel's food art must not change because another feature's
+ * identity did. Same hex as before, so every drawing is pixel-identical. It
+ * is a colour for leaves, not a verdict — VITA does not grade food.
+ */
+const PRODUCE_GREEN = palette.success;
+
 const CATEGORY_VISUALS: Record<FoodCategory, CategoryVisual> = {
   banana: { art: 'banana', color: palette.carbs },
-  fruit: { art: 'apple', color: palette.journey },
+  fruit: { art: 'apple', color: PRODUCE_GREEN },
   burger: { art: 'burger', color: palette.primary },
   pizza: { art: 'pizza', color: palette.fat },
   taco: { art: 'taco', color: palette.carbs },
   burrito: { art: 'burrito', color: palette.gold },
-  bowl: { art: 'bowl', color: palette.journey },
+  bowl: { art: 'bowl', color: PRODUCE_GREEN },
   oatmeal: { art: 'bowl', color: palette.gold },
   eggs: { art: 'egg', color: palette.carbs },
   chicken: { art: 'drumstick', color: palette.gold },
@@ -102,7 +111,7 @@ const CATEGORY_VISUALS: Record<FoodCategory, CategoryVisual> = {
   bread: { art: 'bread', color: palette.gold },
   pasta: { art: 'bowl', color: palette.carbs },
   rice: { art: 'bowl', color: palette.sage },
-  salad: { art: 'bowl', color: palette.journey },
+  salad: { art: 'bowl', color: PRODUCE_GREEN },
   // A cookie is not an ice cream and not a cake.
   dessert: { art: 'utensils', color: palette.peptide },
   beverage: { art: 'bottle', color: palette.water },

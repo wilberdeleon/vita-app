@@ -26,7 +26,7 @@ Reading a surface value off `palette` pins the component to light mode permanent
 | Orange | `#F2670F` | `#FDEBDD` | **Nutrition / [[Fuel]]** |
 | Blue | `#2F80ED` | `#E3EEFD` | **[[Water]]** |
 | Purple | `#7C3AED` | `#EFE7FD` | **[[Atlas]]** (and [[Peptides]], per the approved UI reference) |
-| Green | `#2E9E5B` | `#E4F4EA` | **[[My Journey|Journey]] progression** (also semantic success) |
+| Green | `#2E9E5B` | — | Semantic success; protein; Fuel produce art. **No longer Journey** — slice 6.1 (2026-10-15) moved `palette.journey` to **gold** (`#D4B27A`, light-surface pair `#8A6A2C` as `journeyAccent`) so a weight change is never coloured as a verdict |
 | Neutrals | — | — | Navigation, structure, general UI |
 
 Structural components (SegmentedTabs, Chip, section actions, the Home dock item) default to neutral ink; domain flows pass their domain color explicitly.

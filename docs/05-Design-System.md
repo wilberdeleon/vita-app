@@ -58,6 +58,7 @@ Home is founder-approved and stable. Changing a shared primitive in a way that v
 
 - **Gold `#D4B27A` → brand, journey stage / progression emphasis, premium highlights** · **Orange `#F2670F` → Fuel / nutrition** · **Blue `#2F80ED` → Water / hydration** · **Green `#2E9E5B` → progress, movement, positive completion** · **Purple `#7C3AED` → Peptides** (and Atlas) · **Neutrals → navigation, structure, general UI**
 - Structural components (SegmentedTabs, Chip, section actions, the Home dock item) default to the theme's neutral — brand ink in light, primary text in dark; domain flows pass their domain color explicitly.
+- **Journey's token is gold (slice 6.1, founder ruling 2026-10-15).** `palette.journey` had been `#2E9E5B` — the success green — which would colour a weight loss as a verdict. It is now brand gold, read on light surfaces through `journeyAccent` (`#8A6A2C` light / `#D4B27A` dark). **Gold is Journey's identity, never a judgment:** a weight change is neutral text, never green for loss or red for gain.
 - This hierarchy is part of the permanent design language moving forward. **Do not recolor an existing feature into a different hue.** Treat it as guidance rather than an absolute where already-approved UI requires otherwise (Home's gold journey accents, for example).
 
 ## Motion (Sprint 0.1 baseline)

@@ -5,8 +5,9 @@
  *
  * Permanent domain color hierarchy (founder decision, Sprint 0.1):
  * orange = Nutrition/Fuel · blue = Water · purple = Atlas (and peptides,
- * per the approved UI reference) · green = Journey progression ·
- * neutrals = navigation, structure, general UI.
+ * per the approved UI reference) · gold = Journey (corrected from green in
+ * slice 6.1 — see `journey` below) · neutrals = navigation, structure,
+ * general UI.
  *
  * Theme-invariant vs. theme-aware (founders, 2026-07-18 — clean redesign,
  * dropping the Mountain World photo background in favor of full light/dark
@@ -24,13 +25,16 @@
  * or the component will be permanently light.
  */
 
+/** Brand gold, named once so `gold` and `journey` cannot drift apart. */
+const BRAND_GOLD = '#D4B27A';
+
 export const palette = {
   // Official VITA brand palette (founder-approved, July 2026)
   ink: '#1C1F1A',
   sage: '#7C846B',
   cream: '#E6DFD2',
   paper: '#F7F5F1',
-  gold: '#D4B27A',
+  gold: BRAND_GOLD,
 
   // Permanent domain colors
   primary: '#F2670F', // Nutrition / Fuel
@@ -39,12 +43,22 @@ export const palette = {
   waterSoft: '#E3EEFD',
   peptide: '#7C3AED', // Atlas + peptides
   peptideSoft: '#EFE7FD',
-  journey: '#2E9E5B', // Journey progression
-  journeySoft: '#E4F4EA',
+  /**
+   * Journey's feature identity — **brand gold** (slice 6.1, founder ruling).
+   *
+   * This was `#2E9E5B`, the same hex as `success`. On a weight screen that
+   * is a verdict: a falling line drawn in the "good" colour tells a person
+   * who is deliberately gaining that they are failing. Gold is identity
+   * only — it never marks a direction of weight change as good or bad.
+   * Light surfaces read it through `journeyAccent`; `journeySoft` (a green
+   * pastel with no consumer) was removed rather than recoloured.
+   */
+  journey: BRAND_GOLD,
 
   // Macros — `protein` corrected to green (founders, 2026-07-18) to match
   // the approved Daily Portrait / clean-redesign reference; reuses the
-  // existing journey green rather than inventing a new hex.
+  // existing green rather than inventing a new hex. (That green was also
+  // Journey's until slice 6.1 made Journey gold; `protein` keeps the hex.)
   protein: '#2E9E5B',
   carbs: '#F5A623',
   fat: '#E5484D',
@@ -76,6 +90,20 @@ export const palette = {
   textSecondary: '#6E6B66',
   textTertiary: '#A3A099',
   textOnColor: '#FFFFFF',
+} as const;
+
+/**
+ * Journey's identity per scheme (slice 6.1).
+ *
+ * `palette.gold` sits at roughly 1.7:1 on the light background, the failure
+ * slice 5.3C measured on the quote. Light takes the same deepened gold
+ * `QUOTE_GOLD`, `BMI_GOLD` and Fuel's breakfast accent already use; Dark
+ * takes brand gold itself. Not a new hue — the established pair, named for
+ * the feature that now owns it.
+ */
+export const journeyAccent = {
+  light: '#8A6A2C',
+  dark: palette.journey,
 } as const;
 
 /** Light-mode surfaces (founders, 2026-07-18) — mirrors `palette`'s existing values so there's one source of truth. */
