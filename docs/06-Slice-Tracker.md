@@ -4145,7 +4145,7 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 |---|---|---|
 | Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
 | **6.1 — Journey truth + identity** | Remove fabricated Journey runtime; gold identity; neutral direction | ✅ Implemented — awaiting founder device review |
-| 6.2 — Weight domain + persistence | Canonical kg store, Journey-owned unit, CRUD, no UI | ⬜ |
+| **6.2 — Weight domain + persistence** | Canonical kg store, Journey-owned unit, CRUD, no UI | ✅ Implemented — awaiting founder architecture review |
 | 6.3 — Weight logging UI | | ⬜ NOT STARTED |
 | 6.4 – 6.7 | Home + history · trend · edit/delete UI · closeout | ⬜ |
 
@@ -4164,4 +4164,20 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 **Device verification (iPhone 17 Pro simulator).** Before: the fixture as listed above, dock tint green. After, Light and Dark: the empty state only — no 185.2, no −2.4, no chart, no Week 4 of 24, no milestones, no workouts, no praise. Dock Journey tint **measured** at `#8A6A2C` in Light and `#D4B27A` in Dark. At `accessibility-extra-large` the empty state reflows cleanly; the header truncation and the dock's `Journ/ey` wrap are the pre-existing Sprint 5 debt (Planning Audit §16), not new.
 
 **Tests.** `JourneyTruth.test.tsx`, 14 tests: empty state renders; no invented weight/delta/trend/goal; no `Week N of M` or stage; no milestones/workouts/streaks/rewards; no praise or judgment vocabulary; no `Svg`; the only control is the Settings gear; the fixture files do not exist and `JOURNEY_FIXTURE` appears in no source; `palette.journey === palette.gold` and is not green/red; dock tints Journey gold per scheme and leaves Home/Fuel/Atlas unchanged. Mutation: restoring the green token fails 2 identity tests. Suite **86 / 2400 → 87 / 2414**.
+
+### Slice 6.2 — Weight domain + persistence foundation
+
+**No UI.** `src/lib/journey/` — model, repository, provider — following Water as precedent. Full architecture in `docs/09-Technical-Documentation.md` → *Journey / Weight architecture*.
+
+**Model.** `WeightEntry = { id, loggedAt, weightKg, enteredUnit }`. Canonical **kilograms**, unrounded; exact pound `0.45359237`. Display unit **lb | kg**, Journey-owned at `vita:v1:journey:prefs`, default **lb**. Entries at `vita:v1:journey:weight`. **Multiple same-day entries kept**, newest-first ordering pinned, current weight **derived** from the newest entry, edit/delete by id with stable ids, unknown id a no-op (`false`, nothing written). **No goal, no BMI, no stored trend/delta, no moral fields, no seed.**
+
+**Vectors.** 180 lb → 81.6466266 kg · 80 kg → 176.3698 lb · 1,000 lb↔kg round trips → still displays `180.0 lb`.
+
+**Tests.** 4 suites, 79 tests: `units` (constant, vectors, round trip, display boundary, mathematical validation, parsing), `entries` (same-day, ordering incl. offsets and ties, derived current, edit/delete isolation and immutability, unknown id), `repository` (keys new and collision-free, first-run empty with zero keys written, round trips, exact kg, explicit empty, corrupt JSON / non-array / malformed / duplicate ids / unknown fields, read never writes, writes only Journey keys), `provider` (first run, same-day adds, concurrent adds, add-before-load, failed write, unit change never writes entries, reload survival for unit/edit/delete/empty, no judgment API).
+
+**Mutation checks — all caught:** wrong pound constant (6 fail) · same-day add replaces (4) · unit change rewrites canonical data (1) · demo entry seeded (4) · ordering reversed (9) · load gate removed (1).
+
+**Validation.** `npm test` **91 suites / 2493 tests** (86 / 2400 at Sprint 6 start) · `tsc --noEmit` and `--noUnusedLocals --noUnusedParameters` clean · iOS export clean · **zero dependency changes** · no Sprint 5 key, store or screen touched (one comment in `lib/preferences` corrected: Sprint 6 did not take the app-level unit extension point).
+
+**Not started: 6.3 Weight Logging UI.** Awaiting founder approval of 6.1 and of this data architecture.
 

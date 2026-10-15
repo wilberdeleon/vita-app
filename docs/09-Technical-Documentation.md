@@ -389,6 +389,22 @@ That is the single most important property in the domain. A setup edited next mo
 
 **Schedules are display and organization only.** No notifications, no adherence scoring, and a language rule enforced by test: labels read *Scheduled today*, never *Due today*, and never describe a day as missed.
 
+## Journey / Weight architecture (Sprint 6 slice 6.2)
+
+`src/lib/journey/` is the single source of truth for recorded body weight. It follows Water's shape — `model/` · `data/` · `state/` · `index.ts` — and invents no new persistence machinery.
+
+**Kilograms are canonical and never rounded.** `toKg`/`fromKg` use the exact pound (`KG_PER_LB = 0.45359237`, pinned equal to `src/lib/bmi`'s `LB_TO_KG` by test); rounding to one decimal happens only in `formatWeight`. Switching the display unit 1,000 times leaves the stored value unchanged.
+
+**`WeightEntry = { id, loggedAt, weightKg, enteredUnit }`** — facts only. `id` from the shared `newId('weight')`, stable across edits. `loggedAt` is an absolute ISO instant; there is **no stored day**, so a timezone change never rewrites history and local-day grouping is derived at display time. `enteredUnit` records what was typed; the typed number is recoverable at display precision from `weightKg`, so it is not stored twice. **No** goal, BMI, delta, trend, direction, streak or success field exists.
+
+**Rules, decided once in `model/entries.ts`:** every add is a new record (same-day weigh-ins all kept) · ordering is newest first by `loggedAt`, stable, a new entry ahead of an equal-time one · current weight is `latestEntry(entries)`, derived, never stored · update/remove target one id; an unknown id is a no-op.
+
+**Validation is mathematical:** finite and > 0, decimals and a decimal comma accepted; no medical bounds.
+
+**Storage keys:** `vita:v1:journey:weight` (the entry collection) and `vita:v1:journey:prefs` (`{ unit: 'lb' | 'kg' }`, default `lb` — the same US-English V1 default as Water's fl oz). Versioning is the `v1` namespace, as everywhere in VITA. Read-time validation drops malformed or duplicate-id records whole, drops unknown fields, reads corrupt JSON as empty, and never writes on read. An empty collection removes the key.
+
+**`WeightProvider` / `useWeight()`** mirror `WaterProvider`: shadow refs, optimistic writes, mutations resolve `true` only when storage was written, and every mutation awaits the initial load so an early add cannot overwrite history. `setUnit` writes preferences only — never entries. **Not mounted in 6.2**; 6.3 mounts it with the logging UI.
+
 ## Water architecture (Sprint 3 slice 3.2)
 
 `src/lib/water/` is the single source of truth for hydration. It lives in `src/lib/` because Fuel's Hydration module reads the same state the Water screen does, and features never import each other.

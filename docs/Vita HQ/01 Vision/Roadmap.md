@@ -367,7 +367,7 @@ Sprint 3 shipped **reminder preferences and a reminder time that persist** on a 
 
 **Intentionally delayed until the identity sprint is approved.** The 2026-09-01 identity insertion moved both one place later so Journey is built in VITA's established visual and interaction language rather than one already targeted for replacement. **Journey is not redesigned by that decision and its scope is not reduced** — Sprint 5's language is what Journey is built *in*.
 
-**Sprint 6 opened 2026-10-15.** Characterization `9f68201` split the legacy slices (Milestones · Achievements · Rewards · Streak deferred) and the founders ruled on goal weight, units, same-day entries and identity — see [[Decision Log]]. **6.1 — Journey truth ✅**: the fabricated Journey runtime is removed and Journey is gold. 6.2 (weight domain) follows; 6.3 logging UI not started. Repo `docs/04-Master-Roadmap.md` is authoritative.
+**Sprint 6 opened 2026-10-15.** Characterization `9f68201` split the legacy slices (Milestones · Achievements · Rewards · Streak deferred) and the founders ruled on goal weight, units, same-day entries and identity — see [[Decision Log]]. **6.1 — Journey truth ✅**: the fabricated Journey runtime is removed and Journey is gold. **6.2 — weight data foundation ✅**: canonical kg, Journey-owned lb/kg unit, many weigh-ins per day, edit/delete by id, no goal/BMI/trend storage. 6.3 logging UI not started. Repo `docs/04-Master-Roadmap.md` is authoritative.
 
 *The eight slices below were written as one sprint; the split above supersedes their grouping.*
 

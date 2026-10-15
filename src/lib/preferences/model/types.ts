@@ -67,9 +67,10 @@ export function isThemeMode(value: unknown): value is ThemeMode {
  * no measurement, so an app-wide preference would have been a setting with
  * nothing behind it.
  *
- * The extension point still stands for **Sprint 6 — Journey / Weight**,
- * which does store weight and is the first feature that would make such a
- * preference observable. Adding them is:
+ * **Sprint 6 did not take it either.** The founders ruled (2026-10-15) that
+ * **Journey owns the body-weight display unit**, the way Water owns its
+ * volume unit — it lives at `vita:v1:journey:prefs` in `src/lib/journey`,
+ * not here. If a later feature ever needs an app-wide unit, adding one is:
  *
  *   1. a field here, with its own `DEFAULT_*` and type guard;
  *   2. a line in `parseAppPreferences`, which already falls back per field;

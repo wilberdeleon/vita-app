@@ -1,6 +1,6 @@
 # Sprint 6 — Journey / Weight · Planning & Architecture Audit
 
-**Status: characterization ✅ COMPLETE · founder rulings recorded in `docs/04-Master-Roadmap.md` · 6.1 ✅ implemented.** Decisions 1–4 in §13 are resolved: goal deferred, many weigh-ins per day with edit/delete, Journey-local unit, no Dashboard widget.
+**Status: characterization ✅ COMPLETE · founder rulings recorded in `docs/04-Master-Roadmap.md` · 6.1 ✅ · 6.2 ✅ implemented · 6.3 ⬜ not started.** Decisions 1–4 in §13 are resolved: goal deferred, many weigh-ins per day with edit/delete, Journey-local unit, no Dashboard widget.
 Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb` — the locked Sprint 5 product.
 
 This document characterizes what Sprint 6 is, what already exists, and what has to be decided before a line of feature code is written. **No product code was written to produce it.**
