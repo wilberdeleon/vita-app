@@ -405,6 +405,10 @@ That is the single most important property in the domain. A setup edited next mo
 
 **`WeightProvider` / `useWeight()`** mirror `WaterProvider`: shadow refs, optimistic writes, mutations resolve `true` only when storage was written, and every mutation awaits the initial load so an early add cannot overwrite history. `setUnit` writes preferences only — never entries. **Not mounted in 6.2**; 6.3 mounts it with the logging UI.
 
+## Journey experience (Sprint 6 slice 6.3)
+
+`src/features/journey/` is presentation over explicit data. `JourneyView` takes a required `JourneyViewData` — `{ status, weights, photos, unit }` — and renders the Overview / Weight / Photos pillars with local selection state. Release (`(tabs)/journey.tsx`) mounts `WeightProvider` around the Journey tab only and passes `photos: NO_PHOTOS`, a frozen empty list, until 6.5 adds a photo domain. The `__DEV__` route `journey-preview.tsx` passes in-file fixtures directly, with no provider and no storage. `JourneyPhotoView.placeholder` is the literal `true`: in 6.3 no photo can claim to be an image. Shared visuals: `JourneySpine` (gold rail, hollow nodes for structure, filled for records), `PhotoFrame` (neutral 3:4), `WeightTrend` (time-scaled, no goal line), `useJourneyAccent`. Display arithmetic in `format.ts` is signed and colourless.
+
 ## Water architecture (Sprint 3 slice 3.2)
 
 `src/lib/water/` is the single source of truth for hydration. It lives in `src/lib/` because Fuel's Hydration module reads the same state the Water screen does, and features never import each other.

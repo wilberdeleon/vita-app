@@ -80,23 +80,37 @@ function screenText(tree: ReactTestRenderer): string {
     .join(' \n ');
 }
 
-describe('release Journey with no recorded weight', () => {
+/** Mounts release Journey and returns the text of all three pillars, visited in turn. */
+async function allPillarsText(): Promise<string> {
+  const tree = await mount(<Journey />);
+  const parts = [screenText(tree)];
+  for (const pillar of ['Weight', 'Photos', 'Overview']) {
+    const control = tree.root.findAll(
+      (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
+    )[0];
+    await act(async () => control.props.onPress());
+    parts.push(screenText(tree));
+  }
+  return parts.join(' \n ');
+}
+
+describe('release Journey with no recorded weight — every pillar', () => {
   it('renders the truthful empty state', async () => {
-    const text = screenText(await mount(<Journey />));
+    const text = await allPillarsText();
     expect(text).toContain('My Journey');
     expect(text).toContain('No weight entries yet');
-    expect(text).toContain('Weight you record will appear here, over time.');
+    expect(text).toContain('No progress photos yet');
   });
 
   it('shows no invented weight, delta or trend', async () => {
-    const text = screenText(await mount(<Journey />));
+    const text = await allPillarsText();
     for (const fiction of ['185.2', '186.2', '191.8', '175.0', '2.4', ' lb', 'lbs', 'Weight Trend', 'Average Weight', 'Goal Weight']) {
       expect(text).not.toContain(fiction);
     }
   });
 
   it('shows no staged program', async () => {
-    const text = screenText(await mount(<Journey />));
+    const text = await allPillarsText();
     expect(text).not.toMatch(/week\s+\d+\s+of\s+\d+/i);
     for (const stage of ['Momentum', 'Foundation', 'Journey Stage']) {
       expect(text).not.toContain(stage);
@@ -104,36 +118,53 @@ describe('release Journey with no recorded weight', () => {
   });
 
   it('shows no milestones, workouts, streaks or rewards', async () => {
-    const text = screenText(await mount(<Journey />)).toLowerCase();
+    const text = (await allPillarsText()).toLowerCase();
     for (const fiction of ['milestone', 'workout', 'streak', 'achievement', 'reward', '5 / 5', 'protein goal']) {
       expect(text).not.toContain(fiction);
     }
   });
 
   it('generates no praise or judgment', async () => {
-    const text = screenText(await mount(<Journey />)).toLowerCase();
-    for (const judgment of ['momentum', 'dropped', 'keep', 'great', 'success', 'on track', 'off track', 'progress', 'improv', 'setback', 'results will follow']) {
+    const text = (await allPillarsText()).toLowerCase();
+    for (const judgment of ['momentum', 'dropped', 'keep going', 'keep the', 'great', 'success', 'on track', 'off track', 'improv', 'setback', 'results will follow', 'well done', 'congrat']) {
       expect(text).not.toContain(judgment);
     }
+    // "Progress" survives only as the name of the thing — a progress photo —
+    // never as a verdict ("making progress", "great progress").
+    expect(text.replace(/progress[- ]photo/g, '')).not.toContain('progress');
   });
 
-  it('draws no chart', async () => {
+  it('draws no chart on any pillar', async () => {
     const tree = await mount(<Journey />);
-    expect(tree.root.findAllByType(Svg)).toHaveLength(0);
+    for (const pillar of ['Overview', 'Weight', 'Photos']) {
+      const control = tree.root.findAll(
+        (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
+      )[0];
+      await act(async () => control.props.onPress());
+      expect(tree.root.findAllByType(Svg)).toHaveLength(0);
+    }
   });
 
   it('offers no action into an unfinished flow', async () => {
-    // Logging is slice 6.3; Photos is Sprint 7. The only pressable on the
-    // screen is the header's Settings gear.
-    const tree = await mount(<Journey />);
-    const text = screenText(tree).toLowerCase();
-    for (const action of ['log weight', 'add', 'photo', 'view all']) {
+    // Logging is 6.4 and photo capture 6.5. The only controls are the
+    // Settings gear and the three pillar segments — on every pillar.
+    const text = (await allPillarsText()).toLowerCase();
+    const tree = mounted!;
+    for (const action of ['log weight', 'add', 'take a photo', 'upload', 'view all', 'coming soon', 'sprint', 'soon']) {
       expect(text).not.toContain(action);
     }
-    const buttons = tree.root.findAll(
-      (node) => typeof node.type === 'string' && (node.props.accessibilityRole === 'button' || typeof node.props.onPress === 'function'),
-    );
-    expect(buttons.map((node) => node.props.accessibilityLabel)).toEqual(['Settings']);
+    for (const pillar of ['Overview', 'Weight', 'Photos']) {
+      const control = tree.root.findAll(
+        (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
+      )[0];
+      await act(async () => control.props.onPress());
+      const buttons = tree.root.findAll(
+        (node) => typeof node.type === 'string' && (node.props.accessibilityRole === 'button' || typeof node.props.onPress === 'function'),
+      );
+      expect(buttons.map((node) => node.props.accessibilityLabel).sort()).toEqual(
+        ['Journey, Overview', 'Journey, Photos', 'Journey, Weight', 'Settings'].sort(),
+      );
+    }
   });
 });
 

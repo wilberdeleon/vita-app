@@ -22,6 +22,18 @@ type Props = {
    * "Amount unit, mg". Optional: single-toggle screens read fine without it.
    */
   groupLabel?: string;
+  /**
+   * Label colour on the active segment, for an `activeColor` too light for
+   * white text — Journey's brand gold in Dark (slice 6.3). Unset, every
+   * existing caller renders exactly as before.
+   */
+  activeLabelColor?: string;
+  /**
+   * Keep each label on one line, shrinking it only when it would otherwise
+   * wrap — Journey's "Overview" broke as "Overvi/ew" at accessibility sizes
+   * (slice 6.3). Opt-in, so every existing caller is unchanged.
+   */
+  fitLabels?: boolean;
 };
 
 /**
@@ -46,13 +58,21 @@ type Props = {
  * actually changes the selection**: re-tapping the segment you are already
  * on has changed nothing, and a buzz for nothing is the noise §9 warns about.
  */
-export function SegmentedTabs({ options, selectedIndex, onChange, activeColor, groupLabel }: Props) {
+export function SegmentedTabs({
+  options,
+  selectedIndex,
+  onChange,
+  activeColor,
+  groupLabel,
+  activeLabelColor: activeLabelOverride,
+  fitLabels = false,
+}: Props) {
   const { scheme, surfaces } = useTheme();
   // The one case needing a dark label is the neutral default in dark mode,
   // where the active segment is white. Every domain color is dark enough for white.
   const neutralDarkFill = !activeColor && scheme === 'dark';
   const fill = activeColor ?? (neutralDarkFill ? surfaces.text : palette.ink);
-  const activeLabelColor = neutralDarkFill ? surfaces.background : palette.textOnColor;
+  const activeLabelColor = activeLabelOverride ?? (neutralDarkFill ? surfaces.background : palette.textOnColor);
 
   return (
     <View style={[styles.track, { backgroundColor: surfaces.track }]}>
@@ -74,6 +94,7 @@ export function SegmentedTabs({ options, selectedIndex, onChange, activeColor, g
               style={[styles.segment, active && { backgroundColor: fill }]}
             >
               <Text
+                {...(fitLabels ? { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.5 } : null)}
                 style={[
                   styles.label,
                   { color: active ? activeLabelColor : surfaces.textSecondary },

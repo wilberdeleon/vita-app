@@ -1,14 +1,36 @@
+import type { WeightEntry, WeightUnit } from '../../lib/journey';
+
 /**
- * Chart input shape for the dormant `LineChart` / `WeightBars` components.
+ * What the Journey pillars render — slice 6.3.
  *
- * Slice 6.1 deleted the rest of this file — `JourneyData`, `Milestone`,
- * `WeightStats` (with its `goal`) and `PhotoEntry` existed only to type the
- * invented `JOURNEY_FIXTURE`, and none of them is the canonical Journey
- * model. Stored weight lives in `src/lib/journey/` (slice 6.2). The charts
- * are kept, unrendered, for real-data reuse in slice 6.5.
+ * Every Journey component takes this as **explicit props** and reads nothing
+ * on its own. The release route fills it from the real `WeightProvider`; the
+ * `__DEV__` preview fills it from fixtures declared inside the preview route.
+ * Neither can fall back to the other: there is no default, no "if empty, show
+ * an example" — a component handed nothing renders the truthful empty state.
  */
-export type WeightPoint = {
-  /** Short axis label, e.g. "Apr 15". */
-  label: string;
-  weight: number;
+export type JourneyViewData = {
+  status: 'loading' | 'ready';
+  /** Newest first, as `WeightProvider` delivers them. */
+  weights: readonly WeightEntry[];
+  /** Always `[]` in release until slice 6.5 builds a photo domain. */
+  photos: readonly JourneyPhotoView[];
+  unit: WeightUnit;
 };
+
+/**
+ * A progress photo as the Photos pillar lays it out.
+ *
+ * **Visual characterization only.** No photo model, storage or image exists
+ * yet — 6.5 designs those. The only photos that can exist in 6.3 are `__DEV__`
+ * layout placeholders, hence `placeholder: true` as a literal: there is no way
+ * to construct one that claims to be a real image.
+ */
+export type JourneyPhotoView = {
+  id: string;
+  /** ISO instant the photo was taken. */
+  takenAt: string;
+  placeholder: true;
+};
+
+export type JourneyPillar = 'overview' | 'weight' | 'photos';

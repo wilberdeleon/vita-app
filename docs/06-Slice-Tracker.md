@@ -4148,7 +4148,7 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 | Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ `f50351f` (+ `6c09aa1`) |
-| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 In progress |
+| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 Implemented — **awaiting founder review** |
 | 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ |
 | 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ |
 | 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ |
@@ -4186,4 +4186,33 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 **Validation.** `npm test` **91 suites / 2493 tests** (86 / 2400 at Sprint 6 start) · `tsc --noEmit` and `--noUnusedLocals --noUnusedParameters` clean · iOS export clean · **zero dependency changes** · no Sprint 5 key, store or screen touched (one comment in `lib/preferences` corrected: Sprint 6 did not take the app-level unit extension point).
 
 **Next (as planned at the time): 6.3 Weight Logging UI** — superseded the same day by the founder reframe; logging is now 6.4.
+
+### Slice 6.3 — Journey Experience Foundation
+
+**Purpose.** Make Journey readable as the product it is meant to be — VITA's record of real transformation, not a weight tracker — before more weight functionality is layered on. Founder reframe and revised slices: `docs/04-Master-Roadmap.md` → Sprint 6 → *Journey North Star*.
+
+**Architecture.** `journey.tsx` mounts `WeightProvider` **on the Journey tab only** (narrowest boundary; no app-wide provider) and hands `JourneyView` `{ status, weights, photos: NO_PHOTOS, unit }`. `NO_PHOTOS` is a frozen empty list: release has no photo domain until 6.5. `JourneyView` (`src/features/journey/components/`) owns the pillar selector — the shared `SegmentedTabs` in `journeyAccent` gold, ink label in Dark, `groupLabel="Journey"` so VoiceOver reads *"Journey, Weight, selected"* — and renders `OverviewPillar`, `WeightPillar` or `PhotosPillar`. **Local state, not routes, not persisted**; every visit opens on Overview. Nothing renders until the history is read, so an empty state never flashes over real records.
+
+**Release, empty — three distinct states, no buttons.**
+- **Overview** — *"Journey brings together the weight and progress photos you record, so you can look back on how things have changed over time."* Then the **Journey spine**: a restrained gold rail with hollow nodes — WEIGHT *No weight entries yet.* · PROGRESS PHOTOS *No progress photos yet.* · TIMELINE *Your recorded Journey will appear here, in the order it happened.* Structure, not history: hollow nodes are places records will attach.
+- **Weight** — gold scale glyph, **No weight entries yet**, *"Every weigh-in you record is kept here with its date and time — more than one a day included — so you can see your weight across the whole Journey."*
+- **Photos** — an empty dashed 3:4 portrait frame beside **No progress photos yet** — *"Your private progress-photo history will live here, in the order the photos were taken."*
+
+**Populated presentation** (reachable in release only once real data exists; reviewable now through the preview). Overview: LATEST WEIGHT as the largest text, date and time, a signed neutral change since the first entry with elapsed time, a compact line, the latest photo, recent records on the spine with filled nodes and a *First record* anchor. Weight: latest weight, change since first entry, `WeightTrend` with first/last dates, and a read-only history list. Photos: a static **Then / Now** pair — earliest and latest frame, date, a weight only where one was really recorded that day, *"10 weeks apart"* — over a 3-column chronological grid. Then/Now is **hierarchy only**; comparison is 6.7.
+
+**`WeightTrend` replaces `LineChart` and `WeightBars`** (deleted): x is time, not index; the data's own range; no goal line; gold as identity regardless of direction; one spoken summary for VoiceOver.
+
+**DEV preview.** `/journey-preview?state=empty|early|established&pillar=overview|weight|photos` — deep link only, like every harness (the Fuel audit forbids product code referencing a `*-preview` route, so no Settings row was added). Labelled *DEVELOPMENT PREVIEW · FIXTURE DATA, NOT A REAL JOURNEY*. Fixtures live **only in that file**: Early has four weigh-ins over two weeks (two on one day) and one photo; Established twelve weigh-ins over ten weeks that rise as well as fall (186.4 → 178.0 lb, −8.4) and four photos. Photos are neutral placeholders announced as *"Development progress photo placeholder, <date>"* — no stock image, no body. **No provider, no repository, no storage**; release builds render *Not available.*
+
+**Shared change.** `SegmentedTabs` gained two **opt-in** props — `activeLabelColor` (ink on gold in Dark) and `fitLabels` (one line, shrinking only if it would wrap; "Overview" broke as *Overvi/ew* at accessibility-extra-large). Every existing caller is unchanged.
+
+**Device verification (iPhone 17 Pro simulator).** Release Overview / Weight / Photos empty in Light and Dark; DEV Established Overview / Weight / Photos in Light and Dark; accessibility-extra-large on release Overview and the preview's Weight and Photos. The empty dashed frame's border was raised to tertiary text after it nearly vanished on cream. The preview's first pass doubled the status-bar inset under its bar; fixed with `topInset={false}`. Carried Sprint 5 debt unchanged: header truncation and the dock's `Journ/ey` wrap at AX sizes.
+
+**Tests.** `JourneyTruth` now sweeps **all three pillars** (no fixture values, stages, milestones, workouts, praise, chart or action; "progress" allowed only as *progress photo*; the only controls are Settings and the three segments). New `JourneyExperience`, 20 tests: default Overview and announced selection; distinct empty content per pillar; no social vocabulary in Photos; selection never persisted; release reads `vita:v1:journey:*`, seeds and writes nothing, leaves the unit alone, and renders a real stored weigh-in; **isolation** — empty real history never shows preview-only values, no release module imports the preview, release passes only the frozen empty photo list, `JourneyView` has no default data; preview labelled, populated, storage-silent, placeholders announced as such, neutral change and no green/red, *Not available.* when `__DEV__` is false; neutral arithmetic.
+
+**Mutation checks — all caught:** release falls back to an example weight (6 fail) · release hands Photos a placeholder (5) · preview gate removed (1) · Journey opens on Weight (5) · weight change coloured green (2) · praise added to Overview (1).
+
+**Validation.** **92 suites / 2513 tests** (91 / 2493) · both `tsc` modes clean · iOS export clean · **zero dependency changes** · no persistence added (no tab key, no photo/timeline/milestone records) · Dashboard, Fuel, Water, Peptides, Settings, Tools and BMI untouched.
+
+**Not started: 6.4 Weight Logging + History.** Waits on the founder's judgment of the Journey direction.
 

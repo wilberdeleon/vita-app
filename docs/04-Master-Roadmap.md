@@ -74,7 +74,7 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ✅ Complete |
 | **4 — Settings + Tools Foundation** | Settings architecture and a top-level Tools destination — the foundation later Tools are built into | ✅ Complete |
 | **5 — VITA Identity & Interaction** | **Establish the VITA visual and interaction language and apply it across every already-built product area — the language Journey is built in** | ✅ **Complete / locked** — merged to `main` at `6c657fb` |
-| 6 — Journey (Weight + Core Photos) | **Reframed 2026-10-15:** Journey as VITA's record of real transformation — Overview, Weight and core Photos, then timeline and trends | 🟡 **In progress** — characterization, 6.1, 6.2 ✅ · 6.3 in progress |
+| 6 — Journey (Weight + Core Photos) | **Reframed 2026-10-15:** Journey as VITA's record of real transformation — Overview, Weight and core Photos, then timeline and trends | 🟡 **In progress** — characterization, 6.1, 6.2 ✅ · 6.3 awaiting founder review |
 | 7 — Advanced Progress Photos | **Re-scoped 2026-10-15:** core photos moved into Sprint 6; what remains is re-characterized after Sprint 6 | ⬜ To be re-characterized |
 | 8 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |
 | 9 — Final Polish / Motion / Launch Experience | App-wide finishing motion, consistency, edge cases, and the launch experience | ⬜ Planned |
@@ -627,7 +627,7 @@ Sprint 5 **establishes the interaction vocabulary and rolls it out across every 
 | Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ `f50351f` (+ `6c09aa1`) |
-| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 In progress |
+| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 Implemented — **awaiting founder review** |
 | 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ |
 | 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ |
 | 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ |
@@ -681,7 +681,9 @@ The eight slices written for Journey under the earlier structure (Journey Overvi
 
 **6.2 — Weight domain + persistence ✅ implemented.** `src/lib/journey/`: canonical kilograms, Journey-owned lb/kg display unit (default lb), multiple same-day entries, stable ids, absolute timestamps, newest-first ordering, edit/delete by id, current weight derived. No goal, no BMI storage, no stored trends, no recommendations, no UI.
 
-Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ · 6.2 ✅ · 6.3 Journey Experience Foundation (see revised table above) · 6.4–6.8 ⬜.** Sprint 6 is not complete.
+**6.3 — Journey Experience Foundation 🟡 implemented, awaiting founder review.** Journey opens on **Overview · Weight · Photos** in Journey gold. Release reads the real weight domain through `WeightProvider`, mounted on the Journey tab only, and writes nothing on view; Photos always receives an empty list until 6.5. Each pillar has its own truthful empty state and none has a button. The populated future is reviewable only through the `__DEV__`-only `/journey-preview` (Empty · Early · Established), which renders the same components from in-file fixtures with no provider and no storage. See `docs/06-Slice-Tracker.md`.
+
+Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ · 6.2 ✅ · 6.3 🟡 awaiting founder review · 6.4 Weight Logging + History ⬜ · 6.5 Core Progress Photos ⬜ · 6.6 Timeline + Factual Milestones ⬜ · 6.7 Trends + Then-vs-Now ⬜ · 6.8 Founder Audit ⬜.** Sprint 6 is not complete; 6.4 waits on founder approval of the Journey direction.
 
 ---
 

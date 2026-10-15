@@ -1,6 +1,6 @@
 # Sprint 6 — Journey / Weight · Planning & Architecture Audit
 
-**Status: characterization ✅ COMPLETE · founder rulings recorded in `docs/04-Master-Roadmap.md` · 6.1 ✅ · 6.2 ✅ implemented · **founder reframe 2026-10-15 — see §17; §12's 6.3–6.7 sequence is superseded.** Decisions 1–4 in §13 are resolved: goal deferred, many weigh-ins per day with edit/delete, Journey-local unit, no Dashboard widget.
+**Status: characterization ✅ COMPLETE · founder rulings recorded in `docs/04-Master-Roadmap.md` · 6.1 ✅ · 6.2 ✅ implemented · **founder reframe 2026-10-15 — see §17; §12's 6.3–6.7 sequence is superseded** · 6.3 Journey Experience Foundation 🟡 awaiting founder review. Decisions 1–4 in §13 are resolved: goal deferred, many weigh-ins per day with edit/delete, Journey-local unit, no Dashboard widget.
 Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb` — the locked Sprint 5 product.
 
 This document characterizes what Sprint 6 is, what already exists, and what has to be decided before a line of feature code is written. **No product code was written to produce it.**
@@ -308,7 +308,7 @@ Sprint 9 — Final Polish is the named app-wide pass for the first three.
 | Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ `f50351f` (+ `6c09aa1`) |
-| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 In progress |
+| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 Implemented — **awaiting founder review** |
 | 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ |
 | 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ |
 | 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ |

@@ -1,28 +1,42 @@
-import { EmptyState, Screen, ScreenHeader } from '../../../components/ui';
+import { Screen, ScreenHeader } from '../../../components/ui';
+import { JourneyView } from '../../../features/journey/components/JourneyView';
+import type { JourneyPhotoView } from '../../../features/journey/types';
+import { WeightProvider, useWeight } from '../../../lib/journey';
 
 /**
- * My Journey — slice 6.1, the truthful foundation.
+ * Release has no photo domain until slice 6.5, so Photos always receives
+ * this. Named and frozen so no code path can hand release a photo.
+ */
+const NO_PHOTOS: readonly JourneyPhotoView[] = Object.freeze([]);
+
+/**
+ * My Journey — Overview · Weight · Photos (slice 6.3).
  *
- * Until slice 6.1 this tab rendered `JOURNEY_FIXTURE` unconditionally: a
- * 185.2 lb current weight, a green "−2.4 lbs", "Week 4 of 24", completed
- * milestones, a workout count and "Keep the momentum." — none of it entered
- * by the person holding the phone. It now says only what VITA knows.
+ * **Real data only.** Weight comes from the real `WeightProvider`, mounted
+ * here at the narrowest boundary that needs it rather than app-wide; it reads
+ * `vita:v1:journey:*` and writes nothing on view. Photos are always empty in
+ * release. There is no fixture and no fallback to one: an empty history
+ * renders the empty pillars, never an example. The populated layouts are
+ * reviewed through the `__DEV__`-only preview route, which never mounts this
+ * provider and never touches storage.
  *
- * No weight is stored yet, so the screen is the empty state and nothing else:
- * no chart, no stage, no milestones, no Overview/Weight/Photos switcher over
- * three bodies that would each say the same nothing. **There is deliberately
- * no Log Weight action** — logging is slice 6.3, and a button into an
- * unfinished flow would be its own small lie. Photos is Sprint 7.
+ * No Log Weight or Add Photo action exists yet — those are 6.4 and 6.5, and a
+ * button into an unbuilt flow would be its own small lie.
  */
 export default function Journey() {
   return (
+    <WeightProvider>
+      <JourneyScreen />
+    </WeightProvider>
+  );
+}
+
+function JourneyScreen() {
+  const { status, entries, unit } = useWeight();
+  return (
     <Screen dockClearance>
       <ScreenHeader title="My Journey" settings />
-      <EmptyState
-        icon="footsteps-outline"
-        title="No weight entries yet"
-        body="Weight you record will appear here, over time."
-      />
+      <JourneyView data={{ status, weights: entries, photos: NO_PHOTOS, unit }} />
     </Screen>
   );
 }
