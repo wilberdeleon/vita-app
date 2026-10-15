@@ -4141,13 +4141,19 @@ A test mounts **both routes over the same storage and asserts the two `view` pro
 
 Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization `9f68201` — see `docs/Sprint-6-Planning-Audit.md`. Founder rulings recorded in `docs/04-Master-Roadmap.md` → Sprint 6.
 
-| Slice | Objective | Status |
+**Reframed 2026-10-15 (founder revision): Journey is VITA's record of real transformation, not a weight tracker.** Core Photos moved into Sprint 6. See `docs/04-Master-Roadmap.md` → Sprint 6 → *Journey North Star*. The earlier row set (6.3 Weight logging UI · 6.4–6.7) is superseded.
+
+| Slice | Scope | Status |
 |---|---|---|
 | Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
-| **6.1 — Journey truth + identity** | Remove fabricated Journey runtime; gold identity; neutral direction | ✅ Implemented — awaiting founder device review |
-| **6.2 — Weight domain + persistence** | Canonical kg store, Journey-owned unit, CRUD, no UI | ✅ Implemented — awaiting founder architecture review |
-| 6.3 — Weight logging UI | | ⬜ NOT STARTED |
-| 6.4 – 6.7 | Home + history · trend · edit/delete UI · closeout | ⬜ |
+| **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ `c4c9693` |
+| **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ `f50351f` (+ `6c09aa1`) |
+| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 In progress |
+| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ |
+| 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ |
+| 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ |
+| 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ |
+| 6.8 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ |
 
 ### Slice 6.1 — Journey truth + identity foundation
 
@@ -4179,5 +4185,5 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 
 **Validation.** `npm test` **91 suites / 2493 tests** (86 / 2400 at Sprint 6 start) · `tsc --noEmit` and `--noUnusedLocals --noUnusedParameters` clean · iOS export clean · **zero dependency changes** · no Sprint 5 key, store or screen touched (one comment in `lib/preferences` corrected: Sprint 6 did not take the app-level unit extension point).
 
-**Not started: 6.3 Weight Logging UI.** Awaiting founder approval of 6.1 and of this data architecture.
+**Next (as planned at the time): 6.3 Weight Logging UI** — superseded the same day by the founder reframe; logging is now 6.4.
 

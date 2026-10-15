@@ -6,7 +6,21 @@
 
 ---
 
-## Current state (verified in repo, Sprint 0 — mock data)
+## North Star (founder revision, 2026-10-15) — authoritative
+
+> **Journey is VITA's personal record of real transformation over time. Weight is one signal, Photos are one signal, and the timeline connects them. Journey may describe factual change, but it never fabricates progress or decides whether body change is good or bad.**
+
+**Journey is not a weight tracker.** Three first-class pillars — **Overview** (the story), **Weight** (measurable history), **Photos** (visual history) — later connected by a timeline of real events and a Then-vs-Now view. It should feel personal, visual, chronological and reflective — never clinical, spreadsheet-like, gamified or motivational-poster. **VITA describes factual change; the user decides what it means.** Journey may be incomplete; it may never be fake.
+
+**Milestones** describe participation (*first weigh-in, first progress photo, one month since your first record*), never body direction. **Streaks** are off the plan. **Stages** stay dormant until something real advances them.
+
+See [[Roadmap]] for the revised Sprint 6 slices and [[Decision Log]].
+
+## Current state (2026-10-15)
+
+The Sprint 0 mock Journey below is **gone**: slice 6.1 deleted the fixture and its tabs, and Journey's colour is now **gold**. Slice 6.2 added the real weight domain (`src/lib/journey/`). Slice 6.3 rebuilds Overview · Weight · Photos on truthful empty states.
+
+## Historical state (Sprint 0 — mock data, removed in 6.1)
 
 Built in Slice 0.8 as `src/features/journey/` with three tabs:
 

@@ -74,8 +74,8 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ✅ Complete |
 | **4 — Settings + Tools Foundation** | Settings architecture and a top-level Tools destination — the foundation later Tools are built into | ✅ Complete |
 | **5 — VITA Identity & Interaction** | **Establish the VITA visual and interaction language and apply it across every already-built product area — the language Journey is built in** | ✅ **Complete / locked** — merged to `main` at `6c657fb` |
-| 6 — Journey / Weight | The weight half of the Journey experience, and the core Journey data architecture | 🟡 **In progress** — characterization, 6.1, 6.2 ✅ · 6.3 not started |
-| 7 — Journey / Photos | The transformation-photo half of the Journey experience | ⬜ Planned |
+| 6 — Journey (Weight + Core Photos) | **Reframed 2026-10-15:** Journey as VITA's record of real transformation — Overview, Weight and core Photos, then timeline and trends | 🟡 **In progress** — characterization, 6.1, 6.2 ✅ · 6.3 in progress |
+| 7 — Advanced Progress Photos | **Re-scoped 2026-10-15:** core photos moved into Sprint 6; what remains is re-characterized after Sprint 6 | ⬜ To be re-characterized |
 | 8 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |
 | 9 — Final Polish / Motion / Launch Experience | App-wide finishing motion, consistency, edge cases, and the launch experience | ⬜ Planned |
 
@@ -606,7 +606,42 @@ Sprint 5 **establishes the interaction vocabulary and rolls it out across every 
 
 ---
 
-# Sprint 6 — Journey / Weight
+# Sprint 6 — Journey: Weight + Core Photos
+
+*Named "Journey / Weight" until the founder reframe of 2026-10-15; history below that line is preserved as written.*
+
+## Journey North Star — founder revision (2026-10-15) · authoritative
+
+> **Journey is VITA's personal record of real transformation over time. Weight is one signal, Photos are one signal, and the timeline connects them. Journey may describe factual change, but it never fabricates progress or decides whether body change is good or bad.**
+
+**Journey is not a weight tracker.** It is VITA's emotional and visual record of a person's real transformation — recorded weight, progress photos, dates, factual milestones, chronological history, visual comparison and trend context. **Weight is one input, not the definition of Journey. Photos are a first-class pillar**, not decorative media or a later bolt-on; they are much of what makes Journey different from a generic weight tracker. The aim is *a living autobiography of real progress*, not a spreadsheet with a graph.
+
+**The question every Journey decision answers:** *does this help the user see, understand, or remember their real journey over time?* — where they began, where they are now, what changed and when, what they recorded, what they looked like, how much time has passed. **Without VITA fabricating meaning or judging the direction.** Journey may be incomplete; it may never be fake.
+
+**Why the roadmap changed.** The plan below 6.2 was weight-centric — 6.3 logging UI, 6.4 home and history, 6.5 trend, with photos left to Sprint 7. Reviewing 6.1 and 6.2, the founder ruled that this would build *a weight tracker first and a Journey later*, and that **core progress photos belong inside Journey's core experience**. A sprint boundary drawn before that was understood is not preserved at the product's expense. 6.1 and 6.2 stand unchanged as foundation.
+
+**Revised Sprint 6 structure** (supersedes the 6.3–6.7 sequence in `docs/Sprint-6-Planning-Audit.md` §12):
+
+| Slice | Scope | Status |
+|---|---|---|
+| Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
+| **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ `c4c9693` |
+| **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ `f50351f` (+ `6c09aa1`) |
+| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 In progress |
+| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ |
+| 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ |
+| 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ |
+| 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ |
+| 6.8 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ |
+
+**Three pillars.** **Overview** — the story and synthesis. **Weight** — the measurable body-weight history. **Photos** — the visual progress history. Parts of one Journey, not three utilities.
+
+**Factual milestones (product contract for 6.6).** A milestone describes **participation and history**, never body direction: *First weigh-in · Fifth check-in · First progress photo · One month since your first recorded Journey event · 10 recorded Journey events.* Never: *Lost 10 lb · Stayed under goal · Perfect week · 7-day streak · Hit ideal BMI.* Not implemented before 6.6.
+
+**Streak System — deferred, and rejected in its legacy form.** A streak that resets on a missed day is a guilt mechanic, which VITA does not ship. It is **not on the revised Sprint 6 plan** and returns only by a new, explicit founder decision. Milestones, Achievements and Rewards & Celebrations from the legacy eight are replaced by the factual-milestone contract above.
+
+**Journey Stages stay dormant.** `src/lib/journeyStages.ts` is unused. Stages return only with a real definition of what advances them — never a calendar.
+
 
 **⚠️ Gated. Sprint 6 does not begin until slice 5.10 — the Founder Identity Audit — passes founder real-device review.**
 
@@ -646,11 +681,16 @@ The eight slices written for Journey under the earlier structure (Journey Overvi
 
 **6.2 — Weight domain + persistence ✅ implemented.** `src/lib/journey/`: canonical kilograms, Journey-owned lb/kg display unit (default lb), multiple same-day entries, stable ids, absolute timestamps, newest-first ordering, edit/delete by id, current weight derived. No goal, no BMI storage, no stored trends, no recommendations, no UI.
 
-Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ · 6.2 ✅ · 6.3 ⬜ NOT STARTED · later slices ⬜.** Sprint 6 is not complete; founder review of the truthful Journey and the data architecture gates 6.3.
+Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ · 6.2 ✅ · 6.3 Journey Experience Foundation (see revised table above) · 6.4–6.8 ⬜.** Sprint 6 is not complete.
 
 ---
 
-# Sprint 7 — Journey / Photos
+# Sprint 7 — Advanced Progress Photos · to be re-characterized after Sprint 6
+
+**Re-scoped 2026-10-15 (founder revision).** **Core progress photos moved into Sprint 6** (slice 6.5) because photos are a first-class pillar of Journey, not a follow-on. Sprint 7 is no longer "Journey / Photos". Whatever advanced photo work remains — richer comparison and storytelling beyond 6.7's Then-vs-Now — will be **characterized after Sprint 6 closes**, against what Sprint 6 actually shipped. No advanced-photos scope is invented here. The original text below is preserved as history.
+
+*Original heading: Sprint 7 — Journey / Photos.*
+
 
 Objective: build the transformation-photo half of the Journey experience.
 
@@ -658,7 +698,7 @@ Deliverable: photo capture, comparison, and progress storytelling that makes cha
 
 **Deferred, not reduced.** This was Sprint 4 under the 2026-08-17 structure, Sprint 5 after the 2026-08-21 reorder, Sprint 6 after the first 2026-09-01 reorder, and is now **Sprint 7**. Progress photos, photo comparison, and the existing visual concepts are all preserved exactly as documented; only the sprint number changed. It stays immediately after Journey / Weight, which owns the core Journey data architecture it depends on.
 
-Status: ⬜ Planned
+Status: ⬜ **To be re-characterized after Sprint 6**
 
 ---
 
