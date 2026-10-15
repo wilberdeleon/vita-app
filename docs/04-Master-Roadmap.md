@@ -630,7 +630,17 @@ The eight slices written for Journey under the earlier structure (Journey Overvi
 
 **Downstream opportunity:** once weight and height are stored here, the BMI Calculator (still planned, deferred into the Sprint 5 identity work) could read them instead of asking again. Recorded as an opportunity, not a commitment.
 
-Status: ⬜ Planned
+**Characterization ✅ COMPLETE (2026-10-15), implementation ⬜ NOT STARTED.** See `docs/Sprint-6-Planning-Audit.md`. Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`.
+
+**The audit's headline finding: the Journey tab already ships, and everything on it is invented.** `api.ts` returns `JOURNEY_FIXTURE` unconditionally, so Journey today shows a "Week 4 of 24" stage, a current weight of **185.2 lb**, a green *"−2.4 lbs in the last 4 weeks"*, completed milestones the user never did, a workout count for a feature that does not exist, and the line **"You dropped 2.4 lbs. Keep the momentum."** That breaks three rules the rest of VITA now holds — real-data-only, no moralised weight movement, and no auto-generated judgment — so **the first slice is removing it**, not adding to it.
+
+**Already answered by the audit:** `react-native-svg` is already a dependency and `LineChart`/`WeightBars` already exist, so **Sprint 6 needs no new charting library**; weight and height are stored nowhere; the BMI calculator is stateless and **stays that way**; Dashboard has no Journey reference and gains none. **`palette.journey` is green and identical to `palette.success`** — which would moralise a weight delta by accident, so Journey's weight surfaces take **gold** and a delta stays neutral.
+
+**The Weight/Photos split the roadmap left open is proposed:** Overview, Detail, Polish and the weight half of Timeline go to Sprint 6; Milestones, Achievements and Rewards & Celebrations defer; **the Streak System defers with its design-risk flag unresolved.**
+
+**Four decisions need the founder** before implementation: a user-authored goal weight (recommended yes, never calculated) · multiple weigh-ins per day with edit and delete (recommended yes) · where the body-weight unit lives (recommended Journey-local) · a Dashboard widget (recommended defer).
+
+Status: 🟡 **Characterization complete — awaiting founder approval to begin implementation**
 
 ---
 
