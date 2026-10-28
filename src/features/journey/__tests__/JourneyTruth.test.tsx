@@ -17,24 +17,22 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn(), navigate: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), navigate: jest.fn(), dismissTo: jest.fn() },
+  Redirect: () => null,
   useLocalSearchParams: () => ({}),
 }));
 
 import { Ionicons } from '@expo/vector-icons';
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Svg from 'react-native-svg';
-import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { act } from 'react-test-renderer';
 import Journey from '../../../app/(vita)/(tabs)/journey';
 import { FloatingDock } from '../../../components/shell/FloatingDock';
-import type { PreferencesRepository } from '../../../lib/preferences/data/PreferencesRepository';
 import type { ThemeMode } from '../../../lib/preferences/model/types';
 import { journeyAccent, palette } from '../../../theme/tokens';
-import { ToastProvider } from '../../../components/ui';
-import { ThemeProvider } from '../../../theme/ThemeProvider';
+import { hasPillars, mountApp, text as screenText, unmountApp } from './journeyHarness';
 
 const ROOT = join(__dirname, '..', '..', '..', '..');
 
@@ -43,134 +41,73 @@ function withoutComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 }
 
-function themeRepository(themeMode: ThemeMode): PreferencesRepository {
-  return { get: async () => ({ themeMode }), save: async () => {} };
-}
-
-let mounted: ReactTestRenderer | null = null;
-
 async function mount(element: React.ReactElement, themeMode: ThemeMode = 'light') {
-  await act(async () => {
-    mounted = create(
-      <SafeAreaProvider
-        initialMetrics={{
-          frame: { x: 0, y: 0, width: 390, height: 844 },
-          insets: { top: 47, left: 0, right: 0, bottom: 34 },
-        }}
-      >
-        <ThemeProvider repository={themeRepository(themeMode)}>
-          <ToastProvider>{element}</ToastProvider>
-        </ThemeProvider>
-      </SafeAreaProvider>,
-    );
-  });
-  return mounted!;
+  return mountApp(element, themeMode);
 }
 
 afterEach(async () => {
-  const tree = mounted;
-  mounted = null;
-  if (tree) await act(async () => tree.unmount());
+  await unmountApp();
+  await AsyncStorage.clear();
 });
 
-function screenText(tree: ReactTestRenderer): string {
-  return tree.root
-    .findAllByType(Text)
-    .map((node) => {
-      const children = node.props.children;
-      return Array.isArray(children) ? children.join('') : String(children ?? '');
-    })
-    .join(' \n ');
-}
-
-/** Mounts release Journey and returns the text of all three pillars, visited in turn. */
-async function allPillarsText(): Promise<string> {
-  const tree = await mount(<Journey />);
-  const parts = [screenText(tree)];
-  for (const pillar of ['Weight', 'Photos', 'Overview']) {
-    const control = tree.root.findAll(
-      (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
-    )[0];
-    await act(async () => control.props.onPress());
-    parts.push(screenText(tree));
-  }
-  return parts.join(' \n ');
-}
-
-describe('release Journey with no recorded weight — every pillar', () => {
-  it('renders the truthful empty state', async () => {
-    const text = await allPillarsText();
+/*
+ * Since 6.5 a user with no Journey sees no Overview / Weight / Photos at all —
+ * the pillars belong to a Journey. So the 6.1 truth contract is pinned on the
+ * screen a new user actually meets: the no-Journey screen.
+ */
+describe('release Journey with no Journey — the first screen a user meets', () => {
+  it('renders the truthful first-use state', async () => {
+    const text = screenText(await mount(<Journey />));
     expect(text).toContain('My Journey');
-    expect(text).toContain('No weight entries yet');
-    expect(text).toContain('No progress photos yet');
+    expect(text).toContain('Start a New Journey');
+    expect(text).toContain('Create a Journey to give your weight, photos and progress a beginning and an end.');
   });
 
   it('shows no invented weight, delta or trend', async () => {
-    const text = await allPillarsText();
+    const text = screenText(await mount(<Journey />));
     for (const fiction of ['185.2', '186.2', '191.8', '175.0', '2.4', ' lb', 'lbs', 'Weight Trend', 'Average Weight', 'Goal Weight']) {
       expect(text).not.toContain(fiction);
     }
   });
 
-  it('shows no staged program', async () => {
-    const text = await allPillarsText();
+  it('shows no staged program and no invented day count', async () => {
+    const text = screenText(await mount(<Journey />));
     expect(text).not.toMatch(/week\s+\d+\s+of\s+\d+/i);
+    expect(text).not.toMatch(/day\s+\d+/i);
     for (const stage of ['Momentum', 'Foundation', 'Journey Stage']) {
       expect(text).not.toContain(stage);
     }
   });
 
   it('shows no milestones, workouts, streaks or rewards', async () => {
-    const text = (await allPillarsText()).toLowerCase();
+    const text = screenText(await mount(<Journey />)).toLowerCase();
     for (const fiction of ['milestone', 'workout', 'streak', 'achievement', 'reward', '5 / 5', 'protein goal']) {
       expect(text).not.toContain(fiction);
     }
   });
 
-  it('generates no praise or judgment', async () => {
-    const text = (await allPillarsText()).toLowerCase();
-    for (const judgment of ['momentum', 'dropped', 'keep going', 'keep the', 'great', 'success', 'on track', 'off track', 'improv', 'setback', 'results will follow', 'well done', 'congrat']) {
+  it('generates no praise, judgment or slogan', async () => {
+    const text = screenText(await mount(<Journey />)).toLowerCase();
+    for (const judgment of ['momentum', 'dropped', 'keep going', 'keep the', 'great', 'success', 'on track', 'off track', 'improv', 'setback', 'results will follow', 'well done', 'congrat', 'transform your', 'best self', 'begins today']) {
       expect(text).not.toContain(judgment);
     }
-    // "Progress" survives only as the name of the thing — a progress photo —
-    // never as a verdict ("making progress", "great progress").
-    expect(text.replace(/progress[- ]photo/g, '')).not.toContain('progress');
   });
 
-  it('draws no chart on any pillar', async () => {
+  it('draws no chart', async () => {
     const tree = await mount(<Journey />);
-    for (const pillar of ['Overview', 'Weight', 'Photos']) {
-      const control = tree.root.findAll(
-        (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
-      )[0];
-      await act(async () => control.props.onPress());
-      expect(tree.root.findAllByType(Svg)).toHaveLength(0);
-    }
+    expect(tree.root.findAllByType(Svg)).toHaveLength(0);
   });
 
-  it('offers no action into an unfinished flow', async () => {
-    // Since 6.4 Weight has one real action, Log Weight. Photo capture is 6.5,
-    // so Photos and Overview still have none beyond the pillar segments.
-    const text = (await allPillarsText()).toLowerCase();
-    const tree = mounted!;
-    for (const action of ['add photo', 'take a photo', 'upload', 'view all', 'coming soon', 'sprint', 'soon']) {
+  it('offers exactly one action — Start a New Journey — and no pillar switcher', async () => {
+    const tree = await mount(<Journey />);
+    expect(hasPillars(tree)).toBe(false);
+    const buttons = tree.root.findAll(
+      (node) => typeof node.type === 'string' && (node.props.accessibilityRole === 'button' || typeof node.props.onPress === 'function'),
+    );
+    expect(buttons.map((node) => node.props.accessibilityLabel ?? '').filter(Boolean).sort()).toEqual(['Settings', 'Start a New Journey'].sort());
+    const text = screenText(tree).toLowerCase();
+    for (const action of ['log weight', 'add photo', 'view all', 'coming soon', 'sprint']) {
       expect(text).not.toContain(action);
-    }
-    const expected: Record<string, string[]> = {
-      Overview: [],
-      Weight: ['Log Weight'],
-      Photos: [],
-    };
-    for (const pillar of ['Overview', 'Weight', 'Photos']) {
-      const control = tree.root.findAll(
-        (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
-      )[0];
-      await act(async () => control.props.onPress());
-      const buttons = tree.root.findAll(
-        (node) => typeof node.type === 'string' && (node.props.accessibilityRole === 'button' || typeof node.props.onPress === 'function'),
-      );
-      const labels = buttons.map((node) => node.props.accessibilityLabel ?? '');
-      expect(labels.filter((label) => !/^Journey, |^Settings$/.test(label)).filter(Boolean).sort()).toEqual(expected[pillar]);
     }
   });
 });
@@ -247,8 +184,7 @@ describe('Journey identity is gold, and gold is not a verdict', () => {
 
   it('the dock tints selected Journey gold — deepened in Light, brand gold in Dark', async () => {
     expect(await dockJourneyColor('light', 'journey')).toBe(journeyAccent.light);
-    await act(async () => mounted!.unmount());
-    mounted = null;
+    await unmountApp();
     expect(await dockJourneyColor('dark', 'journey')).toBe(journeyAccent.dark);
   });
 
@@ -262,8 +198,8 @@ describe('Journey identity is gold, and gold is not a verdict', () => {
       const tree = await mount(<FloatingDock {...props} />, 'light');
       const tab = tree.root.findAll((node) => node.props.accessibilityLabel === label && node.props.accessibilityRole === 'tab')[0];
       const color = tab.findByType(Ionicons).props.color as string;
-      await act(async () => tree.unmount());
-      mounted = null;
+      await unmountApp();
+      void tree;
       return color;
     };
     expect(await colorOf('fuel', 'Fuel')).toBe(palette.primary);

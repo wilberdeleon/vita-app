@@ -1,20 +1,20 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { latestEntry } from '../../../lib/journey';
+import { latestEntry, type Journey } from '../../../lib/journey';
 import { SectionHeader } from '../../../components/ui';
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import {
+  calendarDay,
   elapsed,
   firstEntry,
+  journeyWeightStats,
   longDate,
   shortDate,
   signedChange,
   spokenChange,
   spokenWeight,
-  spokenWhen,
   weightNumber,
   weightOnDay,
-  whenLabel,
 } from '../format';
 import type { JourneyViewData } from '../types';
 import { JourneySpine, type SpineItem } from './JourneySpine';
@@ -26,40 +26,36 @@ const RECENT = 5;
 
 type Props = {
   data: JourneyViewData;
-  /**
-   * `__DEV__` preview only: the 6.3 vision of what Overview grows into —
-   * a trend line, the latest photo, recent records — owned by 6.6 and 6.7.
-   * Release never passes it.
-   */
+  /** The Journey this Overview is the home of (6.5). */
+  journey: Journey;
+  /** `__DEV__` preview only: the 6.6/6.7 vision (trend line, records spine). */
   showFuture?: boolean;
 };
 
 /**
- * Overview — *where am I in my real Journey?*
+ * Overview — the home of **this** Journey (6.5).
  *
- * Always the same three-part spine: Weight, Progress photos, Timeline. Each
- * node is hollow until something real is recorded there. **Since 6.4 the
- * Weight node fills in from real data** — the latest weight and when it was
- * recorded, at body size, not as a hero. Overview is a synthesis; the Weight
- * pillar is where weight gets the screen. Photos stay empty until 6.5, and
- * Timeline until 6.6.
+ * The Journey's identity and time already sit above the pillars, so Overview
+ * starts with what was recorded in it: a compact set of facts — starting
+ * weight (its first weigh-in), current weight (its latest), the change
+ * between them once there are two, and how many weigh-ins — then the
+ * Journey's spine from the day it began to its planned end. Progress photos
+ * and the timeline stay hollow until 6.6 and 6.7 make them real.
+ *
+ * No hero number, no grid of cards, no goal, no BMI: weight is one signal in
+ * the Journey, and the Weight pillar is where it gets the screen.
  */
-export function OverviewPillar({ data, showFuture = false }: Props) {
-  const { surfaces } = useTheme();
+export function OverviewPillar({ data, journey, showFuture = false }: Props) {
   const { weights, photos, unit } = data;
-  const latest = latestEntry(weights);
+  const stats = journeyWeightStats(weights);
 
   const items: SpineItem[] = [
-    latest
-      ? {
-          key: 'weight',
-          label: 'Weight',
-          body: `${weightNumber(latest.weightKg, unit)} ${unit}`,
-          note: whenLabel(latest.loggedAt),
-          recorded: true,
-          accessibilityLabel: `Weight, latest ${spokenWeight(latest.weightKg, unit)}, ${spokenWhen(latest.loggedAt)}`,
-        }
-      : { key: 'weight', label: 'Weight', body: 'No weight entries yet.', recorded: false },
+    {
+      key: 'began',
+      label: 'Began',
+      body: calendarDay(journey.startDate, true),
+      recorded: true,
+    },
     photos.length
       ? {
           key: 'photos',
@@ -72,19 +68,74 @@ export function OverviewPillar({ data, showFuture = false }: Props) {
     {
       key: 'timeline',
       label: 'Timeline',
-      body: 'Your recorded Journey will appear here, in the order it happened.',
+      body: 'What you record in this Journey will appear here, in the order it happened.',
+      recorded: false,
+    },
+    {
+      key: 'end',
+      label: 'Planned end',
+      body: calendarDay(journey.plannedEndDate, true),
       recorded: false,
     },
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.intro, { color: surfaces.textSecondary }]}>
-        Journey brings together the weight and progress photos you record, so you can look back on how things have
-        changed over time.
-      </Text>
+      {stats ? <JourneyStats stats={stats} unit={unit} /> : null}
       <JourneySpine items={items} />
       {showFuture && (weights.length > 0 || photos.length > 0) ? <OverviewFuture data={data} /> : null}
+    </View>
+  );
+}
+
+/** Starting · Current · Change · Weigh-ins — facts, two to a row, no cards. */
+export function JourneyStats({
+  stats,
+  unit,
+  currentLabel = 'Current',
+}: {
+  stats: NonNullable<ReturnType<typeof journeyWeightStats>>;
+  unit: JourneyViewData['unit'];
+  currentLabel?: string;
+}) {
+  const { surfaces } = useTheme();
+  const cells: { key: string; label: string; value: string; spoken: string }[] = [
+    {
+      key: 'starting',
+      label: 'Starting',
+      value: `${weightNumber(stats.starting.weightKg, unit)} ${unit}`,
+      spoken: `Starting weight ${spokenWeight(stats.starting.weightKg, unit)}`,
+    },
+    {
+      key: 'current',
+      label: currentLabel,
+      value: `${weightNumber(stats.current.weightKg, unit)} ${unit}`,
+      spoken: `${currentLabel} weight ${spokenWeight(stats.current.weightKg, unit)}`,
+    },
+  ];
+  if (stats.count > 1) {
+    cells.push({
+      key: 'change',
+      label: 'Change',
+      value: signedChange(stats.starting.weightKg, stats.current.weightKg, unit),
+      spoken: `Change ${spokenChange(stats.starting.weightKg, stats.current.weightKg, unit)}`,
+    });
+  }
+  cells.push({
+    key: 'count',
+    label: 'Weigh-ins',
+    value: String(stats.count),
+    spoken: `${stats.count} ${stats.count === 1 ? 'weigh-in' : 'weigh-ins'}`,
+  });
+
+  return (
+    <View style={styles.stats}>
+      {cells.map((cell) => (
+        <View key={cell.key} style={styles.stat} accessible accessibilityLabel={cell.spoken}>
+          <Text style={[styles.statLabel, { color: surfaces.textTertiary }]}>{cell.label.toUpperCase()}</Text>
+          <Text style={[styles.statValue, { color: surfaces.text }]}>{cell.value}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -174,12 +225,25 @@ const styles = StyleSheet.create({
   container: {
     gap: spacing.xxl,
   },
+  stats: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: spacing.l,
+  },
+  stat: {
+    width: '50%',
+    gap: 2,
+  },
+  statLabel: {
+    ...typography.micro,
+    letterSpacing: 0.8,
+  },
+  statValue: {
+    ...typography.heading,
+    fontVariant: ['tabular-nums'],
+  },
   future: {
     gap: spacing.xxl,
-  },
-  intro: {
-    ...typography.body,
-    lineHeight: 21,
   },
   meta: {
     ...typography.caption,

@@ -56,6 +56,14 @@ export type WeightEntry = {
   /** Canonical kilograms. Always finite and > 0. */
   weightKg: number;
   enteredUnit: WeightUnit;
+  /**
+   * The Journey this weigh-in belongs to (slice 6.5). **Absent on legacy
+   * entries** — weigh-ins recorded in 6.4 before Journeys existed. Those are
+   * preserved exactly as stored and shown by no Journey: nothing is silently
+   * imported into a Journey the user did not record them in. Set once at
+   * creation and never changed by an edit.
+   */
+  journeyId?: string;
 };
 
 /** Journey's own preferences — deliberately just the display unit. */

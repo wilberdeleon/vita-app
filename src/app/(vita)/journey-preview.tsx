@@ -1,106 +1,125 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale, Screen, ScreenHeader } from '../../components/ui';
+import { JourneySummary } from '../../features/journey/components/JourneySummary';
 import { JourneyView } from '../../features/journey/components/JourneyView';
-import type { JourneyPhotoView, JourneyPillar, JourneyViewData } from '../../features/journey/types';
-import { sortNewestFirst, toKg, type WeightEntry } from '../../lib/journey';
+import { NoJourney } from '../../features/journey/components/NoJourney';
+import type { JourneyPhotoView, JourneyPillar } from '../../features/journey/types';
+import { shiftLogDate, toLogDate } from '../../lib/daily';
+import { sortNewestFirst, toKg, type Journey, type WeightEntry } from '../../lib/journey';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 
 /**
- * Journey, populated — `__DEV__` only (slice 6.3).
+ * Journey across its lifecycle — `__DEV__` only (slices 6.3, 6.5).
  *
- * ## Why this exists
- *
- * Release Journey is empty until the founder logs a weight (6.4) or adds a
- * photo (6.5), and it must stay empty rather than show an example. That makes
- * the product's *direction* impossible to judge on a real phone. This route
- * renders the **same `JourneyView`** release uses with fixture data, so the
- * founder sees the future Overview, Weight and Photos without one invented
- * record entering the real app.
+ * Release Journey shows only what the user really created and recorded, so
+ * most of the lifecycle cannot be seen on a device without living through
+ * it. This renders the **same components** release uses — `NoJourney`,
+ * `JourneyView`, `JourneySummary` — from fixtures declared in this file.
  *
  * ## The boundary
  *
- * - The fixtures are declared **in this file and nowhere else**. No release
- *   module imports this route, and a test pins that.
- * - **No provider, no repository, no storage.** The data goes straight into
- *   `JourneyView` as props. Nothing here can write `vita:v1:journey:*`.
- * - Reached by deep link only — `/journey-preview?state=established&pillar=photos`
- *   — like every other preview harness; no product screen links to it.
- * - Release builds render "Not available."
+ * - Fixtures live **here and nowhere else**; no release module imports this
+ *   route, and a test pins that.
+ * - **No provider, no repository, no storage.** Data goes straight into the
+ *   components as props; no action is passed, so nothing here can write a
+ *   Journey or a weigh-in.
+ * - Deep link only — `/journey-preview?state=established&pillar=weight` —
+ *   like every other harness. Release builds render "Not available."
  *
- * Photos are neutral **layout placeholders**, labelled as such to VoiceOver.
- * No stock image and no person's body is used or implied.
+ * Photos are neutral layout placeholders, announced as such. No stock image
+ * and no person's body is used or implied.
  */
 
 const DAY = 86_400_000;
+const TODAY = toLogDate(new Date());
 
-/** An instant `daysAgo` days before now, at a local wall-clock time. */
 function at(daysAgo: number, hour: number, minute = 0): string {
   const date = new Date(Date.now() - daysAgo * DAY);
   date.setHours(hour, minute, 0, 0);
   return date.toISOString();
 }
 
-function weighIn(id: string, daysAgo: number, lb: number, hour = 7, minute = 0): WeightEntry {
-  return { id: `preview-${id}`, loggedAt: at(daysAgo, hour, minute), weightKg: toKg(lb, 'lb'), enteredUnit: 'lb' };
+function journey(id: string, name: string, startDaysAgo: number, days: number, completedDaysAgo?: number): Journey {
+  const startDate = shiftLogDate(TODAY, -startDaysAgo);
+  return {
+    id: `preview-${id}`,
+    name,
+    startDate,
+    plannedEndDate: shiftLogDate(startDate, days - 1),
+    status: completedDaysAgo === undefined ? 'active' : 'completed',
+    createdAt: at(startDaysAgo, 7),
+    ...(completedDaysAgo === undefined ? {} : { completedAt: at(completedDaysAgo, 18) }),
+  };
+}
+
+function weighIn(journeyId: string, id: string, daysAgo: number, lb: number, hour = 7, minute = 0): WeightEntry {
+  return {
+    id: `preview-${id}`,
+    loggedAt: at(daysAgo, hour, minute),
+    weightKg: toKg(lb, 'lb'),
+    enteredUnit: 'lb',
+    journeyId: `preview-${journeyId}`,
+  };
 }
 
 function photo(id: string, daysAgo: number): JourneyPhotoView {
   return { id: `preview-photo-${id}`, takenAt: at(daysAgo, 7, 30), placeholder: true };
 }
 
-type Scenario = { key: string; label: string; weights: WeightEntry[]; photos: JourneyPhotoView[] };
+const EARLY = journey('early', 'Getting Back to Me', 12, 90);
+const ESTABLISHED = journey('established', 'Summer Transformation', 70, 90);
+const ENDED = journey('ended', 'Marathon Prep', 92, 90);
+const COMPLETED = journey('completed', 'Spring Reset', 200, 90, 108);
+const OLDER = journey('older', 'New Year, Slowly', 400, 60, 335);
 
-const SCENARIOS: Scenario[] = [
-  { key: 'empty', label: 'Empty', weights: [], photos: [] },
-  {
-    key: 'early',
-    label: 'Early',
-    // Two weigh-ins on one day, kept as two records.
-    weights: sortNewestFirst([
-      weighIn('e1', 13, 184.6),
-      weighIn('e2', 6, 183.9, 7, 2),
-      weighIn('e3', 6, 185.1, 21, 40),
-      weighIn('e4', 0, 183.2, 6, 55),
-    ]),
-    photos: [photo('e1', 13)],
-  },
-  {
-    key: 'established',
-    label: 'Established',
+const WEIGHTS: Record<string, WeightEntry[]> = {
+  early: sortNewestFirst([
+    weighIn('early', 'e1', 12, 184.6),
+    weighIn('early', 'e2', 6, 183.9, 7, 2),
+    weighIn('early', 'e3', 6, 185.1, 21, 40),
+    weighIn('early', 'e4', 0, 183.2, 6, 55),
+  ]),
+  established: sortNewestFirst(
     // Not monotonic on purpose: weight goes up as well as down.
-    weights: sortNewestFirst([
-      weighIn('s1', 70, 186.4),
-      weighIn('s2', 63, 185.8),
-      weighIn('s3', 56, 186.1),
-      weighIn('s4', 49, 184.9),
-      weighIn('s5', 42, 184.2),
-      weighIn('s6', 35, 184.8),
-      weighIn('s7', 28, 183.5),
-      weighIn('s8', 21, 182.9),
-      weighIn('s9', 14, 183.3),
-      weighIn('s10', 7, 181.7),
-      weighIn('s11', 3, 180.6),
-      weighIn('s12', 0, 178.0, 6, 50),
-    ]),
-    photos: [photo('s1', 70), photo('s2', 42), photo('s3', 21), photo('s4', 0)].reverse(),
-  },
+    [186.4, 185.8, 186.1, 184.9, 184.2, 184.8, 183.5, 182.9, 183.3, 181.7, 180.6, 178.0].map((lb, i) =>
+      weighIn('established', `s${i}`, 70 - i * 6 - (i === 11 ? 4 : 0), lb),
+    ),
+  ),
+  ended: sortNewestFirst([weighIn('ended', 'n1', 92, 171.2), weighIn('ended', 'n2', 45, 169.0), weighIn('ended', 'n3', 1, 167.4)]),
+  completed: sortNewestFirst([
+    weighIn('completed', 'c1', 200, 192.0),
+    weighIn('completed', 'c2', 160, 189.5),
+    weighIn('completed', 'c3', 130, 188.8),
+    weighIn('completed', 'c4', 109, 187.1),
+  ]),
+};
+
+const PHOTOS: Record<string, JourneyPhotoView[]> = {
+  established: [photo('s1', 70), photo('s2', 42), photo('s3', 21), photo('s4', 0)].reverse(),
+};
+
+type StateKey = 'none' | 'early' | 'established' | 'ended' | 'completed' | 'library';
+
+const STATES: { key: StateKey; label: string }[] = [
+  { key: 'none', label: 'No Journey' },
+  { key: 'early', label: 'Active — Early' },
+  { key: 'established', label: 'Active — Established' },
+  { key: 'ended', label: 'End Reached' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'library', label: 'Past Journeys' },
 ];
 
 const PILLARS: readonly JourneyPillar[] = ['overview', 'weight', 'photos'];
+const ACTIVE: Partial<Record<StateKey, Journey>> = { early: EARLY, established: ESTABLISHED, ended: ENDED };
 
 export default function JourneyPreview() {
   const { surfaces } = useTheme();
   const params = useLocalSearchParams<{ state?: string; pillar?: string }>();
-  const active = SCENARIOS.find((item) => item.key === params.state) ?? SCENARIOS[2];
+  const state = STATES.find((item) => item.key === params.state)?.key ?? 'established';
   const pillar = PILLARS.find((item) => item === params.pillar) ?? 'overview';
-
-  const data = useMemo<JourneyViewData>(
-    () => ({ status: 'ready', weights: active.weights, photos: active.photos, unit: 'lb' }),
-    [active],
-  );
+  const active = ACTIVE[state];
 
   if (!__DEV__) {
     return (
@@ -117,8 +136,8 @@ export default function JourneyPreview() {
           DEVELOPMENT PREVIEW · FIXTURE DATA, NOT A REAL JOURNEY
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          {SCENARIOS.map((item) => {
-            const selected = item.key === active.key;
+          {STATES.map((item) => {
+            const selected = item.key === state;
             return (
               <PressableScale
                 key={item.key}
@@ -143,9 +162,21 @@ export default function JourneyPreview() {
       <View style={styles.stage}>
         {/* The bar above already clears the status bar. */}
         <Screen topInset={false}>
-          <ScreenHeader title="My Journey" />
-          {/* Keyed so a scenario switch starts the pillars fresh. */}
-          <JourneyView key={`${active.key}-${pillar}`} data={data} initialPillar={pillar} showFuture />
+          <ScreenHeader title={state === 'completed' ? 'Past Journey' : 'My Journey'} />
+          {active ? (
+            <JourneyView
+              key={`${state}-${pillar}`}
+              journey={active}
+              today={TODAY}
+              data={{ status: 'ready', weights: WEIGHTS[state] ?? [], photos: PHOTOS[state] ?? [], unit: 'lb' }}
+              initialPillar={pillar}
+              showFuture
+            />
+          ) : state === 'completed' ? (
+            <JourneySummary journey={COMPLETED} weights={WEIGHTS.completed} unit="lb" />
+          ) : (
+            <NoJourney past={state === 'library' ? [COMPLETED, OLDER] : []} />
+          )}
         </Screen>
       </View>
     </View>

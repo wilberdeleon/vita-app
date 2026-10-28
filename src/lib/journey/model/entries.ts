@@ -24,6 +24,8 @@ export type CreateWeightEntryInput = {
   unit: WeightUnit;
   /** Injectable so tests are deterministic; defaults to now. */
   loggedAt?: Date;
+  /** The owning Journey. Every weigh-in recorded since 6.5 has one. */
+  journeyId?: string;
 };
 
 /**
@@ -31,7 +33,7 @@ export type CreateWeightEntryInput = {
  * input with `parseWeight` first; reaching here with a bad value is a
  * programming error — the same contract as `createWaterEntry`.
  */
-export function createWeightEntry({ weight, unit, loggedAt = new Date() }: CreateWeightEntryInput): WeightEntry {
+export function createWeightEntry({ weight, unit, loggedAt = new Date(), journeyId }: CreateWeightEntryInput): WeightEntry {
   if (!isValidWeight(weight)) {
     throw new Error(`createWeightEntry: weight must be a positive finite number, got ${weight}`);
   }
@@ -40,13 +42,23 @@ export function createWeightEntry({ weight, unit, loggedAt = new Date() }: Creat
     loggedAt: loggedAt.toISOString(),
     weightKg: toKg(weight, unit),
     enteredUnit: unit,
+    ...(journeyId ? { journeyId } : {}),
   };
+}
+
+/**
+ * One Journey's weigh-ins, keeping the input's order. Legacy entries (no
+ * `journeyId`) belong to no Journey, so they never appear here.
+ */
+export function entriesForJourney(entries: readonly WeightEntry[], journeyId: string): WeightEntry[] {
+  return entries.filter((entry) => entry.journeyId === journeyId);
 }
 
 /**
  * What an edit may change. Weight and unit travel together so the canonical
  * value can never contradict its own label; `loggedAt` may be corrected too,
- * for when a later slice authorizes date/time editing. `id` never changes.
+ * for when a later slice authorizes date/time editing. `id` and `journeyId`
+ * never change — an edit cannot move a weigh-in to another Journey.
  */
 export type WeightEntryChanges = {
   weight?: { value: number; unit: WeightUnit };

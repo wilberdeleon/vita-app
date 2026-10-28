@@ -6,7 +6,8 @@
  * a boolean that is `true` only when the write reached storage — a caller
  * must never confirm a weigh-in that was not saved.
  *
- * Mounted on the Journey tab only (6.3), the narrowest boundary that reads it.
+ * Mounted at the root with `JourneyProvider` (6.5): the Journey tab, the
+ * start flow and the Journey summary route all read the same history.
  *
  * Deliberately exposes no chart, trend, delta or goal API. `current` is the
  * newest entry, derived on every change and never stored.
@@ -45,8 +46,8 @@ export type WeightState = {
 };
 
 export type WeightContextValue = WeightState & {
-  /** Always a new record — never replaces a same-day entry. */
-  addEntry: (weight: number, unit: WeightUnit, loggedAt?: Date) => Promise<boolean>;
+  /** Always a new record — never replaces a same-day entry. `journeyId` owns it (6.5). */
+  addEntry: (weight: number, unit: WeightUnit, loggedAt?: Date, journeyId?: string) => Promise<boolean>;
   /** `false`, with nothing written, when no entry has this id. */
   updateEntry: (id: string, changes: WeightEntryChanges) => Promise<boolean>;
   /** `false`, with nothing written, when no entry has this id. */
@@ -130,9 +131,9 @@ export function WeightProvider({ children, repository = asyncStorageWeightReposi
   );
 
   const addEntry = useCallback(
-    (weight: number, unit: WeightUnit, loggedAt?: Date) => {
+    (weight: number, unit: WeightUnit, loggedAt?: Date, journeyId?: string) => {
       // Built before awaiting, so an invalid weight throws to the caller at once.
-      const entry = createWeightEntry({ weight, unit, loggedAt });
+      const entry = createWeightEntry({ weight, unit, loggedAt, journeyId });
       return commit((current) => addWeightEntry(current, entry));
     },
     [commit],

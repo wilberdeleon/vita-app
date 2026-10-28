@@ -112,6 +112,26 @@ describe('PressableScale opacity', () => {
   });
 });
 
+describe('PressableScale opacity across state changes (SDK 58)', () => {
+  it('draws a Button that goes enabled → disabled → enabled at full strength again, on one stable node', async () => {
+    /*
+     * 2026-10-28: on React Native 0.88 a button whose `disabled` flipped back
+     * kept drawing dim while accepting taps — the Journey start flow's
+     * Continue. The cause was a new `Animated.multiply` node per change; the
+     * fix keeps one node and sets its base value. Both halves are pinned.
+     */
+    const tree = await mount(<Button label="Continue" onPress={() => {}} />);
+    const node = () => [animatedLayer(tree).props.style].flat(Infinity).reverse().find((e: unknown) => e && typeof e === 'object' && 'opacity' in (e as object)).opacity;
+    const first = node();
+    expect(opacityOf(tree)).toBe(1);
+    await act(async () => tree.update(<ThemeProvider><Button label="Continue" disabled onPress={() => {}} /></ThemeProvider>));
+    expect(opacityOf(tree)).toBeLessThan(1);
+    await act(async () => tree.update(<ThemeProvider><Button label="Continue" onPress={() => {}} /></ThemeProvider>));
+    expect(opacityOf(tree)).toBe(1);
+    expect(node()).toBe(first);
+  });
+});
+
 describe('PressableScale behaviour', () => {
   it('announces itself as a button only when it does something', async () => {
     const acting = await mount(

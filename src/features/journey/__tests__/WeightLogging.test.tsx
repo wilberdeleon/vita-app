@@ -16,52 +16,42 @@ jest.mock('../../../lib/haptics', () => ({ vitaHaptic: (event: string) => mockHa
 
 let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn(), navigate: jest.fn(), replace: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), navigate: jest.fn(), replace: jest.fn(), dismissTo: jest.fn() },
+  Redirect: () => null,
   useLocalSearchParams: () => mockParams,
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert, Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Svg from 'react-native-svg';
-import { act, create, type ReactTestRenderer, type ReactTestInstance } from 'react-test-renderer';
+import { act, type ReactTestRenderer, type ReactTestInstance } from 'react-test-renderer';
 import Journey from '../../../app/(vita)/(tabs)/journey';
 import JourneyPreview from '../../../app/(vita)/journey-preview';
-import { PressableScale, ToastProvider } from '../../../components/ui';
+import { PressableScale } from '../../../components/ui';
 import { JourneyKeys, toKg, type WeightEntry } from '../../../lib/journey';
-import type { PreferencesRepository } from '../../../lib/preferences/data/PreferencesRepository';
-import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { HISTORY_PAGE } from '../components/WeightPillar';
+import { journeyFixture, mountApp, seedStorage, unmountApp } from './journeyHarness';
 
-const theme: PreferencesRepository = { get: async () => ({ themeMode: 'light' }), save: async () => {} };
-
-let mounted: ReactTestRenderer | null = null;
+/**
+ * Since 6.5 Weight lives inside a Journey, so every test here runs inside a
+ * real active Journey seeded through storage, and the weigh-ins it seeds
+ * belong to it. Mounted under the real root providers (`journeyHarness`).
+ */
+const ACTIVE = journeyFixture({ id: 'j-active', name: 'Test Journey' });
 
 async function mount(element: React.ReactElement = <Journey />) {
-  await act(async () => {
-    mounted = create(
-      <SafeAreaProvider
-        initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 47, left: 0, right: 0, bottom: 34 } }}
-      >
-        <ThemeProvider repository={theme}>
-          <ToastProvider>{element}</ToastProvider>
-        </ThemeProvider>
-      </SafeAreaProvider>,
-    );
-  });
-  return mounted!;
+  return mountApp(element);
 }
 
 beforeEach(async () => {
   mockParams = {};
   await AsyncStorage.clear();
+  await seedStorage({ journeys: [ACTIVE] });
   jest.clearAllMocks();
 });
 
 afterEach(async () => {
-  const tree = mounted;
-  mounted = null;
-  if (tree) await act(async () => tree.unmount());
+  await unmountApp();
   jest.restoreAllMocks();
 });
 
@@ -129,8 +119,8 @@ function at(daysAgo: number, hour: number, minute = 0): string {
   return date.toISOString();
 }
 
-function entry(id: string, iso: string, lb: number): WeightEntry {
-  return { id, loggedAt: iso, weightKg: toKg(lb, 'lb'), enteredUnit: 'lb' };
+function entry(id: string, iso: string, lb: number, journeyId: string | null = ACTIVE.id): WeightEntry {
+  return { id, loggedAt: iso, weightKg: toKg(lb, 'lb'), enteredUnit: 'lb', ...(journeyId ? { journeyId } : {}) };
 }
 
 async function seed(entries: WeightEntry[], unit?: 'lb' | 'kg') {
@@ -170,6 +160,7 @@ describe('logging a weight', () => {
     expect(saved).toHaveLength(1);
     expect(saved[0].weightKg).toBe(180 * 0.45359237);
     expect(saved[0].enteredUnit).toBe('lb');
+    expect(saved[0].journeyId).toBe(ACTIVE.id); // logged inside the active Journey, automatically
     expect(Math.abs(Date.parse(saved[0].loggedAt) - Date.now())).toBeLessThan(5_000);
     expect(mockHaptic).toHaveBeenCalledWith('confirm');
 
@@ -275,7 +266,7 @@ describe('logging a weight', () => {
     await type(tree, 'Weight in pounds', '180');
     await press(tree, 'Close');
     expect(await stored()).toEqual([]);
-    expect(await AsyncStorage.getAllKeys()).toEqual([]);
+    expect(await AsyncStorage.getItem(JourneyKeys.weight)).toBeNull();
     expect(text(tree)).toContain('No weight entries yet');
   });
 
@@ -286,6 +277,19 @@ describe('logging a weight', () => {
     await press(tree, 'Done, close the number pad');
     expect(await stored()).toEqual([]);
     expect(hasControl(tree, 'Log 180.0 pounds')).toBe(true); // still open, value kept
+  });
+
+  it('one tap reaches Log Weight with the number pad up — the screen behind passes taps through', async () => {
+    // The founder's physical-iPhone bug (2026-10-28), fixed in the shared
+    // Screen/VitaSheet: while a sheet is open the screen's scroll view must
+    // not capture the first tap to dismiss the keyboard.
+    const tree = await openWeight();
+    const screenScroll = () => tree.root.findAllByType(require('react-native').ScrollView)[0];
+    expect(screenScroll().props.keyboardShouldPersistTaps).not.toBe('handled');
+    await press(tree, 'Log Weight');
+    expect(screenScroll().props.keyboardShouldPersistTaps).toBe('handled');
+    await press(tree, 'Close');
+    expect(screenScroll().props.keyboardShouldPersistTaps).not.toBe('handled');
   });
 
   it('a failed write keeps the sheet open and warns', async () => {
@@ -473,7 +477,7 @@ describe('deleting an entry', () => {
     expect(text(tree)).toContain('No weight entries yet');
     expect(text(tree)).not.toContain('178.0');
     await pillar(tree, 'Overview');
-    expect(text(tree)).toContain('No weight entries yet.');
+    expect(text(tree)).not.toContain('STARTING');
     expect(text(tree)).not.toContain('178.0');
   });
 });
@@ -481,21 +485,23 @@ describe('deleting an entry', () => {
 /* ─── 6.4D Overview ────────────────────────────────────────────────── */
 
 describe('Overview with real weight', () => {
-  it('fills only the Weight node — latest weight and when, at body size', async () => {
+  it('shows this Journey’s facts — starting, current, change, weigh-ins — and no hero', async () => {
     await seed([entry('a', at(1, 8), 180), entry('b', at(0, 0, 5), 178)]);
     const tree = await mount();
     const content = text(tree);
+    expect(content).toContain('STARTING');
+    expect(content).toContain('180.0 lb');
+    expect(content).toContain('CURRENT');
     expect(content).toContain('178.0 lb');
-    expect(content).toContain('Today, 12:05 AM');
-    expect(content).not.toContain('180.0'); // latest only
+    expect(content).toContain('\u22122.0 lb');
+    expect(content).toContain('WEIGH-INS');
     expect(content).toContain('No progress photos yet.');
-    expect(content).toContain('Your recorded Journey will appear here');
-    for (const absent of ['LATEST WEIGHT', 'since', 'Weigh-in', 'goal', 'BMI', 'Journey began', 'First record']) {
+    for (const absent of ['LATEST WEIGHT', 'goal', 'BMI', 'Journey began', 'First record', 'LOWEST', 'HIGHEST', 'AVERAGE']) {
       expect(content).not.toContain(absent);
     }
     expect(tree.root.findAllByType(Svg)).toHaveLength(0);
-    // Weight is a node on the spine, not a hero.
-    const big = tree.root.findAllByType(Text).filter((n) => [n.props.style].flat(3).some((s) => s && s.fontSize >= 32));
+    // Weight is a set of facts, not a hero number.
+    const big = tree.root.findAllByType(Text).filter((n) => [n.props.style].flat(3).some((st) => st && st.fontSize >= 32));
     expect(big).toHaveLength(0);
   });
 
@@ -518,8 +524,8 @@ describe('real data and the DEV preview stay apart', () => {
     await type(tree, 'Weight in pounds', '163.7');
     await press(tree, 'Log 163.7 pounds');
     const before = await AsyncStorage.getItem(JourneyKeys.weight);
-    await act(async () => tree.unmount());
-    mounted = null;
+    void tree;
+    await unmountApp();
     jest.clearAllMocks();
 
     mockParams = { state: 'established', pillar: 'weight' };
@@ -529,7 +535,6 @@ describe('real data and the DEV preview stay apart', () => {
     expect(hasControl(preview, 'Log Weight')).toBe(false);
     expect(hasControl(preview, /^178\.0 pounds, /)).toBe(false); // rows are read-only
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
-    expect(AsyncStorage.getItem).not.toHaveBeenCalled();
     expect(await AsyncStorage.getItem(JourneyKeys.weight)).toBe(before);
   });
 

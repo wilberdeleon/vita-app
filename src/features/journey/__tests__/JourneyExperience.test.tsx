@@ -1,11 +1,10 @@
 /**
- * Slice 6.3 — Journey's three pillars, and the wall between release and the
- * `__DEV__` preview.
+ * Journey's three pillars inside an active Journey, and the wall between
+ * release and the `__DEV__` preview (slices 6.3 → 6.5).
  *
- * Release Journey renders real domain state only. The preview renders the
- * same components with fixtures declared inside the preview route. The tests
- * that matter most here are the isolation ones: an empty real history must
- * produce the empty pillars, never the populated preview.
+ * Since 6.5 the pillars exist only inside a Journey, so every pillar test
+ * seeds a real active Journey through storage and mounts the real route under
+ * the real providers.
  */
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -14,45 +13,36 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn(), push: jest.fn(), navigate: jest.fn(), replace: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), navigate: jest.fn(), replace: jest.fn(), dismissTo: jest.fn() },
+  Redirect: () => null,
   useLocalSearchParams: () => mockParams,
 }));
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Svg from 'react-native-svg';
-import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import { act, type ReactTestRenderer } from 'react-test-renderer';
 import Journey from '../../../app/(vita)/(tabs)/journey';
 import JourneyPreview from '../../../app/(vita)/journey-preview';
-import { JourneyKeys, toKg, type WeightEntry } from '../../../lib/journey';
-import type { PreferencesRepository } from '../../../lib/preferences/data/PreferencesRepository';
-import { ToastProvider } from '../../../components/ui';
-import { ThemeProvider } from '../../../theme/ThemeProvider';
-import { JourneyView } from '../components/JourneyView';
+import { JourneyKeys, toKg } from '../../../lib/journey';
 import { elapsed, signedChange } from '../format';
+import {
+  TODAY,
+  at,
+  control,
+  entry,
+  hasPillars,
+  journeyFixture,
+  mountApp,
+  pillar,
+  seedStorage,
+  text,
+  unmountApp,
+} from './journeyHarness';
 
 const ROOT = join(__dirname, '..', '..', '..', '..');
-const theme: PreferencesRepository = { get: async () => ({ themeMode: 'light' }), save: async () => {} };
-
-let mounted: ReactTestRenderer | null = null;
-
-async function mount(element: React.ReactElement) {
-  await act(async () => {
-    mounted = create(
-      <SafeAreaProvider
-        initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 47, left: 0, right: 0, bottom: 34 } }}
-      >
-        <ThemeProvider repository={theme}>
-          <ToastProvider>{element}</ToastProvider>
-        </ThemeProvider>
-      </SafeAreaProvider>,
-    );
-  });
-  return mounted!;
-}
+const ACTIVE = journeyFixture({ id: 'j-active', name: 'Summer Chapter' });
 
 beforeEach(async () => {
   mockParams = {};
@@ -61,131 +51,127 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  const tree = mounted;
-  mounted = null;
-  if (tree) await act(async () => tree.unmount());
+  await unmountApp();
 });
 
-function text(tree: ReactTestRenderer): string {
-  return tree.root
-    .findAllByType(Text)
-    .map((node) => {
-      const children = node.props.children;
-      return Array.isArray(children) ? children.join('') : String(children ?? '');
-    })
-    .join(' \n ');
+function segment(tree: ReactTestRenderer, name: string) {
+  return control(tree, `Journey, ${name}`);
 }
 
-function segment(tree: ReactTestRenderer, pillar: string) {
-  return tree.root.findAll(
-    (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
-  )[0];
+async function mountActive(lbs: number[] = [180.4]) {
+  await seedStorage({
+    journeys: [ACTIVE],
+    weights: lbs.map((lb, i) => entry(`w${i}`, at(10 - i, 7), lb, ACTIVE.id)),
+  });
+  jest.clearAllMocks();
+  return mountApp(<Journey />);
 }
 
-async function select(tree: ReactTestRenderer, pillar: string) {
-  await act(async () => segment(tree, pillar).props.onPress());
-}
+/* ─── the three pillars, inside a Journey ───────────────────────────── */
 
-/* ─── the three pillars ──────────────────────────────────────────────── */
-
-describe('three first-class pillars', () => {
+describe('three first-class pillars inside an active Journey', () => {
   it('opens on Overview, with its selected state announced', async () => {
-    const tree = await mount(<Journey />);
+    const tree = await mountActive();
     expect(segment(tree, 'Overview').props.accessibilityState).toEqual({ selected: true });
     expect(segment(tree, 'Weight').props.accessibilityState).toEqual({ selected: false });
     expect(segment(tree, 'Photos').props.accessibilityState).toEqual({ selected: false });
   });
 
-  it('Overview, empty, names what Journey is made of without inventing any of it', async () => {
-    const content = text(await mount(<Journey />));
-    expect(content).toContain('Journey brings together the weight and progress photos you record');
-    expect(content).toContain('No weight entries yet.');
-    expect(content).toContain('No progress photos yet.');
-    expect(content).toContain('Your recorded Journey will appear here, in the order it happened.');
+  it('Overview is the home of this Journey: its facts, then its spine from beginning to planned end', async () => {
+    const content = text(await mountActive());
+    expect(content).toContain('Summer Chapter');
+    for (const fact of ['STARTING', 'CURRENT', 'WEIGH-INS', 'BEGAN', 'PLANNED END', 'No progress photos yet.']) {
+      expect(content).toContain(fact);
+    }
+    // One weigh-in: nothing to compare, so no change.
+    expect(content).not.toContain('CHANGE');
+    expect(content).not.toMatch(/[−+]\d+\.\d lb/);
   });
 
-  it('Weight, empty, says what belongs there — and is not Overview with a new title', async () => {
-    const tree = await mount(<Journey />);
-    await select(tree, 'Weight');
+  it('Weight shows this Journey’s history with its Log Weight action', async () => {
+    const tree = await mountActive([180.4, 179.0]);
+    await pillar(tree, 'Weight');
     expect(segment(tree, 'Weight').props.accessibilityState).toEqual({ selected: true });
     const content = text(tree);
-    expect(content).toContain('No weight entries yet');
-    expect(content).toContain('Every weigh-in you record is kept here with its date and time');
-    expect(content).not.toContain('Journey brings together');
-    expect(content).not.toContain('No progress photos yet');
+    expect(content).toContain('179.0');
+    expect(content).toContain('WEIGHT HISTORY · 2 ENTRIES');
+    expect(control(tree, 'Log Weight')).toBeDefined();
   });
 
-  it('Photos is a real pillar with its own private-history empty state', async () => {
-    const tree = await mount(<Journey />);
-    await select(tree, 'Photos');
-    expect(segment(tree, 'Photos').props.accessibilityState).toEqual({ selected: true });
+  it('Photos is a real pillar with its own private-history empty state and no action', async () => {
+    const tree = await mountActive();
+    await pillar(tree, 'Photos');
     const content = text(tree);
     expect(content).toContain('No progress photos yet');
     expect(content).toContain('Your private progress-photo history will live here');
-    expect(content).not.toContain('No weight entries yet');
-    // Social and feed vocabulary has no place in private history.
-    for (const social of ['like', 'share', 'feed', 'follow', 'post']) expect(content.toLowerCase()).not.toContain(social);
+    for (const social of ['like', 'share', 'feed', 'follow', 'post', 'add photo']) expect(content.toLowerCase()).not.toContain(social);
   });
 
   it('returns to Overview, and the selection is never persisted', async () => {
-    const tree = await mount(<Journey />);
-    await select(tree, 'Photos');
-    await select(tree, 'Overview');
-    expect(text(tree)).toContain('Journey brings together');
-    await select(tree, 'Weight');
+    const tree = await mountActive();
+    await pillar(tree, 'Photos');
+    await pillar(tree, 'Overview');
+    expect(text(tree)).toContain('BEGAN');
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
-
-    await act(async () => tree.unmount());
-    mounted = null;
-    const again = await mount(<Journey />);
+    await unmountApp();
+    const again = await mountApp(<Journey />);
     expect(segment(again, 'Overview').props.accessibilityState).toEqual({ selected: true });
   });
 });
 
-/* ─── the real provider ──────────────────────────────────────────────── */
+/* ─── the real providers ─────────────────────────────────────────────── */
 
-describe('release reads real Journey storage and never writes it', () => {
+describe('release reads real Journey storage and never writes it on view', () => {
   it('reads the Journey keys, finds nothing, seeds nothing and writes nothing', async () => {
-    const tree = await mount(<Journey />);
+    const tree = await mountApp(<Journey />);
     const reads = (AsyncStorage.getItem as jest.Mock).mock.calls.map(([key]) => key);
-    expect(reads).toEqual(expect.arrayContaining([JourneyKeys.weight, JourneyKeys.preferences]));
-    for (const pillar of ['Weight', 'Photos', 'Overview']) await select(tree, pillar);
+    expect(reads).toEqual(expect.arrayContaining([JourneyKeys.weight, JourneyKeys.preferences, JourneyKeys.journeys]));
+    expect(hasPillars(tree)).toBe(false);
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
     expect(AsyncStorage.removeItem).not.toHaveBeenCalled();
     expect(await AsyncStorage.getAllKeys()).toEqual([]);
   });
 
   it('does not change the display unit on its own', async () => {
-    await AsyncStorage.setItem(JourneyKeys.preferences, JSON.stringify({ unit: 'kg' }));
+    await seedStorage({ unit: 'kg' });
     jest.clearAllMocks();
-    await mount(<Journey />);
+    await mountApp(<Journey />);
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
     expect(await AsyncStorage.getItem(JourneyKeys.preferences)).toBe(JSON.stringify({ unit: 'kg' }));
   });
 
-  it('renders a real stored weigh-in — release is wired to real data, not to nothing', async () => {
-    const entry: WeightEntry = { id: 'real', loggedAt: new Date().toISOString(), weightKg: toKg(172.4, 'lb'), enteredUnit: 'lb' };
-    await AsyncStorage.setItem(JourneyKeys.weight, JSON.stringify([entry]));
-    const tree = await mount(<Journey />);
-    expect(text(tree)).toContain('172.4');
-    await select(tree, 'Weight');
-    expect(text(tree)).toContain('172.4');
-    // One entry is not a trend: no line, no change.
+  it('an active Journey is rendered from storage — release is wired to real data', async () => {
+    const tree = await mountActive([172.4]);
+    expect(text(tree)).toContain('172.4 lb');
     expect(tree.root.findAllByType(Svg)).toHaveLength(0);
-    expect(text(tree)).not.toMatch(/[−+]\d/);
   });
 });
 
 /* ─── release / preview isolation ────────────────────────────────────── */
 
-/** Strings only the preview's fixtures can produce. */
-const PREVIEW_ONLY = ['178.0', '186.4', '183.2', 'Development progress photo placeholder', 'DEVELOPMENT PREVIEW', 'Then', 'All photos', 'Latest photo'];
+const PREVIEW_ONLY = [
+  '178.0',
+  '186.4',
+  '183.2',
+  'Getting Back to Me',
+  'Summer Transformation',
+  'Marathon Prep',
+  'Spring Reset',
+  'Development progress photo placeholder',
+  'DEVELOPMENT PREVIEW',
+];
 
 describe('the preview cannot leak into release', () => {
-  it('an empty real history renders empty pillars — never the populated preview', async () => {
-    const tree = await mount(<Journey />);
-    for (const pillar of ['Overview', 'Weight', 'Photos']) {
-      await select(tree, pillar);
+  it('no Journey renders the first-use screen — never a demo Journey', async () => {
+    const content = text(await mountApp(<Journey />));
+    expect(content).toContain('Start a New Journey');
+    for (const fixture of PREVIEW_ONLY) expect(content).not.toContain(fixture);
+  });
+
+  it('a real active Journey shows none of the preview fixtures, on any pillar', async () => {
+    const tree = await mountActive([163.7]);
+    for (const name of ['Overview', 'Weight', 'Photos'] as const) {
+      await pillar(tree, name);
       const content = text(tree);
       for (const fixture of PREVIEW_ONLY) expect(content).not.toContain(fixture);
     }
@@ -194,11 +180,11 @@ describe('the preview cannot leak into release', () => {
   it('no release module imports the preview route or its fixtures', () => {
     const offenders: string[] = [];
     const walk = (dir: string) => {
-      for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        const full = join(dir, entry.name);
-        if (entry.isDirectory()) {
-          if (entry.name !== '__tests__') walk(full);
-        } else if (/\.tsx?$/.test(entry.name) && !/-preview\.tsx$/.test(entry.name)) {
+      for (const item of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, item.name);
+        if (item.isDirectory()) {
+          if (item.name !== '__tests__') walk(full);
+        } else if (/\.tsx?$/.test(item.name) && !/-preview\.tsx$/.test(item.name)) {
           if (/from\s+['"][^'"]*journey-preview['"]/.test(readFileSync(full, 'utf8'))) offenders.push(full);
         }
       }
@@ -211,46 +197,73 @@ describe('the preview cannot leak into release', () => {
     const source = readFileSync(join(ROOT, 'src/app/(vita)/(tabs)/journey.tsx'), 'utf8');
     expect(source).toContain('const NO_PHOTOS: readonly JourneyPhotoView[] = Object.freeze([]);');
     expect(source).toMatch(/photos: NO_PHOTOS/);
-    expect(source).not.toMatch(/placeholder:\s*true|SCENARIO|journey-preview/);
+    expect(source).not.toMatch(/placeholder:\s*true|journey-preview|showFuture/);
   });
 
-  it('JourneyView has no default data — a caller must hand it something', () => {
+  it('JourneyView has no default data — a caller must hand it a Journey and its data', () => {
     const source = readFileSync(join(ROOT, 'src/features/journey/components/JourneyView.tsx'), 'utf8');
-    expect(source).toMatch(/export function JourneyView\(\{ data, initialPillar = 'overview', actions, showFuture = false \}: Props\)/);
-    // No default for `data` in the signature.
+    expect(source).toMatch(/export function JourneyView\(\{ journey, today, data,/);
     expect(source).not.toMatch(/\{\s*data\s*=/);
+    expect(source).not.toMatch(/\{\s*journey\s*=/);
   });
 });
 
 describe('the DEV preview', () => {
-  it('renders the populated vision, clearly labelled, and writes nothing', async () => {
-    mockParams = { state: 'established' };
-    const tree = await mount(<JourneyPreview />);
-    const content = text(tree);
-    expect(content).toContain('DEVELOPMENT PREVIEW · FIXTURE DATA, NOT A REAL JOURNEY');
-    expect(content).toContain('178.0');
-    expect(content).toContain('−8.4 lb');
-    for (const pillar of ['Weight', 'Photos', 'Overview']) await select(tree, pillar);
+  const states = ['none', 'early', 'established', 'ended', 'completed', 'library'];
+
+  it.each(states)('renders "%s", labelled as fixtures, and never touches storage', async (state) => {
+    mockParams = { state };
+    const tree = await mountApp(<JourneyPreview />);
+    expect(text(tree)).toContain('DEVELOPMENT PREVIEW · FIXTURE DATA, NOT A REAL JOURNEY');
+    jest.clearAllMocks();
+    for (const name of ['Weight', 'Photos', 'Overview'] as const) {
+      if (hasPillars(tree)) await pillar(tree, name);
+    }
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
-    expect(AsyncStorage.getItem).not.toHaveBeenCalled();
     expect(await AsyncStorage.getAllKeys()).toEqual([]);
+  });
+
+  it('shows every lifecycle state with its own real component', async () => {
+    const expectations: Record<string, string[]> = {
+      none: ['Start a New Journey'],
+      early: ['Getting Back to Me', 'DAY 13 OF 90'],
+      established: ['Summer Transformation', 'DAY 71 OF 90', 'CHANGE'],
+      ended: ['Marathon Prep', 'Journey end date reached'],
+      completed: ['COMPLETED', 'Spring Reset', 'FINAL'],
+      library: ['PAST JOURNEYS', 'Spring Reset', 'New Year, Slowly'],
+    };
+    for (const [state, strings] of Object.entries(expectations)) {
+      mockParams = { state };
+      const tree = await mountApp(<JourneyPreview />);
+      for (const value of strings) expect(text(tree)).toContain(value);
+      await unmountApp();
+    }
+  });
+
+  it('can write nothing: no Log Weight, no Start, no Manage', async () => {
+    for (const state of ['none', 'established', 'ended', 'completed']) {
+      mockParams = { state, pillar: 'weight' };
+      const tree = await mountApp(<JourneyPreview />);
+      const labels = tree.root.findAll((n) => typeof n.props.onPress === 'function').map((n) => n.props.accessibilityLabel);
+      for (const action of ['Log Weight', 'Start a New Journey', 'Manage Journey', 'Extend Journey', 'Finish Journey']) {
+        expect(labels).not.toContain(action);
+      }
+      await unmountApp();
+    }
   });
 
   it('labels every placeholder photo as a development placeholder', async () => {
     mockParams = { state: 'established', pillar: 'photos' };
-    const tree = await mount(<JourneyPreview />);
+    const tree = await mountApp(<JourneyPreview />);
     const images = tree.root.findAll((node) => typeof node.type === 'string' && node.props.accessibilityRole === 'image');
     const photos = images.filter((node) => /photo/i.test(node.props.accessibilityLabel ?? ''));
-    expect(photos.length).toBeGreaterThanOrEqual(6); // Then, Now, and the grid of four
+    expect(photos.length).toBeGreaterThanOrEqual(6);
     for (const node of photos) expect(node.props.accessibilityLabel).toMatch(/Development progress photo placeholder, /);
-    expect(text(tree)).toContain('THEN');
-    expect(text(tree)).toContain('NOW');
-    expect(text(tree)).toContain('10 weeks apart');
   });
 
-  it('describes change neutrally — a signed number, never a verdict or a verdict colour', async () => {
+  it('describes change neutrally — never a verdict or a verdict colour', async () => {
     mockParams = { state: 'established', pillar: 'weight' };
-    const tree = await mount(<JourneyPreview />);
+    const tree = await mountApp(<JourneyPreview />);
     const content = text(tree).toLowerCase();
     for (const verdict of ['great', 'progress!', 'keep', 'well done', 'on track', 'goal', 'bmi', 'streak']) {
       expect(content).not.toContain(verdict);
@@ -268,7 +281,7 @@ describe('the DEV preview', () => {
     (global as unknown as { __DEV__: boolean }).__DEV__ = false;
     try {
       mockParams = { state: 'established' };
-      const content = text(await mount(<JourneyPreview />));
+      const content = text(await mountApp(<JourneyPreview />));
       expect(content).toContain('Not available.');
       expect(content).not.toContain('178.0');
     } finally {
@@ -294,16 +307,5 @@ describe('change is arithmetic', () => {
   });
 });
 
-/* JourneyView is exercised through both routes above; this pins that a
-   direct render with nothing in it is the empty Overview. */
-describe('JourneyView with empty data', () => {
-  it('is the empty Overview', async () => {
-    const tree = await mount(<JourneyView data={{ status: 'ready', weights: [], photos: [], unit: 'lb' }} />);
-    expect(text(tree)).toContain('No weight entries yet.');
-  });
-
-  it('renders no pillar until the history has been read', async () => {
-    const tree = await mount(<JourneyView data={{ status: 'loading', weights: [], photos: [], unit: 'lb' }} />);
-    expect(text(tree)).not.toContain('No weight entries yet');
-  });
-});
+void act;
+void TODAY;

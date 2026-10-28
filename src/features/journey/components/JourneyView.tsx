@@ -3,7 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { SegmentedTabs } from '../../../components/ui';
 import { palette, spacing } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
+import type { Journey } from '../../../lib/journey';
 import type { JourneyPillar, JourneyViewData, JourneyWeightActions } from '../types';
+import { JourneyHeader } from './JourneyHeader';
 import { OverviewPillar } from './OverviewPillar';
 import { PhotosPillar } from './PhotosPillar';
 import { WeightPillar } from './WeightPillar';
@@ -13,7 +15,17 @@ const PILLARS: readonly JourneyPillar[] = ['overview', 'weight', 'photos'];
 const LABELS = ['Overview', 'Weight', 'Photos'] as const;
 
 type Props = {
+  /** The Journey these pillars belong to (6.5). Pillars never exist without one. */
+  journey: Journey;
+  /** Local calendar day — injected so the preview and tests control time. */
+  today: string;
+  /** `data.weights` must already be this Journey's own weigh-ins. */
   data: JourneyViewData;
+  /** Opens Manage Journey (release, active Journey only). */
+  onManage?: () => void;
+  /** Shown on and after the planned end (release only). */
+  onExtend?: () => void;
+  onFinish?: () => void;
   /**
    * Which pillar opens first. Release never passes it — Journey opens on
    * Overview. The `__DEV__` preview uses it to deep-link a pillar for review.
@@ -33,7 +45,9 @@ type Props = {
 };
 
 /**
- * Journey's three first-class pillars — Overview · Weight · Photos (6.3).
+ * An active Journey: its header, then its three pillars — Overview · Weight ·
+ * Photos (6.3, given a parent in 6.5). The pillars only ever render inside a
+ * Journey; with no Journey there is no switcher at all.
  *
  * The same component renders release and the `__DEV__` preview; only the
  * `data` differs, and it is required. The selected pillar is local state:
@@ -42,7 +56,7 @@ type Props = {
  * The selector is the shared `SegmentedTabs`, in Journey gold. Gold is too
  * light for white text in Dark, so the selected label turns ink there.
  */
-export function JourneyView({ data, initialPillar = 'overview', actions, showFuture = false }: Props) {
+export function JourneyView({ journey, today, data, onManage, onExtend, onFinish, initialPillar = 'overview', actions, showFuture = false }: Props) {
   const { scheme } = useTheme();
   const accent = useJourneyAccent();
   const [index, setIndex] = useState(PILLARS.indexOf(initialPillar));
@@ -50,6 +64,7 @@ export function JourneyView({ data, initialPillar = 'overview', actions, showFut
 
   return (
     <View style={styles.root}>
+      <JourneyHeader journey={journey} today={today} onManage={onManage} onExtend={onExtend} onFinish={onFinish} />
       <SegmentedTabs
         options={LABELS}
         selectedIndex={index}
@@ -62,7 +77,7 @@ export function JourneyView({ data, initialPillar = 'overview', actions, showFut
       {/* Nothing until the real history is read, so an empty state never flashes over real records. */}
       {data.status === 'ready' ? (
         <>
-          {pillar === 'overview' ? <OverviewPillar data={data} showFuture={showFuture} /> : null}
+          {pillar === 'overview' ? <OverviewPillar data={data} journey={journey} showFuture={showFuture} /> : null}
           {pillar === 'weight' ? <WeightPillar data={data} actions={actions} showFuture={showFuture} /> : null}
           {pillar === 'photos' ? <PhotosPillar data={data} /> : null}
         </>

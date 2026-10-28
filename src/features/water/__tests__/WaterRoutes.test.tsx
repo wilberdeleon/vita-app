@@ -553,6 +553,20 @@ describe('the custom amount keyboard', () => {
     await act(async () => control(tree, 'Enter a custom amount')!.props.onPress());
   }
 
+  it('lets one tap reach Log while the number pad is up — the screen behind passes taps through', async () => {
+    /*
+     * The founder's physical-iPhone bug (2026-10-28): with the pad open, the
+     * first tap on Log only dismissed the keyboard. The Water screen's own
+     * scroll view captured it. While the sheet is open it must be 'handled'.
+     */
+    const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
+    const tree = await mount(<WaterLog />, repository);
+    const screenScroll = () => tree.root.findAllByType(require('react-native').ScrollView)[0];
+    expect(screenScroll().props.keyboardShouldPersistTaps).not.toBe('handled');
+    await openCustom(tree);
+    expect(screenScroll().props.keyboardShouldPersistTaps).toBe('handled');
+  });
+
   it('offers Done only while the amount field is on screen', async () => {
     const { repository } = fakeRepository({ preferences: { unit: 'floz' } });
     const tree = await mount(<WaterLog />, repository);

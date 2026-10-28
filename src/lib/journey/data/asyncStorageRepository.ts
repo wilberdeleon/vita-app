@@ -20,11 +20,14 @@ import { JourneyKeys } from './keys';
 /** A stored weigh-in survives only if every field is usable. Unknown fields are dropped. */
 export function parseWeightEntry(value: unknown): WeightEntry | null {
   if (!isRecord(value)) return null;
-  const { id, loggedAt, weightKg, enteredUnit } = value;
+  const { id, loggedAt, weightKg, enteredUnit, journeyId } = value;
   if (!isNonEmptyString(id) || !isNonEmptyString(loggedAt)) return null;
   if (Number.isNaN(Date.parse(loggedAt))) return null;
   if (!isValidWeight(weightKg) || !isWeightUnit(enteredUnit)) return null;
-  return { id, loggedAt, weightKg, enteredUnit };
+  // Absent = a legacy 6.4 entry, kept as it is. Present but not a usable id
+  // is a shape VITA never wrote.
+  if (journeyId !== undefined && !isNonEmptyString(journeyId)) return null;
+  return { id, loggedAt, weightKg, enteredUnit, ...(journeyId ? { journeyId } : {}) };
 }
 
 function parsePreferences(value: unknown): WeightPreferences | null {

@@ -32,6 +32,11 @@ type Props = {
   actions?: JourneyWeightActions;
   /** `__DEV__` preview only — the 6.7 trend line. Release never draws it. */
   showFuture?: boolean;
+  /**
+   * History only, without the latest-weight heading — for a completed
+   * Journey's summary, whose own statistics already say it (6.5).
+   */
+  historyOnly?: boolean;
 };
 
 /**
@@ -47,7 +52,7 @@ type Props = {
  * word that grades a change. One entry shows one entry — no "0.0 lb", no
  * comparison against nothing.
  */
-export function WeightPillar({ data, actions, showFuture = false }: Props) {
+export function WeightPillar({ data, actions, showFuture = false, historyOnly = false }: Props) {
   const [sheet, setSheet] = useState<{ open: boolean; entry: WeightEntry | null }>({ open: false, entry: null });
   const { showToast } = useToast();
 
@@ -94,6 +99,7 @@ export function WeightPillar({ data, actions, showFuture = false }: Props) {
           onEdit={openEdit}
           onUnit={actions ? (unit) => void actions.setUnit(unit) : undefined}
           showFuture={showFuture}
+          historyOnly={historyOnly}
         />
       )}
       {actions ? (
@@ -139,9 +145,10 @@ type PopulatedProps = {
   onEdit?: (entry: WeightEntry) => void;
   onUnit?: (unit: WeightUnit) => void;
   showFuture: boolean;
+  historyOnly: boolean;
 };
 
-function WeightPopulated({ data, onLog, onEdit, onUnit, showFuture }: PopulatedProps) {
+function WeightPopulated({ data, onLog, onEdit, onUnit, showFuture, historyOnly }: PopulatedProps) {
   const { surfaces } = useTheme();
   const { weights, unit } = data;
   const [shown, setShown] = useState(HISTORY_PAGE);
@@ -160,6 +167,8 @@ function WeightPopulated({ data, onLog, onEdit, onUnit, showFuture }: PopulatedP
 
   return (
     <View style={styles.container}>
+      {historyOnly ? null : (
+        <>
       <View accessible accessibilityLabel={`Latest weight ${spokenWeight(latest.weightKg, unit)}, ${spokenWhen(latest.loggedAt)}`}>
         <View style={styles.weightRow}>
           <Text style={[styles.weight, { color: surfaces.text }]}>{weightNumber(latest.weightKg, unit)}</Text>
@@ -181,6 +190,9 @@ function WeightPopulated({ data, onLog, onEdit, onUnit, showFuture }: PopulatedP
       {showFuture && weights.length > 1 ? <WeightTrend weights={weights} unit={unit} height={132} /> : null}
 
       {onLog ? <Button variant="neutral" label="Log Weight" onPress={onLog} /> : null}
+
+        </>
+      )}
 
       <View style={styles.section}>
         <View style={styles.historyHeader}>

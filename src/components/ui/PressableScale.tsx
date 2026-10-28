@@ -1,4 +1,4 @@
-import { useMemo, useRef, type PropsWithChildren } from 'react';
+import { useEffect, useMemo, useRef, type PropsWithChildren } from 'react';
 import {
   Animated,
   Pressable,
@@ -83,10 +83,20 @@ export function PressableScale({
    */
   const baseOpacity = StyleSheet.flatten(style)?.opacity;
   const resolvedBase = typeof baseOpacity === 'number' ? baseOpacity : 1;
-  const composedOpacity = useMemo(
-    () => Animated.multiply(opacity, resolvedBase),
-    [opacity, resolvedBase],
-  );
+  /*
+   * One stable node whose base value is *set*, never a new node per change
+   * (2026-10-28, found on SDK 58 / React Native 0.88). Rebuilding
+   * `Animated.multiply` whenever the caller's opacity changed left the
+   * mounted view drawing the old node: a Button that went enabled →
+   * disabled → enabled stayed visibly dim while accepting taps — the Journey
+   * start flow's Continue showed it. Same product: press fade × caller's
+   * opacity, so nothing about the 5.2A composition changes.
+   */
+  const base = useRef(new Animated.Value(resolvedBase)).current;
+  useEffect(() => {
+    base.setValue(resolvedBase);
+  }, [base, resolvedBase]);
+  const composedOpacity = useMemo(() => Animated.multiply(opacity, base), [opacity, base]);
 
   const springTo = (toValue: number) =>
     Animated.spring(scale, {

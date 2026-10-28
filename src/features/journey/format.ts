@@ -124,3 +124,54 @@ export function todayKey(): string {
   return todayLogDate();
 }
 
+/* ── Journey (6.5) ───────────────────────────────────────────────────── */
+
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** A calendar day as a person reads it: "Oct 28", or "Oct 28, 2026" with the year. */
+export function calendarDay(logDate: string, withYear = false): string {
+  const [year, month, day] = logDate.split('-').map(Number);
+  return `${SHORT_MONTHS[month - 1]} ${day}${withYear ? `, ${year}` : ''}`;
+}
+
+/**
+ * A Journey's date range: "Oct 28 – Jan 25, 2027" when it crosses a year,
+ * "Jun 1 – Aug 29, 2026" when it does not. The year is said once, at the end,
+ * unless the two ends differ.
+ */
+export function dateRange(start: string, end: string): string {
+  const sameYear = start.slice(0, 4) === end.slice(0, 4);
+  return `${calendarDay(start, !sameYear)} \u2013 ${calendarDay(end, true)}`;
+}
+
+/** Spoken: "October 28, 2026". */
+export function spokenCalendarDay(logDate: string): string {
+  const [year, month, day] = logDate.split('-').map(Number);
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  return `${MONTHS[month - 1]} ${day}, ${year}`;
+}
+
+/** "1 day", "90 days". */
+export function dayCount(days: number): string {
+  return `${days} ${days === 1 ? 'day' : 'days'}`;
+}
+
+export type JourneyWeightStats = {
+  /** The Journey's earliest weigh-in — its starting weight. */
+  starting: WeightEntry;
+  /** Its latest weigh-in. Equal to `starting` with one entry. */
+  current: WeightEntry;
+  /** Weigh-ins recorded in this Journey. */
+  count: number;
+};
+
+/**
+ * Starting / current / count from **one Journey's** weigh-ins (newest first).
+ * `null` with none. Change is shown only when `count > 1` — with one weigh-in
+ * there is nothing to compare.
+ */
+export function journeyWeightStats(weights: readonly WeightEntry[]): JourneyWeightStats | null {
+  if (weights.length === 0) return null;
+  return { starting: weights[weights.length - 1], current: weights[0], count: weights.length };
+}
+

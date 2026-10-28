@@ -20,4 +20,6 @@ export const JourneyKeys = {
   weight: singletonKey(JOURNEY_DOMAIN, 'weight'),
   /** `vita:v1:journey:prefs` — the body-weight display unit. */
   preferences: singletonKey(JOURNEY_DOMAIN, 'prefs'),
+  /** `vita:v1:journey:journeys` — every Journey, active and completed (6.5). */
+  journeys: singletonKey(JOURNEY_DOMAIN, 'journeys'),
 } as const;
