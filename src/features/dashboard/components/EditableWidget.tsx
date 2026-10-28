@@ -14,6 +14,7 @@ import {
   StyleSheet,
   View,
   type LayoutRectangle,
+  type ViewInstance,
 } from "react-native";
 import { PressableScale } from "../../../components/ui";
 import { motion, spacing } from "../../../theme/tokens";
@@ -132,7 +133,9 @@ export function EditableWidget({
   const editingRef = useRef(editing);
   editingRef.current = editing;
 
-  const root = useRef<View | null>(null);
+  // `ViewInstance`, not `View`: React Native 0.88's Strict TypeScript API
+  // (Expo SDK 58) types a host ref by its instance, not its component.
+  const root = useRef<ViewInstance | null>(null);
   const measure = useCallback(() => {
     root.current?.measureInWindow((x, y, width, height) => {
       if (width === 0 && height === 0) return;

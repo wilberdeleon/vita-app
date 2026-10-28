@@ -683,7 +683,7 @@ The eight slices written for Journey under the earlier structure (Journey Overvi
 
 **6.3 — Journey Experience Foundation 🟡 implemented, awaiting founder review.** Journey opens on **Overview · Weight · Photos** in Journey gold. Release reads the real weight domain through `WeightProvider`, mounted on the Journey tab only, and writes nothing on view; Photos always receives an empty list until 6.5. Each pillar has its own truthful empty state and none has a button. The populated future is reviewable only through the `__DEV__`-only `/journey-preview` (Empty · Early · Established), which renders the same components from in-file fixtures with no provider and no storage. See `docs/06-Slice-Tracker.md`.
 
-Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ · 6.2 ✅ · 6.3 🟡 awaiting founder review · 6.4 Weight Logging + History ⬜ · 6.5 Core Progress Photos ⬜ · 6.6 Timeline + Factual Milestones ⬜ · 6.7 Trends + Then-vs-Now ⬜ · 6.8 Founder Audit ⬜.** Sprint 6 is not complete; 6.4 waits on founder approval of the Journey direction.
+Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ · 6.2 ✅ · 6.3 🟡 awaiting founder review · 6.4 Weight Logging + History ⬜ · 6.5 Core Progress Photos ⬜ · 6.6 Timeline + Factual Milestones ⬜ · 6.7 Trends + Then-vs-Now ⬜ · 6.8 Founder Audit ⬜.** Sprint 6 is not complete; 6.4 waits on founder approval of the Journey direction. **2026-10-27: Sprint 6 paused for the Expo SDK 58 maintenance upgrade** (`maintenance/expo-sdk-58`, not merged) — the App Store Expo Go moved to SDK 58 and blocked the 6.3 device review. 6.3 remains 🟡 awaiting founder review.
 
 ---
 

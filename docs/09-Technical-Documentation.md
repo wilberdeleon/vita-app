@@ -6,7 +6,7 @@ Single source of truth for implementation details: stack, architecture rules, an
 
 ## Stack (founder-approved, July 2026)
 
-- **Platform:** Native-first — Expo SDK 57 / React Native, managed workflow, EAS builds. TypeScript throughout (strict mode). SDK 57 is pinned to match the current App Store Expo Go client (57.x) so founders can test on real iPhones; upgrade the SDK only when the App Store Expo Go supports it. *(Moved 54 → 57 on 2026-09-05 when the App Store client advanced and stopped opening SDK 54 projects — see Changelog.)*
+- **Platform:** Native-first — Expo SDK 58 / React Native 0.88 / React 19.3, managed workflow (CNG, Expo Go), EAS builds. TypeScript throughout (strict mode; RN's Strict TypeScript API is the default from SDK 58 — host refs are typed by instance, e.g. `ViewInstance`). SDK 58 is pinned to match the current App Store Expo Go client so founders can test on real iPhones; upgrade the SDK only when the App Store Expo Go supports it. *(Moved 54 → 57 on 2026-09-05 and 57 → 58 on 2026-10-27, each when the App Store client stopped opening the older SDK — see `docs/Maintenance-Expo-SDK-58.md`.)* **Custom tab bar:** from Expo Router 58 a `tabBar` receives `navigateToTab(routeKey)`, not `navigation`. **Tests:** `react-test-renderer` is an explicit dev dependency pinned to React's version, and `jest.config.js` + `jest/setup-asset-registry.js` carry three RN 0.88 test-environment repairs, documented in place.
 - **Navigation:** Expo Router (file-based) in `src/app/`.
 - **Backend:** Supabase (auth, database, storage). Schema changes via numbered migrations in `supabase/migrations/`.
 - **Deliberately not pre-committed:** state-management library and component library. These are per-slice decisions made when a slice needs them.
@@ -529,7 +529,7 @@ A second blocker sits under the intended architecture: FatSecret binds OAuth 2.0
 
 ### Barcode scanning (slice 2.8)
 
-`expo-camera@~57.0.5` — SDK 57-compatible. *(Was `~17.0.10` under SDK 54; the package was renumbered to track the SDK in the 2026-09-05 upgrade, and aligned to the expected patch in the 2026-09-13 maintenance pass.)* Works in Expo Go — no development build, no Xcode. `app.json` carries the `expo-camera` plugin with a permission string for future dev builds; Expo Go supplies its own.
+`expo-camera@~58.0.13` — SDK 58-compatible *(was `~57.0.5` until the 2026-10-27 SDK 58 upgrade)*. *(Was `~17.0.10` under SDK 54; the package was renumbered to track the SDK in the 2026-09-05 upgrade, and aligned to the expected patch in the 2026-09-13 maintenance pass.)* Works in Expo Go — no development build, no Xcode. `app.json` carries the `expo-camera` plugin with a permission string for future dev builds; Expo Go supplies its own.
 
 **Flow:** camera → `onBarcodeScanned` → `normalizeGtin()` → sequential lookup → Food Detail. Scan types are limited to `upc_a`, `upc_e`, `ean13`, `ean8`.
 

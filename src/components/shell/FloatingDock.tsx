@@ -72,13 +72,14 @@ type FloatingDockProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tab
  * shared chrome, not per-screen content, so one consistent treatment is
  * correct now that every screen's background can be light or dark.
  */
-export function FloatingDock({ state, navigation }: FloatingDockProps) {
+export function FloatingDock({ state, navigateToTab }: FloatingDockProps) {
   const insets = useSafeAreaInsets();
   const { scheme, surfaces } = useTheme();
   const inactiveColor = scheme === 'dark' ? 'rgba(255,255,255,0.65)' : palette.textSecondary;
 
   const items = DOCK_ITEMS.map((item) => {
     const routeIndex = state.routes.findIndex((route) => route.name === item.route);
+    const route = state.routes[routeIndex];
     const active = state.index === routeIndex;
     const activeColor =
       item.color === null ? surfaces.text : typeof item.color === 'string' ? item.color : item.color[scheme];
@@ -86,7 +87,11 @@ export function FloatingDock({ state, navigation }: FloatingDockProps) {
       <Pressable
         key={item.route}
         style={styles.item}
-        onPress={() => navigation.navigate(item.route)}
+        // Expo Router 58 (SDK 58) no longer hands a tab bar `navigation`; it
+        // passes `navigateToTab(routeKey)`, which is what its own tab bar calls.
+        onPress={() => {
+          if (route && !active) navigateToTab(route.key);
+        }}
         accessibilityRole="tab"
         accessibilityState={{ selected: active }}
         accessibilityLabel={item.label}

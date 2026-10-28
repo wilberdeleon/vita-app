@@ -21,4 +21,4 @@ You are the Primary Software Engineer for VITA. The governing documents in `docs
 
 ## Expo version warning
 
-This project uses Expo SDK 57 — pinned to the SDK supported by the current App Store Expo Go client so the founders can test on real iPhones. Do not upgrade the SDK without checking the App Store Expo Go version first. Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing Expo/React Native code from memory.
+This project uses Expo SDK 58 — pinned to the SDK supported by the current App Store Expo Go client so the founders can test on real iPhones (moved 57 → 58 on 2026-10-27, see `docs/Maintenance-Expo-SDK-58.md`). Do not upgrade the SDK without checking the App Store Expo Go version first. Read the exact versioned docs at https://docs.expo.dev/versions/v58.0.0/ before writing Expo/React Native code from memory.

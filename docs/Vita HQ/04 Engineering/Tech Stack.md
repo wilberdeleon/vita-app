@@ -12,18 +12,20 @@
 
 | Layer | Choice | Version |
 |---|---|---|
-| Platform | **Expo (React Native), managed workflow** — native-first | Expo SDK **57** (pinned) |
-| Runtime | React / React Native | 19.2.3 / 0.86.3 |
+| Platform | **Expo (React Native), managed workflow** — native-first | Expo SDK **58** (pinned) |
+| Runtime | React / React Native | 19.3.0 / 0.88.0 |
 | Language | **TypeScript, strict mode** | ~6.0.3 |
-| Navigation | **Expo Router** (file-based, in `src/app/`) | ~57.0.19 |
+| Navigation | **Expo Router** (file-based, in `src/app/`) | ~58.0.27 |
 | Backend | **Supabase** — auth, database, storage | `@supabase/supabase-js` ^2.110.0 |
-| Graphics | `react-native-svg` (hand-drawn charts) | 15.15.4 |
+| Graphics | `react-native-svg` (hand-drawn charts) | 15.16.0 |
 | Icons | `@expo/vector-icons` (Ionicons) | ^15.0.2 |
 | Builds | **EAS** — development / preview / production profiles | `eas.json` |
 
 ## ⚠️ The SDK pin (important)
 
-Expo SDK is **pinned to 57** to match the current App Store **Expo Go** client so the founders can test on real iPhones. **Do not upgrade the SDK without first checking the App Store Expo Go version.** Always consult the versioned docs: `https://docs.expo.dev/versions/v57.0.0/`.
+Expo SDK is **pinned to 58** to match the current App Store **Expo Go** client so the founders can test on real iPhones. **Do not upgrade the SDK without first checking the App Store Expo Go version.** Always consult the versioned docs: `https://docs.expo.dev/versions/v58.0.0/`.
+
+**Moved 57 → 58 on 2026-10-27** (branch `maintenance/expo-sdk-58`, founder device acceptance pending) after the App Store Expo Go moved to SDK 58 and refused to open VITA. Repo record: `docs/Maintenance-Expo-SDK-58.md`.
 
 The rule has not changed, only the number. The project sat on **54** from 2026-07-05 until 2026-09-05, when the App Store Expo Go client moved to SDK 57 and refused to open an SDK 54 project at all — see the Changelog entry for that date.
 

@@ -231,7 +231,7 @@ describe('Journey identity is gold, and gold is not a verdict', () => {
     const routes = ['dashboard', 'fuel', 'journey', 'atlas'].map((name) => ({ key: name, name }));
     const props = {
       state: { index: routes.findIndex((r) => r.name === activeRoute), routes },
-      navigation: { navigate: jest.fn() },
+      navigateToTab: jest.fn(),
     } as unknown as Parameters<typeof FloatingDock>[0];
     const tree = await mount(<FloatingDock {...props} />, themeMode);
     const tab = tree.root.findAll((node) => node.props.accessibilityLabel === 'Journey' && node.props.accessibilityRole === 'tab')[0];
@@ -250,7 +250,7 @@ describe('Journey identity is gold, and gold is not a verdict', () => {
     const colorOf = async (active: string, label: string) => {
       const props = {
         state: { index: routes.findIndex((r) => r.name === active), routes },
-        navigation: { navigate: jest.fn() },
+        navigateToTab: jest.fn(),
       } as unknown as Parameters<typeof FloatingDock>[0];
       const tree = await mount(<FloatingDock {...props} />, 'light');
       const tab = tree.root.findAll((node) => node.props.accessibilityLabel === label && node.props.accessibilityRole === 'tab')[0];
@@ -262,5 +262,25 @@ describe('Journey identity is gold, and gold is not a verdict', () => {
     expect(await colorOf('fuel', 'Fuel')).toBe(palette.primary);
     expect(await colorOf('atlas', 'Atlas')).toBe(palette.peptide);
     expect(await colorOf('dashboard', 'Home')).toBe(palette.text);
+  });
+
+  it('navigates through the tab bar API Expo Router 58 provides', async () => {
+    // SDK 58 removed `navigation` from a custom tab bar's props; the dock now
+    // calls `navigateToTab(routeKey)`. A dock still calling the old API would
+    // throw on the first tap on a real device.
+    const routes = ['dashboard', 'fuel', 'journey', 'atlas'].map((name) => ({ key: `${name}-key`, name }));
+    const navigateToTab = jest.fn();
+    const props = {
+      state: { index: 0, routes },
+      navigateToTab,
+    } as unknown as Parameters<typeof FloatingDock>[0];
+    const tree = await mount(<FloatingDock {...props} />, 'light');
+    const tab = (label: string) =>
+      tree.root.findAll((node) => node.props.accessibilityLabel === label && node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function')[0];
+    await act(async () => tab('Journey').props.onPress());
+    expect(navigateToTab).toHaveBeenCalledWith('journey-key');
+    navigateToTab.mockClear();
+    await act(async () => tab('Home').props.onPress());
+    expect(navigateToTab).not.toHaveBeenCalled();
   });
 });
