@@ -4146,14 +4146,14 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 | Slice | Scope | Status |
 |---|---|---|
 | Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
-| **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ `c4c9693` |
-| **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ `f50351f` (+ `6c09aa1`) |
-| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | 🟡 Implemented — **awaiting founder review** |
-| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ |
-| 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ |
-| 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ |
-| 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ |
-| 6.8 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ |
+| **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ COMPLETE / LOCKED · `c4c9693` |
+| **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ COMPLETE / LOCKED · `f50351f` (+ `6c09aa1`) |
+| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | ✅ **COMPLETE / LOCKED** — founder-approved on a physical iPhone (SDK 58), 2026-10-27 · `1c5945e` |
+| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ NOT STARTED |
+| 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ NOT STARTED |
+| 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ NOT STARTED |
+| 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ NOT STARTED |
+| 6.8 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ NOT STARTED |
 
 ### Slice 6.1 — Journey truth + identity foundation
 
@@ -4214,5 +4214,7 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 
 **Validation.** **92 suites / 2513 tests** (91 / 2493) · both `tsc` modes clean · iOS export clean · **zero dependency changes** · no persistence added (no tab key, no photo/timeline/milestone records) · Dashboard, Fuel, Water, Peptides, Settings, Tools and BMI untouched.
 
-**Not started: 6.4 Weight Logging + History.** Waits on the founder's judgment of the Journey direction.
+**Founder approval — 2026-10-27: ✅ COMPLETE / LOCKED.** Review was interrupted by the App Store Expo Go moving to SDK 58; after the SDK 58 maintenance pass, the founder opened VITA on a physical iPhone in current Expo Go, tapped through the dock (no first-tap crash), reviewed Overview, Weight and Photos, and approved the direction. Locked implementation `1c5945e`; Sprint 6 now runs on SDK 58 (`8ffc340`, fast-forward from `maintenance/expo-sdk-58`). The locked contract is recorded in `docs/04-Master-Roadmap.md` → Sprint 6.
+
+**Next: 6.4 Weight Logging + History — NOT STARTED.**
 

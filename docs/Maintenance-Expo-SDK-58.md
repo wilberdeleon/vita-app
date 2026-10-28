@@ -1,6 +1,6 @@
 # Maintenance — Expo SDK 57 → 58
 
-**Status: implemented on `maintenance/expo-sdk-58` · founder physical-iPhone acceptance PENDING · not merged.**
+**Status: ✅ COMPLETE — founder physical-iPhone QA APPROVED (2026-10-27) · fast-forwarded into `sprint-6-journey-weight` at `8ffc340` · `maintenance/expo-sdk-58` retained for provenance · `main` untouched.**
 Date: 2026-10-27. Branch cut from `sprint-6-journey-weight` at `1c5945e`.
 
 ## Why it became mandatory
@@ -9,7 +9,7 @@ The founder opened Sprint 6.3 on a physical iPhone and Expo Go reported *"Projec
 
 ## Boundary
 
-Infrastructure only. **Sprint 6 product work is paused, and 6.3 stays 🟡 awaiting founder review.** No product design, persistence key, schema, domain semantic, or Dashboard / Fuel / Water / Peptides / BMI / Settings / Tools / Journey behaviour changed. The only source edits are the two the SDK broke.
+Infrastructure only. Sprint 6 product work was paused for it and 6.3's review waited on it (6.3 was approved on this build — see the acceptance section). No product design, persistence key, schema, domain semantic, or Dashboard / Fuel / Water / Peptides / BMI / Settings / Tools / Journey behaviour changed. The only source edits are the two the SDK broke.
 
 ## Migration audit (before upgrading)
 
@@ -86,10 +86,16 @@ Applied with `npx expo install expo@^58.0.0 --fix`; `expo` then written back as 
 | Dependencies | Only the Expo-aligned set above + the explicit test renderer |
 | Persistence | No key, schema or migration touched |
 
-**Simulator.** The iOS Simulator carries Expo Go **57.0.2**, which cannot open an SDK 58 project (the founder's exact symptom). Expo CLI tried to install Expo Go 58.0.7 and its download timed out; installing the downloaded client by hand was not approved in this session. **So this pass has no on-device run** — the founder's iPhone, which already has the SDK 58 client, is the first device to open it. Regression evidence is the full product suite (every route test, the dock, Journey, Dashboard, Fuel, Water, Peptides, Tools, BMI, Settings, motion, haptics and Reduced Motion) plus a clean bundle.
+**Simulator (during the maintenance pass).** The iOS Simulator carries Expo Go **57.0.2**, which cannot open an SDK 58 project (the founder's exact symptom). Expo CLI tried to install Expo Go 58.0.7 and its download timed out; installing the downloaded client by hand was not approved in this session. **So this pass has no on-device run** — the founder's iPhone, which already has the SDK 58 client, is the first device to open it. Regression evidence is the full product suite (every route test, the dock, Journey, Dashboard, Fuel, Water, Peptides, Tools, BMI, Settings, motion, haptics and Reduced Motion) plus a clean bundle.
 
 **`npm audit`** reports 17 advisories in the dependency tree after the upgrade. Not addressed here — `npm audit fix` would move packages off Expo's aligned versions, which is out of scope for this pass.
 
-## Not merged
+## Founder acceptance — ✅ APPROVED (2026-10-27)
 
-`maintenance/expo-sdk-58` merges into `sprint-6-journey-weight` only after the founder confirms VITA opens and works in SDK 58 Expo Go on the physical iPhone.
+- **SDK 58 physical-iPhone QA ✅** — VITA opens normally in current App Store Expo Go (SDK 58).
+- **FloatingDock physical QA ✅** — the founder tapped through the dock: navigation works, no first-tap crash. Automated: the dock-tap test pins `navigateToTab(route.key)` and the active-tab no-op.
+- Sprint 6.3 Journey verified intact on the same build, and approved.
+
+**Integration.** `maintenance/expo-sdk-58` was a direct descendant of `sprint-6-journey-weight` (merge-base `1c5945e`), so it was **fast-forwarded** — no merge commit manufactured, zero diff from the validated branch. Re-validated on Sprint 6: 92 suites / 2514 tests, both `tsc` modes clean, Doctor 20/20, iOS export clean, Metro dev bundle clean, no storage key outside the 6.2 Journey domain changed since `main`. **SDK 58 is now the Sprint 6 baseline.**
+
+**Kept deliberately:** the `navigateToTab` dock contract, the `ViewInstance` ref, the explicit `react-test-renderer@19.3.0`, the two RN 0.88 module mappings and the asset-registry setup file. The setup file is removed only when a future `jest-expo` genuinely mocks that path — not because tests happen to pass.

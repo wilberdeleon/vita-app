@@ -25,7 +25,7 @@
 
 Expo SDK is **pinned to 58** to match the current App Store **Expo Go** client so the founders can test on real iPhones. **Do not upgrade the SDK without first checking the App Store Expo Go version.** Always consult the versioned docs: `https://docs.expo.dev/versions/v58.0.0/`.
 
-**Moved 57 → 58 on 2026-10-27** (branch `maintenance/expo-sdk-58`, founder device acceptance pending) after the App Store Expo Go moved to SDK 58 and refused to open VITA. Repo record: `docs/Maintenance-Expo-SDK-58.md`.
+**Moved 57 → 58 on 2026-10-27** (founder approved on a physical iPhone; fast-forwarded into `sprint-6-journey-weight` — the Sprint 6 baseline) after the App Store Expo Go moved to SDK 58 and refused to open VITA. Repo record: `docs/Maintenance-Expo-SDK-58.md`.
 
 The rule has not changed, only the number. The project sat on **54** from 2026-07-05 until 2026-09-05, when the App Store Expo Go client moved to SDK 57 and refused to open an SDK 54 project at all — see the Changelog entry for that date.
 
