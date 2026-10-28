@@ -1,7 +1,8 @@
-import type { PropsWithChildren } from 'react';
+import { useCallback, useState, type PropsWithChildren } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DOCK_CLEARANCE, spacing } from '../../theme/tokens';
+import { SheetPresenceContext } from './sheetPresence';
 
 /** Enough room to scroll a form's foot clear of an open numeric keypad. */
 const KEYBOARD_CLEARANCE = 320;
@@ -72,6 +73,11 @@ export function Screen({
   const paddingTop = topInset ? insets.top : 0;
   const rootBackground = surfaces.background;
 
+  // How many `VitaSheet`s rendered inside this screen are open — see
+  // `sheetPresence.ts` for why the scroll view needs to know.
+  const [openSheets, setOpenSheets] = useState(0);
+  const reportSheet = useCallback((delta: 1 | -1) => setOpenSheets((count) => count + delta), []);
+
   if (!scroll) {
     return (
       <View style={[styles.root, { paddingTop, paddingBottom: bottomPadding, backgroundColor: rootBackground }]}>
@@ -88,10 +94,10 @@ export function Screen({
           { gap: contentGap, paddingBottom: bottomPadding, paddingHorizontal: horizontalInset },
         ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps={keyboardAware ? 'handled' : undefined}
+        keyboardShouldPersistTaps={keyboardAware || openSheets > 0 ? 'handled' : undefined}
         keyboardDismissMode={keyboardAware ? 'interactive' : undefined}
       >
-        {children}
+        <SheetPresenceContext.Provider value={reportSheet}>{children}</SheetPresenceContext.Provider>
       </ScrollView>
     </View>
   );

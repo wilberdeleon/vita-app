@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useReducedMotion } from '../../theme/useReducedMotion';
+import { useReportSheetOpen } from './sheetPresence';
 
 type Props = PropsWithChildren<{
   visible: boolean;
@@ -70,6 +71,12 @@ export function VitaSheet({
   const insets = useSafeAreaInsets();
   const { surfaces } = useTheme();
   const reducedMotion = useReducedMotion();
+  /*
+   * Without this, the screen behind the sheet spends the first tap on a
+   * button dismissing the keyboard, and the button needs a second tap.
+   * `sheetPresence.ts` has the whole story.
+   */
+  useReportSheetOpen(visible);
 
   const body = <View style={styles.body}>{children}</View>;
 

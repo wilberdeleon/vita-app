@@ -8,9 +8,10 @@
  * works, and none of those routes is visual-only.
  */
 
-import { Modal, Text } from 'react-native';
+import { Modal, ScrollView, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import { Screen } from '../Screen';
 import { VitaSheet } from '../VitaSheet';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
@@ -20,18 +21,23 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 
 let mounted: ReactTestRenderer | null = null;
 
+/** The providers every mount needs; `update` must pass through it too. */
+function wrap(element: React.ReactElement) {
+  return (
+    <SafeAreaProvider
+      initialMetrics={{
+        frame: { x: 0, y: 0, width: 390, height: 844 },
+        insets: { top: 47, left: 0, right: 0, bottom: 34 },
+      }}
+    >
+      <ThemeProvider>{element}</ThemeProvider>
+    </SafeAreaProvider>
+  );
+}
+
 async function mount(element: React.ReactElement): Promise<ReactTestRenderer> {
   await act(async () => {
-    mounted = create(
-      <SafeAreaProvider
-        initialMetrics={{
-          frame: { x: 0, y: 0, width: 390, height: 844 },
-          insets: { top: 47, left: 0, right: 0, bottom: 34 },
-        }}
-      >
-        <ThemeProvider>{element}</ThemeProvider>
-      </SafeAreaProvider>,
-    );
+    mounted = create(wrap(element));
   });
   return mounted!;
 }
@@ -138,5 +144,93 @@ describe('VitaSheet', () => {
     expect(texts(tree)).toContain('Just content');
     // Only the backdrop remains as an exit; the close control lives in the head.
     expect(byLabel(tree, 'Close')).toHaveLength(1);
+  });
+
+  /**
+   * Regression, Audit Log 2026-10-28: with the number pad up, the first tap
+   * on Log Weight / "Log N fl oz" only dismissed the keyboard.
+   *
+   * The tap was taken by the *screen's* scroll view, not the sheet's — React
+   * Native routes touches through the React tree, where the sheet's `Modal`
+   * is still a child of the `Screen`, and a scroll view left on the default
+   * `keyboardShouldPersistTaps` claims every touch while a keyboard is up. The
+   * test renderer cannot drive the responder system, so this pins the
+   * contract that prevents it: while a sheet is open, the screen it sits on
+   * lets taps through to the sheet.
+   */
+  describe('on a Screen, with a keyboard up', () => {
+    /** The outermost scroll view is the screen's; the sheet's is inside it. */
+    const screenScroll = (tree: ReactTestRenderer) => tree.root.findAllByType(ScrollView)[0];
+
+    it('lets taps through to the sheet only while the sheet is open', async () => {
+      const page = (visible: boolean) => (
+        <Screen>
+          <Text>Hydration</Text>
+          <VitaSheet visible={visible} onClose={() => {}} title="Add Water">
+            <Text>Custom amount</Text>
+          </VitaSheet>
+        </Screen>
+      );
+      const tree = await mount(page(false));
+
+      // Closed: the screen keeps the dismiss-first behaviour it always had.
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBeUndefined();
+
+      await act(async () => tree.update(wrap(page(true))));
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBe('handled');
+
+      await act(async () => tree.update(wrap(page(false))));
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBeUndefined();
+    });
+
+    it('stays handled until the last of two open sheets closes', async () => {
+      const page = (first: boolean, second: boolean) => (
+        <Screen>
+          <VitaSheet visible={first} onClose={() => {}} title="Add Water">
+            <Text>One</Text>
+          </VitaSheet>
+          <VitaSheet visible={second} onClose={() => {}} title="Log Weight">
+            <Text>Two</Text>
+          </VitaSheet>
+        </Screen>
+      );
+      const tree = await mount(page(true, true));
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBe('handled');
+
+      await act(async () => tree.update(wrap(page(false, true))));
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBe('handled');
+
+      await act(async () => tree.update(wrap(page(false, false))));
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBeUndefined();
+    });
+
+    it('leaves a keyboard-aware screen handled whether or not a sheet is open', async () => {
+      const tree = await mount(
+        <Screen keyboardAware>
+          <VitaSheet visible={false} onClose={() => {}} title="Add Water">
+            <Text>Custom amount</Text>
+          </VitaSheet>
+        </Screen>,
+      );
+
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBe('handled');
+    });
+
+    it('releases the screen when an open sheet unmounts without closing', async () => {
+      const page = (withSheet: boolean) => (
+        <Screen>
+          {withSheet ? (
+            <VitaSheet visible onClose={() => {}} title="Add Water">
+              <Text>Custom amount</Text>
+            </VitaSheet>
+          ) : null}
+        </Screen>
+      );
+      const tree = await mount(page(true));
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBe('handled');
+
+      await act(async () => tree.update(wrap(page(false))));
+      expect(screenScroll(tree).props.keyboardShouldPersistTaps).toBeUndefined();
+    });
   });
 });
