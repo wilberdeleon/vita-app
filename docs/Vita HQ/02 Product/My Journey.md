@@ -18,7 +18,7 @@ See [[Roadmap]] for the revised Sprint 6 slices and [[Decision Log]].
 
 ## Current state (2026-10-15)
 
-The Sprint 0 mock Journey below is **gone**: slice 6.1 deleted the fixture and its tabs, and Journey's colour is now **gold**. Slice 6.2 added the real weight domain (`src/lib/journey/`). Slice 6.3 (**✅ locked 2026-10-27**, founder-approved on a physical iPhone) rebuilds **Overview · Weight · Photos** in gold: Overview lays out Journey on a gold *Journey spine*, Weight and Photos each have their own honest empty state, and no button leads anywhere unbuilt. The populated future is reviewable in development builds at `/journey-preview`, from fixtures that never reach real data.
+The Sprint 0 mock Journey below is **gone**: slice 6.1 deleted the fixture and its tabs, and Journey's colour is now **gold**. Slice 6.2 added the real weight domain (`src/lib/journey/`). Slice 6.3 (**✅ locked 2026-10-27**, founder-approved on a physical iPhone) rebuilds **Overview · Weight · Photos** in gold: Overview lays out Journey on a gold *Journey spine*, Weight and Photos each have their own honest empty state, and no button leads anywhere unbuilt. The populated future is reviewable in development builds at `/journey-preview`, from fixtures that never reach real data. **Slice 6.4 (awaiting founder review)** makes Weight real: Log Weight, a day-grouped history, edit and delete with Undo, a lb/kg display control, and the latest real weight on Overview's Weight node.
 
 ## Historical state (Sprint 0 — mock data, removed in 6.1)
 

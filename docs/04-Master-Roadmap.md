@@ -74,7 +74,7 @@ Projects define the product. Sprints define major milestones. Slices define indi
 | **3 — Water + Peptides** | **Bring both daily logs to real, persisted functionality — VITA's daily health-tracking infrastructure** | ✅ Complete |
 | **4 — Settings + Tools Foundation** | Settings architecture and a top-level Tools destination — the foundation later Tools are built into | ✅ Complete |
 | **5 — VITA Identity & Interaction** | **Establish the VITA visual and interaction language and apply it across every already-built product area — the language Journey is built in** | ✅ **Complete / locked** — merged to `main` at `6c657fb` |
-| 6 — Journey (Weight + Core Photos) | **Reframed 2026-10-15:** Journey as VITA's record of real transformation — Overview, Weight and core Photos, then timeline and trends | 🟡 **In progress** — characterization, 6.1, 6.2, 6.3 ✅ locked · 6.4 not started · on SDK 58 |
+| 6 — Journey (Weight + Core Photos) | **Reframed 2026-10-15:** Journey as VITA's record of real transformation — Overview, Weight and core Photos, then timeline and trends | 🟡 **In progress** — characterization, 6.1, 6.2, 6.3 ✅ locked · 6.4 awaiting founder review · on SDK 58 |
 | 7 — Advanced Progress Photos | **Re-scoped 2026-10-15:** core photos moved into Sprint 6; what remains is re-characterized after Sprint 6 | ⬜ To be re-characterized |
 | 8 — Atlas | Transform Atlas into a true AI health coach | ⬜ Planned |
 | 9 — Final Polish / Motion / Launch Experience | App-wide finishing motion, consistency, edge cases, and the launch experience | ⬜ Planned |
@@ -628,7 +628,7 @@ Sprint 5 **establishes the interaction vocabulary and rolls it out across every 
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ COMPLETE / LOCKED · `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ COMPLETE / LOCKED · `f50351f` (+ `6c09aa1`) |
 | **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | ✅ **COMPLETE / LOCKED** — founder-approved on a physical iPhone (SDK 58), 2026-10-27 · `1c5945e` |
-| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ NOT STARTED |
+| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | 🟡 **Implemented — awaiting founder review** |
 | 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ NOT STARTED |
 | 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ NOT STARTED |
 | 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ NOT STARTED |
@@ -693,7 +693,9 @@ The eight slices written for Journey under the earlier structure (Journey Overvi
 
 **Platform baseline:** Sprint 6 develops on **Expo SDK 58** — Expo ~58.0.20, React 19.3.0, React Native 0.88.0, expo-router ~58.0.27 — merged by fast-forward from `maintenance/expo-sdk-58` after founder physical-iPhone approval. See `docs/Maintenance-Expo-SDK-58.md`.
 
-Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ LOCKED · 6.2 ✅ LOCKED · 6.3 ✅ LOCKED · 6.4 Weight Logging + History ⬜ NOT STARTED · 6.5 Core Progress Photos ⬜ · 6.6 Timeline + Factual Milestones ⬜ · 6.7 Trends + Then-vs-Now ⬜ · 6.8 Founder Audit ⬜.** Sprint 7: Advanced Progress Photos, to be re-characterized after Sprint 6.
+**6.4 — Weight Logging + History 🟡 implemented, awaiting founder review.** The Weight pillar records real weigh-ins: **Log Weight** opens a `VitaSheet` (weight, lb/kg for this entry, When — defaulting to now, with date/time fields and Today / Yesterday / Now), saves through the 6.2 domain, and closes only when storage accepted it. Weight shows the latest entry, a neutral signed change **since the previous entry**, and a history grouped by local day, newest first, paged 30 at a time; tapping a row edits or deletes that entry (confirmation, then Undo). A compact lb/kg control changes only how weight is shown. Overview fills just its Weight node with the latest real weight. No chart, goal, BMI, timeline or milestone in release. See `docs/06-Slice-Tracker.md`.
+
+Status: 🟡 **In progress — characterization ✅ · 6.1 ✅ LOCKED · 6.2 ✅ LOCKED · 6.3 ✅ LOCKED · 6.4 Weight Logging + History 🟡 AWAITING FOUNDER REVIEW · 6.5 Core Progress Photos ⬜ · 6.6 Timeline + Factual Milestones ⬜ · 6.7 Trends + Then-vs-Now ⬜ · 6.8 Founder Audit ⬜.** Sprint 7: Advanced Progress Photos, to be re-characterized after Sprint 6.
 
 ---
 

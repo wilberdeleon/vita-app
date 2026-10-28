@@ -309,7 +309,7 @@ Sprint 9 — Final Polish is the named app-wide pass for the first three.
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ COMPLETE / LOCKED · `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ COMPLETE / LOCKED · `f50351f` (+ `6c09aa1`) |
 | **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | ✅ **COMPLETE / LOCKED** — founder-approved on a physical iPhone (SDK 58), 2026-10-27 · `1c5945e` |
-| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ NOT STARTED |
+| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | 🟡 **Implemented — awaiting founder review** |
 | 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ NOT STARTED |
 | 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ NOT STARTED |
 | 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ NOT STARTED |

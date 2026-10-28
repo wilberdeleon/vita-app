@@ -4149,7 +4149,7 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ COMPLETE / LOCKED · `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ COMPLETE / LOCKED · `f50351f` (+ `6c09aa1`) |
 | **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | ✅ **COMPLETE / LOCKED** — founder-approved on a physical iPhone (SDK 58), 2026-10-27 · `1c5945e` |
-| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | ⬜ NOT STARTED |
+| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | 🟡 **Implemented — awaiting founder review** |
 | 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ NOT STARTED |
 | 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ NOT STARTED |
 | 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ NOT STARTED |
@@ -4216,5 +4216,38 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 
 **Founder approval — 2026-10-27: ✅ COMPLETE / LOCKED.** Review was interrupted by the App Store Expo Go moving to SDK 58; after the SDK 58 maintenance pass, the founder opened VITA on a physical iPhone in current Expo Go, tapped through the dock (no first-tap crash), reviewed Overview, Weight and Photos, and approved the direction. Locked implementation `1c5945e`; Sprint 6 now runs on SDK 58 (`8ffc340`, fast-forward from `maintenance/expo-sdk-58`). The locked contract is recorded in `docs/04-Master-Roadmap.md` → Sprint 6.
 
-**Next: 6.4 Weight Logging + History — NOT STARTED.**
+**Next: 6.4 Weight Logging + History** — implemented below.
+
+### Slice 6.4 — Weight Logging + History — 🟡 awaiting founder review
+
+**Purpose.** Give Weight its first real workflow — record, review, correct and remove real weigh-ins — without letting Weight take over Journey.
+
+**Characterization → decisions (all from existing VITA patterns).**
+
+| Area | Decision |
+|---|---|
+| Domain | The 6.2 API unchanged in shape: `addEntry`, `updateEntry`, `removeEntry`, `setUnit`, `latestEntry`, `createWeightEntry`. Two additive helpers: `restoreEntry` (Undo, same id) and `isLoggableTime` (≤ now + 60 s skew). No new key, no schema change |
+| Provider | `WeightProvider` stays on the Journey tab only; release hands its functions to `JourneyView` as `actions`. The `__DEV__` preview passes none, so it shows no Log Weight and cannot write |
+| Entry point | **Log Weight** on the Weight pillar only — empty and populated. Overview has none |
+| Sheet | One `VitaSheet` for log and edit: lb/kg for this entry · `NumericField` (Done dismisses only) · **When** row (Now, or Today, h:mm) expanding to the peptide log's date / 24-hour time fields with Today · Yesterday · Now · Log Weight / Save · Delete Entry when editing |
+| Date/time | No picker dependency. Defaults to now; earlier weigh-ins via the fields; **future refused** ("That time hasn't happened yet") |
+| Units | **Water's founder-corrected convention, not the brief's first preference:** the sheet never writes the display preference — logging in kg records that entry in kg and Journey keeps showing lb, with a one-line note only when they differ. The display unit has its own compact lb/kg control on the history header. Switching unit **converts what was typed** (180 lb → 81.6 kg) |
+| Precision | One decimal at display; canonical kg never rounded. Editing without retyping keeps the stored kilograms exactly, even across a unit switch |
+| History | Newest first, grouped by local day — TODAY · YESTERDAY · *Sat, Oct 24* · year when different — computed at render from the stored instant (travel regroups, never rewrites). Rows: weight left, time right, hairlines, no cards. Paged 30 at a time ("Show earlier entries · N more") |
+| Edit | Tap a row → Edit Weight, prefilled in the unit it was recorded in. Changes weight, unit and/or time; id kept |
+| Delete | Delete Entry → system confirmation *"Delete weight entry?"* naming the entry (*"81.8 kg · Today, 12:14 AM"*) → removed → toast *"Weight entry deleted"* with **Undo** (restores the exact entry). Neutral label — Journey never uses red |
+| Change | With two or more entries, *"+0.8 lb since previous entry"*, neutral, signed. One entry: no change, no "0.0", no chart |
+| Overview | Same three-node spine; **only the Weight node fills**, with the latest real weight and when, at body size — not a hero. Photos and Timeline unchanged |
+| Haptics | Existing vocabulary: `confirm` on a saved entry, `warn` on a failed write. No celebration |
+| Charts | Release draws none. The 6.3 trend line and records spine render only with `showFuture`, which only the `__DEV__` preview passes |
+
+**Device verification (iPhone 17 Pro simulator, SDK 58 Expo Go 58.0.7 installed by Expo CLI).** Dock → Journey → Weight: empty state with Log Weight · sheet · first entry 180.4 lb → populated, one entry, no change · second same-day entry 181.2 lb → both kept, *+0.8 lb since previous entry* · lb → kg display: 82.2 / 81.8 kg, correct · tapping a row opened *Edit Weight* in the entry's own unit with the note · Delete Entry → confirmation naming the entry. **Not verified on device:** switching unit inside the edit sheet, and the close button — CoreSimulator stopped responding during that step (`simctl` hung, display frozen), so those taps cannot be trusted either way; the edit-unit conversion is covered by tests and is in the founder's checklist.
+
+**Found, not fixed (shared, pre-existing):** with the number pad up, the first tap on a sheet's primary button only dismisses the keyboard; the second saves. **Add Water's custom amount behaves identically**, so it is `VitaSheet` / `NumericField` behaviour, not 6.4 — possibly simulator-only (hardware-keyboard mode shows just the Done bar). Logged in the Audit Log for a separate fix. RN 0.88 also warns `InputAccessoryView is deprecated` (the Done bar).
+
+**Tests.** New `WeightLogging.test.tsx`, 34 tests through the real route and repository: first entry stored as exact kg and sheet closed · one entry shows no change/chart · kg entry leaves the display preference unwritten · typed value converts on unit switch · decimals · zero/negative/malformed refused · no medical bounds · earlier date/time · future refused · close writes nothing · Done saves nothing · failed write keeps the sheet and warns · same-day entries both kept with distinct times · newest-first day grouping · spoken row labels · paging at 30 · display-unit switch never rewrites storage · edit keeps id and other entries · edit unit switch keeps exact kg · edit time re-derives current · delete asks and Cancel keeps · delete newest / older · Undo restores exactly · delete last empties Weight and Overview · Overview fills only the Weight node, no hero, no chart · release never draws a chart · real data never reaches the preview and the preview never touches storage. Domain: `isLoggableTime` (3), `restoreEntry` (2). Existing 6.1/6.3 contracts updated only where 6.4 changes them (Weight now has exactly one action; the dock/preview contracts unchanged). **92 / 2514 → 93 / 2553.**
+
+**Mutation checks — all caught:** save without writing (7 fail) · closing the sheet saves (1) · same-day add replaces (6) · edit changes the id (6) · current = oldest entry (2) · unit switch reinterprets the number (1) · sheet writes the display preference (1) · release draws the 6.7 trend (1) · future time accepted (1).
+
+**Validation.** Both `tsc` modes clean · Doctor 20/20 · iOS export clean · Metro dev bundle clean (1,759 modules) · **zero dependency changes** · no storage key or schema change.
 
