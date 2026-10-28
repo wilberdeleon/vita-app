@@ -145,7 +145,7 @@ export default function JourneyPreview() {
         <Screen topInset={false}>
           <ScreenHeader title="My Journey" />
           {/* Keyed so a scenario switch starts the pillars fresh. */}
-          <JourneyView key={`${active.key}-${pillar}`} data={data} initialPillar={pillar} />
+          <JourneyView key={`${active.key}-${pillar}`} data={data} initialPillar={pillar} showFuture />
         </Screen>
       </View>
     </View>

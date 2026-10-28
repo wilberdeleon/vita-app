@@ -29,6 +29,7 @@ import Journey from '../../../app/(vita)/(tabs)/journey';
 import JourneyPreview from '../../../app/(vita)/journey-preview';
 import { JourneyKeys, toKg, type WeightEntry } from '../../../lib/journey';
 import type { PreferencesRepository } from '../../../lib/preferences/data/PreferencesRepository';
+import { ToastProvider } from '../../../components/ui';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 import { JourneyView } from '../components/JourneyView';
 import { elapsed, signedChange } from '../format';
@@ -44,7 +45,9 @@ async function mount(element: React.ReactElement) {
       <SafeAreaProvider
         initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 47, left: 0, right: 0, bottom: 34 } }}
       >
-        <ThemeProvider repository={theme}>{element}</ThemeProvider>
+        <ThemeProvider repository={theme}>
+          <ToastProvider>{element}</ToastProvider>
+        </ThemeProvider>
       </SafeAreaProvider>,
     );
   });
@@ -213,7 +216,7 @@ describe('the preview cannot leak into release', () => {
 
   it('JourneyView has no default data — a caller must hand it something', () => {
     const source = readFileSync(join(ROOT, 'src/features/journey/components/JourneyView.tsx'), 'utf8');
-    expect(source).toMatch(/export function JourneyView\(\{ data, initialPillar = 'overview' \}: Props\)/);
+    expect(source).toMatch(/export function JourneyView\(\{ data, initialPillar = 'overview', actions, showFuture = false \}: Props\)/);
     // No default for `data` in the signature.
     expect(source).not.toMatch(/\{\s*data\s*=/);
   });

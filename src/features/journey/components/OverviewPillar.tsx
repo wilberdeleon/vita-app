@@ -3,39 +3,80 @@ import { latestEntry } from '../../../lib/journey';
 import { SectionHeader } from '../../../components/ui';
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
-import { dateAndTime, elapsed, firstEntry, longDate, shortDate, signedChange, spokenChange, weightNumber, weightOnDay } from '../format';
+import {
+  elapsed,
+  firstEntry,
+  longDate,
+  shortDate,
+  signedChange,
+  spokenChange,
+  spokenWeight,
+  spokenWhen,
+  weightNumber,
+  weightOnDay,
+  whenLabel,
+} from '../format';
 import type { JourneyViewData } from '../types';
 import { JourneySpine, type SpineItem } from './JourneySpine';
 import { PhotoFrame } from './PhotoFrame';
 import { WeightTrend } from './WeightTrend';
 
-/** How many recent records Overview lists before the "began" anchor. */
+/** How many recent records the preview's records spine lists. */
 const RECENT = 5;
+
+type Props = {
+  data: JourneyViewData;
+  /**
+   * `__DEV__` preview only: the 6.3 vision of what Overview grows into —
+   * a trend line, the latest photo, recent records — owned by 6.6 and 6.7.
+   * Release never passes it.
+   */
+  showFuture?: boolean;
+};
 
 /**
  * Overview — *where am I in my real Journey?*
  *
- * Empty, it states what Journey is made of, on the spine, with hollow nodes:
- * weight, progress photos, and the timeline that will connect them. Nothing
- * is pretended into existence and there is no button.
- *
- * With records it synthesizes only what was recorded: the latest weight, the
- * signed change since the first entry, the line, the latest photo, recent
- * records on the spine, and when the record began.
+ * Always the same three-part spine: Weight, Progress photos, Timeline. Each
+ * node is hollow until something real is recorded there. **Since 6.4 the
+ * Weight node fills in from real data** — the latest weight and when it was
+ * recorded, at body size, not as a hero. Overview is a synthesis; the Weight
+ * pillar is where weight gets the screen. Photos stay empty until 6.5, and
+ * Timeline until 6.6.
  */
-export function OverviewPillar({ data }: { data: JourneyViewData }) {
-  const { weights, photos } = data;
-  if (weights.length === 0 && photos.length === 0) return <OverviewEmpty />;
-  return <OverviewPopulated data={data} />;
-}
-
-function OverviewEmpty() {
+export function OverviewPillar({ data, showFuture = false }: Props) {
   const { surfaces } = useTheme();
+  const { weights, photos, unit } = data;
+  const latest = latestEntry(weights);
+
   const items: SpineItem[] = [
-    { key: 'weight', label: 'Weight', body: 'No weight entries yet.', recorded: false },
-    { key: 'photos', label: 'Progress photos', body: 'No progress photos yet.', recorded: false },
-    { key: 'timeline', label: 'Timeline', body: 'Your recorded Journey will appear here, in the order it happened.', recorded: false },
+    latest
+      ? {
+          key: 'weight',
+          label: 'Weight',
+          body: `${weightNumber(latest.weightKg, unit)} ${unit}`,
+          note: whenLabel(latest.loggedAt),
+          recorded: true,
+          accessibilityLabel: `Weight, latest ${spokenWeight(latest.weightKg, unit)}, ${spokenWhen(latest.loggedAt)}`,
+        }
+      : { key: 'weight', label: 'Weight', body: 'No weight entries yet.', recorded: false },
+    photos.length
+      ? {
+          key: 'photos',
+          label: 'Progress photos',
+          body: photos.length === 1 ? '1 progress photo' : `${photos.length} progress photos`,
+          note: `Latest ${shortDate(photos[0].takenAt)}`,
+          recorded: true,
+        }
+      : { key: 'photos', label: 'Progress photos', body: 'No progress photos yet.', recorded: false },
+    {
+      key: 'timeline',
+      label: 'Timeline',
+      body: 'Your recorded Journey will appear here, in the order it happened.',
+      recorded: false,
+    },
   ];
+
   return (
     <View style={styles.container}>
       <Text style={[styles.intro, { color: surfaces.textSecondary }]}>
@@ -43,11 +84,13 @@ function OverviewEmpty() {
         changed over time.
       </Text>
       <JourneySpine items={items} />
+      {showFuture && (weights.length > 0 || photos.length > 0) ? <OverviewFuture data={data} /> : null}
     </View>
   );
 }
 
-function OverviewPopulated({ data }: { data: JourneyViewData }) {
+/** The 6.3 preview vision — `__DEV__` preview only, never release. */
+function OverviewFuture({ data }: { data: JourneyViewData }) {
   const { surfaces } = useTheme();
   const { weights, photos, unit } = data;
   const latest = latestEntry(weights);
@@ -73,31 +116,19 @@ function OverviewPopulated({ data }: { data: JourneyViewData }) {
   ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   const earliest = records[records.length - 1];
-  const now = records[0].at;
   const spine: SpineItem[] = records.slice(0, RECENT).map((record) => record.item);
   if (records.length > RECENT) {
     spine.push({
       key: 'began',
       label: shortDate(earliest.at),
       body: 'First record',
-      detail: elapsed(earliest.at, now) + ' ago',
+      detail: elapsed(earliest.at, records[0].at) + ' ago',
       recorded: true,
     });
   }
 
   return (
-    <View style={styles.container}>
-      {latest ? (
-        <View style={styles.hero} accessible accessibilityLabel={`Latest weight ${weightNumber(latest.weightKg, unit)} ${unit === 'lb' ? 'pounds' : 'kilograms'}, ${dateAndTime(latest.loggedAt)}`}>
-          <Text style={[styles.caption, { color: surfaces.textTertiary }]}>LATEST WEIGHT</Text>
-          <View style={styles.weightRow}>
-            <Text style={[styles.weight, { color: surfaces.text }]}>{weightNumber(latest.weightKg, unit)}</Text>
-            <Text style={[styles.unit, { color: surfaces.textSecondary }]}>{unit}</Text>
-          </View>
-          <Text style={[styles.meta, { color: surfaces.textSecondary }]}>{dateAndTime(latest.loggedAt)}</Text>
-        </View>
-      ) : null}
-
+    <View style={styles.future}>
       {latest && first && first !== latest ? (
         <View style={styles.trendBlock}>
           <Text
@@ -123,9 +154,6 @@ function OverviewPopulated({ data }: { data: JourneyViewData }) {
                   {`${weightNumber(weightOnDay(weights, latestPhoto.takenAt)!.weightKg, unit)} ${unit} recorded that day`}
                 </Text>
               ) : null}
-              <Text style={[styles.meta, { color: surfaces.textTertiary }]}>
-                {photos.length === 1 ? '1 progress photo' : `${photos.length} progress photos`}
-              </Text>
             </View>
           </View>
         </View>
@@ -146,29 +174,12 @@ const styles = StyleSheet.create({
   container: {
     gap: spacing.xxl,
   },
+  future: {
+    gap: spacing.xxl,
+  },
   intro: {
     ...typography.body,
     lineHeight: 21,
-  },
-  hero: {
-    gap: 2,
-  },
-  caption: {
-    ...typography.micro,
-    letterSpacing: 0.8,
-  },
-  weightRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.xs,
-  },
-  weight: {
-    ...typography.display,
-    fontSize: 44,
-    fontVariant: ['tabular-nums'],
-  },
-  unit: {
-    ...typography.heading,
   },
   meta: {
     ...typography.caption,

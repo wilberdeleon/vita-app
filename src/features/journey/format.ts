@@ -6,7 +6,15 @@
  * gaining. Everything here rounds at display only; stored values are untouched.
  */
 
-import { formatClockTime, formatLogDateShort, formatLogDateWithYear, toLogDate } from '../../lib/daily';
+import {
+  formatClockTime,
+  formatLogDateLong,
+  formatLogDateShort,
+  formatLogDateWithYear,
+  shiftLogDate,
+  toLogDate,
+  todayLogDate,
+} from '../../lib/daily';
 import { fromKg, roundForDisplay, type WeightEntry, type WeightUnit } from '../../lib/journey';
 
 const DAY_MS = 86_400_000;
@@ -69,3 +77,50 @@ export function weightOnDay(weights: readonly WeightEntry[], iso: string): Weigh
   const day = toLogDate(new Date(iso));
   return weights.find((entry) => toLogDate(new Date(entry.loggedAt)) === day) ?? null;
 }
+
+/**
+ * The local calendar day a weigh-in belongs to, as a history heading:
+ * "Today", "Yesterday", "Sat, Oct 24", or "24 October 2025" in another year.
+ *
+ * Presentation only. The stored instant is never rewritten; a person who
+ * travels sees their history grouped by the phone's current calendar.
+ */
+export function dayLabel(iso: string, now: Date = new Date()): string {
+  const day = toLogDate(new Date(iso));
+  const today = toLogDate(now);
+  if (day === today) return 'Today';
+  if (day === shiftLogDate(today, -1)) return 'Yesterday';
+  if (day.slice(0, 4) !== today.slice(0, 4)) return formatLogDateWithYear(day);
+  return formatLogDateShort(day);
+}
+
+/** The local day key used to group history. */
+export function dayKeyOf(iso: string): string {
+  return toLogDate(new Date(iso));
+}
+
+/** "8:14 PM". */
+export function clockTime(iso: string): string {
+  return formatClockTime(iso);
+}
+
+/** "Today, 8:14 PM" / "Sat, Oct 24, 8:14 PM". */
+export function whenLabel(iso: string, now: Date = new Date()): string {
+  return `${dayLabel(iso, now)}, ${formatClockTime(iso)}`;
+}
+
+/** Spoken: "Tuesday, October 27 at 8:14 PM". */
+export function spokenWhen(iso: string): string {
+  return `${formatLogDateLong(toLogDate(new Date(iso)))} at ${formatClockTime(iso)}`;
+}
+
+/** Spoken weight: "178.0 pounds". */
+export function spokenWeight(kg: number, unit: WeightUnit): string {
+  return `${weightNumber(kg, unit)} ${unit === 'lb' ? 'pounds' : 'kilograms'}`;
+}
+
+/** Today's local day key — for the When row's "Today" chip. */
+export function todayKey(): string {
+  return todayLogDate();
+}
+

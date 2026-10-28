@@ -27,6 +27,8 @@ export {
 export {
   addWeightEntry,
   createWeightEntry,
+  MAX_FUTURE_SKEW_MS,
+  isLoggableTime,
   latestEntry,
   removeWeightEntry,
   sortNewestFirst,

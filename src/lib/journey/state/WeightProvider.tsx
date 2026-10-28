@@ -6,8 +6,7 @@
  * a boolean that is `true` only when the write reached storage — a caller
  * must never confirm a weigh-in that was not saved.
  *
- * **Not mounted in 6.2.** No screen reads weight yet, and mounting it would
- * add a storage read to every launch for nothing. Slice 6.3 mounts it.
+ * Mounted on the Journey tab only (6.3), the narrowest boundary that reads it.
  *
  * Deliberately exposes no chart, trend, delta or goal API. `current` is the
  * newest entry, derived on every change and never stored.
@@ -52,6 +51,12 @@ export type WeightContextValue = WeightState & {
   updateEntry: (id: string, changes: WeightEntryChanges) => Promise<boolean>;
   /** `false`, with nothing written, when no entry has this id. */
   removeEntry: (id: string) => Promise<boolean>;
+  /**
+   * Puts a removed entry back exactly as it was — same id, time and value.
+   * Powers Undo after a delete (slice 6.4). `false`, with nothing written, if
+   * an entry with that id already exists.
+   */
+  restoreEntry: (entry: WeightEntry) => Promise<boolean>;
   /** Changes display only; stored entries are never rewritten. */
   setUnit: (unit: WeightUnit) => Promise<boolean>;
 };
@@ -145,6 +150,12 @@ export function WeightProvider({ children, repository = asyncStorageWeightReposi
     [commit],
   );
 
+  const restoreEntry = useCallback(
+    (entry: WeightEntry) =>
+      commit((current) => (current.some((existing) => existing.id === entry.id) ? null : addWeightEntry(current, entry))),
+    [commit],
+  );
+
   const setUnit = useCallback(
     async (unit: WeightUnit) => {
       const next: WeightPreferences = { unit };
@@ -170,9 +181,10 @@ export function WeightProvider({ children, repository = asyncStorageWeightReposi
       addEntry,
       updateEntry,
       removeEntry,
+      restoreEntry,
       setUnit,
     }),
-    [status, entries, preferences.unit, error, addEntry, updateEntry, removeEntry, setUnit],
+    [status, entries, preferences.unit, error, addEntry, updateEntry, removeEntry, restoreEntry, setUnit],
   );
 
   return <WeightContext.Provider value={value}>{children}</WeightContext.Provider>;

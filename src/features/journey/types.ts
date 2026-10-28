@@ -1,4 +1,4 @@
-import type { WeightEntry, WeightUnit } from '../../lib/journey';
+import type { WeightEntry, WeightEntryChanges, WeightUnit } from '../../lib/journey';
 
 /**
  * What the Journey pillars render — slice 6.3.
@@ -34,3 +34,20 @@ export type JourneyPhotoView = {
 };
 
 export type JourneyPillar = 'overview' | 'weight' | 'photos';
+
+/**
+ * What release Journey can *do* with weight (slice 6.4) — the real
+ * `WeightProvider`'s own functions, passed through unchanged. Every one
+ * resolves `true` only when storage was written.
+ *
+ * Optional on `JourneyView`: the `__DEV__` preview passes none, so it shows
+ * no Log Weight button and cannot write anything, anywhere.
+ */
+export type JourneyWeightActions = {
+  addEntry: (weight: number, unit: WeightUnit, loggedAt?: Date) => Promise<boolean>;
+  updateEntry: (id: string, changes: WeightEntryChanges) => Promise<boolean>;
+  removeEntry: (id: string) => Promise<boolean>;
+  restoreEntry: (entry: WeightEntry) => Promise<boolean>;
+  setUnit: (unit: WeightUnit) => Promise<boolean>;
+};
+

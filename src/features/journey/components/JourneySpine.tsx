@@ -10,6 +10,8 @@ export type SpineItem = {
   body: string;
   /** Secondary detail on the right, e.g. a weight. */
   detail?: string;
+  /** A quieter line under the body, e.g. when a weight was recorded. */
+  note?: string;
   /**
    * `true` for a recorded event (a filled node); `false` for structure only
    * (a hollow node) — the empty Overview's sections, which are places history
@@ -41,7 +43,7 @@ export function JourneySpine({ items }: { items: readonly SpineItem[] }) {
             key={item.key}
             style={styles.row}
             accessible
-            accessibilityLabel={item.accessibilityLabel ?? [item.label, item.body, item.detail].filter(Boolean).join(', ')}
+            accessibilityLabel={item.accessibilityLabel ?? [item.label, item.body, item.detail, item.note].filter(Boolean).join(', ')}
           >
             <View style={styles.rail}>
               <View style={[styles.node, { borderColor: accent }, item.recorded && { backgroundColor: accent }]} />
@@ -55,6 +57,7 @@ export function JourneySpine({ items }: { items: readonly SpineItem[] }) {
                   <Text style={[styles.detail, { color: surfaces.textSecondary }]}>{item.detail}</Text>
                 ) : null}
               </View>
+              {item.note ? <Text style={[styles.note, { color: surfaces.textSecondary }]}>{item.note}</Text> : null}
             </View>
           </View>
         );
@@ -108,6 +111,9 @@ const styles = StyleSheet.create({
   body: {
     ...typography.body,
     flexShrink: 1,
+  },
+  note: {
+    ...typography.caption,
   },
   detail: {
     ...typography.bodyMedium,

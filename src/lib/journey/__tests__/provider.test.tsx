@@ -244,3 +244,29 @@ describe('the domain carries no judgment', () => {
     }
   });
 });
+
+describe('restoreEntry (6.4 undo)', () => {
+  const a = e('a', '2026-10-01T08:00:00.000Z', 80);
+  const b = e('b', '2026-10-15T08:00:00.000Z', 81);
+
+  it('puts a deleted entry back exactly, in order', async () => {
+    const fake = fakeRepository({ entries: [b, a] });
+    const state = await mount(fake.repository);
+    await act(async () => {
+      await state().removeEntry('b');
+      expect(await state().restoreEntry(b)).toBe(true);
+    });
+    expect(fake.stored()).toEqual([b, a]);
+    expect(state().current?.id).toBe('b');
+  });
+
+  it('refuses to duplicate an entry that still exists', async () => {
+    const fake = fakeRepository({ entries: [b, a] });
+    const state = await mount(fake.repository);
+    await act(async () => {
+      expect(await state().restoreEntry(a)).toBe(false);
+    });
+    expect(fake.writes.entries).toBe(0);
+  });
+});
+

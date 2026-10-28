@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { SegmentedTabs } from '../../../components/ui';
 import { palette, spacing } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
-import type { JourneyPillar, JourneyViewData } from '../types';
+import type { JourneyPillar, JourneyViewData, JourneyWeightActions } from '../types';
 import { OverviewPillar } from './OverviewPillar';
 import { PhotosPillar } from './PhotosPillar';
 import { WeightPillar } from './WeightPillar';
@@ -19,6 +19,17 @@ type Props = {
    * Overview. The `__DEV__` preview uses it to deep-link a pillar for review.
    */
   initialPillar?: JourneyPillar;
+  /**
+   * The real `WeightProvider`'s functions (6.4). Release passes them; the
+   * `__DEV__` preview passes none, so it can show no Log Weight action and
+   * write nothing.
+   */
+  actions?: JourneyWeightActions;
+  /**
+   * `__DEV__` preview only: draw the 6.6/6.7 vision (trend line, records
+   * spine). Release never passes it, so release draws no chart.
+   */
+  showFuture?: boolean;
 };
 
 /**
@@ -31,7 +42,7 @@ type Props = {
  * The selector is the shared `SegmentedTabs`, in Journey gold. Gold is too
  * light for white text in Dark, so the selected label turns ink there.
  */
-export function JourneyView({ data, initialPillar = 'overview' }: Props) {
+export function JourneyView({ data, initialPillar = 'overview', actions, showFuture = false }: Props) {
   const { scheme } = useTheme();
   const accent = useJourneyAccent();
   const [index, setIndex] = useState(PILLARS.indexOf(initialPillar));
@@ -51,8 +62,8 @@ export function JourneyView({ data, initialPillar = 'overview' }: Props) {
       {/* Nothing until the real history is read, so an empty state never flashes over real records. */}
       {data.status === 'ready' ? (
         <>
-          {pillar === 'overview' ? <OverviewPillar data={data} /> : null}
-          {pillar === 'weight' ? <WeightPillar data={data} /> : null}
+          {pillar === 'overview' ? <OverviewPillar data={data} showFuture={showFuture} /> : null}
+          {pillar === 'weight' ? <WeightPillar data={data} actions={actions} showFuture={showFuture} /> : null}
           {pillar === 'photos' ? <PhotosPillar data={data} /> : null}
         </>
       ) : null}

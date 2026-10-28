@@ -102,3 +102,17 @@ export function updateWeightEntry(
 export function removeWeightEntry(entries: readonly WeightEntry[], id: string): WeightEntry[] {
   return entries.filter((entry) => entry.id !== id);
 }
+
+/**
+ * How far past "now" a weigh-in time may sit (slice 6.4): one minute, for
+ * clock skew between reading the time and pressing Save. A weigh-in is
+ * something that already happened — this is factual validation, not medical.
+ */
+export const MAX_FUTURE_SKEW_MS = 60_000;
+
+/** `true` when `at` is a real instant that is not in the future. */
+export function isLoggableTime(at: Date, now: Date = new Date()): boolean {
+  const time = at.getTime();
+  return Number.isFinite(time) && time <= now.getTime() + MAX_FUTURE_SKEW_MS;
+}
+

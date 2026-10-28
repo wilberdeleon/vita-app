@@ -3,7 +3,9 @@
  */
 
 import {
+  MAX_FUTURE_SKEW_MS,
   addWeightEntry,
+  isLoggableTime,
   createWeightEntry,
   latestEntry,
   removeWeightEntry,
@@ -144,3 +146,23 @@ describe('delete', () => {
     expect(removeWeightEntry([b, a], 'nope')).toEqual([b, a]);
   });
 });
+
+describe('isLoggableTime (6.4)', () => {
+  const now = new Date('2026-10-28T12:00:00.000Z');
+
+  it('accepts the past and the present', () => {
+    expect(isLoggableTime(new Date('2020-01-01T00:00:00Z'), now)).toBe(true);
+    expect(isLoggableTime(now, now)).toBe(true);
+  });
+
+  it('tolerates a minute of clock skew, and no more', () => {
+    expect(isLoggableTime(new Date(now.getTime() + MAX_FUTURE_SKEW_MS), now)).toBe(true);
+    expect(isLoggableTime(new Date(now.getTime() + MAX_FUTURE_SKEW_MS + 1), now)).toBe(false);
+    expect(isLoggableTime(new Date('2026-10-29T12:00:00Z'), now)).toBe(false);
+  });
+
+  it('refuses an invalid date', () => {
+    expect(isLoggableTime(new Date('nonsense'), now)).toBe(false);
+  });
+});
+

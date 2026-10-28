@@ -33,6 +33,7 @@ import { FloatingDock } from '../../../components/shell/FloatingDock';
 import type { PreferencesRepository } from '../../../lib/preferences/data/PreferencesRepository';
 import type { ThemeMode } from '../../../lib/preferences/model/types';
 import { journeyAccent, palette } from '../../../theme/tokens';
+import { ToastProvider } from '../../../components/ui';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 const ROOT = join(__dirname, '..', '..', '..', '..');
@@ -57,7 +58,9 @@ async function mount(element: React.ReactElement, themeMode: ThemeMode = 'light'
           insets: { top: 47, left: 0, right: 0, bottom: 34 },
         }}
       >
-        <ThemeProvider repository={themeRepository(themeMode)}>{element}</ThemeProvider>
+        <ThemeProvider repository={themeRepository(themeMode)}>
+          <ToastProvider>{element}</ToastProvider>
+        </ThemeProvider>
       </SafeAreaProvider>,
     );
   });
@@ -146,13 +149,18 @@ describe('release Journey with no recorded weight — every pillar', () => {
   });
 
   it('offers no action into an unfinished flow', async () => {
-    // Logging is 6.4 and photo capture 6.5. The only controls are the
-    // Settings gear and the three pillar segments — on every pillar.
+    // Since 6.4 Weight has one real action, Log Weight. Photo capture is 6.5,
+    // so Photos and Overview still have none beyond the pillar segments.
     const text = (await allPillarsText()).toLowerCase();
     const tree = mounted!;
-    for (const action of ['log weight', 'add', 'take a photo', 'upload', 'view all', 'coming soon', 'sprint', 'soon']) {
+    for (const action of ['add photo', 'take a photo', 'upload', 'view all', 'coming soon', 'sprint', 'soon']) {
       expect(text).not.toContain(action);
     }
+    const expected: Record<string, string[]> = {
+      Overview: [],
+      Weight: ['Log Weight'],
+      Photos: [],
+    };
     for (const pillar of ['Overview', 'Weight', 'Photos']) {
       const control = tree.root.findAll(
         (node) => node.props.accessibilityLabel === `Journey, ${pillar}` && typeof node.props.onPress === 'function',
@@ -161,9 +169,8 @@ describe('release Journey with no recorded weight — every pillar', () => {
       const buttons = tree.root.findAll(
         (node) => typeof node.type === 'string' && (node.props.accessibilityRole === 'button' || typeof node.props.onPress === 'function'),
       );
-      expect(buttons.map((node) => node.props.accessibilityLabel).sort()).toEqual(
-        ['Journey, Overview', 'Journey, Photos', 'Journey, Weight', 'Settings'].sort(),
-      );
+      const labels = buttons.map((node) => node.props.accessibilityLabel ?? '');
+      expect(labels.filter((label) => !/^Journey, |^Settings$/.test(label)).filter(Boolean).sort()).toEqual(expected[pillar]);
     }
   });
 });
