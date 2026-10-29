@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { radii } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -14,6 +14,8 @@ type Props = {
   accessibilityLabel?: string;
   /** The empty-state frame: dashed and quiet, a place rather than a photo. */
   empty?: boolean;
+  /** A real photo to show inside the frame (6.6). Cover-fit: the frame is the thumbnail. */
+  uri?: string;
 };
 
 /**
@@ -21,9 +23,10 @@ type Props = {
  * full-length photo in. Neutral by design: photography is private history,
  * so the frame stays out of the way and Journey gold is not painted on it.
  *
- * In 6.3 it never holds an image. 6.5 puts real photos inside this geometry.
+ * Holds a real photo since 6.6 (cover-fit — this is a thumbnail; the detail
+ * view shows the whole image). Placeholders stay `__DEV__`-only.
  */
-export function PhotoFrame({ width, accessibilityLabel, empty = false }: Props) {
+export function PhotoFrame({ width, accessibilityLabel, empty = false, uri }: Props) {
   const { surfaces } = useTheme();
   const labelled = Boolean(accessibilityLabel);
   return (
@@ -40,7 +43,11 @@ export function PhotoFrame({ width, accessibilityLabel, empty = false }: Props) 
         empty ? styles.empty : { backgroundColor: surfaces.track },
       ]}
     >
-      <Ionicons name="image-outline" size={Math.min(28, Math.round(width / 4))} color={surfaces.textTertiary} />
+      {uri ? (
+        <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityIgnoresInvertColors />
+      ) : (
+        <Ionicons name="image-outline" size={Math.min(28, Math.round(width / 4))} color={surfaces.textTertiary} />
+      )}
     </View>
   );
 }

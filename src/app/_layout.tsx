@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ToastProvider } from '../components/ui';
 import { AuthProvider } from '../features/auth/AuthProvider';
-import { JourneyProvider, WeightProvider } from '../lib/journey';
+import { JourneyProvider, PhotosProvider, WeightProvider } from '../lib/journey';
 import { NutritionProvider } from '../lib/nutrition';
 import { PeptideProvider } from '../lib/peptides';
 import { WaterProvider } from '../lib/water';
@@ -40,9 +40,12 @@ export default function RootLayout() {
             {/* Journey (6.5): the lifecycle sits inside Weight, because starting a Journey writes its first weigh-in. */}
             <WeightProvider>
               <JourneyProvider>
-                <ToastProvider>
-                  <RootStack />
-                </ToastProvider>
+                {/* Progress photos (6.6) belong to a Journey, so they sit inside it. */}
+                <PhotosProvider>
+                  <ToastProvider>
+                    <RootStack />
+                  </ToastProvider>
+                </PhotosProvider>
               </JourneyProvider>
             </WeightProvider>
           </PeptideProvider>

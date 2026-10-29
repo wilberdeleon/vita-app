@@ -16,12 +16,62 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer';
 import { ToastProvider } from '../../../components/ui';
 import { shiftLogDate, toLogDate } from '../../../lib/daily';
-import { JourneyKeys, JourneyProvider, WeightProvider, toKg, type Journey, type WeightEntry } from '../../../lib/journey';
+import {
+  JourneyKeys,
+  JourneyProvider,
+  PHOTO_FILE_PATTERN,
+  PhotosProvider,
+  WeightProvider,
+  toKg,
+  type Journey,
+  type PhotoFileStore,
+  type ProgressPhoto,
+  type WeightEntry,
+} from '../../../lib/journey';
 import type { PreferencesRepository } from '../../../lib/preferences/data/PreferencesRepository';
 import type { ThemeMode } from '../../../lib/preferences/model/types';
 import { ThemeProvider } from '../../../theme/ThemeProvider';
 
 let mounted: ReactTestRenderer | null = null;
+
+/**
+ * VITA's owned photo folder, in memory (6.6). Records every copy and delete,
+ * refuses paths outside the folder exactly as the real store does, and can
+ * fail on demand — so file/record consistency is testable without a device.
+ */
+export const photoFiles = {
+  /** Owned files that currently exist, by relative path → the source they were copied from. */
+  owned: new Map<string, string>(),
+  copies: [] as { from: string; to: string }[],
+  removed: [] as string[],
+  failCopy: false,
+  failRemove: false,
+  reset() {
+    this.owned.clear();
+    this.copies = [];
+    this.removed = [];
+    this.failCopy = false;
+    this.failRemove = false;
+  },
+};
+
+export const memoryPhotoFileStore: PhotoFileStore = {
+  async copyIn(sourceUri, file) {
+    if (!PHOTO_FILE_PATTERN.test(file)) throw new Error('outside the photo folder');
+    if (photoFiles.failCopy) throw new Error('copy failed');
+    photoFiles.copies.push({ from: sourceUri, to: file });
+    photoFiles.owned.set(file, sourceUri);
+  },
+  async remove(file) {
+    if (!PHOTO_FILE_PATTERN.test(file)) throw new Error('outside the photo folder');
+    if (photoFiles.failRemove) throw new Error('remove failed');
+    photoFiles.removed.push(file);
+    photoFiles.owned.delete(file);
+  },
+  uriFor(file) {
+    return `file:///documents/journey-photos/${file}`;
+  },
+};
 
 export function currentTree(): ReactTestRenderer | null {
   return mounted;
@@ -37,7 +87,9 @@ export async function mountApp(element: React.ReactElement, themeMode: ThemeMode
         <ThemeProvider repository={theme}>
           <WeightProvider>
             <JourneyProvider>
-              <ToastProvider>{element}</ToastProvider>
+              <PhotosProvider files={memoryPhotoFileStore}>
+                <ToastProvider>{element}</ToastProvider>
+              </PhotosProvider>
             </JourneyProvider>
           </WeightProvider>
         </ThemeProvider>
@@ -153,6 +205,20 @@ export async function seedStorage({
   if (journeys.length) await AsyncStorage.setItem(JourneyKeys.journeys, JSON.stringify(journeys));
   if (weights.length) await AsyncStorage.setItem(JourneyKeys.weight, JSON.stringify(weights));
   if (unit) await AsyncStorage.setItem(JourneyKeys.preferences, JSON.stringify({ unit }));
+}
+
+export function photoFixture(id: string, journeyId: string, iso: string, ext = 'jpg'): ProgressPhoto {
+  return { id, journeyId, file: `${journeyId}/${id}.${ext}`, takenAt: iso, createdAt: iso };
+}
+
+export async function seedPhotos(photos: ProgressPhoto[]) {
+  await AsyncStorage.setItem(JourneyKeys.photos, JSON.stringify(photos));
+  for (const photo of photos) photoFiles.owned.set(photo.file, 'seed');
+}
+
+export async function storedPhotos(): Promise<ProgressPhoto[]> {
+  const raw = await AsyncStorage.getItem(JourneyKeys.photos);
+  return raw ? (JSON.parse(raw) as ProgressPhoto[]) : [];
 }
 
 export async function storedWeights(): Promise<WeightEntry[]> {

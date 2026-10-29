@@ -4,7 +4,7 @@ import { SegmentedTabs } from '../../../components/ui';
 import { palette, spacing } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { Journey } from '../../../lib/journey';
-import type { JourneyPillar, JourneyViewData, JourneyWeightActions } from '../types';
+import type { JourneyPhotoActions, JourneyPhotoView, JourneyPillar, JourneyViewData, JourneyWeightActions } from '../types';
 import { JourneyHeader } from './JourneyHeader';
 import { OverviewPillar } from './OverviewPillar';
 import { PhotosPillar } from './PhotosPillar';
@@ -37,6 +37,10 @@ type Props = {
    * write nothing.
    */
   actions?: JourneyWeightActions;
+  /** Release, active Journey only (6.6): Add Progress Photo. */
+  photoActions?: JourneyPhotoActions;
+  /** Opens a real photo's detail (release only). */
+  onOpenPhoto?: (photo: JourneyPhotoView) => void;
   /**
    * `__DEV__` preview only: draw the 6.6/6.7 vision (trend line, records
    * spine). Release never passes it, so release draws no chart.
@@ -56,7 +60,7 @@ type Props = {
  * The selector is the shared `SegmentedTabs`, in Journey gold. Gold is too
  * light for white text in Dark, so the selected label turns ink there.
  */
-export function JourneyView({ journey, today, data, onManage, onExtend, onFinish, initialPillar = 'overview', actions, showFuture = false }: Props) {
+export function JourneyView({ journey, today, data, onManage, onExtend, onFinish, initialPillar = 'overview', actions, photoActions, onOpenPhoto, showFuture = false }: Props) {
   const { scheme } = useTheme();
   const accent = useJourneyAccent();
   const [index, setIndex] = useState(PILLARS.indexOf(initialPillar));
@@ -79,7 +83,7 @@ export function JourneyView({ journey, today, data, onManage, onExtend, onFinish
         <>
           {pillar === 'overview' ? <OverviewPillar data={data} journey={journey} showFuture={showFuture} /> : null}
           {pillar === 'weight' ? <WeightPillar data={data} actions={actions} showFuture={showFuture} /> : null}
-          {pillar === 'photos' ? <PhotosPillar data={data} /> : null}
+          {pillar === 'photos' ? <PhotosPillar data={data} actions={photoActions} onOpen={onOpenPhoto} showFuture={showFuture} /> : null}
         </>
       ) : null}
     </View>

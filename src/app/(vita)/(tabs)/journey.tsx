@@ -1,19 +1,22 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import { Screen, ScreenHeader } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
-import { entriesForJourney, useJourneys, useWeight } from '../../../lib/journey';
+import { entriesForJourney, useJourneys, usePhotos, useWeight } from '../../../lib/journey';
 import { JourneyView } from '../../../features/journey/components/JourneyView';
 import { ManageJourneySheet } from '../../../features/journey/components/ManageJourneySheet';
 import { NoJourney } from '../../../features/journey/components/NoJourney';
+import { PhotoReviewSheet } from '../../../features/journey/components/PhotoReviewSheet';
+import { acquirePhoto, type PhotoSource } from '../../../features/journey/photoAcquisition';
 import type { JourneyPhotoView } from '../../../features/journey/types';
 
-/**
- * Release has no photo domain until slice 6.6, so Photos always receives
- * this. Named and frozen so no code path can hand release a photo.
- */
-const NO_PHOTOS: readonly JourneyPhotoView[] = Object.freeze([]);
+type Pending = { uri: string; mimeType: string | null; suggestedTakenAt: Date } | null;
+
+const DENIED: Record<PhotoSource, string> = {
+  camera: 'VITA doesn’t have access to your camera. You can allow it in Settings → VITA (or Expo Go).',
+  library: 'VITA doesn’t have access to your photos. You can allow it in Settings → VITA (or Expo Go).',
+};
 
 /**
  * My Journey (slice 6.5 — the Journey lifecycle).
@@ -26,7 +29,12 @@ const NO_PHOTOS: readonly JourneyPhotoView[] = Object.freeze([]);
  * 6.4 weigh-ins and other Journeys' never appear. Logging here stamps the
  * active Journey's id automatically.
  *
- * **Real data only.** Journeys and weight come from the root providers,
+ * **Photos (6.6).** Photos shows only this Journey's progress photos. Add
+ * Progress Photo offers Take Photo / Choose from Library first and asks for
+ * permission only after that choice; the picked image is reviewed, then
+ * copied into VITA's own storage on Save. Nothing leaves the device.
+ *
+ * **Real data only.** Journeys, weight and photos come from the root providers,
  * which read storage and write nothing on view. There is no fixture and no
  * fallback: the `__DEV__` preview renders these components from its own
  * in-file fixtures and never touches storage.
@@ -34,6 +42,8 @@ const NO_PHOTOS: readonly JourneyPhotoView[] = Object.freeze([]);
 export default function Journey() {
   const journeys = useJourneys();
   const weight = useWeight();
+  const photos = usePhotos();
+  const [pending, setPending] = useState<Pending>(null);
   const [manage, setManage] = useState<{ open: boolean; mode: 'menu' | 'extend' }>({ open: false, mode: 'menu' });
   const today = todayLogDate();
   const active = journeys.active;
@@ -59,6 +69,36 @@ export default function Journey() {
     );
   }
 
+  const activeId = active.id;
+  const photoViews: JourneyPhotoView[] = photos
+    .photosFor(activeId)
+    .map((photo) => ({ id: photo.id, takenAt: photo.takenAt, uri: photos.uriFor(photo) }));
+
+  const acquire = async (source: PhotoSource) => {
+    const result = await acquirePhoto(source);
+    if (result.kind === 'denied') Alert.alert(source === 'camera' ? 'Camera access is off' : 'Photo access is off', DENIED[source]);
+    if (result.kind === 'picked') setPending(result);
+  };
+
+  /** The choice comes first; permission is asked only once the user picks. */
+  const addPhoto = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Take Photo', 'Choose from Library', 'Cancel'], cancelButtonIndex: 2, title: 'Add Progress Photo' },
+        (index) => {
+          if (index === 0) void acquire('camera');
+          if (index === 1) void acquire('library');
+        },
+      );
+      return;
+    }
+    Alert.alert('Add Progress Photo', undefined, [
+      { text: 'Take Photo', onPress: () => void acquire('camera') },
+      { text: 'Choose from Library', onPress: () => void acquire('library') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
   const finish = () => {
     setManage((current) => ({ ...current, open: false }));
     void (async () => {
@@ -78,7 +118,12 @@ export default function Journey() {
         key={active.id}
         journey={active}
         today={today}
-        data={{ status: weight.status, weights: entriesForJourney(weight.entries, active.id), photos: NO_PHOTOS, unit: weight.unit }}
+        data={{
+          status: weight.status === 'ready' && photos.status === 'ready' ? 'ready' : 'loading',
+          weights: entriesForJourney(weight.entries, active.id),
+          photos: photoViews,
+          unit: weight.unit,
+        }}
         actions={{
           addEntry: (value, unit, loggedAt) => weight.addEntry(value, unit, loggedAt, active.id),
           updateEntry: weight.updateEntry,
@@ -86,6 +131,8 @@ export default function Journey() {
           restoreEntry: weight.restoreEntry,
           setUnit: weight.setUnit,
         }}
+        photoActions={{ onAdd: addPhoto }}
+        onOpenPhoto={(photo) => router.push(`/journey/photo/${photo.id}`)}
         onManage={() => setManage({ open: true, mode: 'menu' })}
         onExtend={() => setManage({ open: true, mode: 'extend' })}
         onFinish={confirmFinish}
@@ -98,6 +145,20 @@ export default function Journey() {
         onClose={() => setManage((current) => ({ ...current, open: false }))}
         onExtend={(newEnd) => journeys.extendJourney(active.id, newEnd)}
         onFinish={finish}
+      />
+      <PhotoReviewSheet
+        visible={pending !== null}
+        mode="add"
+        uri={pending?.uri ?? null}
+        initialTakenAt={pending?.suggestedTakenAt ?? new Date()}
+        journey={active}
+        onCancel={() => setPending(null)}
+        onSave={async (takenAt) => {
+          if (!pending) return false;
+          const saved = await photos.addPhoto({ journeyId: activeId, sourceUri: pending.uri, mimeType: pending.mimeType, takenAt });
+          if (saved) setPending(null);
+          return saved !== null;
+        }}
       />
     </Screen>
   );

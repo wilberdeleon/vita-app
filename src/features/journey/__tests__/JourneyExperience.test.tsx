@@ -32,10 +32,12 @@ import {
   at,
   control,
   entry,
+  hasControl,
   hasPillars,
   journeyFixture,
   mountApp,
   pillar,
+  photoFiles,
   seedStorage,
   text,
   unmountApp,
@@ -193,10 +195,10 @@ describe('the preview cannot leak into release', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('release hands Photos nothing but the frozen empty list', () => {
+  it('release hands Photos only the active Journey\'s real photos (6.6) — never a placeholder', () => {
     const source = readFileSync(join(ROOT, 'src/app/(vita)/(tabs)/journey.tsx'), 'utf8');
-    expect(source).toContain('const NO_PHOTOS: readonly JourneyPhotoView[] = Object.freeze([]);');
-    expect(source).toMatch(/photos: NO_PHOTOS/);
+    expect(source).toMatch(/photos\s*\.photosFor\(activeId\)/);
+    expect(source).toMatch(/photos: photoViews/);
     expect(source).not.toMatch(/placeholder:\s*true|journey-preview|showFuture/);
   });
 
@@ -221,6 +223,18 @@ describe('the DEV preview', () => {
     }
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
     expect(await AsyncStorage.getAllKeys()).toEqual([]);
+    // 6.6: the preview's placeholder photos are drawn, never copied, saved or deleted.
+    expect(photoFiles.copies).toEqual([]);
+    expect(photoFiles.removed).toEqual([]);
+  });
+
+  it('preview photos are DEV-only placeholders with no Add, no detail, and no file', async () => {
+    mockParams = { state: 'established' };
+    const tree = await mountApp(<JourneyPreview />);
+    await pillar(tree, 'Photos');
+    expect(hasControl(tree, 'Add Progress Photo')).toBe(false);
+    expect(tree.root.findAll((n) => /^Development progress photo placeholder/.test(n.props.accessibilityLabel ?? '')).length).toBeGreaterThan(0);
+    expect(tree.root.findAll((n) => typeof n.props.onPress === 'function' && /progress photo/i.test(n.props.accessibilityLabel ?? ''))).toEqual([]);
   });
 
   it('shows every lifecycle state with its own real component', async () => {

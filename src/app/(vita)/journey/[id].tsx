@@ -1,7 +1,7 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 import { Screen, ScreenHeader } from '../../../components/ui';
-import { entriesForJourney, useJourneys, useWeight } from '../../../lib/journey';
+import { entriesForJourney, useJourneys, usePhotos, useWeight } from '../../../lib/journey';
 import { JourneySummary } from '../../../features/journey/components/JourneySummary';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -14,6 +14,7 @@ export default function JourneyDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const journeys = useJourneys();
   const weight = useWeight();
+  const photos = usePhotos();
   const { surfaces } = useTheme();
   const journey = journeys.journeys.find((candidate) => candidate.id === id);
 
@@ -23,7 +24,13 @@ export default function JourneyDetail() {
     <Screen>
       <ScreenHeader title="Past Journey" back />
       {journey && journey.status === 'completed' ? (
-        <JourneySummary journey={journey} weights={entriesForJourney(weight.entries, journey.id)} unit={weight.unit} />
+        <JourneySummary
+          journey={journey}
+          weights={entriesForJourney(weight.entries, journey.id)}
+          unit={weight.unit}
+          photos={photos.photosFor(journey.id).map((photo) => ({ id: photo.id, takenAt: photo.takenAt, uri: photos.uriFor(photo) }))}
+          onOpenPhoto={(photo) => router.push(`/journey/photo/${photo.id}`)}
+        />
       ) : journeys.status === 'ready' ? (
         <Text style={{ color: surfaces.textSecondary }}>This Journey isn’t available.</Text>
       ) : null}

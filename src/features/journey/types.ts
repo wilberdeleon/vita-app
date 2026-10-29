@@ -13,7 +13,7 @@ export type JourneyViewData = {
   status: 'loading' | 'ready';
   /** Newest first, as `WeightProvider` delivers them. */
   weights: readonly WeightEntry[];
-  /** Always `[]` in release until slice 6.5 builds a photo domain. */
+  /** This Journey's photos, newest first. Release: real only; preview: placeholders only. */
   photos: readonly JourneyPhotoView[];
   unit: WeightUnit;
 };
@@ -21,17 +21,26 @@ export type JourneyViewData = {
 /**
  * A progress photo as the Photos pillar lays it out.
  *
- * **Visual characterization only.** No photo model, storage or image exists
- * yet — 6.5 designs those. The only photos that can exist in 6.3 are `__DEV__`
- * layout placeholders, hence `placeholder: true` as a literal: there is no way
- * to construct one that claims to be a real image.
+ * Either a real progress photo (6.6) with its owned file URI, or a `__DEV__`
+ * layout placeholder. The two are a discriminated union, so a placeholder can
+ * never carry an image and a real photo can never be mistaken for one.
  */
-export type JourneyPhotoView = {
-  id: string;
-  /** ISO instant the photo was taken. */
-  takenAt: string;
-  placeholder: true;
-};
+export type JourneyPhotoView =
+  | {
+      id: string;
+      /** ISO instant the photo represents. */
+      takenAt: string;
+      /** A real progress photo (6.6): the owned file's URI. */
+      uri: string;
+      placeholder?: undefined;
+    }
+  | {
+      id: string;
+      takenAt: string;
+      /** `__DEV__` preview layout placeholder — never a real image. */
+      placeholder: true;
+      uri?: undefined;
+    };
 
 export type JourneyPillar = 'overview' | 'weight' | 'photos';
 
@@ -49,5 +58,11 @@ export type JourneyWeightActions = {
   removeEntry: (id: string) => Promise<boolean>;
   restoreEntry: (entry: WeightEntry) => Promise<boolean>;
   setUnit: (unit: WeightUnit) => Promise<boolean>;
+};
+
+/** What release can do with photos (6.6). Omitted by the preview and by completed Journeys. */
+export type JourneyPhotoActions = {
+  /** Opens the Take Photo / Choose from Library choice. */
+  onAdd: () => void;
 };
 
