@@ -29,6 +29,7 @@ import { TIMELINE_INITIAL, TIMELINE_STEP } from '../components/JourneyTimeline';
 import {
   TODAY,
   at,
+  control,
   entry,
   hasControl,
   journeyFixture,
@@ -39,6 +40,8 @@ import {
   press,
   seedPhotos,
   seedStorage,
+  storedJourneys,
+  storedWeights,
   text,
   type,
   unmountApp,
@@ -71,7 +74,7 @@ function timeline(tree: ReactTestRenderer): string[] {
   // Scoped to the Journey screen when one is mounted, so another screen's labels never count.
   const screens = tree.root.findAll((n) => n.type === Journey);
   const labels = (screens[0] ?? tree.root)
-    .findAll((n) => typeof n.props.accessibilityLabel === 'string' && /^(Journey began|Journey completed|Weight recorded|Progress photo|Milestone),/.test(n.props.accessibilityLabel) && n.props.accessible !== false)
+    .findAll((n) => typeof n.props.accessibilityLabel === 'string' && /^(Journey began|Journey completed|Journey extended|Weight recorded|Progress photo|Milestone),/.test(n.props.accessibilityLabel) && n.props.accessible !== false)
     .map((n) => n.props.accessibilityLabel as string);
   return labels.filter((label, i) => label !== labels[i - 1]);
 }
@@ -294,5 +297,62 @@ describe('the DEV preview', () => {
     const tree = await mountApp(<JourneyPreview />);
     expect(kinds(tree)[0]).toBe('Journey completed');
     expect(kinds(tree).at(-1)).toBe('Journey began');
+  });
+});
+
+describe('6.7 corrections — the Journey chapter boundary and its extensions', () => {
+  it('Log Weight refuses a date before this Journey began, calmly, and writes nothing', async () => {
+    const tree = await overview();
+    await pillar(tree, 'Weight');
+    await press(tree, 'Log Weight');
+    await type(tree, 'Weight in pounds', '179');
+    await press(tree, /^When, /);
+    await type(tree, 'Date, year dash month dash day', shiftLogDate(ACTIVE.startDate, -1));
+    expect(text(tree)).toContain('This date is before this Journey began.');
+    const save = control(tree, 'Log 179.0 pounds');
+    expect(save.props.disabled).toBe(true);
+    await act(async () => save.props.onPress());
+    expect((await storedWeights()).map((e) => e.id)).toEqual(['w0']);
+
+    await type(tree, 'Date, year dash month dash day', ACTIVE.startDate);
+    expect(text(tree)).not.toContain('This date is before this Journey began.');
+    expect(control(tree, 'Log 179.0 pounds').props.disabled).toBe(false);
+  });
+
+  it('Edit Weight refuses moving a weigh-in before the start day', async () => {
+    const tree = await overview([entry('w0', at(10, 7), 180, ACTIVE.id), entry('w1', at(2, 7), 178, ACTIVE.id)]);
+    await pillar(tree, 'Weight');
+    await press(tree, /^178\.0 pounds, /);
+    await press(tree, /^When, /);
+    await type(tree, 'Date, year dash month dash day', shiftLogDate(ACTIVE.startDate, -4));
+    expect(text(tree)).toContain('This date is before this Journey began.');
+    expect(control(tree, 'Save').props.disabled).toBe(true);
+  });
+
+  it('Extend adds “Journey extended” to the Timeline at its real time; a second extension adds a second; both survive Finish', async () => {
+    const tree = await overview();
+    const first = shiftLogDate(ACTIVE.plannedEndDate, 30);
+    const second = shiftLogDate(first, 30);
+    for (const end of [first, second]) {
+      await press(tree, 'Manage Journey');
+      await press(tree, 'Extend Journey');
+      await type(tree, 'New end date, year dash month dash day', end);
+      await press(tree, /^Extend Journey to /);
+    }
+    const extended = timeline(tree).filter((l) => l.startsWith('Journey extended'));
+    expect(extended).toHaveLength(2);
+    expect(extended[0]).toMatch(/^Journey extended, planned end moved from .* to .*, /);
+    expect(kinds(tree)).toEqual(['Journey extended', 'Journey extended', 'Weight recorded', 'Journey began']);
+    expect(text(tree)).toMatch(/Planned end .* → /);
+    expect((await storedJourneys())[0].extensions).toHaveLength(2);
+
+    jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.find((b) => b.text === 'Finish')?.onPress?.());
+    await press(tree, 'Manage Journey');
+    await press(tree, 'Finish Journey');
+    await unmountApp();
+    mockParams = { id: ACTIVE.id };
+    const past = await mountApp(<JourneyDetail />);
+    expect(kinds(past)).toEqual(['Journey completed', 'Journey extended', 'Journey extended', 'Weight recorded', 'Journey began']);
+    expect((await AsyncStorage.getAllKeys()).filter((k) => /timeline/i.test(k))).toEqual([]);
   });
 });

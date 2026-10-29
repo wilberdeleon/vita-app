@@ -37,6 +37,8 @@ type Props = {
    * Journey's summary, whose own statistics already say it (6.5).
    */
   historyOnly?: boolean;
+  /** The Journey's start day — Log / Edit refuse an earlier date. */
+  journeyStart?: string;
 };
 
 /**
@@ -52,7 +54,7 @@ type Props = {
  * word that grades a change. One entry shows one entry — no "0.0 lb", no
  * comparison against nothing.
  */
-export function WeightPillar({ data, actions, showFuture = false, historyOnly = false }: Props) {
+export function WeightPillar({ data, actions, showFuture = false, historyOnly = false, journeyStart }: Props) {
   const [sheet, setSheet] = useState<{ open: boolean; entry: WeightEntry | null }>({ open: false, entry: null });
   const { showToast } = useToast();
 
@@ -111,6 +113,7 @@ export function WeightPillar({ data, actions, showFuture = false, historyOnly = 
           onLog={log}
           onUpdate={update}
           onDelete={remove}
+          journeyStart={journeyStart}
         />
       ) : null}
     </>

@@ -11,6 +11,14 @@
  *
  * Deliberately exposes no chart, trend, delta or goal API. `current` is the
  * newest entry, derived on every change and never stored.
+ *
+ * **Journey boundary (6.7 correction).** A Journey-owned weigh-in may not be
+ * dated before its Journey's start day. `WeightProvider` sits *above*
+ * `JourneyProvider`, so the Journey registers a start-date lookup here
+ * (`setJourneyStarts`) and every add, edit and restore of a Journey-owned
+ * entry is checked against it — whatever screen or code makes the call.
+ * Unowned legacy entries are never checked; an id the lookup does not know
+ * (a Journey being created this instant) is not blocked.
  */
 
 import {
@@ -33,6 +41,8 @@ import {
   updateWeightEntry,
   type WeightEntryChanges,
 } from '../model/entries';
+import type { LogDate } from '../../daily/dates';
+import { isWithinJourneyStart } from '../model/journeys';
 import { DEFAULT_WEIGHT_PREFERENCES, type WeightEntry, type WeightPreferences, type WeightUnit } from '../model/types';
 
 export type WeightState = {
@@ -60,7 +70,13 @@ export type WeightContextValue = WeightState & {
   restoreEntry: (entry: WeightEntry) => Promise<boolean>;
   /** Changes display only; stored entries are never rewritten. */
   setUnit: (unit: WeightUnit) => Promise<boolean>;
+  /** Registered by `JourneyProvider`: a Journey's start day, or `null` if unknown. */
+  setJourneyStarts: (lookup: JourneyStartLookup) => void;
 };
+
+export type JourneyStartLookup = (journeyId: string) => LogDate | null;
+
+const NO_STARTS: JourneyStartLookup = () => null;
 
 const WeightContext = createContext<WeightContextValue | null>(null);
 
@@ -76,6 +92,16 @@ export function WeightProvider({ children, repository = asyncStorageWeightReposi
   const [error, setError] = useState<string | null>(null);
 
   const entriesRef = useRef<WeightEntry[]>([]);
+  const startsRef = useRef<JourneyStartLookup>(NO_STARTS);
+  const setJourneyStarts = useCallback((lookup: JourneyStartLookup) => {
+    startsRef.current = lookup;
+  }, []);
+  /** `false` for a Journey-owned entry dated before its Journey's start day. */
+  const withinJourney = useCallback((entry: WeightEntry) => {
+    if (!entry.journeyId) return true;
+    const start = startsRef.current(entry.journeyId);
+    return start === null || isWithinJourneyStart(entry.loggedAt, start);
+  }, []);
   /**
    * Resolves when the stored history has been read. Every mutation awaits it:
    * an add fired before the load finished would otherwise save a one-entry
@@ -134,15 +160,19 @@ export function WeightProvider({ children, repository = asyncStorageWeightReposi
     (weight: number, unit: WeightUnit, loggedAt?: Date, journeyId?: string) => {
       // Built before awaiting, so an invalid weight throws to the caller at once.
       const entry = createWeightEntry({ weight, unit, loggedAt, journeyId });
-      return commit((current) => addWeightEntry(current, entry));
+      return commit((current) => (withinJourney(entry) ? addWeightEntry(current, entry) : null));
     },
-    [commit],
+    [commit, withinJourney],
   );
 
   const updateEntry = useCallback(
     (id: string, changes: WeightEntryChanges) =>
-      commit((current) => (current.some((entry) => entry.id === id) ? updateWeightEntry(current, id, changes) : null)),
-    [commit],
+      commit((current) => {
+        if (!current.some((entry) => entry.id === id)) return null;
+        const next = updateWeightEntry(current, id, changes);
+        return withinJourney(next.find((entry) => entry.id === id)!) ? next : null;
+      }),
+    [commit, withinJourney],
   );
 
   const removeEntry = useCallback(
@@ -153,8 +183,10 @@ export function WeightProvider({ children, repository = asyncStorageWeightReposi
 
   const restoreEntry = useCallback(
     (entry: WeightEntry) =>
-      commit((current) => (current.some((existing) => existing.id === entry.id) ? null : addWeightEntry(current, entry))),
-    [commit],
+      commit((current) =>
+        current.some((existing) => existing.id === entry.id) || !withinJourney(entry) ? null : addWeightEntry(current, entry),
+      ),
+    [commit, withinJourney],
   );
 
   const setUnit = useCallback(
@@ -184,8 +216,9 @@ export function WeightProvider({ children, repository = asyncStorageWeightReposi
       removeEntry,
       restoreEntry,
       setUnit,
+      setJourneyStarts,
     }),
-    [status, entries, preferences.unit, error, addEntry, updateEntry, removeEntry, restoreEntry, setUnit],
+    [status, entries, preferences.unit, error, addEntry, updateEntry, removeEntry, restoreEntry, setUnit, setJourneyStarts],
   );
 
   return <WeightContext.Provider value={value}>{children}</WeightContext.Provider>;

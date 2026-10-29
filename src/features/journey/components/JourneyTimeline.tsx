@@ -122,6 +122,10 @@ export function spokenTimelineItem(item: JourneyTimelineItem, unit: WeightUnit):
       return `Milestone, ${MILESTONE_TITLES[item.milestone]}, ${
         item.precision === 'day' ? spokenCalendarDay(toLogDate(new Date(item.at))) : spokenWhen(item.at)
       }`;
+    case 'extended':
+      return `Journey extended, planned end moved from ${spokenCalendarDay(item.previousPlannedEndDate)} to ${spokenCalendarDay(
+        item.newPlannedEndDate,
+      )}, ${spokenWhen(item.at)}`;
     case 'completed':
       return `Journey completed, ${spokenCalendarDay(item.day)}, ran ${dayCount(item.elapsedDays)}`;
   }
@@ -183,6 +187,18 @@ function TimelineRow({
       <View accessible accessibilityLabel={spoken} style={styles.block}>
         <Text style={[styles.kicker, { color: accent }]}>MILESTONE</Text>
         <Text style={[styles.marked, { color: surfaces.text }]}>{MILESTONE_TITLES[item.milestone]}</Text>
+      </View>
+    );
+  }
+
+  if (item.kind === 'extended') {
+    const sameYear = item.previousPlannedEndDate.slice(0, 4) === item.newPlannedEndDate.slice(0, 4);
+    return (
+      <View accessible accessibilityLabel={spoken} style={styles.block}>
+        <Text style={[styles.title, { color: surfaces.text }]}>Journey extended</Text>
+        <Text style={[styles.time, { color: surfaces.textSecondary }]}>
+          {`Planned end ${calendarDay(item.previousPlannedEndDate, !sameYear)} → ${calendarDay(item.newPlannedEndDate, !sameYear)} · ${clockTime(item.at)}`}
+        </Text>
       </View>
     );
   }

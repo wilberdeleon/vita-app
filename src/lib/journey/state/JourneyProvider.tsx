@@ -86,6 +86,14 @@ export function JourneyProvider({ children, repository = asyncStorageJourneyRepo
   const [error, setError] = useState<string | null>(null);
   const journeysRef = useRef<Journey[]>([]);
 
+  // The weigh-in boundary (6.7 correction): WeightProvider asks this lookup
+  // for a Journey's start day before any Journey-owned write.
+  const { setJourneyStarts } = weight;
+  useEffect(() => {
+    setJourneyStarts((id) => journeysRef.current.find((journey) => journey.id === id)?.startDate ?? null);
+    return () => setJourneyStarts(() => null);
+  }, [setJourneyStarts]);
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -143,7 +151,7 @@ export function JourneyProvider({ children, repository = asyncStorageJourneyRepo
       if (!journey) return false;
       let next: Journey;
       try {
-        next = extendJourney(journey, newEnd, today());
+        next = extendJourney(journey, newEnd, today(), new Date());
       } catch {
         return false;
       }

@@ -42,7 +42,40 @@ export type Journey = {
   createdAt: string;
   /** ISO instant the user finished it. Present exactly when `status` is `completed`. */
   completedAt?: string;
+  /**
+   * Every successful Extend, oldest first (slice 6.7 correction). Append-only
+   * lifecycle history — the Timeline derives *Journey extended* from it.
+   * **Absent means none recorded**: Journeys extended before this field
+   * existed have no history, and none is ever inferred from their length.
+   */
+  extensions?: JourneyExtension[];
 };
+
+/** One Extend, as it happened. Immutable once written. */
+export type JourneyExtension = {
+  /** `newId('extension')`, stored — stable for the life of the record. */
+  id: string;
+  /** ISO instant the extension was saved. */
+  extendedAt: string;
+  previousPlannedEndDate: LogDate;
+  newPlannedEndDate: LogDate;
+};
+
+/** A Journey's extension history; missing reads as none. */
+export function journeyExtensions(journey: Pick<Journey, 'extensions'>): readonly JourneyExtension[] {
+  return journey.extensions ?? [];
+}
+
+/**
+ * A Journey-owned weigh-in must fall **on or after the Journey's start day**,
+ * compared as local calendar days (slice 6.7 correction). A Journey is a
+ * chapter with a beginning; nothing recorded in it may predate that.
+ */
+export function isWithinJourneyStart(at: Date | string, startDate: LogDate): boolean {
+  const date = typeof at === 'string' ? new Date(at) : at;
+  if (!Number.isFinite(date.getTime())) return false;
+  return toLogDate(date) >= startDate;
+}
 
 /** Long enough for "Getting Back to Me — Summer 2027", short enough for one header line. */
 export const JOURNEY_NAME_MAX = 60;
@@ -182,10 +215,20 @@ export function canExtendTo(journey: Journey, newEnd: LogDate, today: LogDate): 
   return journey.status === 'active' && isValidLogDate(newEnd) && newEnd >= earliestExtension(journey, today);
 }
 
-/** Moves only the planned end. Same id, same start, same records. */
-export function extendJourney(journey: Journey, newEnd: LogDate, today: LogDate): Journey {
+/**
+ * Moves the planned end **and records that it moved**, in one Journey value —
+ * so a saved Journey can never have a new end without its history entry, or
+ * a history entry without a new end. Same id, same start, same records.
+ */
+export function extendJourney(journey: Journey, newEnd: LogDate, today: LogDate, now: Date = new Date()): Journey {
   if (!canExtendTo(journey, newEnd, today)) throw new Error(`extendJourney: ${newEnd} is not a valid extension`);
-  return { ...journey, plannedEndDate: newEnd };
+  const extension: JourneyExtension = {
+    id: newId('extension'),
+    extendedAt: now.toISOString(),
+    previousPlannedEndDate: journey.plannedEndDate,
+    newPlannedEndDate: newEnd,
+  };
+  return { ...journey, plannedEndDate: newEnd, extensions: [...journeyExtensions(journey), extension] };
 }
 
 /** Finishes an active Journey at `now`. Its records keep their `journeyId`. */

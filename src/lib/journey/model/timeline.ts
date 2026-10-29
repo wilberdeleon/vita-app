@@ -15,12 +15,15 @@
  *   first carries `first: true`, which *is* the "first progress photo"
  *   milestone: a separate adjacent item would say the same thing twice.
  * - **Milestones** — the small, factual set in `MILESTONES`; see below.
+ * - **Journey extended** — one per recorded extension, at `extendedAt`,
+ *   carrying the previous and new planned end (6.7 correction). Derived from
+ *   the Journey's own `extensions` history, which is canonical lifecycle
+ *   data — not timeline storage. Journeys extended before that history
+ *   existed show none; nothing is inferred from their length.
  * - **Journey completed** — at `completedAt`, for a finished Journey.
  *
- * Not contained: the planned end (a plan, not something that happened — it
- * belongs to the header), and **extensions**: a Journey stores only its
- * current planned end, so past extensions cannot be known and are not
- * invented.
+ * Not contained: the planned end itself (a plan, not something that
+ * happened — it belongs to the header).
  *
  * ## Effective time and order
  *
@@ -29,15 +32,16 @@
  * start day, Day 30). A day-precision item is placed at **the start of its
  * local day** and is shown with a date only — no time is invented for it.
  *
- * Newest first. Equal instants break by kind — completed, milestone, photo,
- * weight, began — then by key, so the order is total and stable:
- * "Journey completed" heads a finished chapter; a threshold milestone sits
- * directly above the record that crossed it; "Journey began" is under
- * everything on its day.
+ * Newest first. Equal instants break by kind — completed, extended,
+ * milestone, photo, weight, began — then by key, so the order is total and
+ * stable: lifecycle changes bracket the records ("Journey completed" heads a
+ * finished chapter, an extension is never split from the moment it was
+ * made); a threshold milestone sits directly above the record that crossed
+ * it; "Journey began" is under everything on its day.
  */
 
 import { fromLogDate, shiftLogDate, toLogDate, type LogDate } from '../../daily/dates';
-import { calendarDaysBetween, elapsedDays, type Journey } from './journeys';
+import { calendarDaysBetween, elapsedDays, journeyExtensions, type Journey } from './journeys';
 import type { WeightEntry } from './types';
 
 /** The milestone vocabulary. Small on purpose; participation and time, never body direction. */
@@ -56,6 +60,7 @@ export type JourneyTimelineItem =
   | (Base & { kind: 'weight'; entryId: string; weightKg: number })
   | (Base & { kind: 'photo'; photoId: string; first: boolean })
   | (Base & { kind: 'milestone'; milestone: MilestoneKind })
+  | (Base & { kind: 'extended'; extensionId: string; previousPlannedEndDate: LogDate; newPlannedEndDate: LogDate })
   | (Base & { kind: 'completed'; day: LogDate; elapsedDays: number });
 
 /** The fields a photo needs to take part — real photos and preview placeholders alike. */
@@ -86,7 +91,8 @@ const COUNT_MILESTONES: readonly { kind: MilestoneKind; of: 'weight' | 'photo'; 
 export const DAY_MILESTONE = 30;
 
 const RANK: Record<JourneyTimelineItem['kind'], number> = {
-  completed: 4,
+  completed: 5,
+  extended: 4,
   milestone: 3,
   photo: 2,
   weight: 1,
@@ -159,6 +165,18 @@ export function deriveJourneyTimeline({ journey, weights, photos, today }: Sourc
   const day30 = shiftLogDate(journey.startDate, DAY_MILESTONE - 1);
   if (calendarDaysBetween(journey.startDate, reachedThrough) + 1 >= DAY_MILESTONE) {
     items.push({ kind: 'milestone', key: `${id}:milestone:day-30`, at: startOfDay(day30), precision: 'day', milestone: 'day-30' });
+  }
+
+  for (const extension of journeyExtensions(journey)) {
+    items.push({
+      kind: 'extended',
+      key: `${id}:extended:${extension.id}`,
+      at: extension.extendedAt,
+      precision: 'instant',
+      extensionId: extension.id,
+      previousPlannedEndDate: extension.previousPlannedEndDate,
+      newPlannedEndDate: extension.newPlannedEndDate,
+    });
   }
 
   if (journey.status === 'completed' && journey.completedAt) {

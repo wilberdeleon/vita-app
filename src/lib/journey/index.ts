@@ -56,6 +56,8 @@ export {
   earliestExtension,
   elapsedDays,
   extendJourney,
+  isWithinJourneyStart,
+  journeyExtensions,
   journeyProgress,
   normalizeJourneyName,
   pastJourneys,
@@ -66,6 +68,7 @@ export {
   type Journey,
   type JourneyProgress,
   type JourneyStatus,
+  type JourneyExtension,
 } from './model/journeys';
 export {
   DAY_MILESTONE,

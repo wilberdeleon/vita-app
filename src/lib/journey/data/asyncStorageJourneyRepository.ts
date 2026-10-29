@@ -15,23 +15,46 @@
 import { isValidLogDate } from '../../daily/dates';
 import { isNonEmptyString, isRecord } from '../../daily/guards';
 import { readJson, removeKey, writeJson } from '../../daily/storage';
-import { JOURNEY_NAME_MAX, type Journey } from '../model/journeys';
+import { JOURNEY_NAME_MAX, type Journey, type JourneyExtension } from '../model/journeys';
 import type { JourneyRepository } from './JourneyRepository';
 import { JourneyKeys } from './keys';
+
+/** One stored extension, or `null` if it is not a shape VITA writes. */
+export function parseExtension(value: unknown): JourneyExtension | null {
+  if (!isRecord(value)) return null;
+  const { id, extendedAt, previousPlannedEndDate, newPlannedEndDate } = value;
+  if (!isNonEmptyString(id) || !isNonEmptyString(extendedAt) || Number.isNaN(Date.parse(extendedAt))) return null;
+  if (!isValidLogDate(previousPlannedEndDate) || !isValidLogDate(newPlannedEndDate)) return null;
+  if (newPlannedEndDate <= previousPlannedEndDate) return null;
+  return { id, extendedAt, previousPlannedEndDate, newPlannedEndDate };
+}
+
+/**
+ * Extension history (6.7 correction). Missing → none (every Journey written
+ * before the field existed). A malformed entry is dropped on its own — never
+ * repaired, never invented — so one bad history entry cannot cost the user
+ * their whole Journey. A non-array value is treated as no history.
+ */
+function parseExtensions(value: unknown): JourneyExtension[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(parseExtension).filter((extension): extension is JourneyExtension => extension !== null);
+}
 
 export function parseJourney(value: unknown): Journey | null {
   if (!isRecord(value)) return null;
   const { id, name, startDate, plannedEndDate, status, createdAt, completedAt } = value;
+  const extensions = parseExtensions(value.extensions);
+  const history = extensions.length ? { extensions } : {};
   if (!isNonEmptyString(id) || !isNonEmptyString(name) || name.trim() !== name || name.length > JOURNEY_NAME_MAX) return null;
   if (!isValidLogDate(startDate) || !isValidLogDate(plannedEndDate) || plannedEndDate < startDate) return null;
   if (!isNonEmptyString(createdAt) || Number.isNaN(Date.parse(createdAt))) return null;
   if (status === 'active') {
     if (completedAt !== undefined) return null;
-    return { id, name, startDate, plannedEndDate, status, createdAt };
+    return { id, name, startDate, plannedEndDate, status, createdAt, ...history };
   }
   if (status === 'completed') {
     if (!isNonEmptyString(completedAt) || Number.isNaN(Date.parse(completedAt))) return null;
-    return { id, name, startDate, plannedEndDate, status, createdAt, completedAt };
+    return { id, name, startDate, plannedEndDate, status, createdAt, completedAt, ...history };
   }
   return null;
 }

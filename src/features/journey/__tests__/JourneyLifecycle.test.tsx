@@ -324,7 +324,7 @@ describe('Manage Journey', () => {
     return mountApp(<Journey />);
   }
 
-  it('Extend moves only the planned end', async () => {
+  it('Extend moves the planned end and records the extension', async () => {
     const tree = await mountActive();
     await press(tree, 'Manage Journey');
     await press(tree, 'Extend Journey');
@@ -333,7 +333,13 @@ describe('Manage Journey', () => {
     const newEnd = shiftLogDate(ACTIVE.plannedEndDate, 60);
     await type(tree, 'New end date, year dash month dash day', newEnd);
     await press(tree, `Extend Journey to ${calendarDay(newEnd, true)}`);
-    expect(await storedJourneys()).toEqual([{ ...ACTIVE, plannedEndDate: newEnd }]);
+    expect(await storedJourneys()).toEqual([
+      {
+        ...ACTIVE,
+        plannedEndDate: newEnd,
+        extensions: [{ id: expect.any(String), extendedAt: expect.any(String), previousPlannedEndDate: ACTIVE.plannedEndDate, newPlannedEndDate: newEnd }],
+      },
+    ]);
     expect(text(tree)).toContain('DAY 11 OF 150');
   });
 

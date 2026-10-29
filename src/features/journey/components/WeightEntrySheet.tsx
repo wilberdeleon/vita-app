@@ -28,6 +28,8 @@ type Props = {
   onUpdate: (id: string, changes: WeightEntryChanges) => Promise<boolean>;
   /** Asks for confirmation itself; resolves once the entry is gone. */
   onDelete: (entry: WeightEntry) => void;
+  /** The Journey's start day: a weigh-in in it may not be dated earlier (6.7 correction). */
+  journeyStart?: LogDate;
 };
 
 const UNIT_NAMES: Record<WeightUnit, string> = { lb: 'pounds', kg: 'kilograms' };
@@ -68,7 +70,7 @@ function display(value: number): string {
  * Today / Yesterday / Now — no picker dependency. A time in the future is
  * refused: a weigh-in is something that already happened.
  */
-export function WeightEntrySheet({ visible, entry, preferredUnit, onClose, onLog, onUpdate, onDelete }: Props) {
+export function WeightEntrySheet({ visible, entry, preferredUnit, onClose, onLog, onUpdate, onDelete, journeyStart }: Props) {
   const { surfaces } = useTheme();
   const editing = entry !== null;
 
@@ -104,7 +106,10 @@ export function WeightEntrySheet({ visible, entry, preferredUnit, onClose, onLog
   const timeInvalid = chosenIso === null;
   const timeInFuture = typeof chosenIso === 'string' && !isLoggableTime(new Date(chosenIso));
 
-  const canSave = weight !== null && !timeInvalid && !timeInFuture && !saving;
+  const beforeJourney =
+    journeyStart !== undefined && typeof chosenIso === 'string' && toLogDate(new Date(chosenIso)) < journeyStart;
+
+  const canSave = weight !== null && !timeInvalid && !timeInFuture && !beforeJourney && !saving;
 
   const selectUnit = (index: number) => {
     const next = WEIGHT_UNITS[index];
@@ -241,6 +246,9 @@ export function WeightEntrySheet({ visible, entry, preferredUnit, onClose, onLog
             ) : null}
             {timeInFuture ? (
               <Text style={[styles.error, { color: surfaces.textSecondary }]}>That time hasn’t happened yet.</Text>
+            ) : null}
+            {beforeJourney ? (
+              <Text style={[styles.error, { color: surfaces.textSecondary }]}>This date is before this Journey began.</Text>
             ) : null}
           </View>
         ) : null}

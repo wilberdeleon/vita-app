@@ -193,3 +193,45 @@ describe('milestones', () => {
     expect(keys(derive({ weights: five }))).toEqual(keys(derive({ weights: five })));
   });
 });
+
+describe('Journey extended (6.7 correction)', () => {
+  const ext = (id: string, at: string, from: string, to: string) => ({ id, extendedAt: at, previousPlannedEndDate: from, newPlannedEndDate: to });
+
+  it('derives one item per recorded extension, at its real time, with both ends', () => {
+    const j = journey({ plannedEndDate: '2027-01-26', extensions: [ext('e1', on(5, 18), '2026-11-29', '2026-12-29'), ext('e2', on(9, 7), '2026-12-29', '2027-01-26')] });
+    const items = derive({ journey: j, weights: [weight('w1', on(0)), weight('w2', on(7))] });
+    expect(keys(items)).toEqual(['j1:extended:e2', 'weight:w2', 'j1:extended:e1', 'weight:w1', 'j1:began']);
+    expect(items[0]).toEqual({
+      kind: 'extended',
+      key: 'j1:extended:e2',
+      at: on(9, 7),
+      precision: 'instant',
+      extensionId: 'e2',
+      previousPlannedEndDate: '2026-12-29',
+      newPlannedEndDate: '2027-01-26',
+    });
+  });
+
+  it('none without recorded history — never inferred from a long planned duration', () => {
+    expect(derive({ journey: journey({ plannedEndDate: '2028-01-01' }) }).some((i) => i.kind === 'extended')).toBe(false);
+  });
+
+  it('kept in a completed Journey, beneath Journey completed', () => {
+    const j = journey({ status: 'completed', completedAt: on(20, 18), extensions: [ext('e1', on(20, 18), '2026-11-29', '2026-12-29')] });
+    expect(keys(derive({ journey: j }))).toEqual(['j1:completed', 'j1:extended:e1', 'j1:began']);
+  });
+
+  it('ties: completed › extended › milestone › photo › weight › began', () => {
+    const t = on(2, 7);
+    const weights = [0, 1, 2, 3].map((i) => weight(`w${i}`, on(0, 7, i))).concat([weight('w4', t)]);
+    const j = journey({ extensions: [ext('e1', t, '2026-11-29', '2026-12-29')] });
+    expect(kinds(derive({ journey: j, weights, photos: [photo('p', t)] })).slice(0, 4)).toEqual(['extended', 'weigh-ins-5', 'photo', 'weight']);
+  });
+
+  it('another Journey’s extensions never appear', () => {
+    const other = journey({ id: 'j2', extensions: [ext('x', on(3), '2026-11-29', '2026-12-29')] });
+    const mine = journey();
+    expect(derive({ journey: mine }).some((i) => i.kind === 'extended')).toBe(false);
+    expect(derive({ journey: other }).filter((i) => i.kind === 'extended').map((i) => i.key)).toEqual(['j2:extended:x']);
+  });
+});

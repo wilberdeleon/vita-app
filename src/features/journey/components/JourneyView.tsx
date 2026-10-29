@@ -82,7 +82,7 @@ export function JourneyView({ journey, today, data, onManage, onExtend, onFinish
       {data.status === 'ready' ? (
         <>
           {pillar === 'overview' ? <OverviewPillar data={data} journey={journey} today={today} onOpenPhoto={onOpenPhoto} showFuture={showFuture} /> : null}
-          {pillar === 'weight' ? <WeightPillar data={data} actions={actions} showFuture={showFuture} /> : null}
+          {pillar === 'weight' ? <WeightPillar data={data} actions={actions} showFuture={showFuture} journeyStart={journey.startDate} /> : null}
           {pillar === 'photos' ? <PhotosPillar data={data} actions={photoActions} onOpen={onOpenPhoto} showFuture={showFuture} /> : null}
         </>
       ) : null}

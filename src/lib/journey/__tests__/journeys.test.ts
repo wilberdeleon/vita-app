@@ -146,10 +146,15 @@ describe('one active Journey at a time', () => {
 });
 
 describe('extending', () => {
-  it('moves only the planned end — same id, start and status', () => {
+  it('moves the planned end and records that it moved — same id, start and status', () => {
     const journey = make();
-    const extended = extendJourney(journey, '2026-12-26', '2026-11-10');
-    expect(extended).toEqual({ ...journey, plannedEndDate: '2026-12-26' });
+    const at = new Date(2026, 10, 10, 18, 5);
+    const extended = extendJourney(journey, '2026-12-26', '2026-11-10', at);
+    expect(extended).toEqual({
+      ...journey,
+      plannedEndDate: '2026-12-26',
+      extensions: [{ id: expect.stringMatching(/^extension_/), extendedAt: at.toISOString(), previousPlannedEndDate: '2026-11-26', newPlannedEndDate: '2026-12-26' }],
+    });
     expect(journeyProgress(extended, '2026-11-10')).toMatchObject({ day: 14, totalDays: 60 });
   });
 

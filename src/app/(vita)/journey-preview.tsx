@@ -69,7 +69,21 @@ function photo(id: string, daysAgo: number): JourneyPhotoView {
 }
 
 const EARLY = journey('early', 'Getting Back to Me', 12, 90);
-const ESTABLISHED = journey('established', 'Summer Transformation', 70, 90);
+// Planned for 60 days, extended to 90 three weeks ago — a recorded extension (6.7).
+const ESTABLISHED: Journey = (() => {
+  const base = journey('established', 'Summer Transformation', 70, 90);
+  return {
+    ...base,
+    extensions: [
+      {
+        id: 'preview-extension-1',
+        extendedAt: at(21, 19, 10),
+        previousPlannedEndDate: shiftLogDate(base.startDate, 59),
+        newPlannedEndDate: base.plannedEndDate,
+      },
+    ],
+  };
+})();
 const ENDED = journey('ended', 'Marathon Prep', 92, 90);
 const COMPLETED = journey('completed', 'Spring Reset', 200, 90, 108);
 const OLDER = journey('older', 'New Year, Slowly', 400, 60, 335);

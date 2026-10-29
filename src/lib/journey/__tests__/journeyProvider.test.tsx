@@ -216,13 +216,17 @@ describe('extending and finishing', () => {
     return { w, j };
   }
 
-  it('extend moves only the planned end', async () => {
+  it('extend moves the planned end and appends one history entry, in the same write', async () => {
     const { j, w } = await started();
     const before = j.stored()[0];
     await act(async () => {
       expect(await journeysCtx.extendJourney(before.id, '2027-03-01')).toBe(true);
     });
-    expect(j.stored()[0]).toEqual({ ...before, plannedEndDate: '2027-03-01' });
+    expect(j.stored()[0]).toEqual({
+      ...before,
+      plannedEndDate: '2027-03-01',
+      extensions: [{ id: expect.any(String), extendedAt: expect.any(String), previousPlannedEndDate: before.plannedEndDate, newPlannedEndDate: '2027-03-01' }],
+    });
     expect(w.stored()).toHaveLength(1);
   });
 
