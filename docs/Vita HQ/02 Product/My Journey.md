@@ -20,7 +20,11 @@ See [[Roadmap]] for the revised Sprint 6 slices and [[Decision Log]].
 
 A Journey is something the user **starts, lives through and finishes**: a name, a start (today), a planned end they chose, an active period, and a completion they decide. Weight, Photos and the future Timeline belong **to** a Journey. With no Journey, the screen offers only **Start a New Journey** (and Past Journeys once there are some). An active Journey shows its name, Day X of Y, its dates and a gold rail, then Overview · Weight · Photos. Extend and Finish live under Manage; reaching the end never finishes a Journey on its own. Finished Journeys are kept, read-only. Weigh-ins recorded before Journeys existed are preserved and shown by none. One active Journey at a time. See [[Decision Log]] and [[Roadmap]].
 
-## Progress photos (slice 6.6, 2026-10-29) — awaiting founder review
+## Timeline (slice 6.7, 2026-10-29) — awaiting founder review
+
+Overview now ends in the Journey's **Timeline** — what happened, and when, newest first on the gold spine: *Journey began*, each weigh-in as one quiet line, each progress photo with its image (tap to open), and a few factual markers: *5 weigh-ins recorded*, *10 weigh-ins recorded*, *5 progress photos recorded*, *30 days into this Journey* (time, not a streak). The first photo is marked on the photo itself. A finished Journey shows *Journey completed* at the top and opens with Overview · Weight · Photos, read-only. The Timeline is **worked out from the records, never saved separately**, so it can't disagree with them; delete records and a marker they supported goes too. No planned end or extensions on it — the end is a plan, and past extensions aren't kept. No charts, scores, streaks, badges or praise.
+
+## Progress photos (slice 6.6, 2026-10-29) — ✅ locked
 
 Photos is now real. Inside an active Journey, **Add Progress Photo** → Take Photo or Choose from Library (access asked only then) → a review of the whole image and when it was taken → **Save Photo**. Photos belong to that Journey only, are shown newest first two to a row, and open to the full image with **Change Date** and **Delete**. Overview shows the real count and latest date. A finished Journey keeps its photos, read-only; a new one starts empty. **Nothing leaves the phone** — no upload, sharing, analysis or scores; the original in the Photo Library is never touched. Because there is no backup by design, deleting VITA deletes its photos. Then-vs-Now stays 6.8.
 

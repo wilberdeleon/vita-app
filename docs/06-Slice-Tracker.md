@@ -4151,8 +4151,8 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 | **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful states; DEV-only preview | ✅ COMPLETE (founder-locked 2026-10-27, `1c5945e`) — **its entry architecture is superseded by 6.5**: the pillars now appear only inside a Journey |
 | **6.4 — Weight Logging + History** | Log weight, history, edit, delete, lb/kg | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · lives inside Journeys since 6.5 |
 | **6.5 — Journey Lifecycle + Start Experience** | A Journey the user starts, lives through and finishes: start flow, active home, Journey-owned weight, extend, finish, Past Journeys | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · `85ff839` + `3683006` |
-| **6.6 — Core Progress Photos** | Take or choose one photo, review, save into VITA's own local storage inside the active Journey; history, detail, re-date, delete; read-only once finished | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `9fe54c0` + `54994ee` |
-| 6.7 — Unified Journey Timeline + Factual Milestones | Real events on one timeline; participation milestones only | ⬜ NOT STARTED |
+| **6.6 — Core Progress Photos** | Take or choose one photo, review, save into VITA's own local storage inside the active Journey; history, detail, re-date, delete; read-only once finished | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · `9fe54c0` + `54994ee` |
+| **6.7 — Unified Journey Timeline + Factual Milestones** | One derived, newest-first Timeline in Overview (began, weigh-ins, photos, milestones, completed); five factual milestones; completed Journeys revisitable | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `a6b4e09` |
 | 6.8 — Trends + Then-vs-Now | Real trend, earliest vs latest, photo comparison when available | ⬜ NOT STARTED |
 | 6.9 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ NOT STARTED |
 
@@ -4327,7 +4327,7 @@ No-Journey screen (the two 6.4 test weigh-ins on that simulator were **not** pul
 
 **Founder approval — 2026-10-29: ✅ COMPLETE / LOCKED.** The founder reviewed the Journey lifecycle on a physical iPhone (*"Everything looks good"*), approving 6.5 and, with it, 6.4 Weight Logging + History as it now lives inside a Journey. Locked implementation `85ff839` + `3683006`. The keyboard first-tap item above was not reported on hardware and stays open in the Audit Log until confirmed either way.
 
-### Slice 6.6 — Core Progress Photos — 🟡 awaiting founder review
+### Slice 6.6 — Core Progress Photos — ✅ COMPLETE / LOCKED (founder, physical iPhone, 2026-10-29)
 
 **Purpose.** Give the Photos pillar its real workflow: a private visual history that belongs to one Journey. A progress photo is a fact — *this image, of this moment, in this Journey* — and nothing about the body in it is analysed, scored, tagged or inferred.
 
@@ -4396,6 +4396,81 @@ Disposable generated images (*QA TEST 1–9*, one landscape) added to the **simu
 
 **Simulator-only test data:** a completed Journey *"QA PhotosQA Photos"* (the name typed twice by simulator input lag) with 8 generated photos, and nine *QA TEST* images in the simulator's library. Not product data; nothing was created on the founder's iPhone.
 
-**Next: founder physical-iPhone review of 6.6.** 6.7 Timeline not started.
+**Founder approval — 2026-10-29: ✅ COMPLETE / LOCKED.** The founder tested 6.6 on a physical iPhone — Take Photo, library selection, review and save, the two-column history, persistence, photo detail, delete, Journey isolation and the Overview integration — and reported *"Everything works great."* The camera path, open above on the simulator, is thereby verified on hardware.
+
+### Slice 6.7 — Unified Journey Timeline + Factual Milestones — 🟡 awaiting founder review
+
+**Purpose.** Connect the records. Looking at a Journey should answer *what happened, and when?* — not *how well did I do?* The Timeline is chronological memory, not a feed, a streak or a score.
+
+**Commit.** `a6b4e09` on `sprint-6-journey-weight`; `main` untouched.
+
+#### Audit before building
+
+| Source | Available fields | Timeline item | New storage? |
+|---|---|---|---|
+| Journey | `id, name, startDate, plannedEndDate, status, createdAt, completedAt?` | **Journey began** (start day) · **Journey completed** (`completedAt`) | No |
+| Journey extensions | only the *current* `plannedEndDate` — no history | **none** (not invented) | No |
+| WeightEntry | `id, loggedAt, weightKg, enteredUnit, journeyId?` | **Weight recorded** (`loggedAt`) | No |
+| ProgressPhoto | `id, journeyId, file, takenAt, createdAt` | **Progress photo** (`takenAt`) | No |
+| Counts / calendar | derived from the above + today | **Milestones** | No |
+
+Also found: a weigh-in can be back-dated before the Journey's start day (6.4 only forbids the future). The Timeline shows such an entry truthfully *below* Journey began.
+
+#### Architecture — derived, never stored
+
+`deriveJourneyTimeline({ journey, weights, photos, today })` in `src/lib/journey/model/timeline.ts` — pure, newest first. **No timeline key, no milestone key, no event written anywhere**: an edited weigh-in moves, a deleted photo disappears, a milestone whose threshold is no longer met disappears — with no cleanup code. Routes memoize the Journey-scoped weigh-ins and photos so `OverviewPillar` / `JourneySummary` derive once per change (`useMemo`), not per render.
+
+```ts
+type JourneyTimelineItem =
+  | { kind: 'began';     key; at; precision: 'day';     day: LogDate }
+  | { kind: 'weight';    key; at; precision: 'instant'; entryId: string; weightKg: number }
+  | { kind: 'photo';     key; at; precision: 'instant'; photoId: string; first: boolean }
+  | { kind: 'milestone'; key; at; precision: 'instant' | 'day'; milestone: 'weigh-ins-5' | 'weigh-ins-10' | 'photos-5' | 'day-30' }
+  | { kind: 'completed'; key; at; precision: 'instant'; day: LogDate; elapsedDays: number };
+```
+
+- **Keys** are deterministic: `weight:<entryId>`, `photo:<photoId>`, `<journeyId>:began`, `<journeyId>:completed`, `<journeyId>:milestone:<kind>`.
+- **Effective time** — weigh-in `loggedAt`; photo `takenAt`; completion `completedAt`; **Journey began = the start of its local start day**, `precision: 'day'`, shown as a date only (the calendar start is what the user chose; `createdAt` is a storage instant). Day 30 likewise. No time is invented for a day-precision item.
+- **Order** — newest first; equal instants break by kind **completed › milestone › photo › weight › began**, then by key. So a threshold milestone sits directly above the record that crossed it, Journey completed heads a finished chapter, and Journey began is beneath everything on its day. Total and stable (shuffled input → same order; pinned).
+- **Isolation** — only the Journey's own weigh-ins (`journeyId` exact) and photos; legacy unowned weigh-ins and other Journeys' records never appear.
+- **No future events** — the planned end is a plan; it stays in the header. No extension events: past planned ends are not stored.
+
+#### Milestones — factual, sparse, reversible
+
+| Milestone | Trigger | Dated |
+|---|---|---|
+| *5 weigh-ins recorded* | 5th Journey weigh-in, counted oldest first — **the starting weigh-in is #1** | that weigh-in's `loggedAt` |
+| *10 weigh-ins recorded* | 10th | its `loggedAt` |
+| *5 progress photos recorded* | 5th photo, oldest first by `takenAt` | its `takenAt` |
+| *30 days into this Journey* | calendar Day 30 reached (today for an active Journey; the finishing day for a completed one) — elapsed time, **not a streak** | Day 30 itself, date-only — never the day VITA noticed |
+
+**First progress photo** is not a separate item: the first photo's own item carries *"First progress photo in this Journey"*, so the Timeline does not say the same thing twice. Likewise there is no "first weigh-in" milestone — Journey began and the starting weight already say it. Milestones follow the **current** records: delete back below a threshold and the milestone is gone (no once-achieved badge). Not implemented, by ruling: weight-direction, lowest/new low, goal, streak, consistency, adherence, halfway, BMI or calorie milestones. No trophy, confetti, sound or "achieved".
+
+#### Experience
+
+- **Overview** (active Journey): Starting · Current · Change · Weigh-ins (unchanged), then **TIMELINE** and the spine. The 6.3–6.6 placeholder spine (*Began · Progress photos · Timeline · Planned end*) is **removed** — the Timeline now carries the beginning and every photo, and the planned end stays in the header. The photo count lives on in the Photos pillar header (*PROGRESS PHOTOS · N*). No new statistics.
+- **Rows** — *Weight recorded* is **one compact caption-size line** (value + time) on a small dot with tighter spacing; *Progress photo* shows **its own image** (92 pt, 3:4) with the time; milestones are a quiet gold diamond, a small gold *MILESTONE* caps label and a heading-weight title; *Journey began* / *Journey completed* (*"Oct 29, 2026 · ran 45 days"*) are filled gold bookends. A day caption (*TODAY · YESTERDAY · FRI, OCT 23*) appears once per calendar day. All values neutral: no colour for direction, no arrows, no praise.
+- **Density** — the latest **12** items mount; **Show earlier · N more** reveals **20** more each press until Journey began. Nothing is permanently truncated.
+- **Interaction** — a photo item opens the existing photo detail; weigh-ins, milestones and bookends are not controls.
+- **Completed Journey** — now opens on **Overview · Weight · Photos** like an active one: Overview = facts + the whole Timeline from *Journey completed* to *Journey began*; Weight = its history; Photos = its grid. All read-only.
+- **DEV preview** — Early: began, starting weight, a first photo; Established: 12 weigh-ins, 5 photos, all four milestones; Ended and Completed timelines. The 6.3 records-spine and latest-photo vision were removed from the preview (now real); the 6.8 trend line remains preview-only.
+
+#### Accessibility, type, theme, motion
+
+Each item is one VoiceOver element: *"Weight recorded, 178.4 pounds, Thursday, October 29 at 8:14 AM"* · *"Progress photo, the first in this Journey, …"* · *"Milestone, 5 weigh-ins recorded, …"* · *"Journey began, October 29, 2026"* · *"Journey completed, …, ran 45 days"*. The spine and day captions are hidden from VoiceOver. No `numberOfLines` on any timeline text; rows wrap. Colours come from theme surfaces and the Journey accent (Light/Dark tokens). No entrance animation; only the standard press feedback.
+
+#### Tests
+
+100 / 2689 → **102 suites / 2725 tests.** New: `timeline.test` (22 — began + starting weight with no duplicate, newest-first mix, first-photo marker, completion, no planned-end or extension events, isolation active and completed, tie-break order, shuffle-stable total order, back-dated weigh-in below began, same-day photo above began, 5 / 10 weigh-ins and 5 photos at the crossing record, none below threshold, oldest-first counting, Day 30 dated Day 30 and only once reached, completed before Day 30 never, not a streak, reversibility, re-dated crossing record) · `JourneyTimeline.test` (14 — real Overview timeline, isolation incl. legacy, Show earlier to the beginning, neutral and non-interactive weigh-ins with no chart, photo opens detail, milestone set, Day 30 label, live log/edit/delete of weigh-ins with no timeline key, milestone removed on delete, photo re-date/delete, **mounted Overview updating while the photo detail changes the record**, completed Journey timeline read-only, preview fixtures with milestones and no writes). Updated: `JourneyExperience`, `JourneyLifecycle`, `WeightLogging`, `ProgressPhotos` (placeholder spine gone; summary pillars).
+
+**Mutation checks (2026-10-29, each restored).** Nine caught: Journey filter removed (2 failing) · order reversed (18) · timeline persisted to storage (81) · planned end as an event (18) · milestone counted from all weigh-ins (1) · milestone dated at render (5) · Day 30 dated today (4) · photo item ignoring `takenAt` (6) · **stale memo ignoring photo changes (1)** — this one first *survived*: the routes rebuilt their arrays every render, so the memo never held; the routes now memoize the scoped records and the new mounted-Overview test catches it.
+
+**Validation (2026-10-29).** Both `tsc` modes clean · iOS export clean (1,666 modules) · Metro dev bundle clean · **Expo Doctor 19/20** (unchanged SDK 58 patch drift) · **zero dependency changes** · **zero new storage keys** · full suite green (Dashboard, Water, Fuel, Peptides, Tools/BMI, Settings suites included).
+
+#### Device verification (iPhone 17 Pro simulator, SDK 58 Expo Go)
+
+Preview Early (began, starting weight, first photo, day captions) · Established (12 items, then *Show earlier · 10 more* → Journey began; all four milestones; after the first pass weigh-ins were made lighter and the Day 30 duplicate date removed) · the real completed *QA PhotosQA Photos* Journey (Journey completed at the top, 8 real photo images, 5-photos milestone, starting weight, Journey began; a photo opened the read-only detail). **Not verified on device:** Dark mode (VITA's own Appearance is set to Light on that simulator) and the largest Dynamic Type sizes.
+
+**Next: founder physical-iPhone review of 6.7.** 6.8 Trends + Then-vs-Now not started.
 
 

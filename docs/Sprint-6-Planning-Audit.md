@@ -311,8 +311,8 @@ Sprint 9 — Final Polish is the named app-wide pass for the first three.
 | **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful states; DEV-only preview | ✅ COMPLETE (founder-locked 2026-10-27, `1c5945e`) — **its entry architecture is superseded by 6.5**: the pillars now appear only inside a Journey |
 | **6.4 — Weight Logging + History** | Log weight, history, edit, delete, lb/kg | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · lives inside Journeys since 6.5 |
 | **6.5 — Journey Lifecycle + Start Experience** | A Journey the user starts, lives through and finishes: start flow, active home, Journey-owned weight, extend, finish, Past Journeys | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · `85ff839` + `3683006` |
-| **6.6 — Core Progress Photos** | Take or choose one photo, review, save into VITA's own local storage inside the active Journey; history, detail, re-date, delete; read-only once finished | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `9fe54c0` + `54994ee` |
-| 6.7 — Unified Journey Timeline + Factual Milestones | Real events on one timeline; participation milestones only | ⬜ NOT STARTED |
+| **6.6 — Core Progress Photos** | Take or choose one photo, review, save into VITA's own local storage inside the active Journey; history, detail, re-date, delete; read-only once finished | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · `9fe54c0` + `54994ee` |
+| **6.7 — Unified Journey Timeline + Factual Milestones** | One derived, newest-first Timeline in Overview (began, weigh-ins, photos, milestones, completed); five factual milestones; completed Journeys revisitable | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `a6b4e09` |
 | 6.8 — Trends + Then-vs-Now | Real trend, earliest vs latest, photo comparison when available | ⬜ NOT STARTED |
 | 6.9 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ NOT STARTED |
 
@@ -325,6 +325,14 @@ Sprint 7 is re-scoped to *Advanced Progress Photos — to be re-characterized af
 **Founder correction after physical review of 6.4 (2026-10-28) — Journey is a lifecycle, not a set of trackers.** The physical review of the 6.4 experience established that Journey needed an explicit lifecycle object. Overview / Weight / Photos alone made the feature feel like disconnected trackers rather than a Journey: a user opened Journey and landed straight in three tabs for something they had never started, with no name, no beginning, no planned end, no "Day X of Y" and no way to finish and keep a chapter. **Weight, Photos and the future Timeline now belong to a user-created Journey with a beginning, a planned duration, an active period and a completion state.** 6.3 and 6.4 are not erased: 6.3's pillars and 6.4's weight logging are kept and now sit inside a Journey. Slice 6.5 was inserted for the lifecycle, and the later slices moved down one (Photos 6.6 · Timeline 6.7 · Trends 6.8 · Audit 6.9).
 
 The lifecycle architecture (domain, storage, start flow, active home, extend, finish, Past Journeys) is recorded in `docs/09-Technical-Documentation.md` → *Journey lifecycle* and `docs/06-Slice-Tracker.md` → Slice 6.5. The revised slice table above supersedes §17's.
+
+---
+
+## 20. Slice 6.7 — Timeline + Factual Milestones (2026-10-29)
+
+**Gate.** 6.6 approved on a physical iPhone (*"Everything works great."*) and locked; 6.7 authorized: one chronological Timeline **derived** from Journey, weight and photo records; a small factual milestone set (5 / 10 weigh-ins, 5 photos, Day 30, first photo); no Trends, chart, Then-vs-Now, comparison, Atlas, Dashboard widget, AI narrative, streaks, adherence, badges or new dependencies.
+
+**Decisions inside those limits** (full record: `docs/06-Slice-Tracker.md` → Slice 6.7): Timeline lives **in Overview**, replacing the placeholder spine — no fourth pillar · Journey began is date-only at the start of its day · tie order completed › milestone › photo › weight › began · first-photo milestone merged into the photo's own item; no first-weigh-in milestone · no extension events (no history is stored; none invented) · weigh-ins compact, photos with their image, milestones as quiet gold markers · 12 items, then Show earlier +20 · a completed Journey gains Overview · Weight · Photos, read-only · no same-day weight grouping yet (device QA did not show the need).
 
 ---
 
