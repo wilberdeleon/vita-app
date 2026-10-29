@@ -1,11 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { latestEntry, type Journey } from '../../../lib/journey';
+import { deriveJourneyTimeline, latestEntry, type Journey } from '../../../lib/journey';
 import { SectionHeader } from '../../../components/ui';
 import { spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import {
-  calendarDay,
-  elapsed,
   firstEntry,
   journeyWeightStats,
   longDate,
@@ -14,76 +13,53 @@ import {
   spokenChange,
   spokenWeight,
   weightNumber,
-  weightOnDay,
 } from '../format';
-import type { JourneyViewData } from '../types';
-import { JourneySpine, type SpineItem } from './JourneySpine';
-import { PhotoFrame } from './PhotoFrame';
+import type { JourneyPhotoView, JourneyViewData } from '../types';
+import { JourneyTimeline } from './JourneyTimeline';
 import { WeightTrend } from './WeightTrend';
-
-/** How many recent records the preview's records spine lists. */
-const RECENT = 5;
 
 type Props = {
   data: JourneyViewData;
   /** The Journey this Overview is the home of (6.5). */
   journey: Journey;
-  /** `__DEV__` preview only: the 6.6/6.7 vision (trend line, records spine). */
+  /** Local calendar today — whether the Journey has reached Day 30. */
+  today: string;
+  /** Opens a real photo's detail from its timeline item. */
+  onOpenPhoto?: (photo: JourneyPhotoView) => void;
+  /** `__DEV__` preview only: the 6.8 vision (trend line, latest photo). */
   showFuture?: boolean;
 };
 
 /**
- * Overview — the home of **this** Journey (6.5).
+ * Overview — the home of **this** Journey (6.5), and since 6.7 its history.
  *
- * The Journey's identity and time already sit above the pillars, so Overview
- * starts with what was recorded in it: a compact set of facts — starting
- * weight (its first weigh-in), current weight (its latest), the change
- * between them once there are two, and how many weigh-ins — then the
- * Journey's spine from the day it began to its planned end. Progress photos
- * and the timeline stay hollow until 6.6 and 6.7 make them real.
+ * One continuous hierarchy: the Journey's identity sits above the pillars;
+ * Overview gives its compact facts — starting weight (its first weigh-in),
+ * current weight (its latest), the change once there are two, how many
+ * weigh-ins — and then the **Timeline**: everything that has happened in
+ * this Journey, newest first, on the gold spine. The 6.3–6.6 placeholder
+ * spine (Began · Progress photos · Timeline · Planned end) is gone — the
+ * Timeline now carries the beginning and the photos, and the planned end is
+ * a plan, which the header already shows.
  *
- * No hero number, no grid of cards, no goal, no BMI: weight is one signal in
- * the Journey, and the Weight pillar is where it gets the screen.
+ * No hero number, no grid of cards, no goal, no BMI, no chart.
  */
-export function OverviewPillar({ data, journey, showFuture = false }: Props) {
+export function OverviewPillar({ data, journey, today, onOpenPhoto, showFuture = false }: Props) {
   const { weights, photos, unit } = data;
   const stats = journeyWeightStats(weights);
-
-  const items: SpineItem[] = [
-    {
-      key: 'began',
-      label: 'Began',
-      body: calendarDay(journey.startDate, true),
-      recorded: true,
-    },
-    photos.length
-      ? {
-          key: 'photos',
-          label: 'Progress photos',
-          body: photos.length === 1 ? '1 progress photo' : `${photos.length} progress photos`,
-          note: `Latest ${shortDate(photos[0].takenAt)}`,
-          recorded: true,
-        }
-      : { key: 'photos', label: 'Progress photos', body: 'No progress photos yet.', recorded: false },
-    {
-      key: 'timeline',
-      label: 'Timeline',
-      body: 'What you record in this Journey will appear here, in the order it happened.',
-      recorded: false,
-    },
-    {
-      key: 'end',
-      label: 'Planned end',
-      body: calendarDay(journey.plannedEndDate, true),
-      recorded: false,
-    },
-  ];
+  const timeline = useMemo(
+    () => deriveJourneyTimeline({ journey, weights, photos, today }),
+    [journey, weights, photos, today],
+  );
 
   return (
     <View style={styles.container}>
       {stats ? <JourneyStats stats={stats} unit={unit} /> : null}
-      <JourneySpine items={items} />
-      {showFuture && (weights.length > 0 || photos.length > 0) ? <OverviewFuture data={data} /> : null}
+      {showFuture && weights.length > 1 ? <OverviewFuture data={data} /> : null}
+      <View style={styles.section}>
+        <SectionHeader title="Timeline" />
+        <JourneyTimeline items={timeline} unit={unit} photos={photos} onOpenPhoto={onOpenPhoto} />
+      </View>
     </View>
   );
 }
@@ -140,83 +116,24 @@ export function JourneyStats({
   );
 }
 
-/** The 6.3 preview vision — `__DEV__` preview only, never release. */
+/** The 6.8 trend vision — `__DEV__` preview only, never release. */
 function OverviewFuture({ data }: { data: JourneyViewData }) {
   const { surfaces } = useTheme();
-  const { weights, photos, unit } = data;
+  const { weights, unit } = data;
   const latest = latestEntry(weights);
   const first = firstEntry(weights);
-  const latestPhoto = photos[0] ?? null;
-
-  type Record = { at: string; item: SpineItem };
-  const records: Record[] = [
-    ...weights.map((entry) => ({
-      at: entry.loggedAt,
-      item: {
-        key: entry.id,
-        label: shortDate(entry.loggedAt),
-        body: 'Weigh-in',
-        detail: `${weightNumber(entry.weightKg, unit)} ${unit}`,
-        recorded: true,
-      },
-    })),
-    ...photos.map((photo) => ({
-      at: photo.takenAt,
-      item: { key: photo.id, label: shortDate(photo.takenAt), body: 'Progress photo', recorded: true },
-    })),
-  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
-
-  const earliest = records[records.length - 1];
-  const spine: SpineItem[] = records.slice(0, RECENT).map((record) => record.item);
-  if (records.length > RECENT) {
-    spine.push({
-      key: 'began',
-      label: shortDate(earliest.at),
-      body: 'First record',
-      detail: elapsed(earliest.at, records[0].at) + ' ago',
-      recorded: true,
-    });
-  }
+  if (!latest || !first || first === latest) return null;
 
   return (
-    <View style={styles.future}>
-      {latest && first && first !== latest ? (
-        <View style={styles.trendBlock}>
-          <Text
-            style={[styles.change, { color: surfaces.text }]}
-            accessibilityLabel={`${spokenChange(first.weightKg, latest.weightKg, unit)} since ${longDate(first.loggedAt)}`}
-          >
-            {signedChange(first.weightKg, latest.weightKg, unit)}
-            <Text style={{ color: surfaces.textSecondary }}>{`  since ${shortDate(first.loggedAt)} · ${elapsed(first.loggedAt, latest.loggedAt)}`}</Text>
-          </Text>
-          <WeightTrend weights={weights} unit={unit} height={64} labels={false} />
-        </View>
-      ) : null}
-
-      {latestPhoto ? (
-        <View style={styles.section}>
-          <SectionHeader title="Latest photo" />
-          <View style={styles.photoRow}>
-            <PhotoFrame width={84} accessibilityLabel={`Development progress photo placeholder, ${shortDate(latestPhoto.takenAt)}`} />
-            <View style={styles.photoMeta}>
-              <Text style={[styles.body, { color: surfaces.text }]}>{longDate(latestPhoto.takenAt)}</Text>
-              {weightOnDay(weights, latestPhoto.takenAt) ? (
-                <Text style={[styles.meta, { color: surfaces.textSecondary }]}>
-                  {`${weightNumber(weightOnDay(weights, latestPhoto.takenAt)!.weightKg, unit)} ${unit} recorded that day`}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-        </View>
-      ) : null}
-
-      <View style={styles.section}>
-        <SectionHeader title="Journey" />
-        <JourneySpine items={spine} />
-        <Text style={[styles.meta, { color: surfaces.textTertiary }]}>
-          {`${records.length} records since ${longDate(earliest.at)}`}
-        </Text>
-      </View>
+    <View style={styles.trendBlock}>
+      <Text
+        style={[styles.change, { color: surfaces.text }]}
+        accessibilityLabel={`${spokenChange(first.weightKg, latest.weightKg, unit)} since ${longDate(first.loggedAt)}`}
+      >
+        {signedChange(first.weightKg, latest.weightKg, unit)}
+        <Text style={{ color: surfaces.textSecondary }}>{`  since ${shortDate(first.loggedAt)}`}</Text>
+      </Text>
+      <WeightTrend weights={weights} unit={unit} height={64} labels={false} />
     </View>
   );
 }
@@ -242,12 +159,6 @@ const styles = StyleSheet.create({
     ...typography.heading,
     fontVariant: ['tabular-nums'],
   },
-  future: {
-    gap: spacing.xxl,
-  },
-  meta: {
-    ...typography.caption,
-  },
   trendBlock: {
     gap: spacing.m,
   },
@@ -257,17 +168,5 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.m,
-  },
-  photoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.l,
-  },
-  photoMeta: {
-    flex: 1,
-    gap: 2,
-  },
-  body: {
-    ...typography.bodyMedium,
   },
 });

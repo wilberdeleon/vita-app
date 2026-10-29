@@ -1,13 +1,16 @@
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { SectionHeader, SegmentedTabs } from '../../../components/ui';
 import { toLogDate } from '../../../lib/daily';
-import { elapsedDays, type Journey, type WeightEntry, type WeightUnit } from '../../../lib/journey';
-import { spacing, typography } from '../../../theme/tokens';
+import { deriveJourneyTimeline, elapsedDays, type Journey, type WeightEntry, type WeightUnit } from '../../../lib/journey';
+import { palette, spacing, typography } from '../../../theme/tokens';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { calendarDay, dayCount, journeyWeightStats, spokenCalendarDay } from '../format';
 import { JourneyStats } from './OverviewPillar';
 import { PhotosPillar } from './PhotosPillar';
 import { WeightPillar } from './WeightPillar';
 import type { JourneyPhotoView } from '../types';
+import { JourneyTimeline } from './JourneyTimeline';
 import { useJourneyAccent } from './useJourneyAccent';
 
 type Props = {
@@ -31,16 +34,21 @@ type Props = {
  * No praise, no score. Its progress photos (6.6) are shown read-only — no
  * add, re-date or delete — and open their own read-only detail.
  *
- * The weight history is shown without edit or delete: a finished Journey is
- * history, and this slice keeps it exactly as it was recorded. The domain
- * APIs still exist; they are simply not offered here.
+ * Since 6.7 a finished Journey opens like an active one — **Overview ·
+ * Weight · Photos** — so it can be revisited the same way it was lived:
+ * Overview holds its facts and its whole Timeline, from *Journey completed*
+ * at the top to *Journey began* at the bottom; Weight its history; Photos its
+ * photos. All of it read-only: no Log, edit, delete, add or re-date. The
+ * domain APIs still exist; they are simply not offered here.
  */
 export function JourneySummary({ journey, weights, unit, photos = [], onOpenPhoto }: Props) {
-  const { surfaces } = useTheme();
+  const { surfaces, scheme } = useTheme();
   const accent = useJourneyAccent();
   const end = toLogDate(new Date(journey.completedAt!));
   const days = elapsedDays(journey, end);
   const stats = journeyWeightStats(weights);
+  const [pillar, setPillar] = useState(0);
+  const timeline = useMemo(() => deriveJourneyTimeline({ journey, weights, photos, today: end }), [journey, weights, photos, end]);
 
   return (
     <View style={styles.root}>
@@ -58,15 +66,27 @@ export function JourneySummary({ journey, weights, unit, photos = [], onOpenPhot
         </Text>
       </View>
 
-      {stats ? <JourneyStats stats={stats} unit={unit} currentLabel="Final" /> : null}
+      <SegmentedTabs
+        options={['Overview', 'Weight', 'Photos']}
+        selectedIndex={pillar}
+        onChange={setPillar}
+        groupLabel="Journey"
+        activeColor={accent}
+        activeLabelColor={scheme === 'dark' ? palette.ink : palette.textOnColor}
+        fitLabels
+      />
 
-      {photos.length > 0 ? (
-        <PhotosPillar data={{ status: 'ready', weights, photos, unit }} onOpen={onOpenPhoto} />
+      {pillar === 0 ? (
+        <>
+          {stats ? <JourneyStats stats={stats} unit={unit} currentLabel="Final" /> : null}
+          <View style={styles.section}>
+            <SectionHeader title="Timeline" />
+            <JourneyTimeline items={timeline} unit={unit} photos={photos} onOpenPhoto={onOpenPhoto} />
+          </View>
+        </>
       ) : null}
-
-      {weights.length > 0 ? (
-        <WeightPillar data={{ status: 'ready', weights, photos: [], unit }} historyOnly />
-      ) : null}
+      {pillar === 1 ? <WeightPillar data={{ status: 'ready', weights, photos: [], unit }} historyOnly /> : null}
+      {pillar === 2 ? <PhotosPillar data={{ status: 'ready', weights, photos, unit }} onOpen={onOpenPhoto} /> : null}
     </View>
   );
 }
@@ -87,5 +107,8 @@ const styles = StyleSheet.create({
   },
   meta: {
     ...typography.caption,
+  },
+  section: {
+    gap: spacing.m,
   },
 });

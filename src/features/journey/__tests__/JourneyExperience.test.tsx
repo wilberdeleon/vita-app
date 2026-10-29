@@ -79,15 +79,17 @@ describe('three first-class pillars inside an active Journey', () => {
     expect(segment(tree, 'Photos').props.accessibilityState).toEqual({ selected: false });
   });
 
-  it('Overview is the home of this Journey: its facts, then its spine from beginning to planned end', async () => {
+  it('Overview is the home of this Journey: its facts, then its Timeline (6.7)', async () => {
     const content = text(await mountActive());
     expect(content).toContain('Summer Chapter');
-    for (const fact of ['STARTING', 'CURRENT', 'WEIGH-INS', 'BEGAN', 'PLANNED END', 'No progress photos yet.']) {
+    for (const fact of ['STARTING', 'CURRENT', 'WEIGH-INS', 'TIMELINE', 'Journey began', 'Weight recorded']) {
       expect(content).toContain(fact);
     }
     // One weigh-in: nothing to compare, so no change.
     expect(content).not.toContain('CHANGE');
     expect(content).not.toMatch(/[−+]\d+\.\d lb/);
+    // The 6.3–6.6 placeholder spine is gone; the planned end is a plan, not history.
+    for (const gone of ['BEGAN', 'PLANNED END', 'What you record in this Journey will appear here']) expect(content).not.toContain(gone);
   });
 
   it('Weight shows this Journey’s history with its Log Weight action', async () => {
@@ -113,7 +115,7 @@ describe('three first-class pillars inside an active Journey', () => {
     const tree = await mountActive();
     await pillar(tree, 'Photos');
     await pillar(tree, 'Overview');
-    expect(text(tree)).toContain('BEGAN');
+    expect(text(tree)).toContain('Journey began');
     expect(AsyncStorage.setItem).not.toHaveBeenCalled();
     await unmountApp();
     const again = await mountApp(<Journey />);

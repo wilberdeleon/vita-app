@@ -67,6 +67,14 @@ export {
   type JourneyProgress,
   type JourneyStatus,
 } from './model/journeys';
+export {
+  DAY_MILESTONE,
+  compareTimeline,
+  deriveJourneyTimeline,
+  type JourneyTimelineItem,
+  type MilestoneKind,
+  type TimelinePhoto,
+} from './model/timeline';
 export type { JourneyRepository } from './data/JourneyRepository';
 export { asyncStorageJourneyRepository, parseJourney } from './data/asyncStorageJourneyRepository';
 export { JourneyProvider, useJourneys, type JourneyContextValue, type StartJourneyInput } from './state/JourneyProvider';

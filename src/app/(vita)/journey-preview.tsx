@@ -96,8 +96,12 @@ const WEIGHTS: Record<string, WeightEntry[]> = {
   ]),
 };
 
+// Enough for the timeline's milestones to appear: Established has 12
+// weigh-ins (5 and 10) and 5 photos (5), and is past Day 30.
 const PHOTOS: Record<string, JourneyPhotoView[]> = {
-  established: [photo('s1', 70), photo('s2', 42), photo('s3', 21), photo('s4', 0)].reverse(),
+  early: [photo('e1', 6)],
+  established: [photo('s1', 70), photo('s2', 56), photo('s3', 42), photo('s4', 21), photo('s5', 1)].reverse(),
+  completed: [photo('c1', 199), photo('c2', 130)].reverse(),
 };
 
 type StateKey = 'none' | 'early' | 'established' | 'ended' | 'completed' | 'library';
@@ -173,7 +177,7 @@ export default function JourneyPreview() {
               showFuture
             />
           ) : state === 'completed' ? (
-            <JourneySummary journey={COMPLETED} weights={WEIGHTS.completed} unit="lb" />
+            <JourneySummary journey={COMPLETED} weights={WEIGHTS.completed} photos={PHOTOS.completed} unit="lb" />
           ) : (
             <NoJourney past={state === 'library' ? [COMPLETED, OLDER] : []} />
           )}

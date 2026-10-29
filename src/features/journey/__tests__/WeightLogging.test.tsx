@@ -495,8 +495,8 @@ describe('Overview with real weight', () => {
     expect(content).toContain('178.0 lb');
     expect(content).toContain('\u22122.0 lb');
     expect(content).toContain('WEIGH-INS');
-    expect(content).toContain('No progress photos yet.');
-    for (const absent of ['LATEST WEIGHT', 'goal', 'BMI', 'Journey began', 'First record', 'LOWEST', 'HIGHEST', 'AVERAGE']) {
+    expect(content).toContain('TIMELINE');
+    for (const absent of ['LATEST WEIGHT', 'goal', 'BMI', 'First record', 'LOWEST', 'HIGHEST', 'AVERAGE']) {
       expect(content).not.toContain(absent);
     }
     expect(tree.root.findAllByType(Svg)).toHaveLength(0);

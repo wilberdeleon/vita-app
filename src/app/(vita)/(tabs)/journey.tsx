@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActionSheetIOS, Alert, Platform } from 'react-native';
 import { Screen, ScreenHeader } from '../../../components/ui';
 import { todayLogDate } from '../../../lib/daily';
@@ -47,6 +47,14 @@ export default function Journey() {
   const [manage, setManage] = useState<{ open: boolean; mode: 'menu' | 'extend' }>({ open: false, mode: 'menu' });
   const today = todayLogDate();
   const active = journeys.active;
+  const activeId = active?.id ?? null;
+  // Stable between changes, so the Overview Timeline (6.7) is derived once per
+  // change to the records rather than on every render.
+  const journeyWeights = useMemo(() => (activeId ? entriesForJourney(weight.entries, activeId) : []), [weight.entries, activeId]);
+  const photoViews: JourneyPhotoView[] = useMemo(
+    () => (activeId ? photos.photosFor(activeId).map((photo) => ({ id: photo.id, takenAt: photo.takenAt, uri: photos.uriFor(photo) })) : []),
+    [photos, activeId],
+  );
 
   if (journeys.status !== 'ready') {
     return (
@@ -69,10 +77,7 @@ export default function Journey() {
     );
   }
 
-  const activeId = active.id;
-  const photoViews: JourneyPhotoView[] = photos
-    .photosFor(activeId)
-    .map((photo) => ({ id: photo.id, takenAt: photo.takenAt, uri: photos.uriFor(photo) }));
+  const ownerId = active.id;
 
   const acquire = async (source: PhotoSource) => {
     const result = await acquirePhoto(source);
@@ -120,7 +125,7 @@ export default function Journey() {
         today={today}
         data={{
           status: weight.status === 'ready' && photos.status === 'ready' ? 'ready' : 'loading',
-          weights: entriesForJourney(weight.entries, active.id),
+          weights: journeyWeights,
           photos: photoViews,
           unit: weight.unit,
         }}
@@ -155,7 +160,7 @@ export default function Journey() {
         onCancel={() => setPending(null)}
         onSave={async (takenAt) => {
           if (!pending) return false;
-          const saved = await photos.addPhoto({ journeyId: activeId, sourceUri: pending.uri, mimeType: pending.mimeType, takenAt });
+          const saved = await photos.addPhoto({ journeyId: ownerId, sourceUri: pending.uri, mimeType: pending.mimeType, takenAt });
           if (saved) setPending(null);
           return saved !== null;
         }}

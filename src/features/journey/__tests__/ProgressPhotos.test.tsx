@@ -219,7 +219,7 @@ describe('adding a progress photo', () => {
 });
 
 describe('the Photos history', () => {
-  it("shows only this Journey's photos, newest first, and Overview counts them", async () => {
+  it("shows only this Journey's photos, newest first, and Overview's Timeline holds them", async () => {
     await seedStorage({ journeys: [ACTIVE, DONE] });
     await seedPhotos([
       photoFixture('p1', ACTIVE.id, at(5, 8)),
@@ -229,7 +229,7 @@ describe('the Photos history', () => {
     ]);
     const tree = await mountApp(<Journey />);
     await pillar(tree, 'Overview');
-    expect(text(tree)).toContain('3 progress photos');
+    expect(text(tree).match(/Progress photo\b/g)).toHaveLength(3);
     await pillar(tree, 'Photos');
     expect(text(tree)).toContain('PROGRESS PHOTOS · 3');
     const tiles = tree.root.findAll((n) => typeof n.props.onPress === 'function' && /^Progress photo, /.test(n.props.accessibilityLabel ?? ''));
@@ -307,6 +307,7 @@ describe('a finished Journey', () => {
     await seedPhotos([photoFixture('p-old', DONE.id, at(150, 8))]);
     mockParams = { id: DONE.id };
     const tree = await mountApp(<JourneyDetail />);
+    await pillar(tree, 'Photos');
     expect(text(tree)).toContain('PROGRESS PHOTOS · 1');
     expect(hasControl(tree, 'Add Progress Photo')).toBe(false);
   });

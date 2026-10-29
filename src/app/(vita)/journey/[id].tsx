@@ -1,4 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { useMemo } from 'react';
 import { Text } from 'react-native';
 import { Screen, ScreenHeader } from '../../../components/ui';
 import { entriesForJourney, useJourneys, usePhotos, useWeight } from '../../../lib/journey';
@@ -17,6 +18,12 @@ export default function JourneyDetail() {
   const photos = usePhotos();
   const { surfaces } = useTheme();
   const journey = journeys.journeys.find((candidate) => candidate.id === id);
+  // Stable between changes, so the Timeline is derived once per change.
+  const ownWeights = useMemo(() => (journey ? entriesForJourney(weight.entries, journey.id) : []), [weight.entries, journey]);
+  const ownPhotos = useMemo(
+    () => (journey ? photos.photosFor(journey.id).map((photo) => ({ id: photo.id, takenAt: photo.takenAt, uri: photos.uriFor(photo) })) : []),
+    [photos, journey],
+  );
 
   if (journeys.status === 'ready' && journey?.status === 'active') return <Redirect href="/journey" />;
 
@@ -26,9 +33,9 @@ export default function JourneyDetail() {
       {journey && journey.status === 'completed' ? (
         <JourneySummary
           journey={journey}
-          weights={entriesForJourney(weight.entries, journey.id)}
+          weights={ownWeights}
           unit={weight.unit}
-          photos={photos.photosFor(journey.id).map((photo) => ({ id: photo.id, takenAt: photo.takenAt, uri: photos.uriFor(photo) }))}
+          photos={ownPhotos}
           onOpenPhoto={(photo) => router.push(`/journey/photo/${photo.id}`)}
         />
       ) : journeys.status === 'ready' ? (

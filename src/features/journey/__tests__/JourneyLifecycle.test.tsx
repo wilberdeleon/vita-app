@@ -383,7 +383,10 @@ describe('a finished Journey', () => {
       expect(hasControl(tree, action)).toBe(false);
     }
     expect(hasControl(tree, /^192\.0 pounds, /)).toBe(false); // rows do not open an editor
-    for (const praise of ['great', 'congrat', 'well done', 'success', 'photo']) expect(content.toLowerCase()).not.toContain(praise);
+    for (const praise of ['great', 'congrat', 'well done', 'success', 'achiev']) expect(content.toLowerCase()).not.toContain(praise);
+    expect(content).not.toContain('Progress photo'); // none were recorded
+    expect(content).toContain('Journey completed');
+    expect(content).toContain('Journey began');
   });
 
   it('an active Journey is never shown as a summary', async () => {
