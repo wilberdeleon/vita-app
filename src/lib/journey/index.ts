@@ -70,4 +70,16 @@ export {
 export type { JourneyRepository } from './data/JourneyRepository';
 export { asyncStorageJourneyRepository, parseJourney } from './data/asyncStorageJourneyRepository';
 export { JourneyProvider, useJourneys, type JourneyContextValue, type StartJourneyInput } from './state/JourneyProvider';
+export {
+  PHOTO_FILE_PATTERN,
+  exifTakenAt,
+  isValidPhotoTime,
+  newProgressPhoto,
+  photoExtension,
+  photosForJourney,
+  type ProgressPhoto,
+} from './photos/model';
+export { documentPhotoFileStore, type PhotoFileStore } from './photos/fileStore';
+export { asyncStoragePhotoRepository, parsePhoto, type PhotoRepository } from './photos/repository';
+export { PhotosProvider, usePhotos, type AddPhotoInput, type PhotosContextValue } from './photos/PhotosProvider';
 

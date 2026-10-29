@@ -22,4 +22,6 @@ export const JourneyKeys = {
   preferences: singletonKey(JOURNEY_DOMAIN, 'prefs'),
   /** `vita:v1:journey:journeys` — every Journey, active and completed (6.5). */
   journeys: singletonKey(JOURNEY_DOMAIN, 'journeys'),
+  /** `vita:v1:journey:photos` — progress-photo metadata; images live in files (6.6). */
+  photos: singletonKey(JOURNEY_DOMAIN, 'photos'),
 } as const;

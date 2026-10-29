@@ -40,7 +40,13 @@
           "enableFullScreenImage_legacy": true
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "VITA opens your photo library only when you choose a progress photo to add to your Journey. Photos stay on this device."
+        }
+      ]
     ]
   }
 }
