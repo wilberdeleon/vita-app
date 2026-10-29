@@ -16,9 +16,13 @@
 
 See [[Roadmap]] for the revised Sprint 6 slices and [[Decision Log]].
 
-## Lifecycle (founder correction, 2026-10-28) — slice 6.5, awaiting founder review
+## Lifecycle (founder correction, 2026-10-28) — slice 6.5, ✅ locked 2026-10-29
 
 A Journey is something the user **starts, lives through and finishes**: a name, a start (today), a planned end they chose, an active period, and a completion they decide. Weight, Photos and the future Timeline belong **to** a Journey. With no Journey, the screen offers only **Start a New Journey** (and Past Journeys once there are some). An active Journey shows its name, Day X of Y, its dates and a gold rail, then Overview · Weight · Photos. Extend and Finish live under Manage; reaching the end never finishes a Journey on its own. Finished Journeys are kept, read-only. Weigh-ins recorded before Journeys existed are preserved and shown by none. One active Journey at a time. See [[Decision Log]] and [[Roadmap]].
+
+## Progress photos (slice 6.6, 2026-10-29) — awaiting founder review
+
+Photos is now real. Inside an active Journey, **Add Progress Photo** → Take Photo or Choose from Library (access asked only then) → a review of the whole image and when it was taken → **Save Photo**. Photos belong to that Journey only, are shown newest first two to a row, and open to the full image with **Change Date** and **Delete**. Overview shows the real count and latest date. A finished Journey keeps its photos, read-only; a new one starts empty. **Nothing leaves the phone** — no upload, sharing, analysis or scores; the original in the Photo Library is never touched. Because there is no backup by design, deleting VITA deletes its photos. Then-vs-Now stays 6.8.
 
 ## Current state (2026-10-15)
 

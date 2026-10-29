@@ -19,6 +19,7 @@
 | Backend | **Supabase** — auth, database, storage | `@supabase/supabase-js` ^2.110.0 |
 | Graphics | `react-native-svg` (hand-drawn charts) | 15.16.0 |
 | Icons | `@expo/vector-icons` (Ionicons) | ^15.0.2 |
+| Device media (6.6) | `expo-image-picker` (camera / library, one image) · `expo-file-system` (VITA-owned photo storage, local only) | ~58.0.10 · ~58.0.13 |
 | Builds | **EAS** — development / preview / production profiles | `eas.json` |
 
 ## ⚠️ The SDK pin (important)

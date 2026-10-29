@@ -309,9 +309,9 @@ Sprint 9 — Final Polish is the named app-wide pass for the first three.
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ COMPLETE / LOCKED · `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ COMPLETE / LOCKED · `f50351f` (+ `6c09aa1`) |
 | **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful states; DEV-only preview | ✅ COMPLETE (founder-locked 2026-10-27, `1c5945e`) — **its entry architecture is superseded by 6.5**: the pillars now appear only inside a Journey |
-| **6.4 — Weight Logging + History** | Log weight, history, edit, delete, lb/kg | 🟡 Implemented — **awaiting founder re-review** · retained and integrated into Journey ownership by 6.5 |
-| **6.5 — Journey Lifecycle + Start Experience** | A Journey the user starts, lives through and finishes: start flow, active home, Journey-owned weight, extend, finish, Past Journeys | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `85ff839` + `3683006` |
-| 6.6 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, inside a Journey — characterized before implementation | ⬜ NOT STARTED |
+| **6.4 — Weight Logging + History** | Log weight, history, edit, delete, lb/kg | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · lives inside Journeys since 6.5 |
+| **6.5 — Journey Lifecycle + Start Experience** | A Journey the user starts, lives through and finishes: start flow, active home, Journey-owned weight, extend, finish, Past Journeys | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · `85ff839` + `3683006` |
+| **6.6 — Core Progress Photos** | Take or choose one photo, review, save into VITA's own local storage inside the active Journey; history, detail, re-date, delete; read-only once finished | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `9fe54c0` + `54994ee` |
 | 6.7 — Unified Journey Timeline + Factual Milestones | Real events on one timeline; participation milestones only | ⬜ NOT STARTED |
 | 6.8 — Trends + Then-vs-Now | Real trend, earliest vs latest, photo comparison when available | ⬜ NOT STARTED |
 | 6.9 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ NOT STARTED |
@@ -325,4 +325,12 @@ Sprint 7 is re-scoped to *Advanced Progress Photos — to be re-characterized af
 **Founder correction after physical review of 6.4 (2026-10-28) — Journey is a lifecycle, not a set of trackers.** The physical review of the 6.4 experience established that Journey needed an explicit lifecycle object. Overview / Weight / Photos alone made the feature feel like disconnected trackers rather than a Journey: a user opened Journey and landed straight in three tabs for something they had never started, with no name, no beginning, no planned end, no "Day X of Y" and no way to finish and keep a chapter. **Weight, Photos and the future Timeline now belong to a user-created Journey with a beginning, a planned duration, an active period and a completion state.** 6.3 and 6.4 are not erased: 6.3's pillars and 6.4's weight logging are kept and now sit inside a Journey. Slice 6.5 was inserted for the lifecycle, and the later slices moved down one (Photos 6.6 · Timeline 6.7 · Trends 6.8 · Audit 6.9).
 
 The lifecycle architecture (domain, storage, start flow, active home, extend, finish, Past Journeys) is recorded in `docs/09-Technical-Documentation.md` → *Journey lifecycle* and `docs/06-Slice-Tracker.md` → Slice 6.5. The revised slice table above supersedes §17's.
+
+---
+
+## 19. Slice 6.6 — Core Progress Photos (2026-10-29)
+
+**Gate.** The founder approved 6.4 and 6.5 on a physical iPhone on 2026-10-29 and authorized 6.6 with explicit limits: photos belong to one Journey; acquisition by camera or library, one at a time, permission just in time; a review step before saving; local only — **no photo leaves the device**; never delete a Photo Library original or any file outside VITA's own storage; only `expo-image-picker` and `expo-file-system`, via `npx expo install`, Expo Go compatible; no Timeline, milestones, Trends, Then-vs-Now, comparison, Atlas, AI analysis, Dashboard widget, upload, sharing, filters, cropping, captions, tags or scores; no photo step in Journey setup.
+
+**Decisions taken inside those limits** (recorded in full in `docs/06-Slice-Tracker.md` → Slice 6.6): store a **relative** owned path, not a URI · no `source` field (camera vs library is not a fact the product uses) · `takenAt` is the Journey chronology, `createdAt` the save · record deleted before its file · native action sheet rather than a VitaSheet for the choice (a picker presented over a Modal is unreliable on iOS) · **two-column grid, decided on device** · Then / Now stays preview-only (6.8) · no weight snapshot stored with a photo (6.8 can join by date from real records).
 

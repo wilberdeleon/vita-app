@@ -417,6 +417,14 @@ A **Journey** (`src/lib/journey/model/journeys.ts`) is a user-created chapter: `
 
 **Shared primitives touched:** `Screen` + `VitaSheet` + `sheetPresence.ts` (a `Screen` uses `keyboardShouldPersistTaps='handled'` while one of its sheets is open, so a sheet's first tap is not spent dismissing the keyboard); `PressableScale` (one stable `Animated.multiply` node with a settable base, so opacity follows `disabled` on RN 0.88).
 
+## Progress photos (Sprint 6 slice 6.6)
+
+`ProgressPhoto` (`src/lib/journey/photos/model.ts`) = `{ id, journeyId, file, takenAt, createdAt }`. `file` is **relative** — `<journeyId>/<id>.<ext>` under `Documents/journey-photos/` — and must match `PHOTO_FILE_PATTERN`; it is resolved to a URI at render (`PhotoFileStore.uriFor`) because the iOS container path can change between app versions. Metadata at `vita:v1:journey:photos` via `PhotoRepository` / `asyncStoragePhotoRepository` (validated on read, dropped not repaired, never written on read). Images via `documentPhotoFileStore` (`expo-file-system` `Directory` / `File` / `Paths.document`): `copyIn` creates the Journey folder and copies; `remove` refuses any path outside the pattern and deletes only an existing owned file. **Nothing in the module touches the network.**
+
+`PhotosProvider` sits inside `JourneyProvider` at the root (`src/app/_layout.tsx`) and checks every change against the Journey: active only; `isValidPhotoTime` (on/after `startDate`, not beyond now + 60 s). Add = copy → save record → on save failure remove the copy. Delete = save without the record → remove the file. Re-date changes `takenAt` only. Consumers read photos only through `photosFor(journeyId)` (newest first) — there is no global gallery.
+
+Acquisition (`src/features/journey/photoAcquisition.ts`, `expo-image-picker`): permission requested after the user's choice; `mediaTypes: ['images']`, `allowsEditing: false`, single selection, `quality: 1`, `exif` for library only (`exifTakenAt` reads the capture time locally). Routes: `(tabs)/journey.tsx` (ActionSheetIOS choice → `PhotoReviewSheet` → `addPhoto`), `journey/photo/[id].tsx` (contain-fit detail; Change Date / Delete in an active Journey, read-only otherwise), `journey/[id].tsx` (completed summary photos, read-only). Tests mount `PhotosProvider` over an in-memory `PhotoFileStore` (`journeyHarness.photoFiles`).
+
 ## Water architecture (Sprint 3 slice 3.2)
 
 `src/lib/water/` is the single source of truth for hydration. It lives in `src/lib/` because Fuel's Hydration module reads the same state the Water screen does, and features never import each other.
@@ -534,6 +542,10 @@ A second blocker sits under the intended architecture: FatSecret binds OAuth 2.0
 **`foodFromEntry()`** rebuilds a loggable `VitaFood` from an entry snapshot alone, which is what lets a recent survive an expired provider cache, a deleted custom food, or being offline. Opening Recents also re-seeds the food cache from history.
 
 **Favorites** are keyed by `vitaId` and persisted at `vita:v1:favorites`, newest first. `PERSISTABLE_SOURCES` gates whether the food *definition* may be retained: USDA (CC0), Open Food Facts (ODbL — retaining individual user-chosen records on-device is ordinary API use; share-alike attaches to publishing a derived database), and custom foods. **FatSecret is excluded** — its caching/storage terms were verified on 2026-08-21 and permit only identifiers to be retained, so the provider is deferred entirely rather than partially accommodated. No ID-only favorite path was built; see Provider roster above. A stored definition is dropped on read if its source is no longer permitted, so a terms change needs no migration.
+
+### Progress-photo dependencies (slice 6.6)
+
+`expo-image-picker@~58.0.10` (adds Expo's `expo-image-loader`) and `expo-file-system@~58.0.13` (previously transitive at 58.0.12, now explicit) — installed with `npx expo install`, both in Expo Go SDK 58. `app.json` adds the `expo-image-picker` plugin with VITA's photo-library usage string; the camera string comes from the `expo-camera` plugin. Expo Go shows its own permission text.
 
 ### Barcode scanning (slice 2.8)
 

@@ -4149,9 +4149,9 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ COMPLETE / LOCKED · `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ COMPLETE / LOCKED · `f50351f` (+ `6c09aa1`) |
 | **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful states; DEV-only preview | ✅ COMPLETE (founder-locked 2026-10-27, `1c5945e`) — **its entry architecture is superseded by 6.5**: the pillars now appear only inside a Journey |
-| **6.4 — Weight Logging + History** | Log weight, history, edit, delete, lb/kg | 🟡 Implemented — **awaiting founder re-review** · retained and integrated into Journey ownership by 6.5 |
-| **6.5 — Journey Lifecycle + Start Experience** | A Journey the user starts, lives through and finishes: start flow, active home, Journey-owned weight, extend, finish, Past Journeys | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `85ff839` + `3683006` |
-| 6.6 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, inside a Journey — characterized before implementation | ⬜ NOT STARTED |
+| **6.4 — Weight Logging + History** | Log weight, history, edit, delete, lb/kg | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · lives inside Journeys since 6.5 |
+| **6.5 — Journey Lifecycle + Start Experience** | A Journey the user starts, lives through and finishes: start flow, active home, Journey-owned weight, extend, finish, Past Journeys | ✅ COMPLETE / LOCKED — founder-approved on a physical iPhone, 2026-10-29 · `85ff839` + `3683006` |
+| **6.6 — Core Progress Photos** | Take or choose one photo, review, save into VITA's own local storage inside the active Journey; history, detail, re-date, delete; read-only once finished | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `9fe54c0` + `54994ee` |
 | 6.7 — Unified Journey Timeline + Factual Milestones | Real events on one timeline; participation milestones only | ⬜ NOT STARTED |
 | 6.8 — Trends + Then-vs-Now | Real trend, earliest vs latest, photo comparison when available | ⬜ NOT STARTED |
 | 6.9 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ NOT STARTED |
@@ -4219,7 +4219,7 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 
 **Next: 6.4 Weight Logging + History** — implemented below.
 
-### Slice 6.4 — Weight Logging + History — 🟡 awaiting founder review
+### Slice 6.4 — Weight Logging + History — ✅ COMPLETE / LOCKED (founder, physical iPhone, 2026-10-29)
 
 **Purpose.** Give Weight its first real workflow — record, review, correct and remove real weigh-ins — without letting Weight take over Journey.
 
@@ -4252,7 +4252,7 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 
 **Validation.** Both `tsc` modes clean · Doctor 20/20 · iOS export clean · Metro dev bundle clean (1,759 modules) · **zero dependency changes** · no storage key or schema change.
 
-### Slice 6.5 — Journey Lifecycle + Start Experience — 🟡 awaiting founder review
+### Slice 6.5 — Journey Lifecycle + Start Experience — ✅ COMPLETE / LOCKED (founder, physical iPhone, 2026-10-29)
 
 **Founder correction after physical review of 6.4 (2026-10-28) — Journey is a lifecycle, not a set of trackers.** The physical review of the 6.4 experience established that Journey needed an explicit lifecycle object. Overview / Weight / Photos alone made the feature feel like disconnected trackers rather than a Journey: a user opened Journey and landed straight in three tabs for something they had never started, with no name, no beginning, no planned end, no "Day X of Y" and no way to finish and keep a chapter. **Weight, Photos and the future Timeline now belong to a user-created Journey with a beginning, a planned duration, an active period and a completion state.** 6.3 and 6.4 are not erased: 6.3's pillars and 6.4's weight logging are kept and now sit inside a Journey. Slice 6.5 was inserted for the lifecycle, and the later slices moved down one (Photos 6.6 · Timeline 6.7 · Trends 6.8 · Audit 6.9).
 
@@ -4325,5 +4325,77 @@ No-Journey screen (the two 6.4 test weigh-ins on that simulator were **not** pul
 
 **Simulator-only test data** created during QA: a completed Journey "Getting Back to Me", a Journey "Second Chapter" mid-setup or begun, and 1 fl oz of water. Not product data.
 
-**Next: founder physical-iPhone review of 6.5 (and re-review of 6.4).** 6.6 Core Progress Photos not started.
+**Founder approval — 2026-10-29: ✅ COMPLETE / LOCKED.** The founder reviewed the Journey lifecycle on a physical iPhone (*"Everything looks good"*), approving 6.5 and, with it, 6.4 Weight Logging + History as it now lives inside a Journey. Locked implementation `85ff839` + `3683006`. The keyboard first-tap item above was not reported on hardware and stays open in the Audit Log until confirmed either way.
+
+### Slice 6.6 — Core Progress Photos — 🟡 awaiting founder review
+
+**Purpose.** Give the Photos pillar its real workflow: a private visual history that belongs to one Journey. A progress photo is a fact — *this image, of this moment, in this Journey* — and nothing about the body in it is analysed, scored, tagged or inferred.
+
+**Commits.** `9fe54c0` (domain, storage, provider) · `54994ee` (experience). On `sprint-6-journey-weight`; `main` untouched.
+
+#### Domain and storage
+
+```ts
+type ProgressPhoto = {
+  id: string;        // newId('photo'); also the file name
+  journeyId: string; // required; never changed by an edit
+  file: string;      // '<journeyId>/<id>.<ext>' — relative to VITA's photo folder
+  takenAt: string;   // ISO instant the photo represents; user-correctable
+  createdAt: string; // ISO instant it was saved to VITA
+};
+```
+
+- **Metadata** at `vita:v1:journey:photos`, validated on read like every VITA store: a record whose id or Journey is empty, whose dates do not parse, or whose `file` is not exactly `<its own journeyId>/<safe id>.<jpg|jpeg|png|heic|heif|webp>` is dropped, never repaired; reading never writes. An empty collection removes the key.
+- **Images** live in `Documents/journey-photos/<journeyId>/<photoId>.<ext>` (`expo-file-system`, `Paths.document`) — app-owned, kept by the system, invisible to other apps. **The path is stored relative and resolved at render**, because iOS may move the app container between versions; an absolute URI stored today could point nowhere tomorrow. Extension comes from the picker's MIME type, else the source's own known image extension, else `jpg` — never a user file name.
+- **The picker's temporary URI is never stored.** On Save the image is **copied** into the folder; the record names only the copy.
+- **Structurally safe deletion.** The file store accepts only paths matching that pattern and resolves them inside its own folder, so it can never reach the Photo Library, a picker's temporary file, or anything else. The original in the user's Photo Library is never touched.
+
+#### Consistency (PhotosProvider, inside JourneyProvider)
+
+1. The Journey must exist and be **active**; the moment must be **on or after its start day** and **not in the future** (60 s clock skew, as weigh-ins). Past the planned end is allowed while the Journey is active.
+2. Copy into the folder. **Fails → nothing recorded.**
+3. Save the record. **Fails → the copy is removed again** (no orphan).
+4. **Delete:** the record goes first (so nothing ever shows a photo whose file is gone), then the owned file. A file that fails to delete is unreachable.
+5. **Re-date:** changes only `takenAt`, same rules as adding. The Journey, file and id never change.
+6. **Completed Journeys are read-only:** add, re-date and delete all refuse them.
+
+#### Experience
+
+- **Photos (active Journey).** Empty: the frame, *"No progress photos yet"*, and **Add Progress Photo**. Populated: Add Progress Photo, then *PROGRESS PHOTOS · N* and the photos **newest first, two to a row** in large 3:4 portrait frames with the date beneath. **Grid decided on device:** on a 402 pt iPhone each tile is ~173 pt wide; three columns would make ~110 pt thumbnails to scroll past, and this history exists to be looked back through. Spoken label per tile: *"Progress photo, Thursday, October 29 at 12:47 AM"* — distinct even for several photos on one day.
+- **Add Progress Photo** → the native action sheet **Take Photo · Choose from Library · Cancel**. **Permission is asked only after a choice**, never on opening Journey. A refusal shows one calm alert (*"Camera access is off"* / *"Photo access is off"* — allow it in Settings) and nothing else; VITA does not re-prompt. A limited library grant is respected as iOS gives it. One image; no editing UI, no crop, full quality.
+- **Review before saving** (VitaSheet *Progress Photo*): the whole image (contain-fit, never cropped), **When** — camera: now; library: the photo's EXIF capture time if present, else now — tappable to show date and 24-hour time fields with Today / Now; **Save Photo** · **Cancel**. Invalid, before-start (*"This Journey began Oct 29, 2026. Choose a date on or after it."*) and future times disable Save. Cancel, or a cancelled picker, leaves no record and no file.
+- **Detail** (`/journey/photo/[id]`): the whole image contain-fit in a 3:4 well, its date and time, its Journey's name; in an active Journey **Change Date** (the same sheet, date/time only) and **Delete Photo** → *"Delete progress photo?"* / *"This removes the photo from this Journey."* → Cancel / Delete → back to Photos.
+- **Overview** node *Progress photos* now reads real data: *"N progress photos · Latest {date}"*, filled once one exists. No Overview takeover.
+- **Completed Journey summary** shows its photos read-only (no Add); a photo's detail has no Change Date or Delete.
+- **A new Journey inherits nothing** — photos are found only by their Journey's id.
+- **DEV preview** keeps its placeholder frames; release sources photos only from `PhotosProvider`, and the preview writes no record and copies no file (tested).
+
+#### Privacy — local only
+
+No upload, sync, cloud storage, remote URL, network call, analytics of image content or AI analysis — a source-level audit of every 6.6 file found no `fetch`, URL or upload. Photos last as long as VITA's local app data does: deleting VITA (or Expo Go) deletes them. No sharing, captions, tags, filters, scores or comparison (Then-vs-Now remains 6.8, preview-only).
+
+#### Dependencies
+
+`expo-image-picker ~58.0.10` (new; brings Expo's own `expo-image-loader`) and `expo-file-system ~58.0.13` (already present transitively at 58.0.12; now explicit), both via `npx expo install`, both in Expo Go SDK 58 — no development build. `app.json` adds the `expo-image-picker` plugin with VITA's photo-library string; the camera string is the existing `expo-camera` plugin's. **Expo Go shows its own permission text**; VITA's strings apply in a development or App Store build.
+
+#### Shared fix found in QA
+
+The detail view's two actions rendered cramped: `PressableScale` applies `style` to its inner animated view, so `flex: 1` never reached the row. The route wraps each action in a flexing view (comment in place). Recorded in the Audit Log as a primitive behaviour, not changed in the primitive this slice.
+
+#### Tests
+
+97 / 2643 → **100 suites / 2689 tests.** New: `photos.test` (18 — record shape and owned path, extension choice, time rules incl. skew and before-start, per-Journey newest-first filter, EXIF parse and fallbacks, store round trip and key removal, malformed/temp-URI/foreign-folder/traversal records dropped without writing, owned folder copy and delete, **seven outside paths refused for copy and delete**) · `photosProvider.test` (12 — owned path only, **copy fails → nothing**, **save fails → copy removed**, same-day photos, before-start and future refused, completed/unknown Journey refused, re-date keeps Journey/file/id, re-date before start refused, **delete removes record + owned file only**, failed record delete keeps the file, completed Journey read-only, new Journey inherits nothing) · `ProgressPhotos.test` (15 — action sheet with no permission asked, camera review then save of an owned copy, library EXIF suggestion corrected before save, no-EXIF falls back to now, before-start disables Save, picker/review Cancel leave nothing, refusal alert once, failed copy message, history newest first with distinct labels and Overview count, new Journey sees none, detail re-date, delete with exact copy, finished Journey read-only detail, unknown photo, finished summary without Add). Updated: `journeyHarness` (PhotosProvider over an in-memory owned folder), `JourneyExperience` (release sources real photos only; preview copies and deletes nothing; preview placeholders have no Add and open nothing).
+
+**Mutation checks (2026-10-29, each restored afterwards).** All seven caught: Journey filter removed (4 failing) · temporary URI persisted (7) · rollback cleanup skipped (1) · delete outside the owned folder (7) · completed Journey mutable (2) · pre-Journey date allowed (4) · preview placeholder leaked to release (8).
+
+**Validation (2026-10-29).** Both `tsc` modes clean · iOS export clean · Metro dev bundle clean (1,800 modules) · **Expo Doctor 19/20** — unchanged upstream SDK 58 patch drift (8 packages, neither new dependency among them), left alone as instructed · dependency audit: only the two authorized packages (+ `expo-image-loader`, picker's own) · persistence audit: one new key, `vita:v1:journey:photos`.
+
+#### Device verification (iPhone 17 Pro simulator, SDK 58 Expo Go)
+
+Disposable generated images (*QA TEST 1–9*, one landscape) added to the **simulator's** library only. Verified: 0 photos (empty + Add) · action sheet, no permission until a choice · **Don't Allow → calm alert, nothing saved** · allow → system picker, single select, no crop · review with contain-fit portrait and landscape · before-start date refused with message, Save disabled · save → owned file at `Documents/…/journey-photos/<journeyId>/<photoId>.jpg` · 1 / 3 / 8 photos, newest first, two columns · detail full image · Change Date → 12:05 AM saved in one tap · Delete confirmation → owned files 3 → 2, **Photo Library still 15** · relaunch → 8 photos and images resolve; Overview *"8 progress photos · Latest Thu, Oct 29"* · Finish → Past Journey shows 8 photos, no Add; detail read-only. **Not verifiable on the simulator:** the camera (no camera hardware) — physical-iPhone QA required.
+
+**Simulator-only test data:** a completed Journey *"QA PhotosQA Photos"* (the name typed twice by simulator input lag) with 8 generated photos, and nine *QA TEST* images in the simulator's library. Not product data; nothing was created on the founder's iPhone.
+
+**Next: founder physical-iPhone review of 6.6.** 6.7 Timeline not started.
+
 
