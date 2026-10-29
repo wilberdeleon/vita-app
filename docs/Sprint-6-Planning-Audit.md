@@ -328,6 +328,12 @@ The lifecycle architecture (domain, storage, start flow, active home, extend, fi
 
 ---
 
+## 21. Slice 6.7 — founder corrections before review (2026-10-29)
+
+**Ruled:** (1) a weigh-in that belongs to a Journey may not be dated before that Journey's start day — enforced at the provider boundary for every write, not only in the UI; legacy unowned weigh-ins untouched. (2) Extensions **should** appear on the Timeline: persist the underlying lifecycle fact (`Journey.extensions`, append-only, written atomically with the new end) and keep the Timeline derived; never fabricate history for earlier extensions. Milestone set unchanged; extension is not an achievement. Implemented `5c4b153` — see `docs/06-Slice-Tracker.md` → Slice 6.7 → *Founder corrections before review*.
+
+---
+
 ## 20. Slice 6.7 — Timeline + Factual Milestones (2026-10-29)
 
 **Gate.** 6.6 approved on a physical iPhone (*"Everything works great."*) and locked; 6.7 authorized: one chronological Timeline **derived** from Journey, weight and photo records; a small factual milestone set (5 / 10 weigh-ins, 5 photos, Day 30, first photo); no Trends, chart, Then-vs-Now, comparison, Atlas, Dashboard widget, AI narrative, streaks, adherence, badges or new dependencies.

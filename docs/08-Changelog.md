@@ -6,6 +6,8 @@ Single source of truth for release history and completed work.
 
 ## Unreleased
 
+- 2026-10-29 — **6.7 corrections before founder review (`5c4b153`).** A weigh-in in a Journey can no longer be dated before the day that Journey began — Log and Edit Weight say *"This date is before this Journey began."* and VITA refuses it underneath as well; older weigh-ins that belong to no Journey are untouched. Extending a Journey now records the change, and the Timeline shows **Journey extended · Planned end Nov 27 → Dec 27** at the moment it happened, kept in the finished Journey too. Only extensions made from now on appear — none are invented for earlier ones. The Timeline is still worked out from the records, with nothing extra stored. 103 suites / 2,748 tests.
+
 - 2026-10-29 — **SLICE 6.7: the Journey Timeline — awaiting founder review.** (`a6b4e09`.) Overview now ends in a Timeline of what has actually happened in this Journey, newest first: when it began, each weigh-in, each progress photo (with the photo itself — tap to open it), and a few quiet markers — *5 weigh-ins recorded*, *10 weigh-ins recorded*, *5 progress photos recorded*, *30 days into this Journey*. A finished Journey shows *Journey completed* at the top and opens with Overview, Weight and Photos so the whole chapter can be revisited. Nothing new is saved: the Timeline is worked out from your existing weigh-ins and photos, so editing or deleting them updates it immediately. No charts, scores, streaks or praise. 102 suites / 2,725 tests; zero new dependencies; zero new storage.
 - 2026-10-29 — **6.6 Core Progress Photos: ✅ COMPLETE / LOCKED** — approved by the founder on a physical iPhone (*"Everything works great."*).
 

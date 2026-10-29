@@ -4409,7 +4409,7 @@ Disposable generated images (*QA TEST 1–9*, one landscape) added to the **simu
 | Source | Available fields | Timeline item | New storage? |
 |---|---|---|---|
 | Journey | `id, name, startDate, plannedEndDate, status, createdAt, completedAt?` | **Journey began** (start day) · **Journey completed** (`completedAt`) | No |
-| Journey extensions | only the *current* `plannedEndDate` — no history | **none** (not invented) | No |
+| Journey extensions | only the *current* `plannedEndDate` — no history *(at first build; see the founder corrections below — history is now recorded going forward)* | **none** (not invented) → **Journey extended** from recorded history | No timeline storage; Journey gains `extensions` |
 | WeightEntry | `id, loggedAt, weightKg, enteredUnit, journeyId?` | **Weight recorded** (`loggedAt`) | No |
 | ProgressPhoto | `id, journeyId, file, takenAt, createdAt` | **Progress photo** (`takenAt`) | No |
 | Counts / calendar | derived from the above + today | **Milestones** | No |
@@ -4470,6 +4470,32 @@ Each item is one VoiceOver element: *"Weight recorded, 178.4 pounds, Thursday, O
 #### Device verification (iPhone 17 Pro simulator, SDK 58 Expo Go)
 
 Preview Early (began, starting weight, first photo, day captions) · Established (12 items, then *Show earlier · 10 more* → Journey began; all four milestones; after the first pass weigh-ins were made lighter and the Day 30 duplicate date removed) · the real completed *QA PhotosQA Photos* Journey (Journey completed at the top, 8 real photo images, 5-photos milestone, starting weight, Journey began; a photo opened the read-only detail). **Not verified on device:** Dark mode (VITA's own Appearance is set to Light on that simulator) and the largest Dynamic Type sizes.
+
+#### Founder corrections before review (2026-10-29) — `5c4b153`
+
+**1. A Journey's weigh-ins may not predate it.** Root cause of the earlier behaviour: 6.4's When field refused only the future, and `WeightProvider` — which sits *above* `JourneyProvider` — had no way to know a Journey's start. Final rule: a Journey-owned weigh-in is valid when its **local calendar day ≥ the Journey's `startDate`** (`isWithinJourneyStart`, using `toLogDate`; Oct 29 12:01 AM and 8:00 PM pass, Oct 28 11:59 PM does not). Future-time rejection is unchanged and separate.
+- **Domain:** `JourneyProvider` registers a start-date lookup with `WeightProvider` (`setJourneyStarts`); **every** Journey-owned add, edit and restore (Undo) is checked there, so no screen or code path can write around it. An id the lookup does not know (the Journey being created at that instant) is not blocked; the starting weigh-in is written at the same instant as the start, so it is always on the start day.
+- **UI:** Log Weight / Edit Weight disable Save and show *"This date is before this Journey began."*
+- **Legacy** unowned weigh-ins are never checked, never migrated, never deleted. Already-stored impossible data (none can be written now) is left as it is and shown truthfully below Journey began — never re-dated.
+
+**2. Extensions are recorded going forward.**
+
+```ts
+type JourneyExtension = { id: string; extendedAt: string; previousPlannedEndDate: LogDate; newPlannedEndDate: LogDate };
+// Journey gains: extensions?: JourneyExtension[]   — append-only, oldest first; absent = none recorded
+```
+
+- `extendJourney(journey, newEnd, today, now)` returns the Journey with the new `plannedEndDate` **and** one appended record (`newId('extension')`, real `extendedAt`, previous and new end) — one value, saved in **one write** to `vita:v1:journey:journeys`. A new end without its record, or a record without a new end, cannot be saved. No record on Cancel, a refused date, an unchanged end (refused by `canExtendTo`) or a failed save; each Extend appends exactly one.
+- **Backward compatible:** a Journey stored without `extensions` reads as zero extensions; nothing is inferred from its length, and no past extension is manufactured. On read, a malformed entry is dropped on its own (never repaired) so one bad entry cannot cost a whole Journey; a non-array reads as none. The field is written only once there is history.
+- **Timeline:** derives **Journey extended** — *"Planned end Nov 27 → Dec 27 · 7:10 PM"* (years shown when they differ); spoken *"Journey extended, planned end moved from November 27, 2026 to December 27, 2026, …"* — at `extendedAt`, filled gold lifecycle node, no card or colour. Tie order is now **completed › extended › milestone › photo › weight › began**. Multiple extensions each appear; a completed Journey keeps them, read-only. It is lifecycle history, not an achievement — no milestone.
+- **Still no timeline storage.** The extension record is canonical Journey data; the Timeline remains derived. No new key.
+- DEV preview: *Established* carries one recorded extension (60 → 90 days, three weeks ago).
+
+**Tests** 2725 → **103 suites / 2748**: `journeyBoundaries.test` (15 — local-day rule incl. 12:01 AM / 11:59 PM; log on start day and day after; day before refused with nothing written; edit to before start refused; Undo held to the rule; each Journey's own start; legacy untouched and editable; starting weigh-in on the start day; no supported path to a pre-start Timeline weigh-in; extension appended in one write with real time; second appends; none on same/earlier/failed; old Journey loads with none and no inferred event; storage round trip with malformed entries dropped and no new key; history kept through Finish) · `timeline.test` +5 (derived extended items with both ends, none without history, kept under Journey completed, tie order, isolation) · `JourneyTimeline.test` +3 (Log and Edit refuse a pre-start date with the message, Save disabled; two Extends → two *Journey extended* items, kept after Finish in the Past Journey, no timeline key). Updated: three extend tests that pinned "moves only the planned end".
+
+**Mutation checks** — all seven caught: start validation removed in the provider (5 failing) · edit path unchecked (1) · UI check removed (2) · planned end moved without history (7) · history without a planned-end change (6) · fake extension inferred from duration (3) · Journey filtering removed (2).
+
+**Validation** — both `tsc` modes clean · iOS export clean (1,666 modules) · Metro dev bundle clean · Expo Doctor 19/20 (unchanged patch drift) · zero dependency changes · storage: no new key; `vita:v1:journey:journeys` Journey records may now carry `extensions` · simulator: the Established preview shows *Journey extended · Planned end Oct 18 → Nov 17 · 7:10 PM* in place.
 
 **Next: founder physical-iPhone review of 6.7.** 6.8 Trends + Then-vs-Now not started.
 
