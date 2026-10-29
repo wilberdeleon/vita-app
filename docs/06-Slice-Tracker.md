@@ -4148,12 +4148,13 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 | Characterization | What exists, what is invented, what needs a decision | ✅ `9f68201` |
 | **6.1 — Journey Truth** | Remove fabricated release data; truthful empty runtime; gold identity | ✅ COMPLETE / LOCKED · `c4c9693` |
 | **6.2 — Weight Data Foundation** | Canonical weight domain + persistence, no UI | ✅ COMPLETE / LOCKED · `f50351f` (+ `6c09aa1`) |
-| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful release empty states; DEV-only populated preview. No logging, no capture | ✅ **COMPLETE / LOCKED** — founder-approved on a physical iPhone (SDK 58), 2026-10-27 · `1c5945e` |
-| 6.4 — Weight Logging + History | Add weight, history, edit, delete, lb/kg, real data | 🟡 **Implemented — awaiting founder review** |
-| 6.5 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, truthful empty state, Journey integration — **characterized before implementation** | ⬜ NOT STARTED |
-| 6.6 — Unified Journey Timeline + Factual Milestones | Real events (weigh-ins, photos, time-based facts) on one timeline; participation milestones only | ⬜ NOT STARTED |
-| 6.7 — Trends + Then-vs-Now | Real weight trend, earliest vs latest, elapsed time, photo comparison when available. No predictive coaching | ⬜ NOT STARTED |
-| 6.8 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ NOT STARTED |
+| **6.3 — Journey Experience Foundation** | **Overview · Weight · Photos** as first-class pillars; truthful states; DEV-only preview | ✅ COMPLETE (founder-locked 2026-10-27, `1c5945e`) — **its entry architecture is superseded by 6.5**: the pillars now appear only inside a Journey |
+| **6.4 — Weight Logging + History** | Log weight, history, edit, delete, lb/kg | 🟡 Implemented — **awaiting founder re-review** · retained and integrated into Journey ownership by 6.5 |
+| **6.5 — Journey Lifecycle + Start Experience** | A Journey the user starts, lives through and finishes: start flow, active home, Journey-owned weight, extend, finish, Past Journeys | 🟡 Implemented — **awaiting founder review (current acceptance gate)** · `85ff839` + `3683006` |
+| 6.6 — Core Progress Photos | Add/import, stored photo record, date, history, deletion, inside a Journey — characterized before implementation | ⬜ NOT STARTED |
+| 6.7 — Unified Journey Timeline + Factual Milestones | Real events on one timeline; participation milestones only | ⬜ NOT STARTED |
+| 6.8 — Trends + Then-vs-Now | Real trend, earliest vs latest, photo comparison when available | ⬜ NOT STARTED |
+| 6.9 — Founder Journey Audit + Closeout | Identity, accessibility, Light/Dark, motion, truth, polish | ⬜ NOT STARTED |
 
 ### Slice 6.1 — Journey truth + identity foundation
 
@@ -4250,4 +4251,79 @@ Branch `sprint-6-journey-weight`, cut from `main` at `6c657fb`. Characterization
 **Mutation checks — all caught:** save without writing (7 fail) · closing the sheet saves (1) · same-day add replaces (6) · edit changes the id (6) · current = oldest entry (2) · unit switch reinterprets the number (1) · sheet writes the display preference (1) · release draws the 6.7 trend (1) · future time accepted (1).
 
 **Validation.** Both `tsc` modes clean · Doctor 20/20 · iOS export clean · Metro dev bundle clean (1,759 modules) · **zero dependency changes** · no storage key or schema change.
+
+### Slice 6.5 — Journey Lifecycle + Start Experience — 🟡 awaiting founder review
+
+**Founder correction after physical review of 6.4 (2026-10-28) — Journey is a lifecycle, not a set of trackers.** The physical review of the 6.4 experience established that Journey needed an explicit lifecycle object. Overview / Weight / Photos alone made the feature feel like disconnected trackers rather than a Journey: a user opened Journey and landed straight in three tabs for something they had never started, with no name, no beginning, no planned end, no "Day X of Y" and no way to finish and keep a chapter. **Weight, Photos and the future Timeline now belong to a user-created Journey with a beginning, a planned duration, an active period and a completion state.** 6.3 and 6.4 are not erased: 6.3's pillars and 6.4's weight logging are kept and now sit inside a Journey. Slice 6.5 was inserted for the lifecycle, and the later slices moved down one (Photos 6.6 · Timeline 6.7 · Trends 6.8 · Audit 6.9).
+
+**Commits.** `85ff839` (shared one-tap sheet fix) · `3683006` (lifecycle). Both on `sprint-6-journey-weight`, fast-forward, no history rewritten.
+
+#### Domain and storage
+
+```ts
+type JourneyStatus = 'active' | 'completed';
+type Journey = {
+  id: string;              // newId('journey'); stable forever, completed included
+  name: string;            // user-authored, trimmed, whitespace collapsed, 1–60 chars
+  startDate: LogDate;      // 'YYYY-MM-DD', local calendar — always the day it was begun
+  plannedEndDate: LogDate; // last planned day, inclusive; Extend moves only this
+  status: JourneyStatus;
+  createdAt: string;       // ISO instant of Begin Journey
+  completedAt?: string;    // ISO instant of Finish; present exactly when completed
+};
+```
+
+**Key:** `vita:v1:journey:journeys` — one collection, versioned by the `v1` namespace. Validated on read; a malformed Journey is dropped, never repaired; nothing is ever created to fill a gap. Reading never writes. **Derived, never stored:** active Journey, Day X, days remaining, rail fraction, starting/current weight, change, weigh-in count.
+
+**One active Journey.** `addJourney` refuses an active Journey while one exists; `startJourney` returns `null` and writes nothing in that case; the start route redirects to `/journey`. After Finish there is none, and a new one may begin. If storage ever held two (a torn write), only the most recently created reads as active; the other is left on disk untouched.
+
+**Dates.** Start and planned end are **calendar days**, not instants, so travel cannot move them. Start date = Day 1. Durations are inclusive: "30 days" from Oct 28 ends Nov 26 (Day 30); 60 → +59; 90 → +89; 6 months → the day before the same date six months on (Oct 28 → Apr 27, 182 days), clamped at month ends. Day count uses whole calendar days computed on UTC midnights of the dates' own parts — immune to daylight saving. Remaining = planned days after today. On and after the planned end: *"Journey end date reached"*, the day keeps counting (*DAY 96 · PLANNED 90*), the rail stays full — and the Journey **stays active**. VITA never ends a chapter for the user.
+
+#### Weight ownership and legacy data
+
+`WeightEntry` gains `journeyId?: string`. Every weigh-in created since 6.5 carries its Journey's id (the start flow's first entry and every Log Weight inside the active Journey); edits cannot change it. **Pre-lifecycle 6.4 weigh-ins have no `journeyId`: they stay stored exactly as written, remain valid records, and are shown by no Journey** — `entriesForJourney` matches by id only. No Journey is auto-created and nothing is silently adopted. The key `vita:v1:journey:weight` is unchanged: the field is additive and optional, so no migration rewrites anything. A `journeyId` present but unusable is a shape VITA never wrote and is dropped on read. Journey A never sees Journey B's weigh-ins.
+
+#### Atomic Begin
+
+1. Write the starting weigh-in, already carrying the new Journey's id. Fails → nothing written.
+2. Write the Journey. Fails → the weigh-in is removed again.
+3. If even that rollback fails, the orphan names a Journey that does not exist and is shown nowhere. **An active Journey without its starting weight cannot occur.**
+
+#### Experience
+
+- **No active Journey** — `My Journey` · a gold path (filled beginning, open destination) · **Start a New Journey** · *"Create a Journey to give your weight, photos and progress a beginning and an end."* · the button. **Past Journeys** only when completed Journeys exist: name, date range, duration, chevron → read-only summary. No pillars, no metrics.
+- **Start flow** (`/journey/start`, one route, four steps, *STEP n OF 4*) — **Name** (required, ≤ 60) → **Duration** (30 days · 60 days · 90 days · 6 months · Custom `YYYY-MM-DD`, must be after today; the range and length are shown) → **Starting weight** (lb/kg, opens in Journey's display unit, mathematical validation only) → **Review** (Journey, Starts *(today)*, Planned end, Duration, Starting weight — no BMI, goal or target) → **Begin Journey**. Close or Back write nothing; no drafts. Begin → `router.dismissTo('/journey')`, so Back never reveals the wizard.
+- **Active home** — `My Journey` header, then **DAY X OF Y** (gold), the **Journey name** as the title, the date range, a 3pt gold rail, *"N days remaining"*, the **•••** Manage control; then **Overview · Weight · Photos**. Spoken: *"Summer Transformation. Day 18 of 90. Journey runs June 1 through August 29. 72 days remaining."*
+- **Overview** — Starting · Current · Change (only with two or more weigh-ins) · Weigh-ins, two to a row, no cards, neutral signed change; then the spine: Began (date) · Progress photos (hollow) · Timeline (hollow) · Planned end (date).
+- **Weight** — 6.4 unchanged in behaviour, scoped to this Journey: Log Weight (stamps the active Journey), day-grouped history, edit, delete + Undo, lb/kg display control.
+- **Photos** — unchanged truthful empty state; no action (6.6).
+- **Manage Journey** (VitaSheet) — **Extend Journey** (+30 / +60 / +90 days from the later of the current end and today, or a custom date; the new end and total length are shown before saving; same id, same records, only the planned end moves) · **Finish Journey** → *"Finish this Journey?"* / *"The Journey will move to Past Journeys. Its recorded history will remain."* → Cancel / Finish.
+- **End reached** — the header adds *"This Journey stays active until you decide."* with **Extend** and **Finish**.
+- **Finish** — status `completed`, `completedAt` stored, weigh-ins keep their `journeyId`, the summary opens (`/journey/[id]`), and the tab returns to Start a New Journey with the Journey under Past Journeys.
+- **Completed summary** (read-only) — COMPLETED · name · start – finished date · elapsed days · Starting · Final · Change · Weigh-ins · its weight history with no Log, edit, delete or unit control. **Reopening a finished Journey is not implemented**; continuing means Extend before Finish, starting again means a new Journey, which inherits nothing.
+
+#### DEV preview (`/journey-preview?state=…`)
+
+`none` (No Journey) · `early` (Active — Early, Day 13 of 90) · `established` (Active — Established, Day 71 of 90, photo placeholders, the 6.3 trend/records vision) · `ended` (End Reached) · `completed` (summary) · `library` (Past Journeys). Same release components; fixtures in the file only; no provider, no repository, no actions — it cannot start, log, manage or write anything.
+
+#### Shared fixes included
+
+- **One-tap sheet actions (`85ff839`).** Founder-confirmed on a physical iPhone: with the number pad open, the first tap on Log Weight or Add Water's Log only dismissed the keyboard. React Native routes touches through the React tree, where a `VitaSheet`'s Modal is still a child of its `Screen`, whose scroll view (`keyboardShouldPersistTaps` default) captured the tap. `VitaSheet` now reports itself open (`sheetPresence.ts`) and `Screen` uses `'handled'` only while one of its sheets is open. Tests: `VitaSheet.test` (4 cases), Water and Log Weight route tests.
+- **Stale disabled look (`3683006`).** On SDK 58 / RN 0.88, `PressableScale` rebuilt an `Animated.multiply` node whenever the caller's opacity changed, and the mounted view kept drawing the old node: a Button that went enabled → disabled → enabled stayed dim while accepting taps (the start flow's Continue). It now keeps one node and sets its base value. Test: `PressableScale.test` (enabled → disabled → enabled, same node). Simulator-verified: Continue turns dark as soon as a duration is chosen.
+
+#### Device verification (iPhone 17 Pro simulator, SDK 58 Expo Go)
+
+No-Journey screen (the two 6.4 test weigh-ins on that simulator were **not** pulled in) · full start flow · Begin → active home, Day 1 of 90 · Weight showed one entry, legacy hidden · Manage → Finish → confirmation → summary → Past Journeys. **Open, not confirmed on hardware:** in the start flow, with the keyboard up, the first tap on *Continue* after the Name step, and the first *Duration* chip tap right after it, were sometimes lost; the second worked. *Continue* on the Starting-weight step with the number pad up worked first time. The route is not inside a sheet, its `Screen` is already `keyboardAware` (`'handled'`), and no deterministic source defect was found, so the code was left alone — **physical-iPhone QA required**.
+
+#### Tests
+
+93 / 2553 before the lifecycle → **97 suites / 2643 tests**. New: `journeys.test` (25 — names, creation, inclusive durations incl. 6 months and month-end clamping, DST and leap-day day counts, Day 1 / middle / end / after end, one active, extend rules, finish, no auto-finish) · `journeyRepository.test` (key, round trips, malformed drops, two-active resolution, **legacy weigh-ins preserved unowned**, bad `journeyId` dropped, upgrade writes nothing) · `journeyProvider.test` (12 — first run creates nothing, legacy not adopted, Begin writes Journey + owned weigh-in at one instant, second active refused, **weigh-in write fails → nothing**, **Journey write fails → weigh-in rolled back**, **rollback fails → orphan shown nowhere**, extend, finish, new Journey after finish) · `JourneyLifecycle.test` (21 — no pillars without a Journey, Past Journeys only when non-empty, legacy not shown, four steps each requiring its answer, nothing written before Begin, Begin writes and dismisses, failed save leaves nothing, start route redirects when active, active subject and Day X of Y, Journey-scoped stats and history, logged weigh-in owned, edit keeps ownership, end reached does not finish, Extend from end reached, Manage Extend, Finish Cancel / Finish, read-only summary, active never a summary, second Journey inherits nothing). Updated: `JourneyTruth` (truth contract on the no-Journey screen), `JourneyExperience` (pillars inside a Journey, isolation, all preview states write nothing), `WeightLogging` (inside a Journey; one-tap Log Weight), `PressableScale.test`, `WaterRoutes` (one-tap Add Water).
+
+**Mutation checks (run during implementation, 2026-10-28; recorded from that session's run output, not re-run for this report).** Each was caught: second active Journey allowed (1 failing) · legacy weight adopted (2) · Journey A shows Journey B's weight (4) · auto-complete at end date (2) · start writes before Begin (5) · no rollback on failed start (1) · stats from global history (3) · edit changes `journeyId` (2) · shared two-tap fix reverted (5). Plus the stale-button fix: restoring the per-change node fails its test.
+
+**Validation (2026-10-29, on `3683006`).** Both `tsc` modes clean · iOS export clean (1,635 modules) · Metro dev bundle clean (1,770 modules) · **Expo Doctor 19/20** — the one failure is upstream SDK 58 **patch drift** (Expo published `expo` 58.0.21, `expo-router` 58.0.28 and six other patches after our pins); not an incompatibility, not caused by this slice, and left alone as instructed · **zero dependency changes** since the SDK 58 baseline · Sprint 5 storage untouched (Dashboard, Quick Tools, Water, Fuel, Peptides, Appearance).
+
+**Simulator-only test data** created during QA: a completed Journey "Getting Back to Me", a Journey "Second Chapter" mid-setup or begun, and 1 fl oz of water. Not product data.
+
+**Next: founder physical-iPhone review of 6.5 (and re-review of 6.4).** 6.6 Core Progress Photos not started.
 

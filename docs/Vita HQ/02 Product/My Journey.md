@@ -16,6 +16,10 @@
 
 See [[Roadmap]] for the revised Sprint 6 slices and [[Decision Log]].
 
+## Lifecycle (founder correction, 2026-10-28) — slice 6.5, awaiting founder review
+
+A Journey is something the user **starts, lives through and finishes**: a name, a start (today), a planned end they chose, an active period, and a completion they decide. Weight, Photos and the future Timeline belong **to** a Journey. With no Journey, the screen offers only **Start a New Journey** (and Past Journeys once there are some). An active Journey shows its name, Day X of Y, its dates and a gold rail, then Overview · Weight · Photos. Extend and Finish live under Manage; reaching the end never finishes a Journey on its own. Finished Journeys are kept, read-only. Weigh-ins recorded before Journeys existed are preserved and shown by none. One active Journey at a time. See [[Decision Log]] and [[Roadmap]].
+
 ## Current state (2026-10-15)
 
 The Sprint 0 mock Journey below is **gone**: slice 6.1 deleted the fixture and its tabs, and Journey's colour is now **gold**. Slice 6.2 added the real weight domain (`src/lib/journey/`). Slice 6.3 (**✅ locked 2026-10-27**, founder-approved on a physical iPhone) rebuilds **Overview · Weight · Photos** in gold: Overview lays out Journey on a gold *Journey spine*, Weight and Photos each have their own honest empty state, and no button leads anywhere unbuilt. The populated future is reviewable in development builds at `/journey-preview`, from fixtures that never reach real data. **Slice 6.4 (awaiting founder review)** makes Weight real: Log Weight, a day-grouped history, edit and delete with Undo, a lb/kg display control, and the latest real weight on Overview's Weight node.
